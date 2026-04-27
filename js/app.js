@@ -1170,9 +1170,7 @@ function renderTimetable() {
     }
 
     const completedSubjects = typedSchedule.filter(exam => now > getExamEndTime(exam.date));
-    const routeSchedule = typedSchedule.filter(exam => now <= getExamEndTime(exam.date));
-    const visibleRouteSchedule = routeSchedule.length ? routeSchedule : typedSchedule.slice(-1);
-    const metrics = buildTimetableMapMetrics(visibleRouteSchedule);
+    const metrics = buildTimetableMapMetrics(typedSchedule);
     const nextIndex = metrics.findIndex(exam => now < getISTDate(exam.date));
     const currentIndex = metrics.findIndex(exam => now >= getISTDate(exam.date) && now <= getExamEndTime(exam.date));
     const marker = getTimetableMarkerPosition(metrics, now);
@@ -1241,7 +1239,7 @@ function renderTimetable() {
                 </div>
             </div>
 
-            ${renderCompletedSubjectsPanel(completedSubjects, userDept, showPracticalRoute)}
+
 
             ${secondaryPanel}
 
