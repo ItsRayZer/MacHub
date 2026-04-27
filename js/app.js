@@ -1170,11 +1170,14 @@ function renderTimetable() {
     }
 
     const completedSubjects = typedSchedule.filter(exam => now > getExamEndTime(exam.date));
+    const completedCollapsed = completedSubjects.length > 1 && !appState.completedExpanded;
     const metrics = buildTimetableMapMetrics(typedSchedule);
     const nextIndex = metrics.findIndex(exam => now < getISTDate(exam.date));
     const currentIndex = metrics.findIndex(exam => now >= getISTDate(exam.date) && now <= getExamEndTime(exam.date));
     const marker = getTimetableMarkerPosition(metrics, now);
     const completedCount = completedSubjects.length;
+    const lastCompletedMetric = completedCount > 0 ? metrics[completedCount - 1] : null;
+    const stackAnchorTop = lastCompletedMetric ? lastCompletedMetric.top : 96;
     const activeIndex = currentIndex !== -1 ? currentIndex : nextIndex;
     const focusExam = activeIndex !== -1 ? metrics[activeIndex] : metrics[metrics.length - 1];
     const finalExam = typedSchedule[typedSchedule.length - 1];
@@ -1243,7 +1246,7 @@ function renderTimetable() {
 
             ${secondaryPanel}
 
-            <div class="exam-route ${showPracticalRoute ? 'is-practical-route' : ''}" style="--marker-top:${marker.top}px; --progress-start:${progressStart}px; --progress-height:${progressHeight}px; min-height:${routeHeight}px;">
+            <div id="examRouteMap" class="exam-route ${showPracticalRoute ? 'is-practical-route' : ''}" data-collapsed="${completedCollapsed ? 'true' : 'false'}" style="--marker-top:${marker.top}px; --progress-start:${progressStart}px; --progress-height:${progressHeight}px; --stack-anchor:${stackAnchorTop}px; min-height:${routeHeight}px;" onclick="handleRouteMapClick(event)">
                 <div class="exam-route-start">✦</div>
                 <div class="exam-route-progress"></div>
                 <div class="route-orb"></div>
@@ -1266,7 +1269,7 @@ function renderTimetable() {
                         : 'Final landing';
 
                     return `
-                        <div class="exam-stop ${isCompleted ? 'is-completed' : ''} ${isCurrent ? 'is-current' : ''} ${isNext ? 'is-next' : ''}" style="--stop-top:${exam.top}px; --lane-offset:${exam.laneOffset}px;">
+                        <div class="exam-stop ${isCompleted ? 'is-completed' : ''} ${isCurrent ? 'is-current' : ''} ${isNext ? 'is-next' : ''}" data-ci="${isCompleted ? completedSubjects.findIndex(c => c.date === exam.date) : ''}" style="--stop-top:${exam.top}px; --lane-offset:${exam.laneOffset}px;">
                             <div class="exam-node"></div>
                             ${exam.connectorHeight ? `<div class="exam-connector" style="--connector-height:${exam.connectorHeight}px;"></div>` : ''}
                             <button type="button" class="exam-card spring" onclick="openTimetableExamSheet(${index})">
@@ -1288,6 +1291,30 @@ function renderTimetable() {
             </div>
         </div>
     `;
+    requestAnimationFrame(() => { setupRouteSwipeCollapse(); });
+}
+
+function handleRouteMapClick(event) {
+    const route = document.getElementById('examRouteMap');
+    if (!route || route.dataset.collapsed !== 'true') return;
+    if (!event.target.closest('.exam-stop.is-completed')) return;
+    event.stopPropagation();
+    appState.completedExpanded = true;
+    renderTimetable();
+}
+
+function setupRouteSwipeCollapse() {
+    const route = document.getElementById('examRouteMap');
+    if (!route || route.dataset.swipeReady) return;
+    route.dataset.swipeReady = 'true';
+    let sy = 0, st = 0;
+    route.addEventListener('touchstart', e => { sy = e.touches[0].clientY; st = performance.now(); }, { passive: true });
+    route.addEventListener('touchend', e => {
+        if (route.dataset.collapsed !== 'false') return;
+        const dy = sy - e.changedTouches[0].clientY;
+        const dt = performance.now() - st;
+        if (dy > 60 || (dy > 30 && dt < 400)) { appState.completedExpanded = false; renderTimetable(); }
+    }, { passive: true });
 }
 
 function renderDepartments() {

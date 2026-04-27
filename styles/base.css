@@ -875,6 +875,76 @@
             color: #86868b;
         }
 
+        /* ── Collapsed completed-subjects stack ───────────────────────────── */
+
+        /* All completed stops get smooth transitions so expansion & collapse animate */
+        .exam-stop.is-completed {
+            transition:
+                top 0.52s cubic-bezier(0.34, 1.56, 0.64, 1),
+                transform 0.52s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.35s ease;
+        }
+
+        /*
+         * When the route is collapsed, every completed stop EXCEPT the last
+         * (data-ci = 0 is the FIRST completed, highest data-ci = most recent)
+         * is stacked behind the last one.
+         * We use :not([data-ci=""]) to target only completed stops,
+         * and then offset each one progressively less.
+         */
+        .exam-route[data-collapsed="true"] {
+            cursor: pointer;
+        }
+
+        /* All completed stops snap to position of the "top of the stack" */
+        .exam-route[data-collapsed="true"] .exam-stop.is-completed {
+            top: var(--stack-anchor, 96px) !important;
+            transform: scaleX(0.97) translateY(0);
+            opacity: 0.5;
+            pointer-events: none; /* only the topmost is tappable via route onclick */
+        }
+
+        /* The most-recent completed card (last in the stack = attr data-ci not a smaller val) */
+        /* We show it normally on top */
+        .exam-route[data-collapsed="true"] .exam-stop.is-completed:last-of-type {
+            transform: scaleX(1) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 4;
+        }
+
+        /* Peek cards behind: offset by 6px for each one back */
+        .exam-route[data-collapsed="true"] .exam-stop.is-completed:nth-last-of-type(2) {
+            transform: scaleX(0.97) translateY(6px);
+            opacity: 0.72;
+            z-index: 3;
+        }
+        .exam-route[data-collapsed="true"] .exam-stop.is-completed:nth-last-of-type(3) {
+            transform: scaleX(0.93) translateY(12px);
+            opacity: 0.44;
+            z-index: 2;
+        }
+        .exam-route[data-collapsed="true"] .exam-stop.is-completed:nth-last-of-type(n+4) {
+            transform: scaleX(0.89) translateY(18px);
+            opacity: 0.18;
+            z-index: 1;
+        }
+
+        /* When collapsed, hide the node/connector on non-top cards to keep it clean */
+        .exam-route[data-collapsed="true"] .exam-stop.is-completed:not(:last-of-type) .exam-node,
+        .exam-route[data-collapsed="true"] .exam-stop.is-completed:not(:last-of-type) .exam-connector {
+            opacity: 0;
+        }
+
+        /* Clip the route height when collapsed so the stack doesn't leave a huge blank gap.
+           We use a small min-height override; JS still sets the actual height via inline style,
+           but the collapsed visual is much shorter since cards are all stacked. */
+        .exam-route[data-collapsed="true"] {
+            overflow: visible; /* allow stacked cards to pop slightly outside */
+        }
+
+        /* ─────────────────────────────────────────────────────────────────── */
+
         .route-orb {
             position: absolute;
             left: calc(var(--route-x) - 12px);
