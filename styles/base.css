@@ -524,7 +524,7 @@
 
         .exam-card {
             position: relative;
-            width: calc(100% - 5.5rem);
+            width: calc(100% - 5.75rem - var(--lane-offset, 0px));
             margin-left: calc(4.75rem + var(--lane-offset, 0px));
             padding: 1rem 1rem 1rem 1.05rem;
             border-radius: 1.75rem;
