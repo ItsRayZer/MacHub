@@ -1,0 +1,76 @@
+/* Shared component-level overrides and performance-safe utilities. */
+
+.app-shell-ready {
+    visibility: visible;
+}
+
+.surface-primary-button,
+.surface-secondary-button {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    transition:
+        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 0.24s ease;
+    will-change: transform;
+}
+
+.surface-primary-button {
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: var(--liquid-dark);
+    color: white;
+    box-shadow:
+        0 14px 28px rgba(0, 113, 227, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.dark .surface-primary-button {
+    color: #1d1d1f;
+}
+
+.surface-secondary-button {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: var(--liquid-glass);
+    color: var(--text-main);
+    box-shadow:
+        0 10px 22px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.surface-primary-button::before,
+.surface-secondary-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0) 24%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 78%);
+    transform: translateX(-140%);
+    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+}
+
+.surface-primary-button:hover::before,
+.surface-primary-button:focus-visible::before,
+.surface-secondary-button:hover::before,
+.surface-secondary-button:focus-visible::before {
+    transform: translateX(140%);
+}
+
+.surface-primary-button:hover,
+.surface-primary-button:focus-visible,
+.surface-secondary-button:hover,
+.surface-secondary-button:focus-visible {
+    transform: translateY(-1px);
+    filter: saturate(108%);
+}
+
+.surface-primary-button:active,
+.surface-secondary-button:active {
+    transform: scale(0.97);
+}

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MAC Exam Hub</title>
+    <link rel="stylesheet" href="styles/tailwind.css">
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/mobile-optimized.css">
+</head>
+<body class="pb-32 app-shell-ready">
+
+    <!-- Onboarding Screen -->
+    <div id="onboardingScreen" class="hidden">
+        <div class="onboarding-card spring">
+            <div class="step-indicator">
+                <div class="step-dot active" id="dot-1"></div>
+                <div class="step-dot" id="dot-2"></div>
+                <div class="step-dot" id="dot-3"></div>
+            </div>
+
+            <div id="ob-step-1" class="space-y-6">
+                <div class="w-20 h-20 bg-[var(--mac-blue)] rounded-[1.5rem] flex items-center justify-center text-white text-4xl mx-auto shadow-2xl floating">🏛️</div>
+                <h2 class="text-3xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Welcome to MAC Exam Hub</h2>
+                <p class="text-[#86868b] leading-relaxed">Your premium companion for finding exam seats and schedules at Mac Ramapuram.</p>
+                <button onclick="nextObStep(2)" class="w-full bg-[#1d1d1f] dark:bg-[#f5f5f7] text-white dark:text-[#1d1d1f] py-4 rounded-2xl font-bold text-lg shadow-lg spring">Continue</button>
+            </div>
+
+            <div id="ob-step-2" class="hidden space-y-6">
+                <h2 class="text-2xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Set up your profile</h2>
+                <div class="space-y-3">
+                    <input type="text" id="ob-name" placeholder="Full Name" class="onboarding-input" oninput="validateObStep2()">
+                    <input type="text" id="ob-reg" placeholder="Reg No (Optional)" class="onboarding-input" oninput="validateObStep2()">
+                </div>
+                <div class="flex gap-2 justify-center">
+                    <button id="btn-BCA" onclick="selectObDept('BCA')" class="px-4 py-2 rounded-full border border-[#86868b]/30 text-sm font-bold opacity-60 transition-all">BCA</button>
+                    <button id="btn-BBA" onclick="selectObDept('BBA')" class="px-4 py-2 rounded-full border border-[#86868b]/30 text-sm font-bold opacity-60 transition-all">BBA</button>
+                    <button id="btn-BSW" onclick="selectObDept('BSW')" class="px-4 py-2 rounded-full border border-[#86868b]/30 text-sm font-bold opacity-60 transition-all">BSW</button>
+                </div>
+                <button onclick="nextObStep(3)" id="ob-final-btn" class="w-full bg-[#1d1d1f] dark:bg-[#f5f5f7] text-white dark:text-[#1d1d1f] py-4 rounded-2xl font-bold text-lg shadow-lg opacity-30 pointer-events-none transition-all">Almost Done</button>
+            </div>
+
+            <div id="ob-step-3" class="hidden space-y-6">
+                <h2 class="text-2xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Quick UI Guide</h2>
+                <div class="space-y-4 text-left">
+                    <div class="flex gap-3 items-center">
+                        <div class="w-10 h-10 bg-black/5 rounded-xl flex items-center justify-center text-xl">🏠</div>
+                        <p class="text-sm font-bold text-[#86868b]">See your <span class="text-[var(--mac-blue)]">Countdown</span> here.</p>
+                    </div>
+                    <div class="flex gap-3 items-center">
+                        <div class="w-10 h-10 bg-black/5 rounded-xl flex items-center justify-center text-xl">📅</div>
+                        <p class="text-sm font-bold text-[#86868b]">Check your <span class="text-[var(--mac-blue)]">Time Table</span> here.</p>
+                    </div>
+                    <div class="flex gap-3 items-center">
+                        <div class="w-10 h-10 bg-black/5 rounded-xl flex items-center justify-center text-xl">🪑</div>
+                        <p class="text-sm font-bold text-[#86868b]">Find your <span class="text-[var(--mac-blue)]">Seat Map</span> here.</p>
+                    </div>
+                </div>
+                <button onclick="finishOnboarding()" class="w-full bg-[var(--mac-blue)] text-white py-4 rounded-2xl font-bold text-lg shadow-lg spring">Get Started</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="guideHighlight" class="highlight-box"></div>
+
+    <!-- Header: shown only on home view -->
+    <header id="appHeader" class="max-w-md mx-auto mt-10 mb-4 px-6">
+        <h1 id="userGreeting" class="text-3xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">MAC Exam Hub</h1>
+        <p id="liveClock" class="text-[var(--mac-blue)] text-[10px] font-black tracking-[0.3em] mt-1 uppercase">00:00:00 AM</p>
+    </header>
+
+    <div id="view-seats" class="view-panel">
+
+        <!-- Search at top -->
+        <div class="max-w-md mx-auto px-4 pt-4 pb-2 sticky top-0 z-50">
+            <div class="glass-panel rounded-[2rem] px-4 py-3 search-focus transition-all">
+                <div class="relative">
+                    <input type="text" id="globalSearch" placeholder="Search name or Reg No..."
+                        class="w-full bg-transparent border-none rounded-2xl py-2 pl-10 pr-4 text-base font-bold outline-none placeholder:text-[#86868b]/60 dark:placeholder:text-white/30 dark:text-white">
+                    <span class="absolute left-1 top-1/2 -translate-y-1/2 opacity-30 text-base">🔍</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-md mx-auto px-4 mt-3 mb-3">
+            <div class="seat-toolbar">
+                <div id="departmentFilters" class="seat-dropdown"></div>
+                <div id="daySelector" class="seat-dropdown"></div>
+            </div>
+        </div>
+
+        <!-- Empty State UI -->
+        <div id="emptyState" class="hidden mx-4 glass-panel rounded-[2rem] p-10 mt-4 text-center shadow-sm">
+            <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">💤</div>
+            <h3 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Not Available Right Now</h3>
+            <p class="text-[12px] font-bold text-[#86868b] mt-2">Exam seating data for this day hasn't been published yet. Please check back later.</p>
+        </div>
+
+        <!-- Seating Map Glass Container -->
+        <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: calc(100% - 2rem); max-width: 448px;">
+            <!-- Hall header: name left | dots center | arrows right -->
+            <div class="relative flex items-center mb-3" style="min-height:44px;">
+                <!-- Left: Hall title -->
+                <div class="flex-1">
+                    <h2 id="currentHallTitle" class="text-xl font-bold tracking-tight">Hall 1</h2>
+                    <p id="currentAudInfo" class="text-[9px] font-bold text-[#0071e3] uppercase tracking-widest mt-0.5">Auditorium A</p>
+                </div>
+                <!-- Center: Dots (absolutely centered) -->
+                <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
+                    <div id="hallDots" class="flex gap-1 items-center"></div>
+                </div>
+                <!-- Right: Arrows -->
+                <div class="flex items-center gap-1.5">
+                    <button onclick="changeHallDir('prev')" class="w-9 h-9 bg-black/5 dark:bg-white/10 rounded-[0.75rem] flex items-center justify-center spring active:scale-90 text-[#1d1d1f] dark:text-[#f5f5f7]">
+                        <span class="text-xs font-black opacity-60">❮</span>
+                    </button>
+                    <button onclick="changeHallDir('next')" class="w-9 h-9 bg-black/10 dark:bg-white/20 rounded-[0.75rem] flex items-center justify-center spring active:scale-90 text-[#1d1d1f] dark:text-[#f5f5f7]">
+                        <span class="text-xs font-black opacity-80">❯</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Seating grid with swipe support -->
+            <div id="seatingWrapper" class="w-full relative overflow-hidden">
+                <div id="seatingGrid" class="grid-container">
+                    <!-- Map blocks injected here -->
+                </div>
+            </div>
+
+            <div class="w-full h-7 bg-slate-200/50 dark:bg-white/10 rounded-xl mt-4 flex items-center justify-center text-[9px] font-bold text-slate-400 dark:text-[#86868b] tracking-widest">
+                INVIGILATOR DESK (FRONT)
+            </div>
+        </div>
+
+        <!-- Hidden hall tabs anchor (JS still needs the id) -->
+        <div id="hallTabs" class="hidden"></div>
+    </div> <!-- end view-seats -->
+
+    <div id="view-home" class="view-panel is-active max-w-md mx-auto p-6">
+        <div class="glass-panel p-8 rounded-[3rem] text-center mb-8 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-[var(--mac-blue)] opacity-10 rounded-full -mr-16 -mt-16"></div>
+            <div class="glass-panel w-20 h-20 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 shadow-xl floating">🏠</div>
+            <h2 id="homeGreeting" class="text-3xl font-bold mb-2">Hello!</h2>
+            <p class="text-[#86868b] text-[10px] font-bold uppercase tracking-widest pl-2 mb-8">Mac Ramapuram • 2026</p>
+            
+            <div class="bg-black/5 dark:bg-white/5 rounded-3xl p-6 mb-6">
+                <p class="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-4">Time Remaining</p>
+                <div class="flex items-center justify-center gap-3">
+                    <div class="flex flex-col items-center w-14">
+                        <span id="daysLeft" class="text-3xl font-black tracking-tighter text-[var(--mac-blue)]">00</span>
+                        <span class="text-[7px] font-bold text-[#86868b] uppercase">Days</span>
+                    </div>
+                    <span class="text-xl font-black text-[var(--mac-blue)] opacity-20">:</span>
+                    <div class="flex flex-col items-center w-14">
+                        <span id="hoursLeft" class="text-3xl font-black tracking-tighter text-[var(--mac-blue)]">00</span>
+                        <span class="text-[7px] font-bold text-[#86868b] uppercase">Hours</span>
+                    </div>
+                    <span class="text-xl font-black text-[var(--mac-blue)] opacity-20">:</span>
+                    <div class="flex flex-col items-center w-14">
+                        <span id="minsLeft" class="text-3xl font-black tracking-tighter text-[var(--mac-blue)]">00</span>
+                        <span class="text-[7px] font-bold text-[#86868b] uppercase">Mins</span>
+                    </div>
+                    <span class="text-xl font-black text-[var(--mac-blue)] opacity-20">:</span>
+                    <div class="flex flex-col items-center w-14 text-red-500">
+                        <span id="secsLeft" class="text-3xl font-black tracking-tighter">00</span>
+                        <span class="text-[7px] font-bold opacity-50 uppercase">Secs</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 pt-6 border-t border-black/5 dark:border-white/5">
+                    <h3 id="nextExamTitle" class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Searching...</h3>
+                    <p id="nextExamDate" class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-1">Calculating Schedule</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="switchView('view-timetable')" class="liquid-button py-4 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-full font-bold spring">Check Answers</button>
+                <button onclick="switchView('view-seats')" class="liquid-button py-4 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-full font-bold spring">Find My Seat</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="glass-panel p-6 rounded-[2.5rem]">
+                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">My Dept</p>
+                <p id="homeUserDept" class="text-2xl font-bold text-[var(--mac-blue)]">---</p>
+            </div>
+            <div class="glass-panel p-6 rounded-[2.5rem]">
+                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">Hall</p>
+                <p id="homeUserHall" class="text-2xl font-bold text-[var(--mac-blue)]">---</p>
+            </div>
+            <div class="glass-panel p-6 rounded-[2.5rem]">
+                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">Location</p>
+                <p id="homeUserSeat" class="text-xl font-bold text-[var(--mac-blue)]">---</p>
+            </div>
+            <div onclick="openEditProfile()" class="glass-panel p-6 rounded-[2.5rem] cursor-pointer spring active:scale-95">
+                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">Reg No</p>
+                <p id="homeUserReg" class="text-sm font-bold text-[var(--mac-blue)] truncate">Tap to set</p>
+                <p class="text-[9px] font-bold text-[#86868b] mt-1">✏️ Edit</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Bottom Sheet -->
+    <div id="editProfileSheet" class="fixed inset-0 z-[200] flex items-end justify-center hidden">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeEditProfile()"></div>
+        <div class="relative w-full max-w-md bg-[var(--bg-1)] rounded-t-[2.5rem] p-8 pb-12 shadow-2xl">
+            <div class="w-10 h-1 bg-[#86868b]/30 rounded-full mx-auto mb-6"></div>
+            <h3 class="text-xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] mb-6">Edit Profile</h3>
+
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1 block">Full Name</label>
+                    <input id="editName" type="text" placeholder="Your full name" class="w-full px-4 py-3 rounded-2xl bg-black/5 dark:bg-white/10 text-[#1d1d1f] dark:text-[#f5f5f7] font-bold text-sm outline-none border-2 border-transparent focus:border-[var(--mac-blue)] transition-all">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1 block">Registration Number</label>
+                    <input id="editReg" type="text" placeholder="e.g. MG25103A1234" class="w-full px-4 py-3 rounded-2xl bg-black/5 dark:bg-white/10 text-[#1d1d1f] dark:text-[#f5f5f7] font-bold text-sm outline-none border-2 border-transparent focus:border-[var(--mac-blue)] transition-all">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-2 block">Department</label>
+                    <div class="flex gap-2">
+                        <button id="edit-btn-BCA" onclick="selectEditDept('BCA')" class="flex-1 py-3 rounded-2xl border border-[#86868b]/30 text-sm font-bold transition-all">BCA</button>
+                        <button id="edit-btn-BBA" onclick="selectEditDept('BBA')" class="flex-1 py-3 rounded-2xl border border-[#86868b]/30 text-sm font-bold transition-all">BBA</button>
+                        <button id="edit-btn-BSW" onclick="selectEditDept('BSW')" class="flex-1 py-3 rounded-2xl border border-[#86868b]/30 text-sm font-bold transition-all">BSW</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="saveEditProfile()" class="w-full py-4 bg-[var(--mac-blue)] text-white rounded-2xl font-bold text-sm spring shadow-lg">Save Changes</button>
+        </div>
+    </div>
+
+        <div id="view-timetable" class="view-panel max-w-md mx-auto p-6">
+        <div class="glass-panel flex items-center gap-4 mb-8 sticky top-0 py-4 px-4 rounded-[2rem] z-20">
+            <div class="w-12 h-12 bg-[#0071e3]/10 rounded-2xl flex items-center justify-center text-2xl">📅</div>
+            <div>
+                <h3 class="text-2xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Exam Schedule</h3>
+                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-0.5">2nd Semester MG-UGP</p>
+            </div>
+        </div>
+        <div id="timetableContent" class="space-y-4 pb-24">
+            <!-- Timetable cards injected here -->
+        </div>
+    </div>
+
+    <div id="view-departments" class="view-panel max-w-md mx-auto p-6">
+        <div class="flex items-center gap-4 mb-10">
+            <div class="w-12 h-12 bg-[#0071e3]/10 rounded-2xl flex items-center justify-center text-2xl">🏫</div>
+            <div>
+                <h3 class="text-2xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Departments</h3>
+                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-0.5">College Overview</p>
+            </div>
+        </div>
+        <div id="deptContent" class="grid gap-4 pb-24">
+            <!-- Dept cards injected here -->
+        </div>
+    </div>
+
+    <!-- Bottom Navigation (Floating Liquid Glass Pill) -->
+    <div id="bottomNav">
+        <div id="navPill" class="nav-pill relative" c-current="1" c-previous="1">
+            <!-- Sliding Indicator -->
+            <div id="navIndicator" class="nav-indicator"></div>
+            
+            <button onclick="switchView('view-home')" id="tab-view-home" class="nav-item active" c-option="1">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Home</span>
+            </button>
+            <button onclick="switchView('view-timetable')" id="tab-view-timetable" class="nav-item" c-option="2">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">Schedule</span>
+            </button>
+            <button onclick="switchView('view-seats')" id="tab-view-seats" class="nav-item" c-option="3">
+                <span class="nav-icon">🪑</span>
+                <span class="nav-label">Seats</span>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Detail Bottom Sheet -->
+    <div id="detailDrawer" class="fixed inset-x-0 bottom-0 z-[100] translate-y-full drawer-slide max-w-md mx-auto">
+        <div class="bg-[var(--bg-1)] dark:bg-[#1c1c1e] rounded-t-[2.5rem] shadow-2xl border-t border-white/10 px-6 pt-4 pb-10">
+
+            <!-- Handle -->
+            <div id="drawerDragHandle" class="drawer-drag-zone">
+                <div class="w-10 h-1 bg-black/15 dark:bg-white/20 rounded-full mx-auto"></div>
+            </div>
+
+            <!-- Dept header -->
+            <div class="flex items-center gap-4 mb-5">
+                <div id="drawerDeptIcon" class="w-14 h-14 bg-[#0071e3] rounded-[1.25rem] flex items-center justify-center text-white text-2xl font-bold shadow-lg">B</div>
+                <div>
+                    <h3 id="drawerDeptName" class="text-xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-none">BCA</h3>
+                    <p class="text-[#86868b] text-[9px] font-bold mt-1 tracking-wider uppercase">Mac Ramapuram</p>
+                </div>
+            </div>
+
+            <!-- Seat info grid -->
+                <div class="space-y-3 mb-4">
+                <div class="bg-black/5 dark:bg-white/5 rounded-2xl px-4 py-3">
+                    <p class="text-[8px] font-bold text-[#86868b] uppercase tracking-wider mb-0.5">Student Name</p>
+                    <p id="drawerStudentName" class="text-base font-bold tracking-tight">---</p>
+                </div>
+                <div class="bg-black/5 dark:bg-white/5 rounded-2xl px-4 py-3">
+                    <p class="text-[8px] font-bold text-[#86868b] uppercase tracking-wider mb-0.5">Registration ID</p>
+                    <p id="drawerRegId" class="text-lg font-mono font-bold tracking-tighter">---</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-black/5 dark:bg-white/5 rounded-2xl px-4 py-3">
+                        <p class="text-[8px] font-bold text-[#86868b] uppercase tracking-wider mb-0.5">Hall</p>
+                        <p id="drawerHallId" class="font-bold text-sm">---</p>
+                    </div>
+                    <div class="bg-black/5 dark:bg-white/5 rounded-2xl px-4 py-3">
+                        <p class="text-[8px] font-bold text-[#86868b] uppercase tracking-wider mb-0.5">Block / Row</p>
+                        <p id="drawerSeatPos" class="font-bold text-sm">---</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exam details for this day -->
+            <div id="drawerExamCard" class="hidden rounded-2xl mb-5 overflow-hidden" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);">
+                <div class="px-4 pt-4 pb-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-6 h-6 bg-white/15 rounded-lg flex items-center justify-center text-[11px]">&#128218;</div>
+                        <span class="text-[8px] font-black text-white/50 uppercase tracking-[0.2em]">Exam on this Day</span>
+                    </div>
+                    <p id="drawerExamTitle" class="text-[15px] font-bold text-white leading-snug mb-3">---</p>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span id="drawerExamDate" class="px-2.5 py-1 bg-white/10 rounded-full text-[9px] font-bold text-white/80">---</span>
+                        <span id="drawerExamTime" class="px-2.5 py-1 bg-blue-500/30 rounded-full text-[9px] font-bold text-blue-300">---</span>
+                        <span id="drawerExamCode" class="px-2.5 py-1 bg-white/5 rounded-full text-[9px] font-mono font-bold text-white/40">---</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dismiss -->
+            <button onclick="closeDrawer()" class="w-full py-4 bg-[#1d1d1f] dark:bg-[#f5f5f7] text-white dark:text-[#1d1d1f] rounded-[1.5rem] font-bold spring text-sm">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- Drawer backdrop -->
+    <div id="drawerBackdrop" class="fixed inset-0 z-[99] bg-black/30 backdrop-blur-[2px] hidden" onclick="closeDrawer()"></div>
+
+    <!-- Marks Sheet -->
+    <div id="marksSheet" class="fixed inset-x-0 bottom-0 z-[120] translate-y-full drawer-slide max-w-md mx-auto">
+        <div class="bg-[var(--bg-1)] dark:bg-[#1c1c1e] rounded-t-[2.5rem] shadow-2xl border-t border-white/10 px-6 pt-4 pb-10 max-h-[85vh] overflow-y-auto liquid-scroll">
+            <div id="marksSheetDragHandle" class="drawer-drag-zone">
+                <div class="w-10 h-1 bg-black/15 dark:bg-white/20 rounded-full mx-auto"></div>
+            </div>
+
+            <div class="flex items-start justify-between gap-4 mb-5">
+                <div>
+                    <p id="marksSheetDept" class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.25em] mb-2">BCA</p>
+                    <h3 id="marksSheetTitle" class="text-xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight">Check Answers</h3>
+                    <p id="marksSheetMeta" class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-2">Exam details</p>
+                </div>
+                <div class="w-12 h-12 rounded-[1.25rem] bg-[var(--mac-blue)]/10 flex items-center justify-center text-2xl">📝</div>
+            </div>
+
+            <div id="marksAvailableState" class="hidden space-y-3 mb-6">
+                <div id="marksSummary" class="glass-panel rounded-[1.75rem] p-4"></div>
+                <div id="marksQuestionList" class="space-y-3"></div>
+            </div>
+
+            <div id="marksComingSoonState" class="hidden glass-panel rounded-[2rem] p-6 mb-6 text-center">
+                <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-2xl">⏳</div>
+                <h4 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7] mb-2">Coming Soon</h4>
+                <p class="text-sm font-bold text-[#86868b]">Questions and answers will appear here after admin uploads them so you can predict your mark.</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <a id="marksQuestionPaperLink" href="#" download class="hidden py-4 bg-[var(--mac-blue)]/12 text-[var(--mac-blue)] rounded-[1.5rem] font-bold spring text-sm border border-[var(--mac-blue)]/15 text-center">
+                    Q Paper
+                </a>
+                <button onclick="resetPredictionState()" class="py-4 bg-black/5 dark:bg-white/10 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-[1.5rem] font-bold spring text-sm border border-black/5 dark:border-white/10">Recheck</button>
+                <button onclick="closeMarksSheet()" class="py-4 bg-[#1d1d1f] dark:bg-[#f5f5f7] text-white dark:text-[#1d1d1f] rounded-[1.5rem] font-bold spring text-sm">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="marksBackdrop" class="fixed inset-0 z-[119] bg-black/30 backdrop-blur-[2px] hidden" onclick="closeMarksSheet()"></div>
+
+    <div id="timetableExamSheet" class="fixed inset-x-0 bottom-0 z-[125] translate-y-full drawer-slide max-w-md mx-auto">
+        <div class="bg-[var(--bg-1)] dark:bg-[#1c1c1e] rounded-t-[2.5rem] shadow-2xl border-t border-white/10 px-6 pt-4 pb-10">
+            <div id="timetableExamDragHandle" class="drawer-drag-zone">
+                <div class="w-10 h-1 bg-black/15 dark:bg-white/20 rounded-full mx-auto"></div>
+            </div>
+            <div class="flex items-start justify-between gap-4 mb-5">
+                <div>
+                    <p id="timetableExamSheetDate" class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.22em] mb-2">Exam Date</p>
+                    <h3 id="timetableExamSheetTitle" class="text-2xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Subject</h3>
+                </div>
+                <div id="timetableExamSheetBadge" class="px-3 py-1 rounded-full bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] text-[10px] font-black uppercase tracking-[0.18em]">Upcoming</div>
+            </div>
+
+            <div class="exam-detail-meta mb-5">
+                <div>
+                    <p class="text-[9px] font-black text-[#86868b] uppercase tracking-[0.18em] mb-2">Code</p>
+                    <p id="timetableExamSheetCode" class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-black text-[#86868b] uppercase tracking-[0.18em] mb-2">Time</p>
+                    <p id="timetableExamSheetTime" class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-black text-[#86868b] uppercase tracking-[0.18em] mb-2">Department</p>
+                    <p id="timetableExamSheetDept" class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-black text-[#86868b] uppercase tracking-[0.18em] mb-2">Status</p>
+                    <p id="timetableExamSheetStatus" class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">---</p>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-[1.75rem] p-4 mb-5">
+                <p class="text-[9px] font-black text-[#86868b] uppercase tracking-[0.18em] mb-2">Journey Insight</p>
+                <p id="timetableExamSheetInsight" class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">---</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button id="timetableExamSheetMarks" onclick="openTimetableMarksFromSheet()" class="hidden py-4 rounded-[1.5rem] bg-[var(--mac-blue)] text-white font-bold spring text-sm shadow-lg">Check Answers</button>
+                <button onclick="closeTimetableExamSheet()" class="py-4 bg-[#1d1d1f] dark:bg-[#f5f5f7] text-white dark:text-[#1d1d1f] rounded-[1.5rem] font-bold spring text-sm">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="timetableExamBackdrop" class="fixed inset-0 z-[124] bg-black/30 backdrop-blur-[2px] hidden" onclick="closeTimetableExamSheet()"></div>
+
+    
+    
+    
+    
+    <!-- Daily Note Popup -->
+    <div id="dailyNotePopup" class="fixed inset-0 z-[300] flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="closeDailyNote()"></div>
+        <div class="relative w-[90%] max-w-sm glass-panel rounded-[2.5rem] p-8 text-center shadow-2xl floating transition-all scale-95 opacity-0" id="dailyNoteContent">
+            <div class="w-16 h-16 bg-[var(--mac-blue)] rounded-full flex items-center justify-center text-3xl mx-auto mb-4 text-white shadow-lg">⚠️</div>
+            <h3 class="text-xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] mb-2">Important Note</h3>
+            <p class="text-sm font-bold text-[#86868b] mb-6">Seat arrangement may change. For the most accurate details, please check at least 6 hours before the exam.</p>
+            <button onclick="closeDailyNote()" class="w-full py-4 bg-[#1d1d1f] dark:bg-[#f5f5f7] text-white dark:text-[#1d1d1f] rounded-2xl font-bold spring">Got It</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) themeIcon.textContent = isDark ? '☀️' : '🌓';
+        }
+        // Auto detect system theme
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            toggleTheme();
+        }
+    </script>
+
+    <script defer src="data/timetable.js"></script>
+    <script defer src="data/timetable_bca.js"></script>
+    <script defer src="data/timetable_bba.js"></script>
+    <script defer src="data/timetable_bsw.js"></script>
+    <script defer src="data/marks_data.js"></script>
+    <script defer src="data/question_papers.js"></script>
+    <script defer src="data/student_names.js"></script>
+    <script defer src="js/state.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script defer src="js/profile.js"></script>
+    <script defer src="js/home.js"></script>
+    <script defer src="js/timetable.js"></script>
+    <script defer src="js/seats.js"></script>
+    <script defer src="js/app.js"></script>
+    <script defer src="js/bootstrap.js"></script>
+
+</body>
+</html>
+
