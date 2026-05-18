@@ -96,6 +96,15 @@
             transform: scale(0.92);
         }
 
+        .brand-logo {
+            height: auto;
+            width: auto;
+            max-width: 100%;
+            mix-blend-mode: screen;
+            object-fit: contain;
+            display: block;
+        }
+
         /* ── Floating Liquid Glass Nav ── */
         #bottomNav {
             position: fixed;
@@ -104,6 +113,9 @@
             transform: translateX(-50%);
             z-index: 110;
             width: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
             transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease;
         }
 
@@ -244,6 +256,21 @@
             filter: saturate(0.88) brightness(0.98);
         }
 
+        .nav-item .nav-icon-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1d1d1f;
+            font-size: 0.78rem;
+            font-weight: 900;
+            letter-spacing: 0;
+            background: none;
+        }
+
+        .dark .nav-item .nav-icon-text {
+            color: #f5f5f7;
+        }
+
         .nav-item.active .nav-icon {
             transform: scale(1.08);
             opacity: 1;
@@ -262,14 +289,44 @@
             background-image: url('../assets/nav-seats.png');
         }
 
+        .nav-menu-button {
+            width: 52px;
+            height: 52px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(40px) saturate(210%);
+            -webkit-backdrop-filter: blur(40px) saturate(210%);
+            box-shadow:
+                0 10px 40px rgba(0, 0, 0, 0.1),
+                inset 0 1px 1px rgba(255,255,255,0.7);
+            color: #1d1d1f;
+            font-size: 1.05rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .dark .nav-menu-button {
+            background: rgba(20, 20, 22, 0.5);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: #f5f5f7;
+            box-shadow:
+                0 10px 40px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+
         .nav-item .nav-label {
-            font-size: 7px;
+            font-size: 8px;
             font-weight: 700;
-            letter-spacing: 0.01em;
+            letter-spacing: 0.02em;
             color: #1d1d1f;
             z-index: 1;
             transition: color 0.3s, opacity 0.3s;
-            opacity: 0.4;
+            opacity: 0.55;
+        }
+
+        .dark .nav-item .nav-label {
+            color: #f5f5f7;
         }
 
         .nav-item.active .nav-label {
@@ -320,6 +377,94 @@
         .liquid-button:active {
             transform: scale(0.96);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .exam-subnav {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.35rem;
+            width: 100%;
+            padding: 0.35rem;
+            margin-bottom: 0.75rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.48);
+            border: 1px solid rgba(255, 255, 255, 0.44);
+            backdrop-filter: blur(34px) saturate(210%);
+            -webkit-backdrop-filter: blur(34px) saturate(210%);
+            box-shadow: 0 16px 38px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.58);
+        }
+
+        .dark .exam-subnav {
+            background: rgba(20, 20, 22, 0.52);
+            border-color: rgba(255,255,255,0.08);
+            box-shadow: 0 16px 38px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .exam-subnav-item {
+            min-width: 0;
+            height: 2.35rem;
+            padding: 0 0.6rem;
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            color: #86868b;
+            font-size: 0.64rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), background 0.42s ease, color 0.42s ease, box-shadow 0.42s ease;
+            white-space: nowrap;
+        }
+
+        .exam-subnav-item.is-active {
+            color: #1d1d1f;
+            background: rgba(255,255,255,0.7);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.7);
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        .dark .exam-subnav-item.is-active {
+            color: #f5f5f7;
+            background: rgba(255,255,255,0.12);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .resource-action-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            width: 100%;
+            padding: 1.05rem 1.15rem;
+            border: 1px solid rgba(255,255,255,0.36);
+            border-radius: 1.5rem;
+            background: rgba(255,255,255,0.44);
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px) saturate(190%);
+            box-shadow: 0 14px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.42);
+            color: #1d1d1f;
+            text-align: left;
+        }
+
+        .dark .resource-action-card {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.08);
+            color: #f5f5f7;
+        }
+
+        .resource-action-card span {
+            color: var(--mac-blue);
+            font-size: 0.64rem;
+            font-weight: 900;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .resource-action-card strong {
+            max-width: 12rem;
+            font-size: 0.86rem;
+            line-height: 1.2;
+            text-align: right;
         }
 
 
@@ -875,76 +1020,6 @@
             color: #86868b;
         }
 
-        /* ── Collapsed completed-subjects stack ───────────────────────────── */
-
-        /* All completed stops get smooth transitions so expansion & collapse animate */
-        .exam-stop.is-completed {
-            transition:
-                top 0.52s cubic-bezier(0.34, 1.56, 0.64, 1),
-                transform 0.52s cubic-bezier(0.34, 1.56, 0.64, 1),
-                opacity 0.35s ease;
-        }
-
-        /*
-         * When the route is collapsed, every completed stop EXCEPT the last
-         * (data-ci = 0 is the FIRST completed, highest data-ci = most recent)
-         * is stacked behind the last one.
-         * We use :not([data-ci=""]) to target only completed stops,
-         * and then offset each one progressively less.
-         */
-        .exam-route[data-collapsed="true"] {
-            cursor: pointer;
-        }
-
-        /* All completed stops snap to position of the "top of the stack" */
-        .exam-route[data-collapsed="true"] .exam-stop.is-completed {
-            top: var(--stack-anchor, 96px) !important;
-            transform: scaleX(0.97) translateY(0);
-            opacity: 0.5;
-            pointer-events: none; /* only the topmost is tappable via route onclick */
-        }
-
-        /* The most-recent completed card (last in the stack = attr data-ci not a smaller val) */
-        /* We show it normally on top */
-        .exam-route[data-collapsed="true"] .exam-stop.is-completed:last-of-type {
-            transform: scaleX(1) translateY(0);
-            opacity: 1;
-            pointer-events: auto;
-            z-index: 4;
-        }
-
-        /* Peek cards behind: offset by 6px for each one back */
-        .exam-route[data-collapsed="true"] .exam-stop.is-completed:nth-last-of-type(2) {
-            transform: scaleX(0.97) translateY(6px);
-            opacity: 0.72;
-            z-index: 3;
-        }
-        .exam-route[data-collapsed="true"] .exam-stop.is-completed:nth-last-of-type(3) {
-            transform: scaleX(0.93) translateY(12px);
-            opacity: 0.44;
-            z-index: 2;
-        }
-        .exam-route[data-collapsed="true"] .exam-stop.is-completed:nth-last-of-type(n+4) {
-            transform: scaleX(0.89) translateY(18px);
-            opacity: 0.18;
-            z-index: 1;
-        }
-
-        /* When collapsed, hide the node/connector on non-top cards to keep it clean */
-        .exam-route[data-collapsed="true"] .exam-stop.is-completed:not(:last-of-type) .exam-node,
-        .exam-route[data-collapsed="true"] .exam-stop.is-completed:not(:last-of-type) .exam-connector {
-            opacity: 0;
-        }
-
-        /* Clip the route height when collapsed so the stack doesn't leave a huge blank gap.
-           We use a small min-height override; JS still sets the actual height via inline style,
-           but the collapsed visual is much shorter since cards are all stacked. */
-        .exam-route[data-collapsed="true"] {
-            overflow: visible; /* allow stacked cards to pop slightly outside */
-        }
-
-        /* ─────────────────────────────────────────────────────────────────── */
-
         .route-orb {
             position: absolute;
             left: calc(var(--route-x) - 12px);
@@ -1373,6 +1448,263 @@
             box-shadow: 0 40px 100px rgba(0,0,0,0.1);
         }
 
+        .onboarding-intro {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 0.25rem 0 0;
+        }
+
+        .intro-visual {
+            position: relative;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1rem;
+            overflow: hidden;
+            border-radius: 2.5rem;
+            padding: 1.15rem;
+            background:
+                radial-gradient(circle at 12% 8%, rgba(0,113,227,0.18), transparent 36%),
+                linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.32));
+            border: 1px solid rgba(255,255,255,0.58);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 24px 70px rgba(0,0,0,0.08);
+        }
+
+        .dark .intro-visual {
+            background:
+                radial-gradient(circle at 12% 8%, rgba(0,113,227,0.28), transparent 36%),
+                linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+            border-color: rgba(255,255,255,0.10);
+        }
+
+        .intro-mark {
+            z-index: 1;
+            min-height: 92px;
+            border-radius: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1d1d1f, #3a3a3c);
+            color: #fff;
+            box-shadow: 0 22px 50px rgba(0,0,0,0.18);
+        }
+
+        .intro-mark span {
+            font-size: 1.45rem;
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: 0;
+        }
+
+        .intro-stack {
+            z-index: 1;
+            display: grid;
+            gap: 0.55rem;
+        }
+
+        .intro-stack__row {
+            min-height: 38px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 0.95rem;
+            background: rgba(255,255,255,0.62);
+            border: 1px solid rgba(255,255,255,0.56);
+            color: #1d1d1f;
+        }
+
+        .dark .intro-stack__row {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.08);
+            color: #f5f5f7;
+        }
+
+        .intro-stack__row span {
+            font-size: 0.8rem;
+            font-weight: 800;
+        }
+
+        .intro-stack__row strong {
+            color: var(--mac-blue);
+            font-size: 0.68rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .intro-stack__row--active {
+            background: rgba(0,113,227,0.12);
+            border-color: rgba(0,113,227,0.20);
+        }
+
+        .intro-copy {
+            text-align: left;
+        }
+
+        .intro-kicker {
+            color: var(--mac-blue);
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            margin-bottom: 0.6rem;
+        }
+
+        .intro-copy h2 {
+            color: #1d1d1f;
+            font-size: 2rem;
+            line-height: 1.06;
+            font-weight: 900;
+            letter-spacing: 0;
+        }
+
+        .dark .intro-copy h2 {
+            color: #f5f5f7;
+        }
+
+        .intro-copy p:last-child {
+            margin-top: 0.9rem;
+            color: #86868b;
+            font-size: 0.95rem;
+            line-height: 1.45;
+            font-weight: 700;
+        }
+
+        .ob-profile-card {
+            border-radius: 2rem;
+            padding: 1.35rem;
+            display: grid;
+            gap: 1.1rem;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.07);
+        }
+
+        .dark .ob-profile-card {
+            background: rgba(255,255,255,0.06) !important;
+            border-color: rgba(255,255,255,0.08) !important;
+        }
+
+        .ob-profile-kicker {
+            color: var(--mac-blue);
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            margin-bottom: 0.45rem;
+        }
+
+        .ob-profile-name {
+            color: #1d1d1f;
+            font-size: 1.28rem;
+            line-height: 1.12;
+            font-weight: 900;
+            letter-spacing: 0;
+        }
+
+        .dark .ob-profile-name {
+            color: #f5f5f7;
+        }
+
+        .ob-profile-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-top: 0.8rem;
+        }
+
+        .ob-profile-tags span {
+            border-radius: 999px;
+            padding: 0.35rem 0.7rem;
+            background: rgba(0,0,0,0.05);
+            color: #86868b;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .dark .ob-profile-tags span {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .ob-profile-details {
+            display: grid;
+            gap: 0.65rem;
+        }
+
+        .ob-profile-details div {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            min-height: 42px;
+            border-radius: 1rem;
+            padding: 0 0.9rem;
+            background: rgba(0,0,0,0.035);
+        }
+
+        .dark .ob-profile-details div {
+            background: rgba(255,255,255,0.055);
+        }
+
+        .ob-profile-details p {
+            color: #86868b;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .ob-profile-details strong {
+            color: #1d1d1f;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.78rem;
+            font-weight: 900;
+        }
+
+        .dark .ob-profile-details strong {
+            color: #f5f5f7;
+        }
+
+        .intro-cta {
+            width: 100%;
+            min-height: 58px;
+            border-radius: 1.35rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            background: #1d1d1f;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 800;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.18);
+        }
+
+        .dark .intro-cta {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .intro-cta span {
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            background: var(--mac-blue);
+            position: relative;
+        }
+
+        .intro-cta span::before {
+            content: "";
+            position: absolute;
+            inset: 7px 8px 7px 6px;
+            border-top: 2px solid #fff;
+            border-right: 2px solid #fff;
+            transform: rotate(45deg);
+        }
+
         .step-indicator {
             display: flex;
             gap: 6px;
@@ -1419,6 +1751,58 @@
             background: #2c2c2e;
         }
 
+        .practical-seat-empty {
+            grid-column: 1 / -1;
+            min-height: 320px;
+            border-radius: 2rem;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            background: linear-gradient(180deg, rgba(0,113,227,0.16), rgba(255,255,255,0.05));
+            border: 1px solid rgba(0,113,227,0.25);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+        }
+
+        .practical-seat-empty__icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 1.25rem;
+            display: grid;
+            place-items: center;
+            margin-bottom: 1.2rem;
+            background: rgba(0,113,227,0.16);
+            color: var(--mac-blue);
+            font-size: 0.9rem;
+            font-weight: 900;
+        }
+
+        .practical-seat-empty__kicker {
+            color: var(--mac-blue);
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            margin-bottom: 0.7rem;
+        }
+
+        .practical-seat-empty h3 {
+            color: #f5f5f7;
+            font-size: 1.45rem;
+            line-height: 1.1;
+            font-weight: 900;
+            letter-spacing: 0;
+            margin-bottom: 0.75rem;
+        }
+
+        .practical-seat-empty p:last-child {
+            color: rgba(245,245,247,0.62);
+            font-size: 0.88rem;
+            line-height: 1.5;
+            font-weight: 700;
+        }
+
         .highlight-box {
             position: absolute;
             border: 3px solid var(--mac-blue);
@@ -1428,5 +1812,22 @@
             transition: all 0.5s cubic-bezier(0.32, 0.72, 0, 1);
             box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
             opacity: 0;
+        }
+
+        /* Machub Logo Fix */
+        .logo {
+            width: 160px;
+            height: auto;
+            display: block;
+            margin: 10px auto;
+            object-fit: contain;
+            mix-blend-mode: screen;
+        }
+
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
         }
     

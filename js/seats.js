@@ -16,7 +16,29 @@
         });
     }
 
-    function normalizeSeatData(rawAll) {
+    function normalizeSeatData(rawInput) {
+        if (!Array.isArray(rawInput)) return { allDepartments: [], rawData: [], halls: {}, firstHall: '' };
+
+        const isNewFormat = rawInput.length > 0 && typeof rawInput[0] === 'object' && !Array.isArray(rawInput[0]);
+        
+        if (isNewFormat) {
+            const halls = {};
+            const depts = new Set();
+            rawInput.forEach(item => {
+                (halls[item.h] ||= []).push(item);
+                if (item.l?.d) depts.add(item.l.d.toUpperCase());
+                if (item.ri?.d) depts.add(item.ri.d.toUpperCase());
+            });
+            const deptList = Array.from(depts).map(d => [d, d]);
+            return {
+                allDepartments: [['ALL', 'ALL'], ...deptList],
+                rawData: rawInput,
+                halls: halls,
+                firstHall: Object.keys(halls)[0] || 'Hall 1'
+            };
+        }
+
+        const rawAll = rawInput;
         const allDepartments = rawAll.filter(d => ['BCA', 'BBA', 'BSW'].includes(String(d[6] || '').toUpperCase()));
         const seatGroups = {};
 
@@ -69,25 +91,37 @@
             return globalState.seatLoadPromises[dateStr];
         }
 
-        globalState.seatLoadPromises[dateStr] = Promise.all([
-            injectScriptOnce(`data/${dateStr}/bca.js`),
-            injectScriptOnce(`data/${dateStr}/bba.js`),
-            injectScriptOnce(`data/${dateStr}/bsw.js`)
-        ]).then(() => {
-            const normalized = normalizeSeatData([
-                ...(window.BCA_DATA || []),
-                ...(window.BBA_DATA || []),
-                ...(window.BSW_DATA || [])
-            ]);
-
-            globalState.seatCache[dateStr] = normalized;
-            window.BCA_DATA = null;
-            window.BBA_DATA = null;
-            window.BSW_DATA = null;
-            return normalized;
-        }).finally(() => {
-            delete globalState.seatLoadPromises[dateStr];
-        });
+        globalState.seatLoadPromises[dateStr] = injectScriptOnce(`data/${dateStr}/all_depts.js`)
+            .then(() => {
+                // Success loading unified file
+                const normalized = normalizeSeatData(window.ALL_DEPTS_DATA || []);
+                globalState.seatCache[dateStr] = normalized;
+                window.ALL_DEPTS_DATA = null;
+                return normalized;
+            })
+            .catch(() => {
+                // Fallback to legacy individual files
+                return Promise.all([
+                    injectScriptOnce(`data/${dateStr}/bca.js`),
+                    injectScriptOnce(`data/${dateStr}/bba.js`),
+                    injectScriptOnce(`data/${dateStr}/bsw.js`)
+                ]).then(() => {
+                    const legacyData = [
+                        ...(window.BCA_DATA || []),
+                        ...(window.BBA_DATA || []),
+                        ...(window.BSW_DATA || [])
+                    ];
+                    const normalized = normalizeSeatData(legacyData);
+                    globalState.seatCache[dateStr] = normalized;
+                    window.BCA_DATA = null;
+                    window.BBA_DATA = null;
+                    window.BSW_DATA = null;
+                    return normalized;
+                });
+            })
+            .finally(() => {
+                delete globalState.seatLoadPromises[dateStr];
+            });
 
         return globalState.seatLoadPromises[dateStr];
     }

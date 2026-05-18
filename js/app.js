@@ -6,10 +6,12 @@ const EXAM_DAYS = [
     { label: 'Day 5', date: '20_04_2026' }
 ];
 
-let appState = window.ExamHubState || { selectedDate: '16_04_2026', view: 'view-home', openSeatDropdown: null };
+let appState = window.ExamHubState || { selectedDate: '16_04_2026', view: 'view-home', examSubView: 'view-timetable', openSeatDropdown: null };
 appState.selectedDate = appState.selectedDate || '16_04_2026';
 appState.view = appState.view || 'view-home';
+appState.examSubView = appState.examSubView || 'view-timetable';
 appState.openSeatDropdown = appState.openSeatDropdown || null;
+appState.externalApp = appState.externalApp || { isOpen: false, url: '', title: '' };
 if (typeof appState.completedSubjectsExpanded !== 'boolean') appState.completedSubjectsExpanded = false;
 
 function getStudentInfo() {
@@ -23,7 +25,11 @@ function getStudentInfo() {
 
 function saveStudentInfo(profile) {
     if (window.ExamHubProfileApi) return window.ExamHubProfileApi.saveStudentInfo(profile);
-    localStorage.setItem('mac_student_info', JSON.stringify(profile));
+    try {
+        localStorage.setItem('mac_student_info', JSON.stringify(profile));
+    } catch (error) {
+        console.warn('localStorage is restricted', error);
+    }
     return profile;
 }
 
@@ -70,6 +76,17 @@ function toggleSeatDropdown(name) {
     appState.openSeatDropdown = appState.openSeatDropdown === name ? null : name;
     renderDaySelector();
     renderFilters();
+}
+
+function getFutureSeatExamDates(userDept, now = new Date()) {
+    if (!window.EXAM_TIMETABLE) return [];
+
+    const deptExams = window.EXAM_TIMETABLE
+        .filter(e => e.dept.toUpperCase() === userDept)
+        .filter(e => getExamEndTime(e.date) > now)
+        .sort((a, b) => getISTDate(a.date) - getISTDate(b.date));
+
+    return [...new Set(deptExams.map(e => e.date))];
 }
 
 function updateCountdown() {
@@ -166,7 +183,150 @@ let RAW_DATA = [];
 let HALL_DATA = {};
 let HALL_KEYS = [];
 
+function getMainNavView(viewId) {
+    if (['view-timetable', 'view-seats', 'view-exam-resources'].includes(viewId)) return 'view-exam';
+    if (viewId === 'view-resources') return 'view-resources';
+    return 'view-home';
+}
+
+function updateExamSubnav(activeView) {
+    document.querySelectorAll('.exam-subnav-item').forEach(btn => {
+        if (btn.hasAttribute('data-exam-target')) {
+            btn.classList.toggle('is-active', btn.dataset.examTarget === activeView);
+        } else if (btn.hasAttribute('data-top-target')) {
+            const target = btn.dataset.topTarget;
+            const isActive = (target === 'exam' && (activeView === 'view-timetable' || activeView === 'view-seats')) ||
+                             (target === 'result' && activeView === 'view-results');
+            btn.classList.toggle('is-active', isActive);
+        }
+    });
+}
+
+let externalAppLoadTimer = null;
+
+function syncExternalAppView() {
+    const state = appState.externalApp || { isOpen: false, url: '', title: '' };
+    const home = document.getElementById('view-home');
+    const shell = document.getElementById('externalAppShell');
+    const frame = document.getElementById('externalAppFrame');
+    const title = document.getElementById('externalAppTitle');
+    const loader = document.getElementById('externalAppLoader');
+    const fallback = document.getElementById('externalAppFallback');
+    const header = document.getElementById('appHeader');
+    const isHomeActive = appState.view === 'view-home';
+
+    if (home) home.classList.toggle('external-app-open', !!state.isOpen);
+    if (shell) shell.classList.toggle('hidden', !state.isOpen);
+    if (title) title.textContent = state.title || 'Student Portal';
+    if (header && isHomeActive) header.style.display = state.isOpen ? 'none' : '';
+
+    if (!frame) return;
+
+    if (state.isOpen && state.url && frame.src !== state.url) {
+        if (loader) loader.classList.remove('hidden');
+        if (fallback) fallback.classList.add('hidden');
+        frame.classList.remove('is-loaded');
+        frame.title = state.title || 'External app';
+        frame.src = state.url;
+
+        clearTimeout(externalAppLoadTimer);
+        externalAppLoadTimer = setTimeout(() => {
+            if (!frame.classList.contains('is-loaded') && fallback) {
+                fallback.classList.remove('hidden');
+            }
+        }, 12000);
+    }
+}
+
+function openExternalApp(url, title) {
+    if (!url) return;
+    appState.externalApp = {
+        isOpen: true,
+        url,
+        title: title || 'Student Portal'
+    };
+    switchView('view-home');
+    syncExternalAppView();
+}
+
+function closeExternalApp() {
+    if (!appState.externalApp) appState.externalApp = { isOpen: false, url: '', title: '' };
+    appState.externalApp.isOpen = false;
+    appState.externalApp.url = '';
+    appState.externalApp.title = '';
+
+    const frame = document.getElementById('externalAppFrame');
+    const loader = document.getElementById('externalAppLoader');
+    const fallback = document.getElementById('externalAppFallback');
+    clearTimeout(externalAppLoadTimer);
+    if (frame) {
+        frame.classList.remove('is-loaded');
+        frame.removeAttribute('src');
+    }
+    if (loader) loader.classList.add('hidden');
+    if (fallback) fallback.classList.add('hidden');
+    switchView('view-home');
+    syncExternalAppView();
+}
+
+function switchExamView(viewId) {
+    if (viewId === 'view-timetable' || viewId === 'view-seats') {
+        const targetTab = viewId === 'view-timetable' ? 'timetable' : 'seats';
+        switchView('view-seats');
+        switchExamTab(targetTab);
+        return;
+    }
+    
+    appState.examSubView = viewId || appState.examSubView || 'view-seats';
+    switchView(appState.examSubView);
+}
+
+window.switchExamTab = function(tab) {
+    const timetableEl = document.getElementById('sub-view-timetable');
+    const seatsEl = document.getElementById('sub-view-seats');
+    const timetableBtn = document.getElementById('tab-timetable');
+    const seatsBtn = document.getElementById('tab-seats');
+
+    if (!timetableEl || !seatsEl) return;
+
+    if (tab === 'timetable') {
+        timetableEl.classList.remove('hidden');
+        seatsEl.classList.add('hidden');
+        if (timetableBtn) timetableBtn.classList.add('is-active');
+        if (seatsBtn) seatsBtn.classList.remove('is-active');
+        appState.examSubView = 'view-timetable';
+        if (typeof renderTimetable === 'function') renderTimetable();
+    } else {
+        timetableEl.classList.add('hidden');
+        seatsEl.classList.remove('hidden');
+        if (timetableBtn) timetableBtn.classList.remove('is-active');
+        if (seatsBtn) seatsBtn.classList.add('is-active');
+        appState.examSubView = 'view-seats';
+        if (typeof showSeatNote === 'function') showSeatNote();
+    }
+    
+    // Sync top toggle states
+    document.querySelectorAll('.exam-subnav-item[data-top-target="exam"]').forEach(el => el.classList.add('is-active'));
+    document.querySelectorAll('.exam-subnav-item[data-top-target="result"]').forEach(el => el.classList.remove('is-active'));
+    document.querySelectorAll('.exam-subnav-item[data-exam-target]').forEach(el => {
+        el.classList.toggle('is-active', el.dataset.examTarget === appState.examSubView);
+    });
+};
+
 function switchView(viewId) {
+    // Handle unified view-exam-hub alias and old aliases
+    if (viewId === 'view-exam-hub' || viewId === 'view-exam') {
+        viewId = 'view-seats';
+    }
+
+    if (viewId === 'view-timetable' || viewId === 'view-seats') {
+        if (appState.view !== 'view-seats') {
+            const targetTab = viewId === 'view-timetable' ? 'timetable' : 'seats';
+            switchExamTab(targetTab);
+        }
+        viewId = 'view-seats';
+    }
+
     appState.view = viewId;
     document.querySelectorAll('.view-panel').forEach(el => {
         el.classList.remove('is-active');
@@ -174,21 +334,31 @@ function switchView(viewId) {
     const panel = document.getElementById(viewId);
     if (panel) {
         panel.classList.add('is-active');
+        panel.classList.remove('view-reenter');
+        void panel.offsetWidth;
+        panel.classList.add('view-reenter');
     }
 
     // Show header only on home
     const header = document.getElementById('appHeader');
     if (header) header.style.display = viewId === 'view-home' ? '' : 'none';
     
-    if (viewId === 'view-timetable') renderTimetable();
+    updateExamSubnav(viewId);
+
+    if (viewId === 'view-seats') {
+        if (appState.examSubView === 'view-timetable' && typeof renderTimetable === 'function') renderTimetable();
+        if (appState.examSubView === 'view-seats' && typeof showSeatNote === 'function') showSeatNote();
+    }
+
     if (viewId === 'view-departments') renderDepartments();
     if (viewId === 'view-home') updateCountdown();
-    if (viewId === 'view-seats') showSeatNote();
+    syncExternalAppView();
 
     // Update Nav Bar active & Indicator movement
-    const tabs = ['view-home', 'view-timetable', 'view-seats'];
+    const tabs = ['view-home', 'view-exam', 'view-resources'];
     const navPill = document.getElementById('navPill');
-    const nextIndex = tabs.indexOf(viewId);
+    const activeMainView = (viewId === 'view-seats' || viewId === 'view-results' || viewId === 'view-exam-resources') ? 'view-exam' : getMainNavView(viewId);
+    const nextIndex = tabs.indexOf(activeMainView);
 
     if (navPill && nextIndex !== -1) {
         const currentOption = navPill.getAttribute('c-current') || '1';
@@ -200,13 +370,39 @@ function switchView(viewId) {
     tabs.forEach((tab, index) => {
         const btn = document.getElementById('tab-' + tab);
         if (!btn) return;
-        if (tab === viewId) {
+        if (tab === activeMainView) {
             btn.classList.add('active');
         } else {
             btn.classList.remove('active');
         }
     });
+
+    const indicator = document.getElementById('navIndicator');
+    if (indicator && nextIndex !== -1) {
+        indicator.style.transform = `translateX(${nextIndex * 100}%)`;
+    }
 }
+
+window.openExternalApp = openExternalApp;
+window.closeExternalApp = closeExternalApp;
+window.syncExternalAppView = syncExternalAppView;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const frame = document.getElementById('externalAppFrame');
+    if (!frame) return;
+    frame.addEventListener('load', () => {
+        frame.classList.add('is-loaded');
+        document.getElementById('externalAppLoader')?.classList.add('hidden');
+        document.getElementById('externalAppFallback')?.classList.add('hidden');
+        clearTimeout(externalAppLoadTimer);
+    });
+    frame.addEventListener('error', () => {
+        frame.classList.remove('is-loaded');
+        document.getElementById('externalAppLoader')?.classList.add('hidden');
+        document.getElementById('externalAppFallback')?.classList.remove('hidden');
+        clearTimeout(externalAppLoadTimer);
+    });
+});
 
 function renderDaySelector() {
     const ds = document.getElementById('daySelector');
@@ -215,11 +411,24 @@ function renderDaySelector() {
     const info = getStudentInfo();
     const userDept = info ? info.dept.toUpperCase() : 'BCA';
 
-    const deptExams = window.EXAM_TIMETABLE.filter(e => e.dept.toUpperCase() === userDept);
-    const uniqueDates = [...new Set(deptExams.map(e => e.date))];
+    const uniqueDates = getFutureSeatExamDates(userDept);
     const selectedDate = appState.selectedDate.replace(/_/g, '-');
     const activeDate = uniqueDates.includes(selectedDate) ? selectedDate : uniqueDates[0];
     const isOpen = appState.openSeatDropdown === 'date';
+
+    if (!uniqueDates.length) {
+        ds.innerHTML = `
+            <div class="seat-dropdown">
+                <button type="button" class="seat-dropdown__trigger" disabled>
+                    <div class="seat-dropdown__meta">
+                        <span class="seat-dropdown__label">Next Exam</span>
+                        <span class="seat-dropdown__value">No future seating</span>
+                    </div>
+                </button>
+            </div>
+        `;
+        return;
+    }
 
     ds.innerHTML = `
         <div class="seat-dropdown ${isOpen ? 'is-open' : ''}">
@@ -429,6 +638,16 @@ function getCountdownSchedule(userDept, now) {
     return [...window.EXAM_TIMETABLE].sort((a, b) => getISTDate(a.date) - getISTDate(b.date));
 }
 
+function isPracticalScheduleActiveForUser() {
+    const info = getStudentInfo();
+    const userDept = info ? info.dept.toUpperCase() : null;
+    if (!userDept) return false;
+
+    const now = new Date();
+    const activeSchedule = getCountdownSchedule(userDept, now);
+    return activeSchedule.some(exam => exam.type === 'practical' && getExamEndTime(exam.date) > now);
+}
+
 function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
 }
@@ -626,7 +845,8 @@ function loadPredictionState(entry, dept, examCode) {
     currentPredictionKey = storageKey;
 
     try {
-        const saved = localStorage.getItem(storageKey);
+        let saved = null;
+        try { saved = localStorage.getItem(storageKey); } catch (e) { console.warn('localStorage restricted', e); }
         if (!saved) return createPredictionState(entry);
         return normalizePredictionState(entry, JSON.parse(saved));
     } catch (error) {
@@ -637,7 +857,9 @@ function loadPredictionState(entry, dept, examCode) {
 function savePredictionState() {
     if (!currentPredictionKey) return;
     try {
-        localStorage.setItem(currentPredictionKey, JSON.stringify(currentPredictionState));
+        try {
+            localStorage.setItem(currentPredictionKey, JSON.stringify(currentPredictionState));
+        } catch (e) { console.warn('localStorage restricted', e); }
     } catch (error) {
         // Ignore storage issues so prediction UI still works in-memory.
     }
@@ -828,7 +1050,9 @@ function resetPredictionState() {
 
     if (currentPredictionKey) {
         try {
-            localStorage.removeItem(currentPredictionKey);
+            try {
+                localStorage.removeItem(currentPredictionKey);
+            } catch (e) { console.warn('localStorage restricted', e); }
         } catch (error) {
             // Ignore storage issues and still reset the in-memory state.
         }
@@ -1170,14 +1394,11 @@ function renderTimetable() {
     }
 
     const completedSubjects = typedSchedule.filter(exam => now > getExamEndTime(exam.date));
-    const completedCollapsed = completedSubjects.length > 1 && !appState.completedExpanded;
     const metrics = buildTimetableMapMetrics(typedSchedule);
     const nextIndex = metrics.findIndex(exam => now < getISTDate(exam.date));
     const currentIndex = metrics.findIndex(exam => now >= getISTDate(exam.date) && now <= getExamEndTime(exam.date));
     const marker = getTimetableMarkerPosition(metrics, now);
     const completedCount = completedSubjects.length;
-    const lastCompletedMetric = completedCount > 0 ? metrics[completedCount - 1] : null;
-    const stackAnchorTop = lastCompletedMetric ? lastCompletedMetric.top : 96;
     const activeIndex = currentIndex !== -1 ? currentIndex : nextIndex;
     const focusExam = activeIndex !== -1 ? metrics[activeIndex] : metrics[metrics.length - 1];
     const finalExam = typedSchedule[typedSchedule.length - 1];
@@ -1190,28 +1411,7 @@ function renderTimetable() {
     window.ACTIVE_TIMETABLE_DEPT = userDept;
     window.ACTIVE_TIMETABLE_TYPE = activeScheduleType;
 
-    const secondaryPanel = showPracticalRoute
-        ? `
-            <div class="practical-switch-panel is-theory-done">
-                <div>
-                    <p class="practical-switch-kicker">Theory completed</p>
-                    <h4>BCA practical examinations are now showing.</h4>
-                </div>
-                <span>${theorySchedule.length}/${theorySchedule.length}</span>
-            </div>
-        `
-        : practicalSchedule.length
-            ? `
-                <div class="practical-switch-panel">
-                    <div>
-                        <p class="practical-switch-kicker">Practical exams</p>
-                        <h4>Starts after all theory exams finish.</h4>
-                        <p>${practicalSchedule.map(exam => `${formatShortExamDate(exam.date)} - ${escapeHtml(exam.title)}`).join(' | ')}</p>
-                    </div>
-                    <span>Minimized</span>
-                </div>
-            `
-            : '';
+    const secondaryPanel = '';
 
     container.innerHTML = `
         <div class="exam-map-shell">
@@ -1246,8 +1446,8 @@ function renderTimetable() {
 
             ${secondaryPanel}
 
-            <div id="examRouteMap" class="exam-route ${showPracticalRoute ? 'is-practical-route' : ''}" data-collapsed="${completedCollapsed ? 'true' : 'false'}" style="--marker-top:${marker.top}px; --progress-start:${progressStart}px; --progress-height:${progressHeight}px; --stack-anchor:${stackAnchorTop}px; min-height:${routeHeight}px;" onclick="handleRouteMapClick(event)">
-                <div class="exam-route-start">✦</div>
+            <div class="exam-route ${showPracticalRoute ? 'is-practical-route' : ''}" style="--marker-top:${marker.top}px; --progress-start:${progressStart}px; --progress-height:${progressHeight}px; min-height:${routeHeight}px;">
+                <div class="exam-route-start" aria-hidden="true"></div>
                 <div class="exam-route-progress"></div>
                 <div class="route-orb"></div>
                 ${metrics.map((exam, index) => {
@@ -1269,7 +1469,7 @@ function renderTimetable() {
                         : 'Final landing';
 
                     return `
-                        <div class="exam-stop ${isCompleted ? 'is-completed' : ''} ${isCurrent ? 'is-current' : ''} ${isNext ? 'is-next' : ''}" data-ci="${isCompleted ? completedSubjects.findIndex(c => c.date === exam.date) : ''}" style="--stop-top:${exam.top}px; --lane-offset:${exam.laneOffset}px;">
+                        <div class="exam-stop ${isCompleted ? 'is-completed' : ''} ${isCurrent ? 'is-current' : ''} ${isNext ? 'is-next' : ''}" style="--stop-top:${exam.top}px; --lane-offset:${exam.laneOffset}px;">
                             <div class="exam-node"></div>
                             ${exam.connectorHeight ? `<div class="exam-connector" style="--connector-height:${exam.connectorHeight}px;"></div>` : ''}
                             <button type="button" class="exam-card spring" onclick="openTimetableExamSheet(${index})">
@@ -1291,30 +1491,6 @@ function renderTimetable() {
             </div>
         </div>
     `;
-    requestAnimationFrame(() => { setupRouteSwipeCollapse(); });
-}
-
-function handleRouteMapClick(event) {
-    const route = document.getElementById('examRouteMap');
-    if (!route || route.dataset.collapsed !== 'true') return;
-    if (!event.target.closest('.exam-stop.is-completed')) return;
-    event.stopPropagation();
-    appState.completedExpanded = true;
-    renderTimetable();
-}
-
-function setupRouteSwipeCollapse() {
-    const route = document.getElementById('examRouteMap');
-    if (!route || route.dataset.swipeReady) return;
-    route.dataset.swipeReady = 'true';
-    let sy = 0, st = 0;
-    route.addEventListener('touchstart', e => { sy = e.touches[0].clientY; st = performance.now(); }, { passive: true });
-    route.addEventListener('touchend', e => {
-        if (route.dataset.collapsed !== 'false') return;
-        const dy = sy - e.changedTouches[0].clientY;
-        const dt = performance.now() - st;
-        if (dy > 60 || (dy > 30 && dt < 400)) { appState.completedExpanded = false; renderTimetable(); }
-    }, { passive: true });
 }
 
 function renderDepartments() {
@@ -1396,6 +1572,48 @@ function renderMap() {
     const grid = document.getElementById('seatingGrid');
     if (!grid) return;
     grid.innerHTML = '';
+    const invigilatorDesk = document.getElementById('invigilatorDesk');
+    invigilatorDesk?.classList.remove('hidden');
+
+    const info = getStudentInfo();
+    const userDept = info ? info.dept.toUpperCase() : 'BCA';
+    const futureSeatDates = getFutureSeatExamDates(userDept);
+    const activeTimetableIsPractical = window.ACTIVE_TIMETABLE_TYPE === 'practical' || isPracticalScheduleActiveForUser();
+    const selectedDateFormatted = appState.selectedDate.replace(/_/g, '-');
+    const selectedDateIsPractical = (window.PRACTICAL_TIMETABLE_BCA || []).some(exam => exam.date === selectedDateFormatted);
+    if (!futureSeatDates.length && !activeTimetableIsPractical && !selectedDateIsPractical) {
+        const hallTitle = document.getElementById('currentHallTitle');
+        const audInfo = document.getElementById('currentAudInfo');
+        if (hallTitle) hallTitle.textContent = 'No Future Seating';
+        if (audInfo) audInfo.textContent = 'Check back later';
+        invigilatorDesk?.classList.add('hidden');
+        grid.innerHTML = `
+            <div class="practical-seat-empty">
+                <div class="practical-seat-empty__icon">SEAT</div>
+                <p class="practical-seat-empty__kicker">Not available</p>
+                <h3>No future seating has been published.</h3>
+                <p>Past seating maps are hidden here. New seating will appear when the next exam arrangement is available.</p>
+            </div>
+        `;
+        return;
+    }
+
+    if (activeTimetableIsPractical || selectedDateIsPractical) {
+        const hallTitle = document.getElementById('currentHallTitle');
+        const audInfo = document.getElementById('currentAudInfo');
+        if (hallTitle) hallTitle.textContent = 'Practical Exam';
+        if (audInfo) audInfo.textContent = 'Seating not available';
+        invigilatorDesk?.classList.add('hidden');
+        grid.innerHTML = `
+            <div class="practical-seat-empty">
+                <div class="practical-seat-empty__icon">LAB</div>
+                <p class="practical-seat-empty__kicker">Practical mode</p>
+                <h3>Seating is not available for practical exams.</h3>
+                <p>Lab allocations are handled separately, so this seating map is only shown for theory exam days.</p>
+            </div>
+        `;
+        return;
+    }
     
     const data = HALL_DATA[app.h] || RAW_DATA.filter(d => d.h === app.h);
     const hallTitle = document.getElementById('currentHallTitle');
@@ -1549,7 +1767,6 @@ function closeSeatDetailSheet() {
 function initDrawerDrag() {
     initDraggableSheet('detailDrawer', 'drawerDragHandle', closeSeatDetailSheet);
 }
-
 function changeHallAnimated(newHall, dir) {
     if(newHall === app.h || isAnimatingHall) return;
     isAnimatingHall = true;
@@ -1670,14 +1887,20 @@ if (searchInput) {
     });
 }
 
-let obData = { name: '', dept: '', reg: '' };
+window.obData = { name: '', dept: '', reg: '', adminNo: '' };
+let obData = window.obData;
 
 function validateObStep2() {
+    obData = window.obData || obData || { name: '', dept: '', reg: '', adminNo: '' };
+    window.obData = obData;
+
     const nameVal = (document.getElementById('ob-name')?.value || "").trim();
     const regVal = (document.getElementById('ob-reg')?.value || "").trim();
+    const adminNoVal = (document.getElementById('ob-adminNo')?.value || "").trim();
     
     obData.name = nameVal;
     obData.reg = regVal;
+    obData.adminNo = adminNoVal;
 
     const btn = document.getElementById('ob-final-btn');
     if (obData.name && obData.dept) {
@@ -1687,7 +1910,7 @@ function validateObStep2() {
         }
         // Update greeting and countdown in background
         // Temporarily save to local storage to let updateCountdown use it
-        const tempInfo = { name: obData.name, dept: obData.dept, reg: obData.reg };
+        const tempInfo = { name: obData.name, dept: obData.dept, reg: obData.reg, adminNo: obData.adminNo };
         saveStudentInfo(tempInfo);
         updateCountdown();
     } else {
@@ -1699,44 +1922,34 @@ function validateObStep2() {
 }
 
 function nextObStep(step) {
-    if (step === 2) {
-        const step1 = document.getElementById('ob-step-1');
-        const step2 = document.getElementById('ob-step-2');
-        if (step1) step1.classList.add('hidden');
-        if (step2) step2.classList.remove('hidden');
-        const dot1 = document.getElementById('dot-1');
-        const dot2 = document.getElementById('dot-2');
-        if (dot1) dot1.classList.remove('active');
-        if (dot2) dot2.classList.add('active');
-    } else if (step === 3) {
-        // Final sync before moving to guide
-        obData.name = (document.getElementById('ob-name')?.value || "").trim();
-        obData.reg = (document.getElementById('ob-reg')?.value || "").trim();
-        
-        if (!obData.name || !obData.dept) return;
+    ['ob-step-1', 'ob-step-2', 'ob-step-2b', 'ob-step-3'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.add('hidden');
+        el.style.display = '';
+    });
+    ['dot-1', 'dot-2', 'dot-3'].forEach(id => {
+        document.getElementById(id)?.classList.remove('active');
+    });
 
-        const screen = document.getElementById('onboardingScreen');
-        if (screen) screen.classList.add('no-blur');
-        
-        const step2 = document.getElementById('ob-step-2');
-        const step3 = document.getElementById('ob-step-3');
-        if (step2) step2.classList.add('hidden');
-        if (step3) step3.classList.remove('hidden');
-        
-        const dot2 = document.getElementById('dot-2');
-        const dot3 = document.getElementById('dot-3');
-        if (dot2) dot2.classList.remove('active');
-        if (dot3) dot3.classList.add('active');
-        
-        showGuideHighlight();
+    const stepId = step === 2.5 ? 'ob-step-2b' : `ob-step-${step}`;
+    const dotId = step === 1 ? 'dot-1' : step === 3 ? 'dot-3' : 'dot-2';
+    const stepEl = document.getElementById(stepId);
+    if (stepEl) {
+        stepEl.classList.remove('hidden');
+        stepEl.style.display = '';
     }
+    document.getElementById(dotId)?.classList.add('active');
 }
 
-async function selectObDept(dept) {
+function selectObDept(dept) {
+    obData = window.obData || obData || { name: '', dept: '', reg: '', adminNo: '' };
+    window.obData = obData;
     obData.dept = dept;
+
     ['BCA', 'BBA', 'BSW'].forEach(d => {
         const btn = document.getElementById('btn-' + d);
-        if(!btn) return;
+        if (!btn) return;
         if (d === dept) {
             btn.classList.add('bg-[var(--mac-blue)]', 'text-white', 'opacity-100');
             btn.classList.remove('opacity-60');
@@ -1745,90 +1958,86 @@ async function selectObDept(dept) {
             btn.classList.add('opacity-60');
         }
     });
-
-    // Immediately sync the countdown for the chosen dept
     validateObStep2();
 }
 
-async function showGuideHighlight() {
-    const highlight = document.getElementById('guideHighlight');
-    if (!highlight) return;
-
-    highlight.style.opacity = '1';
-    
-    // First highlight: Home
-    const homeBtn = document.getElementById('tab-view-home');
-    if (homeBtn) {
-        const rect = homeBtn.getBoundingClientRect();
-        highlight.style.top = (rect.top - 10) + 'px';
-        highlight.style.left = (rect.left - 10) + 'px';
-        highlight.style.width = (rect.width + 20) + 'px';
-        highlight.style.height = (rect.height + 20) + 'px';
-    }
-
-    await new Promise(r => setTimeout(r, 2000));
-
-    // Second highlight: Timetable
-    const ttBtn = document.getElementById('tab-view-timetable');
-    if (ttBtn) {
-        const rect = ttBtn.getBoundingClientRect();
-        highlight.style.top = (rect.top - 10) + 'px';
-        highlight.style.left = (rect.left - 10) + 'px';
-        highlight.style.width = (rect.width + 20) + 'px';
-        highlight.style.height = (rect.height + 20) + 'px';
-    }
-
-    await new Promise(r => setTimeout(r, 2000));
-
-    // Third highlight: Seats
-    const seatBtn = document.getElementById('tab-view-seats');
-    if (seatBtn) {
-        const rect2 = seatBtn.getBoundingClientRect();
-        highlight.style.top = (rect2.top - 10) + 'px';
-        highlight.style.left = (rect2.left - 10) + 'px';
-        highlight.style.width = (rect2.width + 20) + 'px';
-        highlight.style.height = (rect2.height + 20) + 'px';
-    }
-
-    await new Promise(r => setTimeout(r, 2000));
-    highlight.style.opacity = '0';
-}
-
 function finishOnboarding() {
-    saveStudentInfo(obData);
+    obData = window.obData || obData || { name: '', dept: '', reg: '', adminNo: '' };
+    window.obData = obData;
+
+    const profile = {
+        name: (obData.name || '').trim(),
+        dept: (obData.dept || '').trim(),
+        reg: (obData.reg || '').trim(),
+        adminNo: (obData.adminNo || '').trim(),
+        classGroup: obData.classGroup || '',
+        classNo: obData.classNo || ''
+    };
+
+    if (!profile.name || !profile.dept) {
+        alert('Please choose your profile or complete the manual setup.');
+        nextObStep(2);
+        return;
+    }
+
+    saveStudentInfo(profile);
     const obScreen = document.getElementById('onboardingScreen');
-    if (obScreen) obScreen.classList.add('collapsed');
+    if (obScreen) {
+        obScreen.classList.add('collapsed');
+        obScreen.classList.add('hidden');
+        setTimeout(() => obScreen.style.display = 'none', 600);
+    }
     applyUserProfile();
-    updateCountdown();
+    autoSelectNextExamDay();
 }
+
+window.nextObStep = nextObStep;
+window.selectObDept = selectObDept;
+window.validateObStep2 = validateObStep2;
+window.finishOnboarding = finishOnboarding;
 
 async function applyUserProfile() {
-    const infoStr = getStudentInfo();
-    if (infoStr) {
-        const info = infoStr;
-        const deptEl = document.getElementById('homeUserDept');
-        if (deptEl) deptEl.textContent = info.dept;
+    const info = getStudentInfo();
+    const deptEl = document.getElementById('homeUserDept');
+    const greetingEl = document.getElementById('homeGreeting');
+    const regEl = document.getElementById('homeUserReg');
 
-        const regEl = document.getElementById('homeUserReg');
-        if (regEl) regEl.textContent = info.reg || 'Tap to set';
+    if (info) {
+        if (deptEl) deptEl.textContent = info.dept || 'General';
+        
+        if (regEl) {
+            regEl.textContent = info.reg || 'Not set';
+            regEl.classList.toggle('opacity-30', !info.reg);
+        }
 
-        // Auto filter to their department
-        setFilter(info.dept);
+        if (greetingEl) {
+            const displayName = info.name && info.name !== 'Guest' ? info.name.split(' ')[0] : 'Guest';
+            greetingEl.textContent = `Hi, ${displayName}!`;
+        }
 
-        // Update countdown immediately with their dept
+        if (info.dept) setFilter(info.dept);
         updateCountdown();
 
-        // If they provided a Reg No, auto search/highlight it
+        if (info.adminNo && window.startBackgroundSync) {
+            window.startBackgroundSync();
+        }
+
         if (info.reg) {
             app.s = info.reg.toLowerCase();
             const searchInput = document.getElementById('globalSearch');
             if (searchInput) searchInput.value = info.reg;
             
-            const match = ALL_DEPARTMENTS.find(d => d[0].toLowerCase().includes(app.s));
-            if (match) {
-                if (match[1] !== app.h) changeHall(match[1]);
+            if (window.ALL_DEPARTMENTS) {
+                const match = ALL_DEPARTMENTS.find(d => d[0].toLowerCase().includes(app.s));
+                if (match) {
+                    if (match[1] !== app.h) changeHall(match[1]);
+                }
             }
         }
+    } else {
+        if (greetingEl) greetingEl.textContent = 'Hello!';
+        if (deptEl) deptEl.textContent = '---';
+        if (regEl) regEl.textContent = '---';
     }
 }
 
@@ -1837,14 +2046,14 @@ function checkOnboarding() {
     const obScreen = document.getElementById('onboardingScreen');
 
     if (!saved) {
-        // First launch: show the onboarding popup
         if (obScreen) obScreen.classList.remove('hidden');
     } else {
-        // Returning user: keep onboarding hidden, restore their profile instantly
         if (obScreen) obScreen.classList.add('hidden', 'collapsed');
         applyUserProfile();
     }
 }
+
+
 
 let _editDept = '';
 
@@ -1854,8 +2063,10 @@ function openEditProfile() {
 
     const nameInput = document.getElementById('editName');
     const regInput = document.getElementById('editReg');
+    const adminInput = document.getElementById('editAdminNo');
     if (nameInput) nameInput.value = info.name || '';
     if (regInput) regInput.value = info.reg || '';
+    if (adminInput) adminInput.value = info.adminNo || '';
 
     // Highlight saved dept button
     ['BCA', 'BBA', 'BSW'].forEach(d => {
@@ -1897,6 +2108,7 @@ function selectEditDept(dept) {
 function saveEditProfile() {
     const name = (document.getElementById('editName')?.value || '').trim();
     const reg  = (document.getElementById('editReg')?.value || '').trim();
+    const adminNo = (document.getElementById('editAdminNo')?.value || '').trim();
     const dept = _editDept;
 
     if (!name || !dept) {
@@ -1904,7 +2116,7 @@ function saveEditProfile() {
         return;
     }
 
-    const updated = { name, reg, dept };
+    const updated = { name, reg, adminNo, dept };
     saveStudentInfo(updated);
 
     // Refresh home cards instantly
@@ -1921,36 +2133,32 @@ function saveEditProfile() {
     renderDaySelector();
 
     closeEditProfile();
+
+    if (window.startBackgroundSync) {
+        window.startBackgroundSync();
+    }
 }
 function autoSelectNextExamDay() {
     if (!window.EXAM_TIMETABLE || window.EXAM_TIMETABLE.length === 0) {
-        selectDay('16_04_2026');
+        appState.selectedDate = '';
+        renderDaySelector();
+        renderMap();
         return;
     }
 
     const info = getStudentInfo();
     const userDept = info ? info.dept.toUpperCase() : null;
     const now = new Date();
-    
-    const sortedTimetable = [...window.EXAM_TIMETABLE].sort((a, b) => getISTDate(a.date) - getISTDate(b.date));
-    
-    let nextDateStr = null;
-    for (let exam of sortedTimetable) {
-        if (userDept && exam.dept.toUpperCase() !== userDept) continue;
-        
-        const examOverTime = getExamEndTime(exam.date);
-        if (examOverTime > now) {
-            nextDateStr = exam.date;
-            break;
-        }
-    }
+    const futureSeatDates = userDept ? getFutureSeatExamDates(userDept, now) : [];
+    const nextDateStr = futureSeatDates[0] || null;
     
     if (nextDateStr) {
         const folderName = nextDateStr.replace(/-/g, '_');
         selectDay(folderName);
     } else {
-        const lastExam = sortedTimetable[sortedTimetable.length - 1];
-        selectDay(lastExam.date.replace(/-/g, '_'));
+        appState.selectedDate = '';
+        renderDaySelector();
+        renderMap();
     }
 }
 function showSeatNote() {

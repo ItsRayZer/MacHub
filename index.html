@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MAC Exam Hub</title>
+    <title>MacHub</title>
+    <link rel="icon" type="image/png" href="Logo/ChatGPT Image May 18, 2026, 10_33_49 PM.png">
+    <link rel="apple-touch-icon" href="Logo/ChatGPT Image May 18, 2026, 10_33_49 PM.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MacHub">
     <link rel="stylesheet" href="styles/tailwind.css">
     <link rel="stylesheet" href="styles/base.css">
     <link rel="stylesheet" href="styles/components.css">
@@ -20,44 +25,93 @@
                 <div class="step-dot" id="dot-3"></div>
             </div>
 
-            <div id="ob-step-1" class="space-y-6">
-                <div class="w-20 h-20 bg-[var(--mac-blue)] rounded-[1.5rem] flex items-center justify-center text-white text-4xl mx-auto shadow-2xl floating">🏛️</div>
-                <h2 class="text-3xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Welcome to MAC Exam Hub</h2>
-                <p class="text-[#86868b] leading-relaxed">Your premium companion for finding exam seats and schedules at Mac Ramapuram.</p>
-                <button onclick="nextObStep(2)" class="w-full bg-[#1d1d1f] dark:bg-[#f5f5f7] text-white dark:text-[#1d1d1f] py-4 rounded-2xl font-bold text-lg shadow-lg spring">Continue</button>
+            <!-- Step 1: Smart Search -->
+            <div id="ob-step-1" class="onboarding-intro">
+                <div class="intro-copy">
+                    <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="brand-logo h-5 mb-5">
+                    <h2>Start with your profile.</h2>
+                    <p>Search by name, admission number, register number, or class roll.</p>
+                </div>
+                <div class="intro-search-shell">
+                    <label class="intro-search-label" for="ob-smart-search">Synced profile</label>
+                    <div class="intro-search-box">
+                        <span aria-hidden="true"></span>
+                        <input type="text" id="ob-smart-search"
+                            placeholder="Name, admn no, reg no..."
+                            class="onboarding-input"
+                            oninput="handleSmartSearch(this.value)"
+                            autocomplete="off">
+                    </div>
+                    <div id="ob-results" class="ob-results-list"></div>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <button onclick="showManualEntry()" class="intro-manual spring">Set up manually</button>
+                    <button onclick="skipOnboarding()" class="text-[#86868b] text-[10px] font-black uppercase tracking-widest py-2 spring">Skip for now</button>
+                </div>
             </div>
 
-            <div id="ob-step-2" class="hidden space-y-6">
-                <h2 class="text-2xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Set up your profile</h2>
+            <!-- Step 2: Smart Search -->
+            <div id="ob-step-2" class="hidden"></div>
+
+            <!-- Step 2b: Manual fallback for BBA/BSW -->
+            <div id="ob-step-2b" class="hidden space-y-6">
+                <div class="text-left">
+                    <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.25em] mb-2">Manual Setup</p>
+                    <h2 class="text-3xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight">Create your profile</h2>
+                    <p class="text-sm font-bold text-[#86868b] mt-2">Enter your academic details to get started.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="relative">
+                        <input type="text" id="ob-name" placeholder="Full Name *"
+                            class="w-full bg-black/5 dark:bg-white/5 border-none rounded-2xl py-4 px-5 text-base font-bold outline-none focus:ring-2 focus:ring-[var(--mac-blue)]/50 transition-all placeholder:text-[#86868b]/50"
+                            oninput="validateObStep2()">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="ob-reg" placeholder="Reg No"
+                            class="bg-black/5 dark:bg-white/5 border-none rounded-2xl py-4 px-5 text-base font-bold outline-none focus:ring-2 focus:ring-[var(--mac-blue)]/50 transition-all placeholder:text-[#86868b]/50"
+                            oninput="validateObStep2()">
+                        <input type="text" id="ob-adminNo" placeholder="Admin No"
+                            class="bg-black/5 dark:bg-white/5 border-none rounded-2xl py-4 px-5 text-base font-bold outline-none focus:ring-2 focus:ring-[var(--mac-blue)]/50 transition-all placeholder:text-[#86868b]/50"
+                            oninput="validateObStep2()">
+                    </div>
+
+                    <div class="flex gap-2 p-1 bg-black/5 dark:bg-white/5 rounded-2xl">
+                        <button id="btn-BCA" onclick="selectObDept('BCA')" class="flex-1 py-3 rounded-xl text-xs font-black tracking-widest transition-all opacity-60">BCA</button>
+                        <button id="btn-BBA" onclick="selectObDept('BBA')" class="flex-1 py-3 rounded-xl text-xs font-black tracking-widest transition-all opacity-60">BBA</button>
+                        <button id="btn-BSW" onclick="selectObDept('BSW')" class="flex-1 py-3 rounded-xl text-xs font-black tracking-widest transition-all opacity-60">BSW</button>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <button onclick="nextObStep(3)" id="ob-final-btn"
+                        class="w-full bg-[#1d1d1f] dark:bg-[#f5f5f7] text-white dark:text-[#1d1d1f] py-5 rounded-[1.5rem] font-bold text-lg shadow-xl opacity-30 pointer-events-none transition-all flex items-center justify-center gap-2">
+                        Continue <span class="opacity-30">></span>
+                    </button>
+                    <button onclick="nextObStep(1)" class="w-full text-[10px] font-black text-[#86868b] uppercase tracking-widest py-2 active:scale-95 transition-all">
+                        Back to Smart Search
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Confirm profile & guide -->
+            <div id="ob-step-3" class="hidden space-y-8">
+                <div class="text-left">
+                    <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.25em] mb-2">Profile linked</p>
+                    <h2 class="text-3xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight">You are ready.</h2>
+                </div>
+
+                <div id="ob-confirm-card" class="text-left"></div>
+
                 <div class="space-y-3">
-                    <input type="text" id="ob-name" placeholder="Full Name" class="onboarding-input" oninput="validateObStep2()">
-                    <input type="text" id="ob-reg" placeholder="Reg No (Optional)" class="onboarding-input" oninput="validateObStep2()">
+                    <button type="button" onclick="if (window.finishOnboarding) return window.finishOnboarding(event)" class="w-full bg-[var(--mac-blue)] text-white py-5 rounded-[1.5rem] font-bold text-lg shadow-xl shadow-[var(--mac-blue)]/20 spring">
+                        Continue
+                    </button>
+                    <button onclick="nextObStep(1)" class="w-full text-[#86868b] text-[10px] font-black uppercase tracking-widest py-2 spring">
+                        Not you? Search again
+                    </button>
                 </div>
-                <div class="flex gap-2 justify-center">
-                    <button id="btn-BCA" onclick="selectObDept('BCA')" class="px-4 py-2 rounded-full border border-[#86868b]/30 text-sm font-bold opacity-60 transition-all">BCA</button>
-                    <button id="btn-BBA" onclick="selectObDept('BBA')" class="px-4 py-2 rounded-full border border-[#86868b]/30 text-sm font-bold opacity-60 transition-all">BBA</button>
-                    <button id="btn-BSW" onclick="selectObDept('BSW')" class="px-4 py-2 rounded-full border border-[#86868b]/30 text-sm font-bold opacity-60 transition-all">BSW</button>
-                </div>
-                <button onclick="nextObStep(3)" id="ob-final-btn" class="w-full bg-[#1d1d1f] dark:bg-[#f5f5f7] text-white dark:text-[#1d1d1f] py-4 rounded-2xl font-bold text-lg shadow-lg opacity-30 pointer-events-none transition-all">Almost Done</button>
-            </div>
-
-            <div id="ob-step-3" class="hidden space-y-6">
-                <h2 class="text-2xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Quick UI Guide</h2>
-                <div class="space-y-4 text-left">
-                    <div class="flex gap-3 items-center">
-                        <div class="w-10 h-10 bg-black/5 rounded-xl flex items-center justify-center text-xl">🏠</div>
-                        <p class="text-sm font-bold text-[#86868b]">See your <span class="text-[var(--mac-blue)]">Countdown</span> here.</p>
-                    </div>
-                    <div class="flex gap-3 items-center">
-                        <div class="w-10 h-10 bg-black/5 rounded-xl flex items-center justify-center text-xl">📅</div>
-                        <p class="text-sm font-bold text-[#86868b]">Check your <span class="text-[var(--mac-blue)]">Time Table</span> here.</p>
-                    </div>
-                    <div class="flex gap-3 items-center">
-                        <div class="w-10 h-10 bg-black/5 rounded-xl flex items-center justify-center text-xl">🪑</div>
-                        <p class="text-sm font-bold text-[#86868b]">Find your <span class="text-[var(--mac-blue)]">Seat Map</span> here.</p>
-                    </div>
-                </div>
-                <button onclick="finishOnboarding()" class="w-full bg-[var(--mac-blue)] text-white py-4 rounded-2xl font-bold text-lg shadow-lg spring">Get Started</button>
             </div>
         </div>
     </div>
@@ -65,15 +119,21 @@
     <div id="guideHighlight" class="highlight-box"></div>
 
     <!-- Header: shown only on home view -->
-    <header id="appHeader" class="max-w-md mx-auto mt-10 mb-4 px-6">
-        <h1 id="userGreeting" class="text-3xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">MAC Exam Hub</h1>
-        <p id="liveClock" class="text-[var(--mac-blue)] text-[10px] font-black tracking-[0.3em] mt-1 uppercase">00:00:00 AM</p>
+    <header id="appHeader" class="max-w-md mx-auto mt-4 mb-6 px-6 text-center">
+        <div class="logo-container">
+            <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="logo" id="userGreeting">
+        </div>
+        <p id="liveClock" class="text-[var(--mac-blue)] text-[10px] font-black tracking-[0.3em] mt-2 uppercase">00:00:00 AM</p>
     </header>
 
     <div id="view-seats" class="view-panel">
 
         <!-- Search at top -->
         <div class="max-w-md mx-auto px-4 pt-4 pb-2 sticky top-0 z-50">
+            <div class="exam-subnav" aria-label="Exam menu">
+                <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item is-active" data-top-target="exam">Exam</button>
+                <button type="button" onclick="switchExamView('view-results')" class="exam-subnav-item" data-top-target="result">Result</button>
+            </div>
             <div class="glass-panel rounded-[2rem] px-4 py-3 search-focus transition-all">
                 <div class="relative">
                     <input type="text" id="globalSearch" placeholder="Search name or Reg No..."
@@ -99,8 +159,19 @@
 
         <!-- Seating Map Glass Container -->
         <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: calc(100% - 2rem); max-width: 448px;">
-            <!-- Hall header: name left | dots center | arrows right -->
-            <div class="relative flex items-center mb-3" style="min-height:44px;">
+            <!-- Inner Toggle -->
+            <div class="exam-subnav mb-4 mt-2" aria-label="Inner Exam Menu">
+                <button type="button" id="tab-timetable" onclick="switchExamTab('timetable')" class="exam-subnav-item" data-exam-target="view-timetable">Timetable</button>
+                <button type="button" id="tab-seats" onclick="switchExamTab('seats')" class="exam-subnav-item is-active" data-exam-target="view-seats">View Seats</button>
+            </div>
+
+            <div id="sub-view-timetable" class="hidden w-full">
+                <div id="timetableContent"></div>
+            </div>
+
+            <div id="sub-view-seats">
+                <!-- Hall header: name left | dots center | arrows right -->
+                <div class="relative flex items-center mb-3" style="min-height:44px;">
                 <!-- Left: Hall title -->
                 <div class="flex-1">
                     <h2 id="currentHallTitle" class="text-xl font-bold tracking-tight">Hall 1</h2>
@@ -128,8 +199,9 @@
                 </div>
             </div>
 
-            <div class="w-full h-7 bg-slate-200/50 dark:bg-white/10 rounded-xl mt-4 flex items-center justify-center text-[9px] font-bold text-slate-400 dark:text-[#86868b] tracking-widest">
+            <div id="invigilatorDesk" class="w-full h-7 bg-slate-200/50 dark:bg-white/10 rounded-xl mt-4 flex items-center justify-center text-[9px] font-bold text-slate-400 dark:text-[#86868b] tracking-widest">
                 INVIGILATOR DESK (FRONT)
+            </div>
             </div>
         </div>
 
@@ -143,7 +215,7 @@
             <div class="glass-panel w-20 h-20 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 shadow-xl floating">🏠</div>
             <h2 id="homeGreeting" class="text-3xl font-bold mb-2">Hello!</h2>
             <p class="text-[#86868b] text-[10px] font-bold uppercase tracking-widest pl-2 mb-8">Mac Ramapuram • 2026</p>
-            
+
             <div class="bg-black/5 dark:bg-white/5 rounded-3xl p-6 mb-6">
                 <p class="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-4">Time Remaining</p>
                 <div class="flex items-center justify-center gap-3">
@@ -167,16 +239,23 @@
                         <span class="text-[7px] font-bold opacity-50 uppercase">Secs</span>
                     </div>
                 </div>
-                
+
                 <div class="mt-6 pt-6 border-t border-black/5 dark:border-white/5">
                     <h3 id="nextExamTitle" class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Searching...</h3>
                     <p id="nextExamDate" class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-1">Calculating Schedule</p>
                 </div>
             </div>
-            
+
             <div class="grid grid-cols-2 gap-3">
-                <button onclick="switchView('view-timetable')" class="liquid-button py-4 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-full font-bold spring">Check Answers</button>
-                <button onclick="switchView('view-seats')" class="liquid-button py-4 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-full font-bold spring">Find My Seat</button>
+                <button onclick="switchExamView('view-timetable')" class="liquid-button py-4 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-full font-bold spring">Exam Hub</button>
+                <button onclick="switchView('view-resources')" class="liquid-button py-4 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-full font-bold spring">Resources</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-3">
+                
+                <button onclick="openExternalApp('https://eportal.maraugusthinosecollege.org/Login.aspx', 'Student Portal')" class="bg-[var(--mac-blue)]/10 border border-[var(--mac-blue)]/20 py-4 text-[var(--mac-blue)] rounded-[1.5rem] font-bold spring flex items-center justify-center gap-2">
+                    <span>🌐</span>
+                    <span class="text-sm">Student Portal</span>
+                </button>
             </div>
         </div>
 
@@ -189,58 +268,68 @@
                 <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">Hall</p>
                 <p id="homeUserHall" class="text-2xl font-bold text-[var(--mac-blue)]">---</p>
             </div>
-            <div class="glass-panel p-6 rounded-[2.5rem]">
+            <div class="glass-panel p-6 rounded-[2.5rem] col-span-2">
                 <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">Location</p>
                 <p id="homeUserSeat" class="text-xl font-bold text-[var(--mac-blue)]">---</p>
             </div>
-            <div onclick="openEditProfile()" class="glass-panel p-6 rounded-[2.5rem] cursor-pointer spring active:scale-95">
-                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">Reg No</p>
-                <p id="homeUserReg" class="text-sm font-bold text-[var(--mac-blue)] truncate">Tap to set</p>
-                <p class="text-[9px] font-bold text-[#86868b] mt-1">✏️ Edit</p>
+
+        </div>
+
+        <div id="externalAppShell" class="external-app-shell hidden" aria-live="polite">
+            <div class="external-app-toolbar">
+                <button type="button" class="external-app-back" onclick="closeExternalApp()" aria-label="Back to MacHub home">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
             </div>
+            <div class="external-app-frame-wrap">
+                <div id="externalAppLoader" class="external-app-loader">
+                    <span></span>
+                    <p>Loading portal...</p>
+                </div>
+                <div id="externalAppFallback" class="external-app-fallback hidden">
+                    <strong>Portal could not load here.</strong>
+                    <p>The college portal may have blocked embedded viewing. Use the back button to return home and try again.</p>
+                </div>
+                <iframe id="externalAppFrame" class="external-app-frame" title="Student Portal" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+            </div>
+        </div>
+    </div> <!-- Close view-home -->
+
+    <div id="view-results" class="view-panel max-w-md mx-auto p-6">
+        <div class="exam-subnav mb-4" aria-label="Exam menu">
+            <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item" data-top-target="exam">Exam</button>
+            <button type="button" onclick="switchExamView('view-results')" class="exam-subnav-item is-active" data-top-target="result">Result</button>
+        </div>
+        <div class="glass-panel rounded-[2rem] p-10 mt-4 text-center shadow-sm">
+            <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">📊</div>
+            <h3 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Results Coming Soon</h3>
+            <p class="text-[12px] font-bold text-[#86868b] mt-2">Exam results will be available here once they are published.</p>
         </div>
     </div>
 
-    <!-- Edit Profile Bottom Sheet -->
-    <div id="editProfileSheet" class="fixed inset-0 z-[200] flex items-end justify-center hidden">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeEditProfile()"></div>
-        <div class="relative w-full max-w-md bg-[var(--bg-1)] rounded-t-[2.5rem] p-8 pb-12 shadow-2xl">
-            <div class="w-10 h-1 bg-[#86868b]/30 rounded-full mx-auto mb-6"></div>
-            <h3 class="text-xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] mb-6">Edit Profile</h3>
-
-            <div class="space-y-4 mb-6">
-                <div>
-                    <label class="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1 block">Full Name</label>
-                    <input id="editName" type="text" placeholder="Your full name" class="w-full px-4 py-3 rounded-2xl bg-black/5 dark:bg-white/10 text-[#1d1d1f] dark:text-[#f5f5f7] font-bold text-sm outline-none border-2 border-transparent focus:border-[var(--mac-blue)] transition-all">
-                </div>
-                <div>
-                    <label class="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1 block">Registration Number</label>
-                    <input id="editReg" type="text" placeholder="e.g. MG25103A1234" class="w-full px-4 py-3 rounded-2xl bg-black/5 dark:bg-white/10 text-[#1d1d1f] dark:text-[#f5f5f7] font-bold text-sm outline-none border-2 border-transparent focus:border-[var(--mac-blue)] transition-all">
-                </div>
-                <div>
-                    <label class="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-2 block">Department</label>
-                    <div class="flex gap-2">
-                        <button id="edit-btn-BCA" onclick="selectEditDept('BCA')" class="flex-1 py-3 rounded-2xl border border-[#86868b]/30 text-sm font-bold transition-all">BCA</button>
-                        <button id="edit-btn-BBA" onclick="selectEditDept('BBA')" class="flex-1 py-3 rounded-2xl border border-[#86868b]/30 text-sm font-bold transition-all">BBA</button>
-                        <button id="edit-btn-BSW" onclick="selectEditDept('BSW')" class="flex-1 py-3 rounded-2xl border border-[#86868b]/30 text-sm font-bold transition-all">BSW</button>
-                    </div>
-                </div>
-            </div>
-
-            <button onclick="saveEditProfile()" class="w-full py-4 bg-[var(--mac-blue)] text-white rounded-2xl font-bold text-sm spring shadow-lg">Save Changes</button>
+    <div id="view-exam-resources" class="view-panel max-w-md mx-auto p-6">
+        <div class="exam-subnav mb-4" aria-label="Exam menu">
+            <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item is-active" data-top-target="exam">Exam</button>
+            <button type="button" onclick="switchExamView('view-results')" class="exam-subnav-item" data-top-target="result">Result</button>
         </div>
-    </div>
-
-        <div id="view-timetable" class="view-panel max-w-md mx-auto p-6">
-        <div class="glass-panel flex items-center gap-4 mb-8 sticky top-0 py-4 px-4 rounded-[2rem] z-20">
-            <div class="w-12 h-12 bg-[#0071e3]/10 rounded-2xl flex items-center justify-center text-2xl">📅</div>
-            <div>
-                <h3 class="text-2xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Exam Schedule</h3>
-                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-0.5">2nd Semester MG-UGP</p>
+        <div class="glass-panel p-6 rounded-[2rem] mb-4">
+            <div class="flex items-center gap-2 mb-3">
+                <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="brand-logo h-4">
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.25em]">Resources</p>
             </div>
+            <h3 class="text-2xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight">Question papers, answers, and exam tools.</h3>
+            <p class="text-sm font-bold text-[#86868b] mt-2">Everything exam-related lives here as MacHub grows.</p>
         </div>
-        <div id="timetableContent" class="space-y-4 pb-24">
-            <!-- Timetable cards injected here -->
+        <div class="grid gap-3 pb-24">
+            <button onclick="switchExamView('view-seats')" class="resource-action-card spring">
+                <span>Schedule</span>
+                <strong>Open answer prediction</strong>
+            </button>
+            <button onclick="switchExamView('view-seats')" class="resource-action-card spring">
+                <span>Seating</span>
+                <strong>Find upcoming exam seats</strong>
+            </button>
+            
         </div>
     </div>
 
@@ -257,25 +346,48 @@
         </div>
     </div>
 
+    <div id="view-resources" class="view-panel max-w-md mx-auto p-6">
+        <div class="glass-panel p-7 rounded-[2.5rem] mb-5">
+            <div class="flex items-center gap-2 mb-3">
+                <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="brand-logo h-4">
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.25em]">Resources</p>
+            </div>
+            <h3 class="text-3xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight">All-in-one student space.</h3>
+            <p class="text-sm font-bold text-[#86868b] mt-3">Quick access for academics, exams, and college tools.</p>
+        </div>
+        <div class="grid gap-3 pb-24">
+            <button onclick="switchExamView('view-exam-resources')" class="resource-action-card spring">
+                <span>Exam Resources</span>
+                <strong>Question papers, answers, seating</strong>
+            </button>
+            
+            <button onclick="openExternalApp('https://eportal.maraugusthinosecollege.org/Login.aspx', 'Student Portal')" class="resource-action-card spring">
+                <span>Student Portal</span>
+                <strong>Open college e-portal</strong>
+            </button>
+        </div>
+    </div>
+
     <!-- Bottom Navigation (Floating Liquid Glass Pill) -->
     <div id="bottomNav">
         <div id="navPill" class="nav-pill relative" c-current="1" c-previous="1">
             <!-- Sliding Indicator -->
             <div id="navIndicator" class="nav-indicator"></div>
-            
+
             <button onclick="switchView('view-home')" id="tab-view-home" class="nav-item active" c-option="1">
                 <span class="nav-icon">🏠</span>
                 <span class="nav-label">Home</span>
             </button>
-            <button onclick="switchView('view-timetable')" id="tab-view-timetable" class="nav-item" c-option="2">
-                <span class="nav-icon">📅</span>
-                <span class="nav-label">Schedule</span>
+            <button onclick="switchExamView()" id="tab-view-exam" class="nav-item" c-option="2">
+                <span class="nav-icon nav-icon-text">E</span>
+                <span class="nav-label">Exam</span>
             </button>
-            <button onclick="switchView('view-seats')" id="tab-view-seats" class="nav-item" c-option="3">
-                <span class="nav-icon">🪑</span>
-                <span class="nav-label">Seats</span>
+            <button onclick="switchView('view-resources')" id="tab-view-resources" class="nav-item" c-option="3">
+                <span class="nav-icon nav-icon-text">R</span>
+                <span class="nav-label">Resources</span>
             </button>
         </div>
+        
     </div>
 
 
@@ -428,10 +540,10 @@
 
     <div id="timetableExamBackdrop" class="fixed inset-0 z-[124] bg-black/30 backdrop-blur-[2px] hidden" onclick="closeTimetableExamSheet()"></div>
 
-    
-    
-    
-    
+
+
+
+
     <!-- Daily Note Popup -->
     <div id="dailyNotePopup" class="fixed inset-0 z-[300] flex items-center justify-center hidden">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="closeDailyNote()"></div>
@@ -456,13 +568,19 @@
         }
     </script>
 
-    <script defer src="data/timetable.js"></script>
-    <script defer src="data/timetable_bca.js"></script>
-    <script defer src="data/timetable_bba.js"></script>
-    <script defer src="data/timetable_bsw.js"></script>
-    <script defer src="data/marks_data.js"></script>
-    <script defer src="data/question_papers.js"></script>
-    <script defer src="data/student_names.js"></script>
+    
+
+    <script type="module" src="js/firebase-init.js"></script>
+    <script defer src="data/common/timetable.js"></script>
+    <script defer src="data/common/timetable_bca.js"></script>
+    <script defer src="data/common/timetable_bba.js"></script>
+    <script defer src="data/common/timetable_bsw.js"></script>
+    <script defer src="data/common/marks_data.js"></script>
+    <script defer src="data/common/question_papers.js"></script>
+    <script defer src="data/common/student_names.js"></script>
+    <script defer src="data/common/students_db.js"></script>
+    <script defer src="js/api.js"></script>
+    <script defer src="js/smart_finder.js"></script>
     <script defer src="js/state.js"></script>
     <script defer src="js/ui.js"></script>
     <script defer src="js/profile.js"></script>
@@ -470,6 +588,7 @@
     <script defer src="js/timetable.js"></script>
     <script defer src="js/seats.js"></script>
     <script defer src="js/app.js"></script>
+    <script defer src="js/onboarding.js"></script>
     <script defer src="js/bootstrap.js"></script>
 
 </body>

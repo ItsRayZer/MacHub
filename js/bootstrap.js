@@ -1,7 +1,8 @@
 (function () {
     function initFirebaseDeferred() {
         const state = window.ExamHubState;
-        if (!state || state.mobileOptimized || state.lowEndDevice || window.__examHubAnalyticsStarted) return;
+        const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+        if (!state || isLocalHost || state.mobileOptimized || state.lowEndDevice || window.__examHubAnalyticsStarted) return;
         window.__examHubAnalyticsStarted = true;
 
         const start = () => {

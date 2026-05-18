@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+:root {
+    --bg: #111316;
+    --logo: url(https://assets.codepen.io/13471/threads.svg);
+    --logopng: url(https://assets.codepen.io/13471/threads.png);
+    --ticket: url(https://assets.codepen.io/13471/ticket-shape.svg);
+    --ar: 20/30;
+    --gutter: 8%;
+}
+
+#app-ticket {
+    perspective: 1200px;
+    --o: 0;
+    --p: 100%;
+    --h: 50%;
+    --r: 0;
+    display: grid;
+    place-content: center;
+    padding: 20px;
+}
+
+.ticket {
+    --scale: 1;
+    transform: translate3d(0, 0, 0.1px) scale(var(--scale)) rotateY(var(--r));
+    transform-style: preserve-3d;
+    pointer-events: auto;
+    display: grid;
+    grid-area: 1/1;
+    width: 300px;
+    aspect-ratio: var(--ar);
+    transition: transform 0.1s ease;
+}
+
+.front,
+.back {
+    grid-area: 1/1;
+    background-color: #6e6176;
+    background-image: radial-gradient(
+        circle at var(--p) 50%,
+        #fff 10%,
+        transparent 100%
+    );
+    background-size: 100% 220vh;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 15px;
+    display: grid;
+    backface-visibility: visible;
+    transform: translateZ(1px);
+    transform-style: preserve-3d;
+    mask-image: var(--ticket);
+    mask-size: cover;
+    mask-repeat: no-repeat;
+}
+
+.front::after,
+.back::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+        -70deg,
+        transparent 40%,
+        rgba(255, 255, 255, 0.5) 40.5%,
+        transparent
+    );
+    background-size: 200% 200%;
+    background-position: var(--p) var(--p);
+    z-index: 5;
+    opacity: calc(var(--o) + 0.5);
+    pointer-events: none;
+}
+
+.front {
+    transform: rotateY(180deg) translateZ(1px);
+}
+
+.holo {
+    display: block;
+    position: absolute;
+    inset: 0;
+    border-radius: 15px;
+}
+
+.holo {
+    --space: 5%;
+    --red: hsl(0, 100%, 50%);
+    --orange: hsl(30, 100%, 50%);
+    --yellow: hsl(60, 100%, 50%);
+    --green: hsl(120, 100%, 50%);
+    --cyan: hsl(180, 100%, 50%);
+    --blue: hsl(222, 100%, 50%);
+    --purple: hsl(258, 100%, 50%);
+    --magenta: hsl(300, 100%, 50%);
+    background-image: repeating-linear-gradient(
+        -45deg,
+        var(--red) 0%,
+        var(--orange) calc(var(--space) * 1),
+        var(--yellow) calc(var(--space) * 2),
+        var(--green) calc(var(--space) * 3),
+        var(--cyan) calc(var(--space) * 4),
+        var(--blue) calc(var(--space) * 5),
+        var(--purple) calc(var(--space) * 6),
+        var(--magenta) calc(var(--space) * 7),
+        var(--red) calc(var(--space) * 8)
+    );
+    background-size: 150vw 150vh;
+    background-position: calc(var(--h)) calc(var(--h));
+    background-repeat: no-repeat;
+    mask-image: var(--logopng);
+    mask-size: 4% 4%;
+    mask-repeat: repeat;
+    mix-blend-mode: plus-lighter;
+    filter: brightness(0.9) contrast(0.7) saturate(2);
+    opacity: var(--o);
+}
+
+.logo,
+.data {
+    position: relative;
+    z-index: 2;
+}
+
+.logo {
+    width: 50%;
+    place-self: center;
+    transform: translateY(-14%);
+}
+
+.back .logo {
+    position: absolute;
+    right: var(--gutter);
+    top: 13%;
+    width: 16%;
+    image-rendering: optimize-speed;
+    image-rendering: crisp-edges;
+}
+
+.data {
+    margin: 14% var(--gutter);
+    text-transform: uppercase;
+}
+
+.data h3 {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1;
+    margin: 0.2em 0;
+}
+
+.data p {
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1;
+    margin: 0.2em 0 1em;
+}
+
+.qr {
+    max-width: 30%;
+    display: block;
+    image-rendering: optimize-speed;
+    image-rendering: crisp-edges;
+}
+
+.divider {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    bottom: 2%;
+    left: 0;
+    right: 0;
+    height: 18%;
+    padding: 0 var(--gutter);
+
+    background-image: repeating-linear-gradient(
+            90deg,
+            #fff0 0px,
+            #fff0 8px,
+            #0005 8px,
+            #0005 16px
+        ),
+        radial-gradient(ellipse at center center, #fff0 10%, transparent 50%);
+    background-size: 100% 1.5px, 250% 1.5px;
+    background-repeat: no-repeat;
+    background-position: -4px top, var(--h) top;
+    background-blend-mode: overlay;
+
+    font-size: 14px;
+    font-weight: 400;
+    z-index: 2;
+}
+
+.username {
+    display: flex;
+    align-items: center;
+    font-family: heebo;
+    font-weight: 600;
+}
+
+.profile {
+    border-radius: 100%;
+    width: 40px;
+    box-shadow: 0 0 0 1.33px black;
+    margin-right: 10px;
+}
+
+.usernum {
+    font-size: 16px;
+}
+</style>
+</head>
+<body style="background: #111;">
+<div id="app-ticket">
+    <section class="ticket" id="ticketEl">
+        <header class="front">
+            <div class="holo"></div>
+            <img class="logo" src="https://assets.codepen.io/13471/threads.svg" alt="Logo">
+            <aside class="divider"></aside>
+        </header>
+
+        <section class="back">
+            <div class="holo"></div>
+            <img class="logo" src="https://assets.codepen.io/13471/threads.svg" alt="Logo">
+            <div class="data">
+                <h3>Department</h3>
+                <p>BCA</p>
+                <h3>Reg No</h3>
+                <p>230021074154</p>
+                <h3>Name</h3>
+                <p>Abel B K</p>
+                <div class="qr" style="background:white; width:60px; height:60px; border-radius:5px;"></div>
+            </div>
+
+            <aside class="divider">
+                <div class="username">
+                    <img class="profile" src="Logo/file_00000000378c7207842a975d80367515.png">
+                    <span>MacHub</span>
+                </div>
+                <span class="usernum">2026</span>
+            </aside>
+        </section>
+    </section>
+</div>
+
+<script>
+    const el = document.getElementById('app-ticket');
+    const ticket = document.getElementById('ticketEl');
+
+    let currentX = 0;
+    let currentY = 0;
+    let targetX = 0;
+    let targetY = 0;
+
+    el.addEventListener('mousemove', (e) => {
+        const rect = el.getBoundingClientRect();
+        const x = e.clientX - rect.left; // x position within the element.
+        const y = e.clientY - rect.top;  // y position within the element.
+        
+        const px = x / rect.width;
+        const py = y / rect.height;
+        
+        targetX = (px - 0.5) * 40; // rotate Y
+        targetY = (0.5 - py) * 40; // rotate X
+        
+        el.style.setProperty('--p', `${px * 100}%`);
+        el.style.setProperty('--h', `${py * 100}%`);
+        el.style.setProperty('--o', 1);
+    });
+    
+    el.addEventListener('mouseleave', () => {
+        targetX = 0;
+        targetY = 0;
+        el.style.setProperty('--o', 0);
+    });
+
+    function loop() {
+        currentX += (targetX - currentX) * 0.1;
+        currentY += (targetY - currentY) * 0.1;
+        ticket.style.transform = `translate3d(0, 0, 0.1px) rotateY(${currentX}deg) rotateX(${currentY}deg)`;
+        requestAnimationFrame(loop);
+    }
+    loop();
+</script>
+</body>
+</html>

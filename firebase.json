@@ -1,10 +1,18 @@
 {
   "hosting": {
+    "site": "machub",
     "public": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "MAC-EXAM-Hub-Scraper/**",
+      "scratch/**",
+      "Exam full detailed time table/**",
+      "package.json",
+      "package-lock.json",
+      "README.md",
+      "SAMPLE UI WITH REAL DATA.HTML"
     ]
   }
 }

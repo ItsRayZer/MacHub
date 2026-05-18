@@ -8,7 +8,12 @@
         seatLoadPromises: {},
         timersStarted: false,
         mobileOptimized: false,
-        lowEndDevice: false
+        lowEndDevice: false,
+        externalApp: {
+            isOpen: false,
+            url: '',
+            title: ''
+        }
     };
 
     function readProfile() {
@@ -23,7 +28,11 @@
 
     function writeProfile(profile) {
         state.profile = profile;
-        localStorage.setItem('mac_student_info', JSON.stringify(profile));
+        try {
+            localStorage.setItem('mac_student_info', JSON.stringify(profile));
+        } catch (error) {
+            console.warn('localStorage is restricted', error);
+        }
     }
 
     function clearProfileCache() {
