@@ -250,7 +250,7 @@ window.nextObStep = function(step) {
                         <!-- FRONT FACE (visible to user) — all student data here -->
                         <section class="ob-ticket-front">
                             <div class="ob-ticket-holo"></div>
-                            <img class="ob-ticket-logo-small" src="Logo/file_00000000378c7207842a975d80367515.png" alt="MacHub">
+                            <img class="ob-ticket-logo-small" src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub">
                             <div class="data">
                                 <h3>Name</h3>
                                 <p>${escapeHtml(s.name || '---')}</p>
@@ -263,7 +263,7 @@ window.nextObStep = function(step) {
                             </div>
                             <aside class="divider">
                                 <div class="username">
-                                    <img class="profile-pic" src="Logo/ChatGPT%20Image%20May%2018,%202026,%2010_33_49%20PM.png" alt="Profile">
+                                    <img class="profile-pic" src="assets/img/ChatGPT%20Image%20May%2018,%202026,%2010_33_49%20PM.png" alt="Profile">
                                     <span>MacHub</span>
                                 </div>
                                 <span class="usernum">2026</span>
@@ -272,7 +272,7 @@ window.nextObStep = function(step) {
                         <!-- BACK FACE (flipped away) — MacHub branding only -->
                         <header class="ob-ticket-back">
                             <div class="ob-ticket-holo"></div>
-                            <img class="logo" src="Logo/file_00000000378c7207842a975d80367515.png" alt="MacHub">
+                            <img class="logo" src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub">
                         </header>
                     </section>
                 </div>`;

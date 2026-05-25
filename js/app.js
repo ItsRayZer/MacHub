@@ -160,7 +160,12 @@ function updateLiveClock() {
     const now = new Date();
     const clockEl = document.getElementById('liveClock');
     if (clockEl) {
-        clockEl.textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        clockEl.textContent = now.toLocaleTimeString('en-IN', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit',
+            hour12: true 
+        }) + ' IST';
     }
 }
 
@@ -1995,6 +2000,7 @@ window.nextObStep = nextObStep;
 window.selectObDept = selectObDept;
 window.validateObStep2 = validateObStep2;
 window.finishOnboarding = finishOnboarding;
+window.applyUserProfile = applyUserProfile;
 
 async function applyUserProfile() {
     const info = getStudentInfo();

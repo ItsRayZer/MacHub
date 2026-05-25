@@ -1415,9 +1415,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            background: rgba(245,246,250,0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             z-index: 200;
             display: flex;
             flex-direction: column;
@@ -1427,7 +1427,7 @@
             transition: all 0.8s cubic-bezier(0.32, 0.72, 0, 1);
         }
         .dark #onboardingScreen {
-            background: rgba(0,0,0,0.25);
+            background: rgba(18,18,18,0.96);
         }
         #onboardingScreen.collapsed {
             transform: translateY(-100%);
@@ -1816,12 +1816,11 @@
 
         /* Machub Logo Fix */
         .logo {
-            width: 160px;
-            height: auto;
+            height: 28px;
+            width: auto;
             display: block;
             margin: 10px auto;
             object-fit: contain;
-            mix-blend-mode: screen;
         }
 
         .logo-container {
