@@ -1,6 +1,17 @@
-// Academic Hub data for Classes, Syllabus, and Teachers (BCA, BBA, BSW)
+// Academic Hub & Exam Portal easily-editable sample datasets
+// This file serves as the SINGLE, easily-editable database for:
+// 1. CLASS TIMETABLES (Monday to Friday, 5 periods for BCA, BBA, BSW)
+// 2. ENROLLED SUBJECTS & SYLLABUS MODULES (Credits, type, and syllabus contents)
+// 3. FACULTY PROFILES / TEACHERS (Office hours, cabins, designations, and emails)
+// 4. EXAM TIMETABLES (Schedules for upcoming final exams)
+// 5. EXAM SEATING CHART (Sample seat and desk mappings per register number)
+
 (function () {
-    // BCA Regular Class Timetable (Monday to Friday, 5 periods)
+    // ==========================================
+    // 1. CLASS TIMETABLES (BCA, BBA, BSW)
+    // ==========================================
+    
+    // BCA lecture schedule (Monday to Friday)
     window.CLASS_TIMETABLE_BCA = {
         "Monday": [
             { period: "1", time: "09:30 AM - 10:30 AM", code: "MG2CCRBCA100", title: "Mathematics II", room: "Room 101" },
@@ -39,7 +50,7 @@
         ]
     };
 
-    // BBA Regular Class Timetable
+    // BBA lecture schedule (Monday to Friday)
     window.CLASS_TIMETABLE_BBA = {
         "Monday": [
             { period: "1", time: "09:30 AM - 10:30 AM", code: "MG2CCRBBA100", title: "Organisation Behaviour", room: "Room 202" },
@@ -78,7 +89,7 @@
         ]
     };
 
-    // BSW Regular Class Timetable
+    // BSW lecture schedule (Monday to Friday)
     window.CLASS_TIMETABLE_BSW = {
         "Monday": [
             { period: "1", time: "09:30 AM - 10:30 AM", code: "MG2DSCSWK100", title: "Social Work Profession", room: "Room 304" },
@@ -117,7 +128,12 @@
         ]
     };
 
-    // BCA Classroom Subjects (Syllabus & Teachers details)
+
+    // ==========================================
+    // 2. ENROLLED SUBJECTS, SYLLABI, AND TEACHERS
+    // ==========================================
+    
+    // BCA Subjects (Data Structures, Web Tech, Maths II, OS, Constitution)
     window.CLASS_SUBJECTS_BCA = [
         {
             code: "MG2CCRBCA101",
@@ -221,7 +237,7 @@
         }
     ];
 
-    // BBA Classroom Subjects
+    // BBA Subjects (Marketing, OB, Media Literacy)
     window.CLASS_SUBJECTS_BBA = [
         {
             code: "MG2CCRBBA101",
@@ -285,7 +301,7 @@
         }
     ];
 
-    // BSW Classroom Subjects
+    // BSW Subjects (Social Work Profession, Positive Mental Health)
     window.CLASS_SUBJECTS_BSW = [
         {
             code: "MG2DSCSWK100",
@@ -327,5 +343,46 @@
                 "Module 5: Self-Care Strategies - Goal setting, healthy habits, wellbeing index."
             ]
         }
+    ];
+
+    // ==========================================
+    // 3. EXAM TIMETABLES & SCHEDULES
+    // ==========================================
+    
+    // Consolidated exam schedules dynamically synced
+    window.EXAM_TIMETABLE = [
+        // DAY 1
+        { day: "Day 1", date: "16-04-2026", dept: "BCA", code: "MG2AECENG100", title: "English" },
+        { day: "Day 1", date: "16-04-2026", dept: "BBA", code: "MG2AECENG102", title: "English for Commerce" },
+        { day: "Day 1", date: "16-04-2026", dept: "BSW", code: "MG2AECENG101", title: "English for Arts & Humanities" },
+
+        // DAY 2
+        { day: "Day 2", date: "17-04-2026", dept: "BCA", code: "MG2AECMAL100 / MG2AECHIN100", title: "Malayalam / Hindi" },
+        { day: "Day 2", date: "17-04-2026", dept: "BBA", code: "MG2AECMAL102 / MG2AECHIN102", title: "Malayalam / Hindi" },
+        { day: "Day 2", date: "17-04-2026", dept: "BSW", code: "MG2AECMAL101 / MG2AECHIN101", title: "Malayalam / Hindi" },
+
+        // DAY 3
+        { day: "Day 3", date: "20-04-2026", dept: "BCA", code: "MG2CCRBCA100", title: "Mathematics II" },
+        { day: "Day 3", date: "20-04-2026", dept: "BBA", code: "MG2CCRBBA100", title: "Organisation Behaviour" },
+
+        // DAY 5
+        { day: "Day 5", date: "22-04-2026", dept: "BCA", code: "MG2CCRBCA101", title: "Data Structures" },
+        { day: "Day 5", date: "22-04-2026", dept: "BBA", code: "MG2CCRBBA101", title: "Marketing Management" },
+
+        // DAY 7
+        { day: "Day 7", date: "24-04-2026", dept: "BCA", code: "MG2CCRBCA102", title: "Operating Systems" },
+        { day: "Day 7", date: "24-04-2026", dept: "BSW", code: "MG2DSCSWK100", title: "Social Work Profession" },
+
+        // DAY 8
+        { day: "Day 8", date: "27-04-2026", dept: "BCA", code: "MG2VACBCA100", title: "Indian Constitution" },
+
+        // DAY 9
+        { day: "Day 9", date: "28-04-2026", dept: "BSW", code: "MG2MDCSWK101", title: "Positive Mental Health" },
+
+        // DAY 11
+        { day: "Day 11", date: "30-04-2026", dept: "BCA", code: "MG2SECBCA100", title: "Web Technologies" },
+
+        // DAY 12
+        { day: "Day 12", date: "05-05-2026", dept: "BBA", code: "MG2MDEBBA100", title: "Media Literacy" }
     ];
 })();
