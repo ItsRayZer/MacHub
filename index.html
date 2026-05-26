@@ -153,7 +153,7 @@
         <!-- Seating Map Glass Container -->
         <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: calc(100% - 2rem); max-width: 448px;">
             <!-- Inner Toggle -->
-            <div class="exam-subnav mb-4 mt-2" aria-label="Inner Exam Menu">
+            <div class="exam-subnav subnav-3col mb-4 mt-2" aria-label="Inner Exam Menu">
                 <button type="button" id="tab-timetable" onclick="switchExamTab('timetable')" class="exam-subnav-item" data-exam-target="view-timetable">Exam Timetable</button>
                 <button type="button" id="tab-seats" onclick="switchExamTab('seats')" class="exam-subnav-item is-active" data-exam-target="view-seats">View Seats</button>
                 <button type="button" id="tab-results" onclick="switchExamTab('results')" class="exam-subnav-item" data-exam-target="view-results">Result</button>
@@ -215,7 +215,16 @@
         <div id="hallTabs" class="hidden"></div>
     </div> <!-- end view-seats -->
 
-    <div id="view-home" class="view-panel is-active max-w-md mx-auto p-6">
+    <div id="view-home" class="view-panel is-active max-w-md mx-auto p-6 relative">
+        <!-- Insta-like pulsing announcement bell button -->
+        <button onclick="openAnnouncements()" class="absolute top-8 right-8 w-11 h-11 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-xl z-30" style="background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.5);" aria-label="Open Announcements">
+            🔔
+            <!-- Pulsing Red Dot -->
+            <span class="absolute top-2 right-2.5 flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+        </button>
         <div class="glass-panel p-8 rounded-[3rem] text-center mb-8 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-32 h-32 bg-[var(--mac-blue)] opacity-10 rounded-full -mr-16 -mt-16"></div>
             <div class="glass-panel w-20 h-20 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 shadow-xl floating">🏠</div>
@@ -301,6 +310,23 @@
         </div>
     </div> <!-- Close view-home -->
 
+    <!-- Announcements Panel -->
+    <div id="view-announcements" class="view-panel max-w-md mx-auto p-6 hidden relative">
+        <!-- Fixed back button with no text (same as student portal back button) -->
+        <button type="button" class="external-app-back absolute top-6 left-6" onclick="closeAnnouncements()" aria-label="Back to home">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+
+        <div class="flex flex-col gap-4 mb-6 mt-14">
+            <h2 class="text-3xl font-black text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight">Announcements</h2>
+            <!-- Category list pill filter (scrolling horizontally) -->
+            <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none" id="announcementCategories"></div>
+        </div>
+
+        <!-- Announcements list container -->
+        <div id="announcementsList" class="space-y-4 pb-24"></div>
+    </div>
+
     <div id="view-class" class="view-panel max-w-md mx-auto p-6">
         <div class="exam-subnav mb-4" aria-label="Exam menu">
             <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item is-active" data-top-target="class">Class</button>
@@ -318,7 +344,7 @@
         <!-- Classroom Hub Seating/Timetable Container -->
         <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: 100%;">
             <!-- Inner Class Toggle -->
-            <div class="exam-subnav mb-4 mt-2" aria-label="Inner Class Menu">
+            <div class="exam-subnav subnav-3col mb-4 mt-2" aria-label="Inner Class Menu">
                 <button type="button" id="tab-class-timetable" onclick="switchClassTab('timetable')" class="exam-subnav-item is-active" data-class-target="view-class-timetable">Timetable</button>
                 <button type="button" id="tab-class-subjects" onclick="switchClassTab('subjects')" class="exam-subnav-item" data-class-target="view-class-subjects">Subjects</button>
                 <button type="button" id="tab-class-teachers" onclick="switchClassTab('teachers')" class="exam-subnav-item" data-class-target="view-class-teachers">Teachers</button>
@@ -612,6 +638,7 @@
     <script defer src="data/common/student_names.js"></script>
     <script defer src="data/common/students_db.js"></script>
     <script defer src="data/common/class_info.js"></script>
+    <script defer src="data/common/announcements.js"></script>
     <script defer src="js/api.js"></script>
     <script defer src="js/smart_finder.js"></script>
     <script defer src="js/state.js"></script>

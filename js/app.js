@@ -2297,6 +2297,99 @@ function setupScrollHide() {
     }, { passive: true });
 }
 
+// ==================== ANNOUNCEMENTS PORTAL ====================
+window.openAnnouncements = function() {
+    switchView('view-announcements');
+    const nav = document.getElementById('bottomNav');
+    if (nav) nav.classList.add('nav-hidden');
+    renderAnnouncements('All');
+};
+
+window.closeAnnouncements = function() {
+    const nav = document.getElementById('bottomNav');
+    if (nav) nav.classList.remove('nav-hidden');
+    switchView('view-home');
+};
+
+window.renderAnnouncements = function(category = 'All') {
+    const container = document.getElementById('announcementsList');
+    if (!container) return;
+
+    // Render categories filter pills
+    const categoriesContainer = document.getElementById('announcementCategories');
+    if (categoriesContainer) {
+        const categories = ['All', 'Exam', 'Class', 'Sports'];
+        categoriesContainer.innerHTML = categories.map(cat => {
+            const isActive = cat.toLowerCase() === category.toLowerCase();
+            return `
+                <button type="button" onclick="renderAnnouncements('${cat}')" class="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all duration-300 flex-shrink-0 ${
+                    isActive
+                        ? 'bg-[var(--mac-blue)] text-white shadow-sm'
+                        : 'bg-black/5 dark:bg-white/5 text-[#86868b] hover:bg-black/10 dark:hover:bg-white/10'
+                }">
+                    ${cat}
+                </button>
+            `;
+        }).join('');
+    }
+
+    const data = window.ANNOUNCEMENTS_DATA || [];
+    const filtered = category.toLowerCase() === 'all' ? data : data.filter(a => a.category.toLowerCase() === category.toLowerCase());
+
+    if (!filtered.length) {
+        container.innerHTML = `
+            <div class="glass-panel p-8 text-center my-6 rounded-3xl text-[#86868b]">
+                <p class="text-4xl mb-3">🔔</p>
+                <p class="text-sm font-bold">No announcements in ${category}</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = filtered.map(item => {
+        let icon = '📢';
+        let badgeColor = 'bg-blue-500/10 text-blue-500';
+        if (item.category === 'Exam') {
+            icon = '📝';
+            badgeColor = 'bg-red-500/10 text-red-500';
+        } else if (item.category === 'Class') {
+            icon = '🏫';
+            badgeColor = 'bg-green-500/10 text-green-500';
+        } else if (item.category === 'Sports') {
+            icon = '⚽';
+            badgeColor = 'bg-orange-500/10 text-orange-500';
+        }
+
+        return `
+            <div class="glass-panel p-5 rounded-[2rem] border border-white/10 dark:border-white/5 relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:shadow-md">
+                <div class="flex items-center justify-between gap-3 mb-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 bg-black/5 dark:bg-white/5 rounded-xl flex items-center justify-center text-lg">${icon}</span>
+                        <div class="flex flex-wrap gap-1">
+                            <span class="${badgeColor} text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                ${item.category}
+                            </span>
+                            ${item.badge ? `
+                            <span class="bg-black/5 dark:bg-white/5 text-[#86868b] text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                ${item.badge}
+                            </span>` : ''}
+                        </div>
+                    </div>
+                    <span class="text-[9px] font-bold text-[#86868b] tracking-tight">
+                        ${item.date} • ${item.time}
+                    </span>
+                </div>
+                <h4 class="text-base font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight mb-2">
+                    ${item.title}
+                </h4>
+                <p class="text-xs text-[#86868b] dark:text-[#86868b]/90 leading-relaxed font-medium font-bold">
+                    ${item.content}
+                </p>
+            </div>
+        `;
+    }).join('');
+};
+
 // ==================== CLASS HUB FUNCTIONS ====================
 window.renderClassFilters = function() {
     const container = document.getElementById('classDepartmentFilters');

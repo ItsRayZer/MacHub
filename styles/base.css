@@ -1850,4 +1850,14 @@
         .class-subject-card.is-expanded .card-chevron {
             transform: rotate(180deg);
         }
+
+        /* 3-Column sub-navigation styling to fit straight without wrapping */
+        .subnav-3col {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+        .subnav-3col .exam-subnav-item {
+            font-size: 0.56rem !important; /* Slightly smaller to fit long text on small screens */
+            padding: 0 0.2rem !important; /* Compact padding */
+            letter-spacing: 0.03em !important;
+        }
     
