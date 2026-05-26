@@ -2,9 +2,6 @@
 (function () {
     window.openMacAI = function() {
         switchView('view-ai');
-        // Hide floating FAB and bottom nav
-        const fab = document.getElementById('macAiFloatingBtn');
-        if (fab) fab.classList.add('hidden');
         const nav = document.getElementById('bottomNav');
         if (nav) nav.classList.add('nav-hidden');
         
@@ -16,9 +13,6 @@
     };
 
     window.closeMacAI = function() {
-        // Show floating FAB and bottom nav
-        const fab = document.getElementById('macAiFloatingBtn');
-        if (fab) fab.classList.remove('hidden');
         const nav = document.getElementById('bottomNav');
         if (nav) nav.classList.remove('nav-hidden');
         switchView('view-home');

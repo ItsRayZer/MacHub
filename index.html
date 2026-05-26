@@ -446,6 +446,20 @@
             </button>
         </div>
         
+        <!-- Separate but same to same MacAI Circle Button -->
+        <button onclick="openMacAI()" id="macAiFloatingBtn" class="nav-ai-pill" aria-label="Open MacAI">
+            <!-- Custom Gemini Star SVG -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 8px rgba(134,34,255,0.4));">
+                <path d="M12 2L14.83 8.17L21 11L14.83 13.83L12 20L9.17 13.83L3 11L9.17 8.17L12 2Z" fill="url(#gemini-grad)" stroke="url(#gemini-grad)" stroke-width="1" stroke-linejoin="round"/>
+                <path d="M19 3L20.06 5.28L22.5 6L20.06 6.72L19 9L17.94 6.72L15.5 6L17.94 5.28L19 3Z" fill="url(#gemini-grad)"/>
+                <defs>
+                    <linearGradient id="gemini-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#0071e3" />
+                        <stop offset="100%" stop-color="#8622ff" />
+                    </linearGradient>
+                </defs>
+            </svg>
+        </button>
     </div>
 
 
@@ -613,14 +627,6 @@
         </div>
     </div>
 
-    <!-- Floating MacAI Button -->
-    <button onclick="openMacAI()" id="macAiFloatingBtn" class="fixed bottom-24 right-6 w-14 h-14 rounded-full flex items-center justify-center spring hover:scale-110 active:scale-90 shadow-2xl z-50 transition-all duration-300" style="background: linear-gradient(135deg, #0071e3, #8622ff); border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 12px 30px rgba(134, 34, 255, 0.3);" aria-label="Open MacAI">
-        <!-- Custom Gemini Star SVG -->
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-white">
-            <path d="M12 2L14.83 8.17L21 11L14.83 13.83L12 20L9.17 13.83L3 11L9.17 8.17L12 2Z" fill="white" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
-            <path d="M19 3L20.06 5.28L22.5 6L20.06 6.72L19 9L17.94 6.72L15.5 6L17.94 5.28L19 3Z" fill="white"/>
-        </svg>
-    </button>
 
     <!-- MacAI Chat Panel -->
     <div id="view-ai" class="view-panel max-w-md mx-auto p-6 hidden relative min-h-screen flex flex-col justify-between" style="padding-bottom: 90px;">
