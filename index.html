@@ -404,25 +404,42 @@
         </div>
     </div>
 
-    <div id="view-resources" class="view-panel max-w-md mx-auto p-6">
-        <div class="glass-panel p-7 rounded-[2.5rem] mb-5">
-            <div class="flex items-center gap-2 mb-3">
-                <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="brand-logo h-4">
-                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.25em]">Resources</p>
+    <!-- Reconstructed Resources View -->
+    <div id="view-resources" class="view-panel max-w-md mx-auto p-6 relative min-h-screen flex flex-col" style="padding-bottom: 90px;">
+        <div class="flex items-center gap-3.5 mb-6 mt-2">
+            <div class="w-12 h-12 bg-[#0071e3]/10 rounded-2xl flex items-center justify-center text-2xl shadow-md">📚</div>
+            <div>
+                <h2 class="text-2xl font-black text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight leading-none">Resources</h2>
+                <p class="text-[9px] font-black text-[#86868b] uppercase tracking-widest mt-1">Academic Study Space</p>
             </div>
-            <h3 class="text-3xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight">All-in-one student space.</h3>
-            <p class="text-sm font-bold text-[#86868b] mt-3">Quick access for academics, exams, and college tools.</p>
         </div>
-        <div class="grid gap-3 pb-24">
-            <button onclick="switchExamView('view-exam-resources')" class="resource-action-card spring">
-                <span>Exam Resources</span>
-                <strong>Question papers, answers, seating</strong>
-            </button>
-            
-            <button onclick="openExternalApp('https://eportal.maraugusthinosecollege.org/Login.aspx', 'Student Portal')" class="resource-action-card spring">
-                <span>Student Portal</span>
-                <strong>Open college e-portal</strong>
-            </button>
+
+        <!-- Two Toggles for Subjects & Protocols -->
+        <div class="exam-subnav mb-5" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.5rem; width: 100%;">
+            <button type="button" onclick="switchResourcesTab('subjects')" id="btn-resource-subjects" class="exam-subnav-item is-active">Subjects</button>
+            <button type="button" onclick="switchResourcesTab('protocols')" id="btn-resource-protocols" class="exam-subnav-item">Protocols</button>
+        </div>
+
+        <!-- Subjects Resource Container -->
+        <div id="resources-subjects-container" class="w-full space-y-4">
+            <div class="glass-panel p-5 rounded-[2.5rem] mb-4">
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-1">Subject selector</p>
+                <h4 class="text-sm font-bold text-[#86868b] mb-4">Select a subject to explore its academic materials:</h4>
+                <div id="resource-subjects-list" class="space-y-3">
+                    <!-- Dynamic subjects list with accordion folders will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Protocols Resource Container -->
+        <div id="resources-protocols-container" class="w-full space-y-4 hidden">
+            <div class="glass-panel p-5 rounded-[2.5rem] mb-4">
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-1">Academic Protocols</p>
+                <h4 class="text-sm font-bold text-[#86868b] mb-4">Mahatma Gandhi University & MAC Guidelines:</h4>
+                <div id="resource-protocols-list" class="space-y-3">
+                    <!-- Sample protocols list will be injected here -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -717,6 +734,7 @@
     <script defer src="js/home.js"></script>
     <script defer src="js/timetable.js"></script>
     <script defer src="js/seats.js"></script>
+    <script defer src="js/resources.js"></script>
     <script defer src="js/app.js"></script>
     <script defer src="js/onboarding.js"></script>
     <script defer src="js/bootstrap.js"></script>
