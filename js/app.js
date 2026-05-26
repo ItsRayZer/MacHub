@@ -6,13 +6,21 @@ const EXAM_DAYS = [
     { label: 'Day 5', date: '20_04_2026' }
 ];
 
-let appState = window.ExamHubState || { selectedDate: '16_04_2026', view: 'view-home', examSubView: 'view-timetable', openSeatDropdown: null };
+let appState = window.ExamHubState || { selectedDate: '16_04_2026', view: 'view-home', examSubView: 'view-class', openSeatDropdown: null };
 appState.selectedDate = appState.selectedDate || '16_04_2026';
 appState.view = appState.view || 'view-home';
-appState.examSubView = appState.examSubView || 'view-timetable';
+appState.examSubView = appState.examSubView || 'view-class';
 appState.openSeatDropdown = appState.openSeatDropdown || null;
 appState.externalApp = appState.externalApp || { isOpen: false, url: '', title: '' };
 if (typeof appState.completedSubjectsExpanded !== 'boolean') appState.completedSubjectsExpanded = false;
+
+// Class Hub state
+let currentClassDay = (function() {
+    const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const currentDayName = DAYS_OF_WEEK[new Date().getDay()];
+    return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].includes(currentDayName) ? currentDayName : "Monday";
+})();
+let currentClassDept = 'BCA';
 
 function getStudentInfo() {
     if (window.ExamHubProfileApi) return window.ExamHubProfileApi.getStudentInfo();
@@ -189,7 +197,7 @@ let HALL_DATA = {};
 let HALL_KEYS = [];
 
 function getMainNavView(viewId) {
-    if (['view-timetable', 'view-seats', 'view-exam-resources'].includes(viewId)) return 'view-exam';
+    if (['view-timetable', 'view-seats', 'view-exam-resources', 'view-class'].includes(viewId)) return 'view-exam';
     if (viewId === 'view-resources') return 'view-resources';
     return 'view-home';
 }
@@ -200,8 +208,8 @@ function updateExamSubnav(activeView) {
             btn.classList.toggle('is-active', btn.dataset.examTarget === activeView);
         } else if (btn.hasAttribute('data-top-target')) {
             const target = btn.dataset.topTarget;
-            const isActive = (target === 'exam' && (activeView === 'view-timetable' || activeView === 'view-seats')) ||
-                             (target === 'result' && activeView === 'view-results');
+            const isActive = (target === 'class' && activeView === 'view-class') ||
+                             (target === 'exam' && (activeView === 'view-timetable' || activeView === 'view-seats' || activeView === 'view-exam-resources' || activeView === 'view-results'));
             btn.classList.toggle('is-active', isActive);
         }
     });
@@ -275,44 +283,48 @@ function closeExternalApp() {
 }
 
 function switchExamView(viewId) {
-    if (viewId === 'view-timetable' || viewId === 'view-seats') {
-        const targetTab = viewId === 'view-timetable' ? 'timetable' : 'seats';
+    if (viewId === 'view-timetable' || viewId === 'view-seats' || viewId === 'view-results') {
+        const targetTab = viewId === 'view-timetable' ? 'timetable' : (viewId === 'view-seats' ? 'seats' : 'results');
         switchView('view-seats');
         switchExamTab(targetTab);
         return;
     }
     
-    appState.examSubView = viewId || appState.examSubView || 'view-seats';
+    appState.examSubView = viewId || appState.examSubView || 'view-class';
     switchView(appState.examSubView);
 }
 
 window.switchExamTab = function(tab) {
     const timetableEl = document.getElementById('sub-view-timetable');
     const seatsEl = document.getElementById('sub-view-seats');
+    const resultsEl = document.getElementById('sub-view-results');
     const timetableBtn = document.getElementById('tab-timetable');
     const seatsBtn = document.getElementById('tab-seats');
+    const resultsBtn = document.getElementById('tab-results');
 
-    if (!timetableEl || !seatsEl) return;
+    if (!timetableEl || !seatsEl || !resultsEl) return;
+
+    timetableEl.classList.toggle('hidden', tab !== 'timetable');
+    seatsEl.classList.toggle('hidden', tab !== 'seats');
+    resultsEl.classList.toggle('hidden', tab !== 'results');
+
+    if (timetableBtn) timetableBtn.classList.toggle('is-active', tab === 'timetable');
+    if (seatsBtn) seatsBtn.classList.toggle('is-active', tab === 'seats');
+    if (resultsBtn) resultsBtn.classList.toggle('is-active', tab === 'results');
 
     if (tab === 'timetable') {
-        timetableEl.classList.remove('hidden');
-        seatsEl.classList.add('hidden');
-        if (timetableBtn) timetableBtn.classList.add('is-active');
-        if (seatsBtn) seatsBtn.classList.remove('is-active');
         appState.examSubView = 'view-timetable';
         if (typeof renderTimetable === 'function') renderTimetable();
-    } else {
-        timetableEl.classList.add('hidden');
-        seatsEl.classList.remove('hidden');
-        if (timetableBtn) timetableBtn.classList.remove('is-active');
-        if (seatsBtn) seatsBtn.classList.add('is-active');
+    } else if (tab === 'seats') {
         appState.examSubView = 'view-seats';
         if (typeof showSeatNote === 'function') showSeatNote();
+    } else {
+        appState.examSubView = 'view-results';
     }
     
     // Sync top toggle states
     document.querySelectorAll('.exam-subnav-item[data-top-target="exam"]').forEach(el => el.classList.add('is-active'));
-    document.querySelectorAll('.exam-subnav-item[data-top-target="result"]').forEach(el => el.classList.remove('is-active'));
+    document.querySelectorAll('.exam-subnav-item[data-top-target="class"]').forEach(el => el.classList.remove('is-active'));
     document.querySelectorAll('.exam-subnav-item[data-exam-target]').forEach(el => {
         el.classList.toggle('is-active', el.dataset.examTarget === appState.examSubView);
     });
@@ -321,12 +333,12 @@ window.switchExamTab = function(tab) {
 function switchView(viewId) {
     // Handle unified view-exam-hub alias and old aliases
     if (viewId === 'view-exam-hub' || viewId === 'view-exam') {
-        viewId = 'view-seats';
+        viewId = 'view-class';
     }
 
-    if (viewId === 'view-timetable' || viewId === 'view-seats') {
+    if (viewId === 'view-timetable' || viewId === 'view-seats' || viewId === 'view-results') {
         if (appState.view !== 'view-seats') {
-            const targetTab = viewId === 'view-timetable' ? 'timetable' : 'seats';
+            const targetTab = viewId === 'view-timetable' ? 'timetable' : (viewId === 'view-seats' ? 'seats' : 'results');
             switchExamTab(targetTab);
         }
         viewId = 'view-seats';
@@ -2021,7 +2033,17 @@ async function applyUserProfile() {
             greetingEl.textContent = `Hi, ${displayName}!`;
         }
 
-        if (info.dept) setFilter(info.dept);
+        if (info.dept) {
+            setFilter(info.dept);
+            currentClassDept = info.dept.toUpperCase();
+            if (typeof renderClassFilters === 'function') {
+                renderClassFilters();
+                renderClassDaySelector();
+                renderClassTimetable();
+                renderClassSubjects();
+                renderClassTeachers();
+            }
+        }
         updateCountdown();
 
         if (info.adminNo && window.startBackgroundSync) {
@@ -2275,8 +2297,343 @@ function setupScrollHide() {
     }, { passive: true });
 }
 
+// ==================== CLASS HUB FUNCTIONS ====================
+window.renderClassFilters = function() {
+    const container = document.getElementById('classDepartmentFilters');
+    if (!container) return;
+
+    const isOpen = appState.openClassDropdown === 'department';
+
+    container.innerHTML = `
+        <div class="seat-dropdown ${isOpen ? 'is-open' : ''}">
+            <button type="button" onclick="toggleClassDropdown('department')" class="seat-dropdown__trigger">
+                <div class="seat-dropdown__meta">
+                    <span class="seat-dropdown__label">Department</span>
+                    <span class="seat-dropdown__value">${currentClassDept}</span>
+                </div>
+                <span class="seat-dropdown__icon">⌄</span>
+            </button>
+            <div class="seat-dropdown__menu">
+                <button type="button" onclick="selectClassDept('BCA')" class="seat-dropdown__option ${currentClassDept === 'BCA' ? 'is-active' : ''}">
+                    <span class="seat-dropdown__option-title">BCA</span>
+                    <span class="seat-dropdown__option-meta">Computer Applications</span>
+                </button>
+                <button type="button" onclick="selectClassDept('BBA')" class="seat-dropdown__option ${currentClassDept === 'BBA' ? 'is-active' : ''}">
+                    <span class="seat-dropdown__option-title">BBA</span>
+                    <span class="seat-dropdown__option-meta">Business Administration</span>
+                </button>
+                <button type="button" onclick="selectClassDept('BSW')" class="seat-dropdown__option ${currentClassDept === 'BSW' ? 'is-active' : ''}">
+                    <span class="seat-dropdown__option-title">BSW</span>
+                    <span class="seat-dropdown__option-meta">Social Work</span>
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+window.renderClassDaySelector = function() {
+    const container = document.getElementById('classDaySelector');
+    if (!container) return;
+
+    const isOpen = appState.openClassDropdown === 'day';
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+    container.innerHTML = `
+        <div class="seat-dropdown ${isOpen ? 'is-open' : ''}">
+            <button type="button" onclick="toggleClassDropdown('day')" class="seat-dropdown__trigger">
+                <div class="seat-dropdown__meta">
+                    <span class="seat-dropdown__label">Day</span>
+                    <span class="seat-dropdown__value">${currentClassDay}</span>
+                </div>
+                <span class="seat-dropdown__icon">⌄</span>
+            </button>
+            <div class="seat-dropdown__menu">
+                ${days.map(day => `
+                    <button type="button" onclick="selectClassDay('${day}')" class="seat-dropdown__option ${currentClassDay === day ? 'is-active' : ''}">
+                        <span class="seat-dropdown__option-title">${day}</span>
+                        <span class="seat-dropdown__option-meta">Timetable for ${day}</span>
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+};
+
+window.toggleClassDropdown = function(name) {
+    appState.openClassDropdown = appState.openClassDropdown === name ? null : name;
+    renderClassFilters();
+    renderClassDaySelector();
+};
+
+window.closeClassDropdowns = function() {
+    appState.openClassDropdown = null;
+};
+
+window.selectClassDept = function(dept) {
+    currentClassDept = dept;
+    closeClassDropdowns();
+    renderClassFilters();
+    renderClassDaySelector();
+    renderClassTimetable();
+    renderClassSubjects();
+    renderClassTeachers();
+};
+
+window.selectClassDay = function(day) {
+    currentClassDay = day;
+    closeClassDropdowns();
+    renderClassFilters();
+    renderClassDaySelector();
+    renderClassTimetable();
+};
+
+window.switchClassTab = function(tab) {
+    const timetableEl = document.getElementById('sub-view-class-timetable');
+    const subjectsEl = document.getElementById('sub-view-class-subjects');
+    const teachersEl = document.getElementById('sub-view-class-teachers');
+    const timetableBtn = document.getElementById('tab-class-timetable');
+    const subjectsBtn = document.getElementById('tab-class-subjects');
+    const teachersBtn = document.getElementById('tab-class-teachers');
+
+    if (!timetableEl || !subjectsEl || !teachersEl) return;
+
+    timetableEl.classList.toggle('hidden', tab !== 'timetable');
+    subjectsEl.classList.toggle('hidden', tab !== 'subjects');
+    teachersEl.classList.toggle('hidden', tab !== 'teachers');
+
+    if (timetableBtn) timetableBtn.classList.toggle('is-active', tab === 'timetable');
+    if (subjectsBtn) subjectsBtn.classList.toggle('is-active', tab === 'subjects');
+    if (teachersBtn) teachersBtn.classList.toggle('is-active', tab === 'teachers');
+
+    appState.classSubTab = tab;
+};
+
+window.renderClassTimetable = function() {
+    const container = document.getElementById('classTimetableContent');
+    if (!container) return;
+
+    const dept = currentClassDept.toUpperCase();
+    const day = currentClassDay;
+    const timetableKey = `CLASS_TIMETABLE_${dept}`;
+    const timetableData = window[timetableKey] ? window[timetableKey][day] : null;
+
+    if (!timetableData || !timetableData.length) {
+        container.innerHTML = `
+            <div class="text-center p-8 text-[#86868b]">
+                <p class="text-3xl mb-2">💤</p>
+                <p class="text-sm font-bold">No lectures scheduled for ${day}</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = timetableData.map(period => {
+        const subjectsKey = `CLASS_SUBJECTS_${dept}`;
+        const subjectDetail = window[subjectsKey]?.find(s => s.code === period.code) || {};
+        const teacherName = subjectDetail.teacher?.name || "Faculty Assigned";
+
+        return `
+            <div class="glass-panel p-5 rounded-[2rem] border border-white/10 dark:border-white/5 relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:shadow-md flex items-center justify-between gap-4">
+                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--mac-blue)]"></div>
+                
+                <div class="flex-1 pl-2">
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <span class="bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] dark:text-blue-400 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Period ${period.period}
+                        </span>
+                        <span class="text-[#86868b] dark:text-[#86868b] text-[10px] font-bold">
+                            ${period.time}
+                        </span>
+                    </div>
+                    <h4 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight mb-1">
+                        ${period.title}
+                    </h4>
+                    <p class="text-xs font-bold text-[#86868b] dark:text-[#86868b]/80">
+                        ${teacherName} • ${period.code}
+                    </p>
+                </div>
+                
+                <div class="text-right flex-shrink-0">
+                    <span class="inline-block bg-black/5 dark:bg-white/5 text-[#1d1d1f] dark:text-[#f5f5f7] text-[10px] font-bold px-3 py-1 rounded-xl border border-white/5">
+                        📍 ${period.room}
+                    </span>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+window.renderClassSubjects = function() {
+    const container = document.getElementById('classSubjectsContent');
+    if (!container) return;
+
+    const dept = currentClassDept.toUpperCase();
+    const subjectsKey = `CLASS_SUBJECTS_${dept}`;
+    const subjectsData = window[subjectsKey] || [];
+
+    if (!subjectsData.length) {
+        container.innerHTML = `
+            <div class="text-center p-8 text-[#86868b]">
+                <p class="text-3xl mb-2">📚</p>
+                <p class="text-sm font-bold">No subjects loaded</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = subjectsData.map((subject, idx) => {
+        const uniqueId = `subject-card-${idx}`;
+        const modulesHtml = subject.syllabus.map(mod => {
+            const parts = mod.split(':');
+            const title = parts[0];
+            const desc = parts[1] || '';
+            return `
+                <div class="border-l border-white/10 dark:border-white/5 pl-3 py-1">
+                    <p class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${title}</p>
+                    <p class="text-[11px] text-[#86868b] mt-0.5">${desc}</p>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div id="${uniqueId}" class="class-subject-card glass-panel rounded-[2rem] border border-white/10 dark:border-white/5 overflow-hidden transition-all duration-300 relative">
+                <div onclick="toggleClassSubjectCard('${uniqueId}')" class="p-5 cursor-pointer flex items-center justify-between gap-4 select-none">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="bg-black/5 dark:bg-white/5 text-[#86868b] text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                ${subject.type}
+                            </span>
+                            <span class="bg-blue-500/10 text-blue-500 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                ${subject.credits} Credits
+                            </span>
+                        </div>
+                        <h4 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight mb-1">
+                            ${subject.title}
+                        </h4>
+                        <p class="text-xs font-bold text-[#86868b]">
+                            Code: ${subject.code}
+                        </p>
+                    </div>
+                    <span class="card-chevron text-lg text-[#86868b] transition-transform duration-300">▼</span>
+                </div>
+
+                <div class="card-syllabus-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                    <div class="px-5 pb-5 pt-1 border-t border-black/5 dark:border-white/5 space-y-4">
+                        <div>
+                            <h5 class="text-[10px] font-black text-[#86868b] uppercase tracking-[0.15em] mb-2">Syllabus Breakdown</h5>
+                            <div class="space-y-3">
+                                ${modulesHtml}
+                            </div>
+                        </div>
+                        
+                        <div class="bg-black/5 dark:bg-white/5 rounded-2xl p-4 flex items-center justify-between gap-3 border border-white/5">
+                            <div class="flex-1">
+                                <p class="text-[8px] font-black text-[#86868b] uppercase tracking-wider mb-0.5">Assigned Faculty</p>
+                                <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${subject.teacher.name}</p>
+                                <p class="text-[10px] text-[#86868b]">${subject.teacher.designation}</p>
+                                <p class="text-[10px] text-[#86868b] mt-1">📍 ${subject.teacher.room}</p>
+                            </div>
+                            <a href="mailto:${subject.teacher.email}" class="w-10 h-10 bg-[var(--mac-blue)] rounded-full flex items-center justify-center spring hover:scale-105 active:scale-95 text-white text-base shadow-sm">
+                                ✉️
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+window.toggleClassSubjectCard = function(cardId) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+
+    const content = card.querySelector('.card-syllabus-content');
+    const chevron = card.querySelector('.card-chevron');
+    if (!content || !chevron) return;
+
+    const isExpanded = card.classList.toggle('is-expanded');
+    chevron.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+
+    if (isExpanded) {
+        content.style.maxHeight = content.scrollHeight + 'px';
+    } else {
+        content.style.maxHeight = '0px';
+    }
+};
+
+window.renderClassTeachers = function() {
+    const container = document.getElementById('classTeachersContent');
+    if (!container) return;
+
+    const dept = currentClassDept.toUpperCase();
+    const subjectsKey = `CLASS_SUBJECTS_${dept}`;
+    const subjectsData = window[subjectsKey] || [];
+    
+    const teachersMap = new Map();
+    subjectsData.forEach(subject => {
+        if (subject.teacher && !teachersMap.has(subject.teacher.name)) {
+            teachersMap.set(subject.teacher.name, {
+                ...subject.teacher,
+                subjectTitle: subject.title
+            });
+        }
+    });
+
+    const uniqueTeachers = Array.from(teachersMap.values());
+
+    if (!uniqueTeachers.length) {
+        container.innerHTML = `
+            <div class="text-center p-8 text-[#86868b]">
+                <p class="text-3xl mb-2">👥</p>
+                <p class="text-sm font-bold">No faculty loaded</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = uniqueTeachers.map(teacher => {
+        return `
+            <div class="glass-panel p-5 rounded-[2rem] border border-white/10 dark:border-white/5 relative overflow-hidden transition-all duration-300 hover:shadow-md flex items-center justify-between gap-4">
+                <div class="flex-1">
+                    <p class="text-[8px] font-black text-[#86868b] uppercase tracking-wider mb-0.5">${teacher.designation}</p>
+                    <h4 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight mb-1">
+                        ${teacher.name}
+                    </h4>
+                    <p class="text-xs font-bold text-[var(--mac-blue)] dark:text-blue-400 mb-2">
+                        Course: ${teacher.subjectTitle}
+                    </p>
+                    <div class="space-y-1 text-[11px] text-[#86868b] dark:text-[#86868b]/80">
+                        <p>📍 ${teacher.room}</p>
+                        <p>🕒 Hours: ${teacher.hours}</p>
+                    </div>
+                </div>
+                
+                <a href="mailto:${teacher.email}" class="bg-[var(--mac-blue)] text-white px-4 py-2.5 rounded-[1.25rem] text-xs font-bold tracking-tight spring hover:scale-105 active:scale-95 shadow-md flex items-center gap-1.5 whitespace-nowrap">
+                    <span>Email Teacher</span>
+                    <span class="text-[10px]">✉️</span>
+                </a>
+            </div>
+        `;
+    }).join('');
+};
+
 window.initExamHubApp = () => {
     checkOnboarding();
+    
+    // Sync class department with student info
+    const student = getStudentInfo();
+    if (student && student.dept) {
+        currentClassDept = student.dept.toUpperCase();
+    }
+    
+    // Initialize Class Hub
+    renderClassFilters();
+    renderClassDaySelector();
+    renderClassTimetable();
+    renderClassSubjects();
+    renderClassTeachers();
+
     switchView('view-home');
     startTimers();
     setupSwipeGestures();
@@ -2299,6 +2656,11 @@ document.addEventListener('click', (event) => {
             closeSeatDropdowns();
             renderDaySelector();
             renderFilters();
+        }
+        if (appState.openClassDropdown) {
+            closeClassDropdowns();
+            renderClassFilters();
+            renderClassDaySelector();
         }
     }
 });

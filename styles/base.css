@@ -1829,4 +1829,25 @@
             align-items: center;
             width: 100%;
         }
+
+        /* Class Hub Custom Styles */
+        .class-subject-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .class-subject-card.is-expanded {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        .card-syllabus-content {
+            transition: max-height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .card-chevron {
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .class-subject-card.is-expanded .card-chevron {
+            transform: rotate(180deg);
+        }
     

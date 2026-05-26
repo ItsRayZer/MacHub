@@ -131,8 +131,8 @@
         <!-- Search at top -->
         <div class="max-w-md mx-auto px-4 pt-4 pb-2 sticky top-0 z-50">
             <div class="exam-subnav" aria-label="Exam menu">
+                <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item" data-top-target="class">Class</button>
                 <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item is-active" data-top-target="exam">Exam</button>
-                <button type="button" onclick="switchExamView('view-results')" class="exam-subnav-item" data-top-target="result">Result</button>
             </div>
             <div class="glass-panel rounded-[2rem] px-4 py-3 search-focus transition-all">
                 <div class="relative">
@@ -161,12 +161,25 @@
         <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: calc(100% - 2rem); max-width: 448px;">
             <!-- Inner Toggle -->
             <div class="exam-subnav mb-4 mt-2" aria-label="Inner Exam Menu">
-                <button type="button" id="tab-timetable" onclick="switchExamTab('timetable')" class="exam-subnav-item" data-exam-target="view-timetable">Timetable</button>
+                <button type="button" id="tab-timetable" onclick="switchExamTab('timetable')" class="exam-subnav-item" data-exam-target="view-timetable">Exam Timetable</button>
                 <button type="button" id="tab-seats" onclick="switchExamTab('seats')" class="exam-subnav-item is-active" data-exam-target="view-seats">View Seats</button>
+                <button type="button" id="tab-results" onclick="switchExamTab('results')" class="exam-subnav-item" data-exam-target="view-results">Result</button>
             </div>
 
             <div id="sub-view-timetable" class="hidden w-full">
                 <div id="timetableContent"></div>
+            </div>
+
+            <div id="sub-view-results" class="hidden w-full">
+                <!-- Sleek Glassmorphism Coming Soon Card -->
+                <div class="glass-panel rounded-3xl p-8 text-center my-6 relative overflow-hidden shadow-sm">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-[var(--mac-blue)] opacity-10 rounded-full -mr-12 -mt-12"></div>
+                    <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">🏆</div>
+                    <h3 class="text-xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Results Coming Soon</h3>
+                    <p class="text-[12px] font-bold text-[#86868b] mt-2 leading-relaxed">
+                        Semester exam results and performance analytics are being compiled. Stay tuned!
+                    </p>
+                </div>
             </div>
 
             <div id="sub-view-seats">
@@ -295,22 +308,48 @@
         </div>
     </div> <!-- Close view-home -->
 
-    <div id="view-results" class="view-panel max-w-md mx-auto p-6">
+    <div id="view-class" class="view-panel max-w-md mx-auto p-6">
         <div class="exam-subnav mb-4" aria-label="Exam menu">
+            <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item is-active" data-top-target="class">Class</button>
             <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item" data-top-target="exam">Exam</button>
-            <button type="button" onclick="switchExamView('view-results')" class="exam-subnav-item is-active" data-top-target="result">Result</button>
         </div>
-        <div class="glass-panel rounded-[2rem] p-10 mt-4 text-center shadow-sm">
-            <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">📊</div>
-            <h3 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Results Coming Soon</h3>
-            <p class="text-[12px] font-bold text-[#86868b] mt-2">Exam results will be available here once they are published.</p>
+
+        <!-- Class Portal Top Dropdowns -->
+        <div class="max-w-md mx-auto mt-3 mb-4">
+            <div class="seat-toolbar">
+                <div id="classDepartmentFilters" class="seat-dropdown"></div>
+                <div id="classDaySelector" class="seat-dropdown"></div>
+            </div>
+        </div>
+
+        <!-- Classroom Hub Seating/Timetable Container -->
+        <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: 100%;">
+            <!-- Inner Class Toggle -->
+            <div class="exam-subnav mb-4 mt-2" aria-label="Inner Class Menu">
+                <button type="button" id="tab-class-timetable" onclick="switchClassTab('timetable')" class="exam-subnav-item is-active" data-class-target="view-class-timetable">Timetable</button>
+                <button type="button" id="tab-class-subjects" onclick="switchClassTab('subjects')" class="exam-subnav-item" data-class-target="view-class-subjects">Subjects</button>
+                <button type="button" id="tab-class-teachers" onclick="switchClassTab('teachers')" class="exam-subnav-item" data-class-target="view-class-teachers">Teachers</button>
+            </div>
+
+            <!-- Class Sub-views -->
+            <div id="sub-view-class-timetable" class="w-full">
+                <div id="classTimetableContent" class="space-y-4"></div>
+            </div>
+
+            <div id="sub-view-class-subjects" class="hidden w-full">
+                <div id="classSubjectsContent" class="grid gap-4"></div>
+            </div>
+
+            <div id="sub-view-class-teachers" class="hidden w-full">
+                <div id="classTeachersContent" class="space-y-4"></div>
+            </div>
         </div>
     </div>
 
     <div id="view-exam-resources" class="view-panel max-w-md mx-auto p-6">
         <div class="exam-subnav mb-4" aria-label="Exam menu">
+            <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item" data-top-target="class">Class</button>
             <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item is-active" data-top-target="exam">Exam</button>
-            <button type="button" onclick="switchExamView('view-results')" class="exam-subnav-item" data-top-target="result">Result</button>
         </div>
         <div class="glass-panel p-6 rounded-[2rem] mb-4">
             <div class="flex items-center gap-2 mb-3">
@@ -579,6 +618,7 @@
     <script defer src="data/common/question_papers.js"></script>
     <script defer src="data/common/student_names.js"></script>
     <script defer src="data/common/students_db.js"></script>
+    <script defer src="data/common/class_info.js"></script>
     <script defer src="js/api.js"></script>
     <script defer src="js/smart_finder.js"></script>
     <script defer src="js/state.js"></script>
