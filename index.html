@@ -613,6 +613,52 @@
         </div>
     </div>
 
+    <!-- Floating MacAI Button -->
+    <button onclick="openMacAI()" id="macAiFloatingBtn" class="fixed bottom-24 right-6 w-14 h-14 rounded-full flex items-center justify-center spring hover:scale-110 active:scale-90 shadow-2xl z-50 transition-all duration-300" style="background: linear-gradient(135deg, #0071e3, #8622ff); border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 12px 30px rgba(134, 34, 255, 0.3);" aria-label="Open MacAI">
+        <!-- Custom Gemini Star SVG -->
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-white">
+            <path d="M12 2L14.83 8.17L21 11L14.83 13.83L12 20L9.17 13.83L3 11L9.17 8.17L12 2Z" fill="white" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M19 3L20.06 5.28L22.5 6L20.06 6.72L19 9L17.94 6.72L15.5 6L17.94 5.28L19 3Z" fill="white"/>
+        </svg>
+    </button>
+
+    <!-- MacAI Chat Panel -->
+    <div id="view-ai" class="view-panel max-w-md mx-auto p-6 hidden relative min-h-screen flex flex-col justify-between" style="padding-bottom: 90px;">
+        <!-- Fixed back button same as Announcements -->
+        <button type="button" class="external-app-back absolute top-6 left-6" onclick="closeMacAI()" aria-label="Back to home">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+
+        <div class="flex items-center gap-3.5 mb-6 mt-14">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-md" style="background: linear-gradient(135deg, #0071e3, #8622ff);">✨</div>
+            <div>
+                <h2 class="text-2xl font-black text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight leading-none">MacAI</h2>
+                <p class="text-[9px] font-black text-[#86868b] uppercase tracking-widest mt-1">Gemini Powered Assistant</p>
+            </div>
+        </div>
+
+        <!-- Chat messages container (scrollable) -->
+        <div id="macAiMessages" class="flex-1 overflow-y-auto space-y-4 pr-1 mb-4 flex flex-col" style="max-height: calc(100vh - 290px); scrollbar-width: none;">
+            <!-- Welcome message injected here -->
+        </div>
+
+        <!-- Quick suggest options scroll -->
+        <div class="flex gap-2 overflow-x-auto pb-3 mb-2 scrollbar-none flex-shrink-0" id="macAiSuggestions">
+            <button type="button" onclick="sendSuggestedMessage('What is my timetable today?')" class="px-3.5 py-2 bg-black/5 dark:bg-white/5 text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white rounded-2xl text-[10px] font-bold tracking-tight whitespace-nowrap border border-white/5 transition-all">📅 Timetable Today</button>
+            <button type="button" onclick="sendSuggestedMessage('Who is my teacher for Data Structures?')" class="px-3.5 py-2 bg-black/5 dark:bg-white/5 text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white rounded-2xl text-[10px] font-bold tracking-tight whitespace-nowrap border border-white/5 transition-all">👨‍🏫 DS Teacher</button>
+            <button type="button" onclick="sendSuggestedMessage('Where is my exam seating?')" class="px-3.5 py-2 bg-black/5 dark:bg-white/5 text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white rounded-2xl text-[10px] font-bold tracking-tight whitespace-nowrap border border-white/5 transition-all">📝 Exam Seating</button>
+            <button type="button" onclick="sendSuggestedMessage('What is the syllabus of Web Tech?')" class="px-3.5 py-2 bg-black/5 dark:bg-white/5 text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white rounded-2xl text-[10px] font-bold tracking-tight whitespace-nowrap border border-white/5 transition-all">📚 Web Tech Syllabus</button>
+        </div>
+
+        <!-- Input area -->
+        <div class="glass-panel rounded-[2rem] px-4 py-2 border border-white/10 dark:border-white/5 flex items-center justify-between gap-2 shadow-md mb-2">
+            <input type="text" id="macAiInput" placeholder="Ask MacAI anything..." onkeydown="handleAiInputKey(event)" class="flex-1 bg-transparent border-none py-2 text-sm font-bold outline-none placeholder:text-[#86868b]/50 dark:placeholder:text-white/20 dark:text-white">
+            <button type="button" onclick="submitMacAiMessage()" class="w-9 h-9 rounded-full flex items-center justify-center text-white spring hover:scale-105 active:scale-95" style="background: linear-gradient(135deg, #0071e3, #8622ff);">
+                ➔
+            </button>
+        </div>
+    </div>
+
     <script>
         function toggleTheme() {
             document.documentElement.classList.toggle('dark');
@@ -639,7 +685,9 @@
     <script defer src="data/common/students_db.js"></script>
     <script defer src="data/common/class_info.js"></script>
     <script defer src="data/common/announcements.js"></script>
+    <script defer src="data/common/mac_ai_database.js"></script>
     <script defer src="js/api.js"></script>
+    <script defer src="js/mac_ai.js"></script>
     <script defer src="js/smart_finder.js"></script>
     <script defer src="js/state.js"></script>
     <script defer src="js/ui.js"></script>
