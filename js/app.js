@@ -199,6 +199,7 @@ let HALL_KEYS = [];
 function getMainNavView(viewId) {
     if (['view-timetable', 'view-seats', 'view-exam-resources', 'view-class'].includes(viewId)) return 'view-exam';
     if (viewId === 'view-resources') return 'view-resources';
+    if (viewId === 'view-profile') return 'view-profile';
     return 'view-home';
 }
 
@@ -369,10 +370,11 @@ function switchView(viewId) {
 
     if (viewId === 'view-departments') renderDepartments();
     if (viewId === 'view-home') updateCountdown();
+    if (viewId === 'view-profile' && typeof renderUserProfile === 'function') renderUserProfile();
     syncExternalAppView();
 
     // Update Nav Bar active & Indicator movement
-    const tabs = ['view-home', 'view-exam', 'view-resources'];
+    const tabs = ['view-home', 'view-exam', 'view-resources', 'view-profile'];
     const navPill = document.getElementById('navPill');
     const activeMainView = (viewId === 'view-seats' || viewId === 'view-results' || viewId === 'view-exam-resources') ? 'view-exam' : getMainNavView(viewId);
     const nextIndex = tabs.indexOf(activeMainView);
@@ -2159,6 +2161,10 @@ function saveEditProfile() {
     updateCountdown();
     updateHomeSeatInfo();
     renderDaySelector();
+
+    if (typeof renderUserProfile === 'function') {
+        renderUserProfile();
+    }
 
     closeEditProfile();
 

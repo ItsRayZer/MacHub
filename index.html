@@ -461,6 +461,10 @@
                 <span class="nav-icon nav-icon-text">R</span>
                 <span class="nav-label">Resources</span>
             </button>
+            <button onclick="switchView('view-profile')" id="tab-view-profile" class="nav-item" c-option="4">
+                <span class="nav-icon nav-icon-text">P</span>
+                <span class="nav-label">Profile</span>
+            </button>
         </div>
         
         <!-- Separate but same to same MacAI Circle Button -->
@@ -639,6 +643,127 @@
             <h3 class="text-xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] mb-2">Important Note</h3>
             <p class="text-sm font-bold text-[#86868b] mb-6">Seat arrangement may change. For the most accurate details, please check at least 6 hours before the exam.</p>
             <button onclick="closeDailyNote()" class="w-full py-4 bg-[#1d1d1f] dark:bg-[#f5f5f7] text-white dark:text-[#1d1d1f] rounded-2xl font-bold spring">Got It</button>
+        </div>
+    </div>
+
+
+    <!-- Profile View Panel -->
+    <div id="view-profile" class="view-panel max-w-md mx-auto p-6 hidden relative min-h-screen flex flex-col" style="padding-bottom: 90px;">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-1">Academic Identity</p>
+                <h2 class="text-2xl font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">My Profile</h2>
+            </div>
+            <button onclick="toggleTheme()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-lg spring hover:scale-105 active:scale-95" aria-label="Toggle theme">
+                <span id="themeIcon">🌓</span>
+            </button>
+        </div>
+
+        <!-- 3D Card Holographic Container -->
+        <div id="profile-card-container" class="w-full mb-6">
+            <!-- Dynamic 3D interactive ticket will be injected here by JS -->
+        </div>
+
+        <!-- Attendance Badge section -->
+        <div class="glass-panel p-4 rounded-[2rem] mb-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-[var(--mac-blue)]/10 dark:bg-[var(--mac-blue)]/20 flex items-center justify-center text-lg">
+                    📊
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-[#86868b]">Class Attendance</h4>
+                    <p id="profileAttendanceLabel" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">Loading...</p>
+                </div>
+            </div>
+            <span id="profileAttendanceBadge" class="text-[10px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider">---</span>
+        </div>
+
+        <!-- Academic Info Grid -->
+        <div class="glass-panel p-5 rounded-[2.5rem] mb-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
+                <span class="text-xs font-bold text-[#86868b]">Full Name</span>
+                <span id="profileGridName" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
+                <span class="text-xs font-bold text-[#86868b]">Course</span>
+                <span id="profileGridDept" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
+                <span class="text-xs font-bold text-[#86868b]">Reg No</span>
+                <span id="profileGridReg" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
+                <span class="text-xs font-bold text-[#86868b]">Admission No</span>
+                <span id="profileGridAdmin" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-[#86868b]">Academic Regulation</span>
+                <span class="text-sm font-black text-[var(--mac-blue)]">MGU-UGP 2024</span>
+            </div>
+        </div>
+
+        <!-- Advanced Customization & Settings Section -->
+        <div class="glass-panel p-5 rounded-[2.5rem] mb-6">
+            <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-4">Identity & Visual Settings</p>
+            
+            <div class="space-y-4">
+                <!-- Custom Skins Selection -->
+                <div>
+                    <label class="block text-xs font-bold text-[#86868b] mb-2">Holographic ID Skin Theme</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setProfileHoloSkin('amethyst')" id="skin-btn-amethyst" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">🔮 Amethyst</button>
+                        <button onclick="setProfileHoloSkin('cyberpunk')" id="skin-btn-cyberpunk" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">🌌 Cyberpunk</button>
+                        <button onclick="setProfileHoloSkin('emerald')" id="skin-btn-emerald" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">💚 Emerald</button>
+                        <button onclick="setProfileHoloSkin('classic')" id="skin-btn-classic" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">💿 Classic</button>
+                    </div>
+                </div>
+
+                <div class="h-px bg-[#86868b]/10 my-1"></div>
+
+                <!-- Toggle Display Details -->
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Show Reg No on Card</h4>
+                        <p class="text-[10px] text-[#86868b]">Display your university registration number</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleShowReg" onchange="toggleCardField('showReg')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Show Admission No on Card</h4>
+                        <p class="text-[10px] text-[#86868b]">Display college Admission Number</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleShowAdmin" onchange="toggleCardField('showAdmin')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+
+                <div class="h-px bg-[#86868b]/10 my-1"></div>
+
+                <!-- High Fidelity / Performance Mode -->
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">High-Fidelity 3D Tilt</h4>
+                        <p class="text-[10px] text-[#86868b]">Fluid interactive tilting effects (Battery Saver if off)</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="togglePerformance" onchange="toggleCardField('highFidelity')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagnostic & Editing Actions -->
+        <div class="space-y-3">
+            <button onclick="openEditProfile()" class="w-full py-4 bg-[var(--mac-blue)] text-white rounded-2xl font-bold spring active:scale-95">Edit Academic Info</button>
+            <button onclick="triggerResetProfile()" class="w-full py-4 bg-red-500/10 dark:bg-red-500/20 text-red-500 rounded-2xl font-bold spring active:scale-95">Reset Identity Profile</button>
         </div>
     </div>
 

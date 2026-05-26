@@ -924,7 +924,8 @@ body::after {
 }
 
 /* ── Onboarding 3D Holographic ID Ticket ── */
-#ob-ticket-container {
+#ob-ticket-container,
+#profile-ticket-container {
     perspective: 1200px;
     --o: 0; /* Opacity for reflection */
     --p: 50%; /* Position X for reflection */
@@ -1200,4 +1201,93 @@ body::after {
     font-weight: 900;
     opacity: 0.8;
     letter-spacing: 0.05em;
+}
+
+/* ── Interactive Holographic ID Card Skins ── */
+.ob-ticket.holo-skin-amethyst .ob-ticket-front,
+.ob-ticket.holo-skin-amethyst .ob-ticket-back {
+    background-image:
+        radial-gradient(
+            circle at var(--p) 40%,
+            rgba(163, 73, 255, 0.4) 0%,
+            rgba(98, 0, 234, 0.2) 40%,
+            transparent 70%
+        ),
+        radial-gradient(
+            circle at 80% 80%,
+            rgba(233, 30, 99, 0.25) 0%,
+            transparent 60%
+        ),
+        linear-gradient(135deg, #1d003b 0%, #08020f 50%, #120024 100%);
+    box-shadow:
+        0 30px 80px rgba(0,0,0,0.8),
+        0 0 0 1px rgba(255,255,255,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        0 0 60px rgba(163, 73, 255, 0.2);
+}
+
+.ob-ticket.holo-skin-cyberpunk .ob-ticket-front,
+.ob-ticket.holo-skin-cyberpunk .ob-ticket-back {
+    background-image:
+        radial-gradient(
+            circle at var(--p) 40%,
+            rgba(255, 0, 128, 0.4) 0%,
+            rgba(0, 242, 254, 0.2) 40%,
+            transparent 70%
+        ),
+        radial-gradient(
+            circle at 80% 80%,
+            rgba(79, 172, 254, 0.3) 0%,
+            transparent 60%
+        ),
+        linear-gradient(135deg, #2b001a 0%, #00121a 50%, #000c14 100%);
+    box-shadow:
+        0 30px 80px rgba(0,0,0,0.8),
+        0 0 0 1px rgba(255,255,255,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        0 0 60px rgba(255, 0, 128, 0.2);
+}
+
+.ob-ticket.holo-skin-emerald .ob-ticket-front,
+.ob-ticket.holo-skin-emerald .ob-ticket-back {
+    background-image:
+        radial-gradient(
+            circle at var(--p) 40%,
+            rgba(0, 230, 118, 0.35) 0%,
+            rgba(0, 184, 212, 0.2) 40%,
+            transparent 70%
+        ),
+        radial-gradient(
+            circle at 80% 80%,
+            rgba(76, 175, 80, 0.25) 0%,
+            transparent 60%
+        ),
+        linear-gradient(135deg, #002214 0%, #000c0f 50%, #00121a 100%);
+    box-shadow:
+        0 30px 80px rgba(0,0,0,0.8),
+        0 0 0 1px rgba(255,255,255,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        0 0 60px rgba(0, 230, 118, 0.18);
+}
+
+.ob-ticket.holo-skin-classic .ob-ticket-front,
+.ob-ticket.holo-skin-classic .ob-ticket-back {
+    background-image:
+        radial-gradient(
+            circle at var(--p) 40%,
+            rgba(255, 255, 255, 0.15) 0%,
+            rgba(255, 255, 255, 0.05) 40%,
+            transparent 70%
+        ),
+        radial-gradient(
+            circle at 80% 80%,
+            rgba(255, 255, 255, 0.08) 0%,
+            transparent 60%
+        ),
+        linear-gradient(135deg, #1f1f1f 0%, #0d0d0d 50%, #151515 100%);
+    box-shadow:
+        0 30px 80px rgba(0,0,0,0.8),
+        0 0 0 1px rgba(255,255,255,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        0 0 60px rgba(255, 255, 255, 0.08);
 }

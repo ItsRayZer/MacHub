@@ -198,19 +198,26 @@
         .nav-pill[c-current="1"] { --nav-translate: calc(var(--nav-step) * 0); }
         .nav-pill[c-current="2"] { --nav-translate: calc(var(--nav-step) * 1); }
         .nav-pill[c-current="3"] { --nav-translate: calc(var(--nav-step) * 2); }
+        .nav-pill[c-current="4"] { --nav-translate: calc(var(--nav-step) * 3); }
 
         .nav-pill[c-previous="1"][c-current="2"] .nav-indicator,
-        .nav-pill[c-previous="2"][c-current="3"] .nav-indicator {
+        .nav-pill[c-previous="2"][c-current="3"] .nav-indicator,
+        .nav-pill[c-previous="3"][c-current="4"] .nav-indicator {
             animation: nav-liquid-forward 0.45s ease-out;
         }
 
+        .nav-pill[c-previous="4"][c-current="3"] .nav-indicator,
         .nav-pill[c-previous="3"][c-current="2"] .nav-indicator,
         .nav-pill[c-previous="2"][c-current="1"] .nav-indicator {
             animation: nav-liquid-backward 0.45s ease-out;
         }
 
         .nav-pill[c-previous="1"][c-current="3"] .nav-indicator,
-        .nav-pill[c-previous="3"][c-current="1"] .nav-indicator {
+        .nav-pill[c-previous="3"][c-current="1"] .nav-indicator,
+        .nav-pill[c-previous="2"][c-current="4"] .nav-indicator,
+        .nav-pill[c-previous="4"][c-current="2"] .nav-indicator,
+        .nav-pill[c-previous="1"][c-current="4"] .nav-indicator,
+        .nav-pill[c-previous="4"][c-current="1"] .nav-indicator {
             animation: nav-liquid-jump 0.45s ease-out;
         }
 
