@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MacHub</title>
-    <link rel="icon" type="image/png" href="Logo/ChatGPT Image May 18, 2026, 10_33_49 PM.png">
-    <link rel="apple-touch-icon" href="Logo/ChatGPT Image May 18, 2026, 10_33_49 PM.png">
+    <link rel="icon" type="image/png" href="assets/img/ChatGPT Image May 18, 2026, 10_33_49 PM.png">
+    <link rel="apple-touch-icon" href="assets/img/ChatGPT Image May 18, 2026, 10_33_49 PM.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MacHub">
@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="styles/base.css">
     <link rel="stylesheet" href="styles/components.css">
     <link rel="stylesheet" href="styles/mobile-optimized.css">
+    <link rel="stylesheet" href="styles/mac_ai_chat.css">
 </head>
 <body class="pb-32 app-shell-ready">
 
@@ -128,18 +129,11 @@
 
     <div id="view-seats" class="view-panel">
 
-        <!-- Search at top -->
+        <!-- Top navigation header without search box -->
         <div class="max-w-md mx-auto px-4 pt-4 pb-2 sticky top-0 z-50">
             <div class="exam-subnav" aria-label="Exam menu">
+                <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item" data-top-target="class">Class</button>
                 <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item is-active" data-top-target="exam">Exam</button>
-                <button type="button" onclick="switchExamView('view-results')" class="exam-subnav-item" data-top-target="result">Result</button>
-            </div>
-            <div class="glass-panel rounded-[2rem] px-4 py-3 search-focus transition-all">
-                <div class="relative">
-                    <input type="text" id="globalSearch" placeholder="Search name or Reg No..."
-                        class="w-full bg-transparent border-none rounded-2xl py-2 pl-10 pr-4 text-base font-bold outline-none placeholder:text-[#86868b]/60 dark:placeholder:text-white/30 dark:text-white">
-                    <span class="absolute left-1 top-1/2 -translate-y-1/2 opacity-30 text-base">🔍</span>
-                </div>
             </div>
         </div>
 
@@ -160,13 +154,26 @@
         <!-- Seating Map Glass Container -->
         <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: calc(100% - 2rem); max-width: 448px;">
             <!-- Inner Toggle -->
-            <div class="exam-subnav mb-4 mt-2" aria-label="Inner Exam Menu">
-                <button type="button" id="tab-timetable" onclick="switchExamTab('timetable')" class="exam-subnav-item" data-exam-target="view-timetable">Timetable</button>
+            <div class="exam-subnav subnav-3col mb-4 mt-2" aria-label="Inner Exam Menu">
+                <button type="button" id="tab-timetable" onclick="switchExamTab('timetable')" class="exam-subnav-item" data-exam-target="view-timetable">Exam Timetable</button>
                 <button type="button" id="tab-seats" onclick="switchExamTab('seats')" class="exam-subnav-item is-active" data-exam-target="view-seats">View Seats</button>
+                <button type="button" id="tab-results" onclick="switchExamTab('results')" class="exam-subnav-item" data-exam-target="view-results">Result</button>
             </div>
 
             <div id="sub-view-timetable" class="hidden w-full">
                 <div id="timetableContent"></div>
+            </div>
+
+            <div id="sub-view-results" class="hidden w-full">
+                <!-- Sleek Glassmorphism Coming Soon Card -->
+                <div class="glass-panel rounded-3xl p-8 text-center my-6 relative overflow-hidden shadow-sm">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-[var(--mac-blue)] opacity-10 rounded-full -mr-12 -mt-12"></div>
+                    <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">🏆</div>
+                    <h3 class="text-xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Results Coming Soon</h3>
+                    <p class="text-[12px] font-bold text-[#86868b] mt-2 leading-relaxed">
+                        Semester exam results and performance analytics are being compiled. Stay tuned!
+                    </p>
+                </div>
             </div>
 
             <div id="sub-view-seats">
@@ -209,7 +216,16 @@
         <div id="hallTabs" class="hidden"></div>
     </div> <!-- end view-seats -->
 
-    <div id="view-home" class="view-panel is-active max-w-md mx-auto p-6">
+    <div id="view-home" class="view-panel is-active max-w-md mx-auto p-6 relative">
+        <!-- Insta-like pulsing announcement bell button -->
+        <button onclick="openAnnouncements()" class="absolute top-8 right-8 w-11 h-11 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-xl z-30" style="background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.5);" aria-label="Open Announcements">
+            🔔
+            <!-- Pulsing Red Dot -->
+            <span class="absolute top-2 right-2.5 flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+        </button>
         <div class="glass-panel p-8 rounded-[3rem] text-center mb-8 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-32 h-32 bg-[var(--mac-blue)] opacity-10 rounded-full -mr-16 -mt-16"></div>
             <div class="glass-panel w-20 h-20 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 shadow-xl floating">🏠</div>
@@ -295,22 +311,65 @@
         </div>
     </div> <!-- Close view-home -->
 
-    <div id="view-results" class="view-panel max-w-md mx-auto p-6">
-        <div class="exam-subnav mb-4" aria-label="Exam menu">
-            <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item" data-top-target="exam">Exam</button>
-            <button type="button" onclick="switchExamView('view-results')" class="exam-subnav-item is-active" data-top-target="result">Result</button>
+    <!-- Announcements Panel -->
+    <div id="view-announcements" class="view-panel max-w-md mx-auto p-6 hidden relative">
+        <!-- Fixed back button with no text (same as student portal back button) -->
+        <button type="button" class="external-app-back absolute top-6 left-6" onclick="closeAnnouncements()" aria-label="Back to home">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+
+        <div class="flex flex-col gap-4 mb-6 mt-14">
+            <h2 class="text-3xl font-black text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight">Announcements</h2>
+            <!-- Category list pill filter (scrolling horizontally) -->
+            <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none" id="announcementCategories"></div>
         </div>
-        <div class="glass-panel rounded-[2rem] p-10 mt-4 text-center shadow-sm">
-            <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">📊</div>
-            <h3 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Results Coming Soon</h3>
-            <p class="text-[12px] font-bold text-[#86868b] mt-2">Exam results will be available here once they are published.</p>
+
+        <!-- Announcements list container -->
+        <div id="announcementsList" class="space-y-4 pb-24"></div>
+    </div>
+
+    <div id="view-class" class="view-panel max-w-md mx-auto p-6">
+        <div class="exam-subnav mb-4" aria-label="Exam menu">
+            <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item is-active" data-top-target="class">Class</button>
+            <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item" data-top-target="exam">Exam</button>
+        </div>
+
+        <!-- Class Portal Top Dropdowns -->
+        <div class="max-w-md mx-auto mt-3 mb-4">
+            <div class="seat-toolbar">
+                <div id="classDepartmentFilters" class="seat-dropdown"></div>
+                <div id="classDaySelector" class="seat-dropdown"></div>
+            </div>
+        </div>
+
+        <!-- Classroom Hub Seating/Timetable Container -->
+        <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: 100%;">
+            <!-- Inner Class Toggle -->
+            <div class="exam-subnav subnav-3col mb-4 mt-2" aria-label="Inner Class Menu">
+                <button type="button" id="tab-class-timetable" onclick="switchClassTab('timetable')" class="exam-subnav-item is-active" data-class-target="view-class-timetable">Timetable</button>
+                <button type="button" id="tab-class-subjects" onclick="switchClassTab('subjects')" class="exam-subnav-item" data-class-target="view-class-subjects">Subjects</button>
+                <button type="button" id="tab-class-teachers" onclick="switchClassTab('teachers')" class="exam-subnav-item" data-class-target="view-class-teachers">Teachers</button>
+            </div>
+
+            <!-- Class Sub-views -->
+            <div id="sub-view-class-timetable" class="w-full">
+                <div id="classTimetableContent" class="space-y-4"></div>
+            </div>
+
+            <div id="sub-view-class-subjects" class="hidden w-full">
+                <div id="classSubjectsContent" class="grid gap-4"></div>
+            </div>
+
+            <div id="sub-view-class-teachers" class="hidden w-full">
+                <div id="classTeachersContent" class="space-y-4"></div>
+            </div>
         </div>
     </div>
 
     <div id="view-exam-resources" class="view-panel max-w-md mx-auto p-6">
         <div class="exam-subnav mb-4" aria-label="Exam menu">
+            <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item" data-top-target="class">Class</button>
             <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item is-active" data-top-target="exam">Exam</button>
-            <button type="button" onclick="switchExamView('view-results')" class="exam-subnav-item" data-top-target="result">Result</button>
         </div>
         <div class="glass-panel p-6 rounded-[2rem] mb-4">
             <div class="flex items-center gap-2 mb-3">
@@ -346,25 +405,42 @@
         </div>
     </div>
 
-    <div id="view-resources" class="view-panel max-w-md mx-auto p-6">
-        <div class="glass-panel p-7 rounded-[2.5rem] mb-5">
-            <div class="flex items-center gap-2 mb-3">
-                <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="brand-logo h-4">
-                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.25em]">Resources</p>
+    <!-- Reconstructed Resources View -->
+    <div id="view-resources" class="view-panel max-w-md mx-auto p-6 relative min-h-screen flex flex-col" style="padding-bottom: 90px;">
+        <div class="flex items-center gap-3.5 mb-6 mt-2">
+            <div class="w-12 h-12 bg-[#0071e3]/10 rounded-2xl flex items-center justify-center text-2xl shadow-md">📚</div>
+            <div>
+                <h2 class="text-2xl font-black text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight leading-none">Resources</h2>
+                <p class="text-[9px] font-black text-[#86868b] uppercase tracking-widest mt-1">Academic Study Space</p>
             </div>
-            <h3 class="text-3xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight">All-in-one student space.</h3>
-            <p class="text-sm font-bold text-[#86868b] mt-3">Quick access for academics, exams, and college tools.</p>
         </div>
-        <div class="grid gap-3 pb-24">
-            <button onclick="switchExamView('view-exam-resources')" class="resource-action-card spring">
-                <span>Exam Resources</span>
-                <strong>Question papers, answers, seating</strong>
-            </button>
-            
-            <button onclick="openExternalApp('https://eportal.maraugusthinosecollege.org/Login.aspx', 'Student Portal')" class="resource-action-card spring">
-                <span>Student Portal</span>
-                <strong>Open college e-portal</strong>
-            </button>
+
+        <!-- Two Toggles for Subjects & Protocols -->
+        <div class="exam-subnav mb-5" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.5rem; width: 100%;">
+            <button type="button" onclick="switchResourcesTab('subjects')" id="btn-resource-subjects" class="exam-subnav-item is-active">Subjects</button>
+            <button type="button" onclick="switchResourcesTab('protocols')" id="btn-resource-protocols" class="exam-subnav-item">Protocols</button>
+        </div>
+
+        <!-- Subjects Resource Container -->
+        <div id="resources-subjects-container" class="w-full space-y-4">
+            <div class="glass-panel p-5 rounded-[2.5rem] mb-4">
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-1">Subject selector</p>
+                <h4 class="text-sm font-bold text-[#86868b] mb-4">Select a subject to explore its academic materials:</h4>
+                <div id="resource-subjects-list" class="space-y-3">
+                    <!-- Dynamic subjects list with accordion folders will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Protocols Resource Container -->
+        <div id="resources-protocols-container" class="w-full space-y-4 hidden">
+            <div class="glass-panel p-5 rounded-[2.5rem] mb-4">
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-1">Academic Protocols</p>
+                <h4 class="text-sm font-bold text-[#86868b] mb-4">Mahatma Gandhi University & MAC Guidelines:</h4>
+                <div id="resource-protocols-list" class="space-y-3">
+                    <!-- Sample protocols list will be injected here -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -379,15 +455,31 @@
                 <span class="nav-label">Home</span>
             </button>
             <button onclick="switchExamView()" id="tab-view-exam" class="nav-item" c-option="2">
-                <span class="nav-icon nav-icon-text">E</span>
-                <span class="nav-label">Exam</span>
+                <span class="nav-icon nav-icon-text">S</span>
+                <span class="nav-label">Schedule</span>
             </button>
             <button onclick="switchView('view-resources')" id="tab-view-resources" class="nav-item" c-option="3">
                 <span class="nav-icon nav-icon-text">R</span>
                 <span class="nav-label">Resources</span>
             </button>
+            <button onclick="switchView('view-profile')" id="tab-view-profile" class="nav-item" c-option="4">
+                <span class="nav-icon nav-icon-text">P</span>
+                <span class="nav-label">Profile</span>
+            </button>
         </div>
         
+        <!-- Separate but same to same MacAI Circle Button -->
+        <button onclick="openMacAI()" id="macAiFloatingBtn" class="nav-ai-pill" aria-label="Open MacAI" style="position: relative;">
+            <div id="geminianimation">
+                <div></div>
+            </div>
+            <div class="gemini-star-overlay">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L14.83 8.17L21 11L14.83 13.83L12 20L9.17 13.83L3 11L9.17 8.17L12 2Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
+                    <path d="M19 3L20.06 5.28L22.5 6L20.06 6.72L19 9L17.94 6.72L15.5 6L17.94 5.28L19 3Z" fill="white"/>
+                </svg>
+            </div>
+        </button>
     </div>
 
 
@@ -555,6 +647,466 @@
         </div>
     </div>
 
+
+    <!-- Profile View Panel -->
+    <div id="view-profile" class="view-panel max-w-md mx-auto p-6 hidden relative min-h-screen flex flex-col" style="padding-bottom: 90px;">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-1">Academic Identity</p>
+                <h2 class="text-2xl font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">My Profile</h2>
+            </div>
+            <button onclick="toggleTheme()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-lg spring hover:scale-105 active:scale-95" aria-label="Toggle theme">
+                <span id="themeIcon">🌓</span>
+            </button>
+        </div>
+
+        <!-- 3D Card Holographic Container -->
+        <div id="profile-card-container" class="w-full mb-6">
+            <!-- Dynamic 3D interactive ticket will be injected here by JS -->
+        </div>
+
+        <!-- Attendance Badge section -->
+        <div class="glass-panel p-4 rounded-[2rem] mb-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-[var(--mac-blue)]/10 dark:bg-[var(--mac-blue)]/20 flex items-center justify-center text-lg">
+                    📊
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-[#86868b]">Class Attendance</h4>
+                    <p id="profileAttendanceLabel" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">Loading...</p>
+                </div>
+            </div>
+            <span id="profileAttendanceBadge" class="text-[10px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider">---</span>
+        </div>
+
+        <!-- Academic Info Grid -->
+        <div class="glass-panel p-5 rounded-[2.5rem] mb-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
+                <span class="text-xs font-bold text-[#86868b]">Full Name</span>
+                <span id="profileGridName" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
+                <span class="text-xs font-bold text-[#86868b]">Course</span>
+                <span id="profileGridDept" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
+                <span class="text-xs font-bold text-[#86868b]">Reg No</span>
+                <span id="profileGridReg" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
+                <span class="text-xs font-bold text-[#86868b]">Admission No</span>
+                <span id="profileGridAdmin" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-[#86868b]">Academic Regulation</span>
+                <span class="text-sm font-black text-[var(--mac-blue)]">MGU-UGP 2024</span>
+            </div>
+        </div>
+
+        <!-- Advanced Customization & Settings Section -->
+        <div class="glass-panel p-5 rounded-[2.5rem] mb-6">
+            <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-4">Identity & Visual Settings</p>
+            
+            <div class="space-y-4">
+                <!-- Custom Skins Selection -->
+                <div>
+                    <label class="block text-xs font-bold text-[#86868b] mb-2">Holographic ID Skin Theme</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setProfileHoloSkin('amethyst')" id="skin-btn-amethyst" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">🔮 Amethyst</button>
+                        <button onclick="setProfileHoloSkin('cyberpunk')" id="skin-btn-cyberpunk" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">🌌 Cyberpunk</button>
+                        <button onclick="setProfileHoloSkin('emerald')" id="skin-btn-emerald" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">💚 Emerald</button>
+                        <button onclick="setProfileHoloSkin('classic')" id="skin-btn-classic" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">💿 Classic</button>
+                    </div>
+                </div>
+
+                <div class="h-px bg-[#86868b]/10 my-1"></div>
+
+                <!-- Toggle Display Details -->
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Show Reg No on Card</h4>
+                        <p class="text-[10px] text-[#86868b]">Display your university registration number</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleShowReg" onchange="toggleCardField('showReg')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Show Admission No on Card</h4>
+                        <p class="text-[10px] text-[#86868b]">Display college Admission Number</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleShowAdmin" onchange="toggleCardField('showAdmin')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+
+                <div class="h-px bg-[#86868b]/10 my-1"></div>
+
+                <!-- High Fidelity / Performance Mode -->
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">High-Fidelity 3D Tilt</h4>
+                        <p class="text-[10px] text-[#86868b]">Fluid interactive tilting effects (Battery Saver if off)</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="togglePerformance" onchange="toggleCardField('highFidelity')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagnostic & Editing Actions -->
+        <div class="space-y-3">
+            <button onclick="openEditProfile()" class="w-full py-4 bg-[var(--mac-blue)] text-white rounded-2xl font-bold spring active:scale-95">Edit Academic Info</button>
+            <button onclick="triggerResetProfile()" class="w-full py-4 bg-red-500/10 dark:bg-red-500/20 text-red-500 rounded-2xl font-bold spring active:scale-95">Reset Identity Profile</button>
+        </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MacAI — DareToWin UI (Nothing OS × Apple Liquid Glass Edition)
+         Tabs: Boss AI (Chat) · Mind (Study) · Profile
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div id="view-ai" class="view-panel" style="
+        position:fixed; inset:0; z-index:100;
+        background:#000; display:none; flex-direction:column;
+        font-family:'Space Grotesk',system-ui,sans-serif;
+        overflow:hidden;">
+
+        <!-- ── Ambient background orbs ── -->
+        <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;">
+            <div style="position:absolute;width:320px;height:320px;border-radius:50%;
+                background:radial-gradient(circle,rgba(108,99,255,.28) 0%,transparent 70%);
+                top:-80px;left:-60px;filter:blur(50px);animation:macai-orb1 8s ease-in-out infinite alternate;"></div>
+            <div style="position:absolute;width:280px;height:280px;border-radius:50%;
+                background:radial-gradient(circle,rgba(0,122,255,.22) 0%,transparent 70%);
+                bottom:-60px;right:-40px;filter:blur(60px);animation:macai-orb2 10s ease-in-out infinite alternate;"></div>
+        </div>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+            @keyframes macai-orb1{from{transform:translate(0,0) scale(1)}to{transform:translate(30px,20px) scale(1.12)}}
+            @keyframes macai-orb2{from{transform:translate(0,0) scale(1)}to{transform:translate(-20px,25px) scale(1.08)}}
+            @keyframes macai-pop{from{opacity:0;transform:translateY(14px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+            @keyframes macai-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+            @keyframes macai-dots{0%,80%,100%{transform:scale(0);opacity:.3}40%{transform:scale(1);opacity:1}}
+
+            #view-ai.is-active{display:flex!important;}
+            /* Tab Bar */
+            .macai-tabbar{display:flex;align-items:center;justify-content:center;gap:4px;
+                padding:10px 20px;background:rgba(0,0,0,.7);backdrop-filter:blur(20px);
+                border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;position:relative;z-index:10;}
+            .macai-tab{flex:1;max-width:110px;padding:8px 6px;border-radius:20px;
+                background:transparent;border:1px solid transparent;
+                color:rgba(255,255,255,.4);font-size:11px;font-weight:700;
+                cursor:pointer;transition:all .25s;text-align:center;letter-spacing:.02em;}
+            .macai-tab.active{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12);color:#fff;}
+            /* Header */
+            .macai-header{display:flex;align-items:center;justify-content:space-between;
+                padding:14px 20px;background:rgba(0,0,0,.65);backdrop-filter:blur(24px);
+                border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;z-index:10;position:relative;}
+            .macai-back{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);
+                border:1px solid rgba(255,255,255,.1);color:#fff;display:grid;place-items:center;
+                cursor:pointer;transition:all .2s;}
+            .macai-back:active{transform:scale(.9);}
+            /* Scrollable body */
+            .macai-scroll{flex:1;overflow-y:auto;padding:16px 16px 120px;position:relative;z-index:1;}
+            .macai-scroll::-webkit-scrollbar{display:none;}
+            /* Glass card */
+            .macai-glass{background:rgba(255,255,255,.03);
+                border:1px solid rgba(255,255,255,.09);border-radius:24px;
+                backdrop-filter:blur(30px);padding:16px;margin-bottom:12px;overflow:hidden;
+                box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);}
+            /* Suggestion cards */
+            .macai-suggest-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+            .macai-suggest-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+                border-radius:20px;padding:14px 12px;text-align:left;cursor:pointer;
+                transition:all .25s;color:#fff;}
+            .macai-suggest-card:hover,.macai-suggest-card:active{background:rgba(255,255,255,.08);
+                border-color:rgba(108,99,255,.4);transform:translateY(-2px);}
+            /* Chat bubbles */
+            .macai-chat-area{display:flex;flex-direction:column;gap:12px;}
+            .macai-bubble{max-width:82%;padding:12px 16px;border-radius:20px;font-size:13px;
+                line-height:1.55;font-weight:500;word-wrap:break-word;
+                animation:macai-pop .3s cubic-bezier(.25,1,.5,1);}
+            .macai-bubble.user{align-self:flex-end;
+                background:linear-gradient(135deg,#0071e3,#6C63FF);color:#fff;border-bottom-right-radius:4px;}
+            .macai-bubble.ai{align-self:flex-start;background:rgba(255,255,255,.05);
+                border:1px solid rgba(255,255,255,.09);color:#f0f0f5;border-bottom-left-radius:4px;}
+            .macai-typing{display:flex;gap:5px;padding:6px 10px;align-items:center;}
+            .macai-typing span{width:6px;height:6px;background:rgba(255,255,255,.4);border-radius:50%;
+                animation:macai-dots 1.4s infinite both;}
+            .macai-typing span:nth-child(2){animation-delay:-.2s;}
+            .macai-typing span:nth-child(3){animation-delay:-.1s;}
+            /* Input dock */
+            .macai-input-dock{position:absolute;bottom:0;left:0;right:0;z-index:20;
+                padding:10px 14px 20px;background:linear-gradient(to top,rgba(0,0,0,.9) 70%,transparent);}
+            .macai-pill{display:flex;align-items:center;gap:8px;padding:6px 8px;
+                background:rgba(12,12,12,.92);border:1px solid rgba(255,255,255,.1);
+                border-radius:50px;backdrop-filter:blur(30px);box-shadow:0 8px 32px rgba(0,0,0,.6);}
+            .macai-circle{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.06);
+                border:1px solid rgba(255,255,255,.1);color:#fff;display:grid;place-items:center;
+                cursor:pointer;transition:all .18s;flex-shrink:0;font-size:15px;}
+            .macai-circle:active{transform:scale(.88);}
+            .macai-circle.send{background:#fff;color:#000;border-color:#fff;}
+            .macai-circle.send:active{transform:scale(.88);}
+            .macai-input{flex:1;background:transparent;border:none;outline:none;
+                color:#fff;font-size:13px;font-weight:600;padding:6px 2px;}
+            .macai-input::placeholder{color:rgba(255,255,255,.3);}
+            /* Plus menu */
+            .macai-plus-menu{position:absolute;bottom:72px;left:14px;width:240px;
+                background:rgba(10,10,14,.95);border:1px solid rgba(255,255,255,.1);
+                border-radius:22px;padding:8px;box-shadow:0 16px 40px rgba(0,0,0,.7);
+                display:none;flex-direction:column;gap:4px;z-index:30;}
+            .macai-plus-menu.open{display:flex;}
+            .macai-plus-item{display:flex;align-items:center;gap:12px;padding:10px 12px;
+                border-radius:14px;cursor:pointer;transition:background .18s;border:none;
+                background:transparent;color:#fff;width:100%;text-align:left;}
+            .macai-plus-item:hover{background:rgba(255,255,255,.06);}
+            /* Active tag */
+            .macai-tag-row{padding:0 4px 6px;display:none;}
+            .macai-tag-row.show{display:flex;gap:6px;}
+            .macai-active-tag{font-size:10px;font-weight:800;letter-spacing:.05em;
+                background:rgba(108,99,255,.15);border:1px solid rgba(108,99,255,.3);
+                color:#a599ff;padding:4px 10px;border-radius:12px;display:flex;align-items:center;gap:6px;}
+            .macai-active-tag button{background:none;border:none;color:#a599ff;
+                font-weight:900;cursor:pointer;font-size:12px;}
+            /* Mind tab */
+            .macai-subject-row{display:flex;align-items:center;gap:12px;padding:12px 0;
+                border-bottom:1px solid rgba(255,255,255,.06);}
+            .macai-subject-row:last-child{border-bottom:none;}
+            .macai-prog-bar{flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
+            .macai-prog-fill{height:100%;border-radius:2px;
+                background:linear-gradient(90deg,#6C63FF,#30D158);transition:width .5s;}
+            /* Profile tab */
+            .macai-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+            .macai-stat-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+                border-radius:18px;padding:14px;text-align:center;}
+            /* Section label */
+            .macai-section-label{font-size:10px;font-weight:800;letter-spacing:.15em;
+                color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:10px;}
+            /* Hero greeting */
+            .macai-hero{text-align:center;padding:32px 16px 20px;}
+            .macai-hero h2{font-size:26px;font-weight:800;letter-spacing:-.03em;
+                background:linear-gradient(180deg,#fff 30%,rgba(255,255,255,.5) 100%);
+                -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+            .macai-hero p{font-size:12px;color:rgba(255,255,255,.4);margin-top:6px;font-weight:500;}
+            /* Dot status */
+            .macai-dot{width:7px;height:7px;border-radius:50%;background:#30D158;
+                animation:macai-pulse 2s ease-in-out infinite;display:inline-block;}
+        </style>
+
+        <!-- ── TOP HEADER ── -->
+        <div class="macai-header">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button class="macai-back" onclick="closeMacAI()" aria-label="Close MacAI">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div>
+                    <div style="font-size:15px;font-weight:900;color:#fff;letter-spacing:-.02em;display:flex;align-items:center;gap:7px;">
+                        MacAI <span class="macai-dot"></span>
+                    </div>
+                    <div style="font-size:10px;color:rgba(255,255,255,.35);font-weight:700;letter-spacing:.04em;margin-top:1px;">DARETOWNIN EDITION</div>
+                </div>
+            </div>
+            <button onclick="macaiClearAllChats()" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);display:grid;place-items:center;cursor:pointer;font-size:15px;" title="Clear chat">🗑️</button>
+        </div>
+
+        <!-- ── TAB BAR ── -->
+        <div class="macai-tabbar">
+            <button class="macai-tab active" id="macai-tab-boss" onclick="macaiSwitchTab('boss')">🤖 Boss AI</button>
+            <button class="macai-tab" id="macai-tab-mind" onclick="macaiSwitchTab('mind')">📚 Mind</button>
+            <button class="macai-tab" id="macai-tab-profile" onclick="macaiSwitchTab('profile')">👤 Profile</button>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             TAB: BOSS AI (DareToWin Chat)
+        ══════════════════════════════════════ -->
+        <div id="macai-pane-boss" style="flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;">
+
+            <!-- Scrollable messages + welcome -->
+            <div class="macai-scroll" id="macaiBossScroll">
+
+                <!-- Welcome / hero (shown when chat is empty) -->
+                <div id="macaiHero" class="macai-hero">
+                    <h2>What can I<br>help with?</h2>
+                    <p>Ask about timetables, syllabus, seats & more.</p>
+                </div>
+
+                <!-- Suggestion cards (shown when chat is empty) -->
+                <div id="macaiSuggestGrid" class="macai-suggest-grid">
+                    <button class="macai-suggest-card" onclick="macaiSendSuggested('Show me today\'s class timetable')">
+                        <div style="font-size:20px;margin-bottom:6px;">📅</div>
+                        <div style="font-size:12px;font-weight:700;">Timetable Today</div>
+                        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;">Periods & room numbers</div>
+                    </button>
+                    <button class="macai-suggest-card" onclick="macaiSendSuggested('What is the syllabus of Data Structures?')">
+                        <div style="font-size:20px;margin-bottom:6px;">📚</div>
+                        <div style="font-size:12px;font-weight:700;">Syllabus Modules</div>
+                        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;">Credits & topic lists</div>
+                    </button>
+                    <button class="macai-suggest-card" onclick="macaiSendSuggested('Who is my teacher for Data Structures?')">
+                        <div style="font-size:20px;margin-bottom:6px;">👔</div>
+                        <div style="font-size:12px;font-weight:700;">Faculty Cabin</div>
+                        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;">Emails & office hours</div>
+                    </button>
+                    <button class="macai-suggest-card" onclick="macaiSendSuggested('Find my exam seating arrangement')">
+                        <div style="font-size:20px;margin-bottom:6px;">🪑</div>
+                        <div style="font-size:12px;font-weight:700;">Exam Seat</div>
+                        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;">Locate exam halls</div>
+                    </button>
+                </div>
+
+                <!-- Chat messages container -->
+                <div class="macai-chat-area" id="macaiMessages"></div>
+            </div>
+
+            <!-- Plus options menu -->
+            <div class="macai-plus-menu" id="macaiPlusMenu">
+                <button class="macai-plus-item" onclick="macaiSelectTag('Deep Research')">
+                    <span style="font-size:18px;">🔍</span>
+                    <div><div style="font-size:12px;font-weight:700;">Deep Research</div><div style="font-size:10px;color:rgba(255,255,255,.4);">Exhaustive search queries</div></div>
+                </button>
+                <button class="macai-plus-item" onclick="macaiSelectTag('Syllabus Swarm')">
+                    <span style="font-size:18px;">📚</span>
+                    <div><div style="font-size:12px;font-weight:700;">Syllabus Swarm</div><div style="font-size:10px;color:rgba(255,255,255,.4);">Topic extraction agent</div></div>
+                </button>
+                <button class="macai-plus-item" onclick="macaiSelectTag('Exam Coach')">
+                    <span style="font-size:18px;">🔥</span>
+                    <div><div style="font-size:12px;font-weight:700;">Exam Coach</div><div style="font-size:10px;color:rgba(255,255,255,.4);">Hard truths mode</div></div>
+                </button>
+            </div>
+
+            <!-- Input dock -->
+            <div class="macai-input-dock">
+                <!-- Active tag row -->
+                <div class="macai-tag-row" id="macaiTagRow">
+                    <div class="macai-active-tag">
+                        <span id="macaiTagText">Deep Research</span>
+                        <button onclick="macaiClearTag()">×</button>
+                    </div>
+                </div>
+                <div class="macai-pill">
+                    <button class="macai-circle" onclick="macaiTogglePlusMenu()" id="macaiPlusBtn" title="More options" style="font-size:20px;font-weight:900;line-height:1;">
+                        <span id="macaiPlusIcon">+</span>
+                    </button>
+                    <input class="macai-input" id="macaiInput" type="text"
+                        placeholder="Ask MacAI…"
+                        onkeydown="if(event.key==='Enter')macaiSend()">
+                    <button class="macai-circle" onclick="macaiToggleThinking()" id="macaiThinkBtn" title="Deep Thinking" style="font-size:14px;">💡</button>
+                    <button class="macai-circle send" onclick="macaiSend()" title="Send" style="font-size:16px;">➔</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             TAB: MIND (Study Tracker)
+        ══════════════════════════════════════ -->
+        <div id="macai-pane-mind" style="flex:1;overflow-y:auto;padding:16px;display:none;padding-bottom:24px;">
+            <div class="macai-hero" style="padding:20px 0 16px;">
+                <h2 style="font-size:22px;">Ready to learn?</h2>
+                <p>Track your subjects and study progress.</p>
+            </div>
+
+            <div class="macai-glass">
+                <div class="macai-section-label">Target Subjects</div>
+                <div id="macaiSubjectList"></div>
+            </div>
+
+            <div class="macai-glass">
+                <div class="macai-section-label">Upcoming Exam</div>
+                <div id="macaiExamCountdown" style="text-align:center;padding:12px 0;">
+                    <div style="font-size:28px;font-weight:900;color:#fff;" id="macaiDaysLeft">—</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;font-weight:600;">days until next exam</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:8px;font-weight:700;" id="macaiNextExamTitle">Loading...</div>
+                </div>
+            </div>
+
+            <div class="macai-glass">
+                <div class="macai-section-label">Reading List</div>
+                <div style="display:flex;flex-direction:column;gap:10px;" id="macaiBookList">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);">
+                        <div><div style="font-size:13px;font-weight:700;color:#fff;">Atomic Habits</div><div style="font-size:10px;color:rgba(255,255,255,.4);">James Clear</div></div>
+                        <span style="font-size:10px;font-weight:800;color:#30D158;background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.2);padding:3px 9px;border-radius:10px;">Done ✓</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);">
+                        <div><div style="font-size:13px;font-weight:700;color:#fff;">Can't Hurt Me</div><div style="font-size:10px;color:rgba(255,255,255,.4);">David Goggins</div></div>
+                        <span style="font-size:10px;font-weight:800;color:#007AFF;background:rgba(0,122,255,.1);border:1px solid rgba(0,122,255,.2);padding:3px 9px;border-radius:10px;">Reading</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+                        <div><div style="font-size:13px;font-weight:700;color:#fff;">Deep Work</div><div style="font-size:10px;color:rgba(255,255,255,.4);">Cal Newport</div></div>
+                        <span style="font-size:10px;font-weight:800;color:rgba(255,255,255,.3);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:3px 9px;border-radius:10px;">Want</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             TAB: PROFILE
+        ══════════════════════════════════════ -->
+        <div id="macai-pane-profile" style="flex:1;overflow-y:auto;padding:16px;display:none;padding-bottom:24px;">
+            <div class="macai-hero" style="padding:20px 0 16px;">
+                <h2 style="font-size:22px;">Your Profile</h2>
+                <p>Academic identity and stats.</p>
+            </div>
+
+            <!-- ID card -->
+            <div class="macai-glass" style="text-align:center;padding:24px;">
+                <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#007AFF);
+                    display:grid;place-items:center;font-size:26px;margin:0 auto 14px;">🎓</div>
+                <div id="macaiProfileName" style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.02em;">Loading...</div>
+                <div id="macaiProfileDept" style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;">—</div>
+                <div id="macaiProfileReg" style="font-size:10px;color:rgba(255,255,255,.3);margin-top:6px;">REG: —</div>
+            </div>
+
+            <!-- Stat grid -->
+            <div class="macai-stat-grid" style="margin-bottom:12px;">
+                <div class="macai-stat-card">
+                    <div style="font-size:22px;font-weight:900;color:#6C63FF;" id="macaiStatStreak">5</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:4px;font-weight:600;">Day Streak 🔥</div>
+                </div>
+                <div class="macai-stat-card">
+                    <div style="font-size:22px;font-weight:900;color:#30D158;" id="macaiStatStudy">24</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:4px;font-weight:600;">Study Hours 📖</div>
+                </div>
+                <div class="macai-stat-card">
+                    <div style="font-size:22px;font-weight:900;color:#007AFF;" id="macaiStatBooks">4</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:4px;font-weight:600;">Books Read 📚</div>
+                </div>
+                <div class="macai-stat-card">
+                    <div style="font-size:22px;font-weight:900;color:#FF9F0A;" id="macaiStatAura">750</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:4px;font-weight:600;">Aura Points ⚡</div>
+                </div>
+            </div>
+
+            <!-- Mood log -->
+            <div class="macai-glass">
+                <div class="macai-section-label">Mood Log</div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;
+                        padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);">
+                        <div><div style="font-size:12px;font-weight:700;color:#fff;">May 25</div>
+                            <div style="font-size:10px;color:rgba(255,255,255,.4);">Highly focused study day</div></div>
+                        <span style="font-size:14px;font-weight:900;color:#30D158;">8/10</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+                        <div><div style="font-size:12px;font-weight:700;color:#fff;">May 24</div>
+                            <div style="font-size:10px;color:rgba(255,255,255,.4);">Completed legs workout</div></div>
+                        <span style="font-size:14px;font-weight:900;color:#30D158;">7/10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ═══════════ END MacAI Panel ═══════════ -->
+
+    </div>
+
     <script>
         function toggleTheme() {
             document.documentElement.classList.toggle('dark');
@@ -579,7 +1131,11 @@
     <script defer src="data/common/question_papers.js"></script>
     <script defer src="data/common/student_names.js"></script>
     <script defer src="data/common/students_db.js"></script>
+    <script defer src="data/common/class_info.js"></script>
+    <script defer src="data/common/announcements.js"></script>
+    <script defer src="data/common/mac_ai_database.js"></script>
     <script defer src="js/api.js"></script>
+    <script defer src="js/mac_ai.js"></script>
     <script defer src="js/smart_finder.js"></script>
     <script defer src="js/state.js"></script>
     <script defer src="js/ui.js"></script>
@@ -587,6 +1143,7 @@
     <script defer src="js/home.js"></script>
     <script defer src="js/timetable.js"></script>
     <script defer src="js/seats.js"></script>
+    <script defer src="js/resources.js"></script>
     <script defer src="js/app.js"></script>
     <script defer src="js/onboarding.js"></script>
     <script defer src="js/bootstrap.js"></script>

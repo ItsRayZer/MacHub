@@ -106,16 +106,39 @@ function finishSmartOnboarding(event) {
     return false;
 }
 
-let _obTicketFrameId = null;
+// Generic high-performance 3D Card tilting & holographic reflection physics binder
+const activeTiltLoops = {};
+function bindCardTilt(containerId, ticketId) {
+    const el = document.getElementById(containerId);
+    const ticket = document.getElementById(ticketId);
+    if (!el || !ticket) return;
 
-function bindProfileCardTilt() {
-    if (_profileTiltBound) return;
-    _profileTiltBound = true;
+    // Check performance settings from storage
+    let settings = { highFidelity: true };
+    try {
+        const stored = localStorage.getItem('mac_profile_settings');
+        if (stored) settings = JSON.parse(stored);
+    } catch(e) {}
 
-    const el = document.getElementById('ob-ticket-container');
-    const ticket = document.getElementById('ob-ticketEl');
-    if (!el || !ticket) {
-        _profileTiltBound = false;
+    // Clean up old listeners
+    const oldListeners = el._cardTiltListeners;
+    if (oldListeners) {
+        el.removeEventListener('pointermove', oldListeners.move);
+        el.removeEventListener('pointerleave', oldListeners.leave);
+    }
+
+    if (activeTiltLoops[containerId]) {
+        cancelAnimationFrame(activeTiltLoops[containerId]);
+        delete activeTiltLoops[containerId];
+    }
+
+    // Reset styles
+    el.style.setProperty('--o', '0');
+    el.style.setProperty('--rx', '0deg');
+    el.style.setProperty('--ry', '0deg');
+
+    // If battery saver performance mode is on, return immediately
+    if (!settings.highFidelity) {
         return;
     }
 
@@ -126,7 +149,7 @@ function bindProfileCardTilt() {
     let isActive = false;
     let autoRotation = 0;
 
-    el.addEventListener('pointermove', event => {
+    const onPointerMove = event => {
         const rect = el.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
@@ -141,16 +164,20 @@ function bindProfileCardTilt() {
         el.style.setProperty('--h', `${py * 100}%`);
         el.style.setProperty('--o', '1');
         isActive = true;
-    }, { passive: true });
+    };
 
-    el.addEventListener('pointerleave', () => {
+    const onPointerLeave = () => {
         targetX = 0;
         targetY = 0;
         el.style.setProperty('--o', '0');
         isActive = false;
-    });
+    };
 
-    if (_obTicketFrameId) cancelAnimationFrame(_obTicketFrameId);
+    el.addEventListener('pointermove', onPointerMove, { passive: true });
+    el.addEventListener('pointerleave', onPointerLeave, { passive: true });
+
+    // Store listener references for clean teardown
+    el._cardTiltListeners = { move: onPointerMove, leave: onPointerLeave };
 
     function loop() {
         if (!isActive) {
@@ -158,12 +185,11 @@ function bindProfileCardTilt() {
             targetX = Math.sin(autoRotation * Math.PI / 180) * 15;
             targetY = Math.cos(autoRotation * 0.8 * Math.PI / 180) * 5;
             
-            // Subtle auto reflection movement
             const autoPx = (Math.sin(autoRotation * Math.PI / 180) + 1) / 2;
             const autoPy = (Math.cos(autoRotation * Math.PI / 180) + 1) / 2;
             el.style.setProperty('--p', `${autoPx * 100}%`);
             el.style.setProperty('--h', `${autoPy * 100}%`);
-            el.style.setProperty('--o', '0.6'); // Dimmer reflection when auto-rotating
+            el.style.setProperty('--o', '0.6');
         }
 
         currentX += (targetX - currentX) * 0.1;
@@ -172,9 +198,25 @@ function bindProfileCardTilt() {
         el.style.setProperty('--rx', `${currentY}deg`);
         el.style.setProperty('--ry', `${currentX}deg`);
         
-        _obTicketFrameId = requestAnimationFrame(loop);
+        activeTiltLoops[containerId] = requestAnimationFrame(loop);
     }
-    loop();
+    
+    activeTiltLoops[containerId] = requestAnimationFrame(loop);
+}
+
+window.bindCardTilt = bindCardTilt;
+
+function bindProfileCardTilt() {
+    if (_profileTiltBound) return;
+    _profileTiltBound = true;
+    
+    const el = document.getElementById('ob-ticket-container');
+    if (!el) {
+        _profileTiltBound = false;
+        return;
+    }
+    
+    bindCardTilt('ob-ticket-container', 'ob-ticketEl');
 }
 
 // Override the old nextObStep
@@ -250,7 +292,7 @@ window.nextObStep = function(step) {
                         <!-- FRONT FACE (visible to user) — all student data here -->
                         <section class="ob-ticket-front">
                             <div class="ob-ticket-holo"></div>
-                            <img class="ob-ticket-logo-small" src="Logo/file_00000000378c7207842a975d80367515.png" alt="MacHub">
+                            <img class="ob-ticket-logo-small" src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub">
                             <div class="data">
                                 <h3>Name</h3>
                                 <p>${escapeHtml(s.name || '---')}</p>
@@ -263,7 +305,7 @@ window.nextObStep = function(step) {
                             </div>
                             <aside class="divider">
                                 <div class="username">
-                                    <img class="profile-pic" src="Logo/ChatGPT%20Image%20May%2018,%202026,%2010_33_49%20PM.png" alt="Profile">
+                                    <img class="profile-pic" src="assets/img/ChatGPT%20Image%20May%2018,%202026,%2010_33_49%20PM.png" alt="Profile">
                                     <span>MacHub</span>
                                 </div>
                                 <span class="usernum">2026</span>
@@ -272,7 +314,7 @@ window.nextObStep = function(step) {
                         <!-- BACK FACE (flipped away) — MacHub branding only -->
                         <header class="ob-ticket-back">
                             <div class="ob-ticket-holo"></div>
-                            <img class="logo" src="Logo/file_00000000378c7207842a975d80367515.png" alt="MacHub">
+                            <img class="logo" src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub">
                         </header>
                     </section>
                 </div>`;
