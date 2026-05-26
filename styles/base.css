@@ -2142,4 +2142,32 @@
           100% { transform: translateY(-40%); }
         }
 
+        .gemini-star-overlay {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: syncStarRotation 6s ease-in-out infinite;
+        }
+
+        @keyframes syncStarRotation {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg) scale(1);
+                filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.7));
+            }
+            50% {
+                transform: translate(-50%, -50%) rotate(180deg) scale(1.2);
+                filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.95));
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg) scale(1);
+                filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.7));
+            }
+        }
+
     

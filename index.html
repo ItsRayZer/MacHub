@@ -447,9 +447,15 @@
         </div>
         
         <!-- Separate but same to same MacAI Circle Button -->
-        <button onclick="openMacAI()" id="macAiFloatingBtn" class="nav-ai-pill" aria-label="Open MacAI">
+        <button onclick="openMacAI()" id="macAiFloatingBtn" class="nav-ai-pill" aria-label="Open MacAI" style="position: relative;">
             <div id="geminianimation">
                 <div></div>
+            </div>
+            <div class="gemini-star-overlay">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L14.83 8.17L21 11L14.83 13.83L12 20L9.17 13.83L3 11L9.17 8.17L12 2Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
+                    <path d="M19 3L20.06 5.28L22.5 6L20.06 6.72L19 9L17.94 6.72L15.5 6L17.94 5.28L19 3Z" fill="white"/>
+                </svg>
             </div>
         </button>
     </div>
