@@ -1,5 +1,8 @@
 name: Machin Portal Scraper
 
+permissions:
+  contents: write
+
 on:
   # ── Scheduled: twice daily (6 AM IST + 6 PM IST) ──────────────────────────
   schedule:
@@ -58,4 +61,14 @@ jobs:
               github.event.client_payload.password ||
               ''
             }}
-        run: python batch_scrape.py
+        run: python batch_scrape.py 2>&1 | tee scrape.log
+
+      # 5. Push logs back on failure to debug database issues
+      - name: Push logs on failure
+        if: failure()
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add scrape.log
+          git commit -m "chore: upload scrape log from failed run [skip ci]" || true
+          git push origin HEAD:${{ github.ref }} || true
