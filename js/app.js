@@ -2265,15 +2265,24 @@ function showBottomNav() {
     const drawer = document.getElementById('detailDrawer');
     const marksSheet = document.getElementById('marksSheet');
     const timetableExamSheet = document.getElementById('timetableExamSheet');
+    const academicSheet = document.getElementById('academicSheet');
     const drawerOpen = drawer && drawer.style.transform !== 'translateY(100%)' && drawer.style.transform !== '';
     const marksOpen = marksSheet && marksSheet.style.transform !== 'translateY(100%)' && marksSheet.style.transform !== '';
     const timetableOpen = timetableExamSheet && timetableExamSheet.style.transform !== 'translateY(100%)' && timetableExamSheet.style.transform !== '';
-    if (drawerOpen || marksOpen || timetableOpen) return;
+    const academicOpen = academicSheet && academicSheet.style.transform !== 'translateY(100%)' && academicSheet.style.transform !== '';
+    if (drawerOpen || marksOpen || timetableOpen || academicOpen) return;
     _navLockedHidden = false;
     const nav = document.getElementById('bottomNav');
     if (nav) nav.classList.remove('nav-hidden');
     _navHidden = false;
 }
+
+// Expose navigation/sheet utilities to global scope
+window.hideBottomNav = hideBottomNav;
+window.showBottomNav = showBottomNav;
+if (typeof snapSheetOpen !== 'undefined') window.snapSheetOpen = snapSheetOpen;
+if (typeof snapSheetClosed !== 'undefined') window.snapSheetClosed = snapSheetClosed;
+if (typeof initDraggableSheet !== 'undefined') window.initDraggableSheet = initDraggableSheet;
 
 function setupScrollHide() {
     return;

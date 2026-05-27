@@ -122,17 +122,36 @@
     window.openAcademicSheet = function() {
         const sheet = document.getElementById('academicSheet');
         const backdrop = document.getElementById('academicBackdrop');
-        if (sheet) sheet.classList.remove('translate-y-full');
+        
+        if (window.initDraggableSheet) {
+            window.initDraggableSheet('academicSheet', 'academicSheetDragHandle', closeAcademicSheetState);
+        }
+        if (sheet && window.snapSheetOpen) {
+            window.snapSheetOpen(sheet);
+        } else if (sheet) {
+            sheet.classList.remove('translate-y-full');
+        }
+        
         if (backdrop) backdrop.classList.remove('hidden');
+        if (window.hideBottomNav) window.hideBottomNav();
         
         renderAcademicData();
     };
 
+    function closeAcademicSheetState() {
+        const backdrop = document.getElementById('academicBackdrop');
+        if (backdrop) backdrop.classList.add('hidden');
+        if (window.showBottomNav) window.showBottomNav();
+    }
+
     window.closeAcademicSheet = function() {
         const sheet = document.getElementById('academicSheet');
-        const backdrop = document.getElementById('academicBackdrop');
-        if (sheet) sheet.classList.add('translate-y-full');
-        if (backdrop) backdrop.classList.add('hidden');
+        if (sheet && window.snapSheetClosed) {
+            window.snapSheetClosed(sheet, closeAcademicSheetState);
+        } else {
+            if (sheet) sheet.classList.add('translate-y-full');
+            closeAcademicSheetState();
+        }
     };
 
     window.renderAcademicData = function() {
