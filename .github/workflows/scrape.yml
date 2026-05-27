@@ -72,3 +72,11 @@ jobs:
           git add scrape.log
           git commit -m "chore: upload scrape log from failed run [skip ci]" || true
           git push origin HEAD:${{ github.ref }} || true
+
+      # 6. Always upload logs as artifact for debug
+      - name: Upload Scrape Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrape-log
+          path: scrape.log
