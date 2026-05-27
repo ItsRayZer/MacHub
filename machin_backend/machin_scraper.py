@@ -239,10 +239,8 @@ def init_firebase() -> bool:
         return False
     if firebase_admin._apps:
         return True
-    database_url = os.environ.get("FIREBASE_DATABASE_URL", DEFAULT_FIREBASE_DB_URL)
-    # Rewrite database URL if it points to US region but database is in Singapore
-    if "firebaseio.com" in database_url and "machub-6af39" in database_url:
-        database_url = "https://machub-6af39-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    # Force database URL to Singapore region default database which the frontend listens to
+    database_url = "https://machub-6af39-default-rtdb.asia-southeast1.firebasedatabase.app/"
     service_account_json_str = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON", "")
     try:
         if service_account_json_str:
