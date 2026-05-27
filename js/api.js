@@ -1,6 +1,6 @@
 (function() {
     // Configurable Cloudflare Worker endpoint
-    const CLOUDFLARE_WORKER_URL = 'https://machin-refresh.abens.workers.dev';
+    const CLOUDFLARE_WORKER_URL = 'https://machin-refresh.mrabensojan.workers.dev';
     
     let isSyncing = false;
     let currentListeningAdmin = null;
