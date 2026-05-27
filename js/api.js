@@ -1,6 +1,50 @@
 (function() {
-    const API_URL = 'https://mac-data-sync-1.onrender.com/sync-deep-live';
+    // Configurable Cloudflare Worker endpoint
+    const CLOUDFLARE_WORKER_URL = 'https://machin-refresh.abens.workers.dev';
+    
     let isSyncing = false;
+    let currentListeningAdmin = null;
+    let dbUnsubscribe = null;
+
+    // Realtime Database listener setup
+    function setupFirebaseListener(adminNo) {
+        if (dbUnsubscribe) {
+            dbUnsubscribe();
+            dbUnsubscribe = null;
+        }
+
+        if (!adminNo) return;
+
+        // If firebase references aren't initialized yet, retry in 500ms
+        if (!window.firebaseDb || !window.firebaseDbOnValue || !window.firebaseDbRef) {
+            setTimeout(() => setupFirebaseListener(adminNo), 500);
+            return;
+        }
+
+        const studentRef = window.firebaseDbRef(window.firebaseDb, `/students/${adminNo}`);
+        console.log(`[MacHub API] Listening to Realtime DB path /students/${adminNo}`);
+
+        dbUnsubscribe = window.firebaseDbOnValue(studentRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                console.log("[MacHub API] Firebase Realtime DB data updated:", data);
+                try {
+                    localStorage.setItem('mac_academic_data', JSON.stringify(data));
+                    localStorage.removeItem('mac_academic_error');
+                } catch (e) { console.warn('localStorage is restricted', e); }
+                
+                // If syncing was in progress, stop the spinner since we got the data
+                isSyncing = false;
+
+                // Re-render UI
+                if (window.renderAcademicData) {
+                    window.renderAcademicData();
+                }
+            }
+        }, (error) => {
+            console.error("[MacHub API] Firebase Realtime DB listener error:", error);
+        });
+    }
 
     async function startBackgroundSync() {
         const info = window.ExamHubProfile?.get() || window.getStudentInfo?.();
@@ -9,57 +53,62 @@
             return;
         }
 
+        // Set up real-time listener if we haven't already for this student
+        if (currentListeningAdmin !== info.adminNo) {
+            currentListeningAdmin = info.adminNo;
+            setupFirebaseListener(info.adminNo);
+        }
+
         if (isSyncing) return;
         isSyncing = true;
         window.syncStartTime = Date.now();
-        console.log('Background Sync: Started for Admin No', info.adminNo);
+        console.log('Background Sync: Triggering refresh via Cloudflare Worker for Admin No', info.adminNo);
 
         try {
             try {
                 localStorage.removeItem('mac_academic_error');
             } catch (e) { console.warn('localStorage is restricted', e); }
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ adminNo: info.adminNo })
-            });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Scraping Failed');
-            }
-
-            const data = await response.json();
-            try {
-                localStorage.setItem('mac_academic_data', JSON.stringify(data));
-            } catch (e) { console.warn('localStorage is restricted', e); }
-            console.log('Background Sync: Completed successfully.', data);
-
-            // If the academic sheet is open, refresh it
             if (window.renderAcademicData) {
                 window.renderAcademicData();
             }
 
+            const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ admission_no: info.adminNo })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP error ${response.status}`);
+            }
+
+            const resData = await response.json();
+            console.log('Background Sync: Triggered successfully.', resData.message);
+
+            // Note: The UI stays in isSyncing state (showing the spinner) while we wait for GitHub Actions
+            // to scrape the portal and update Firebase. Once Firebase updates, our firebaseDbOnValue
+            // listener above will receive the new data, write it to localStorage, and reset isSyncing to false.
+
         } catch (error) {
             console.error('Background Sync Error:', error.message);
-            isSyncing = false; // Reset before rendering
+            isSyncing = false; // Reset since the trigger itself failed
             try {
                 localStorage.setItem('mac_academic_error', error.message);
             } catch (e) { console.warn('localStorage is restricted', e); }
             if (window.renderAcademicData) {
                 window.renderAcademicData();
             }
-        } finally {
-            isSyncing = false;
         }
     }
 
     // Attempt to sync automatically when the app loads
     setTimeout(() => {
         startBackgroundSync();
-    }, 5000); // 5 seconds after load to prevent blocking main thread
+    }, 3000); // 3 seconds after load to prevent blocking main thread
     
     // Attempt sync every 1 hour if the app stays open
     setInterval(() => {
@@ -111,23 +160,26 @@
             console.warn('localStorage is restricted', e);
         }
 
-        if (!dataStr) {
-            if (isSyncing) {
-                const elapsed = window.syncStartTime ? (Date.now() - window.syncStartTime) : 0;
-                const syncText = elapsed > 15000 
-                    ? "Waking up the cloud server. This can take up to 2 minutes on the first request of the day..."
-                    : "Extracting your latest academic records from the portal in the background...";
+        if (isSyncing) {
+            const elapsed = window.syncStartTime ? (Date.now() - window.syncStartTime) : 0;
+            const syncText = elapsed > 12000 
+                ? "GitHub Actions is running the scraper. Synced data will appear here in ~15 seconds..."
+                : "Triggering on-demand refresh via Cloudflare Worker...";
 
-                contentEl.innerHTML = `
-                    <div class="glass-panel p-6 text-center rounded-[2rem]">
-                        <div class="w-10 h-10 border-4 border-[var(--mac-blue)]/30 border-t-[var(--mac-blue)] rounded-full animate-spin mx-auto mb-4"></div>
-                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Syncing Data</p>
-                        <p class="text-[10px] font-bold text-[#86868b] mt-2">${syncText}</p>
-                    </div>
-                `;
-                // Re-render to update the text if it's still syncing
-                setTimeout(() => { if(isSyncing && window.renderAcademicData) window.renderAcademicData(); }, 5000);
-            } else if (errorStr) {
+            contentEl.innerHTML = `
+                <div class="glass-panel p-6 text-center rounded-[2rem]">
+                    <div class="w-10 h-10 border-4 border-[var(--mac-blue)]/30 border-t-[var(--mac-blue)] rounded-full animate-spin mx-auto mb-4"></div>
+                    <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Refreshing Portal Data</p>
+                    <p class="text-[10px] font-bold text-[#86868b] mt-2">${syncText}</p>
+                </div>
+            `;
+            // Re-render to update the text if it's still syncing
+            setTimeout(() => { if(isSyncing && window.renderAcademicData) window.renderAcademicData(); }, 3000);
+            return;
+        }
+
+        if (!dataStr) {
+            if (errorStr) {
                 contentEl.innerHTML = `
                     <div class="glass-panel p-6 text-center rounded-[2rem] border border-red-500/20">
                         <div class="w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">⚠️</div>
@@ -151,8 +203,9 @@
         try {
             const data = JSON.parse(dataStr);
             const attendance = data.attendance || [];
-            const marks = data.internalMarks || [];
-            const lastSyncDate = new Date(data.timestamp).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
+            const marks = data.assessments || data.internalMarks || [];
+            const lastSyncStr = data.last_synced || data.timestamp || new Date().toISOString();
+            const lastSyncDate = new Date(lastSyncStr).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
 
             let html = `<p class="text-[10px] font-black text-[#86868b] uppercase tracking-widest text-center mb-4">Last Synced: ${lastSyncDate}</p>`;
 
@@ -164,7 +217,6 @@
                         <div class="space-y-3">
                 `;
                 attendance.forEach(item => {
-                    // Try to parse the percentage, or default to 0
                     const percNum = parseFloat(item.percentage) || 0;
                     const isLow = percNum < 75;
                     const percColor = isLow ? 'text-red-500' : 'text-[#1d1d1f] dark:text-[#f5f5f7]';
@@ -185,7 +237,7 @@
                 html += `</div></div>`;
             }
 
-            // Internal Marks Section
+            // Internal Marks (Assessments) Section
             if (marks.length > 0) {
                 html += `
                     <div>
@@ -193,10 +245,16 @@
                         <div class="grid grid-cols-2 gap-3">
                 `;
                 marks.forEach(item => {
+                    const subject = item.subject || 'Unknown Subject';
+                    const score = item.score !== undefined ? item.score : item.mark;
+                    const type = item.assessment_type ? `<p class="text-[8px] font-bold text-[#86868b] uppercase tracking-wider mb-1">${item.assessment_type}</p>` : '';
+                    const statusText = item.status ? ` <span class="text-[9px] font-bold text-[#86868b]">(${item.status})</span>` : '';
+                    
                     html += `
                         <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
-                            <p class="text-[10px] font-bold text-[#86868b] line-clamp-2 leading-tight mb-2">${item.subject}</p>
-                            <p class="text-lg font-black tracking-tight text-[var(--mac-blue)]">${item.mark}</p>
+                            ${type}
+                            <p class="text-[10px] font-bold text-[#86868b] line-clamp-2 leading-tight mb-2">${subject}</p>
+                            <p class="text-sm font-black tracking-tight text-[var(--mac-blue)]">${score}${statusText}</p>
                         </div>
                     `;
                 });
@@ -215,9 +273,19 @@
                 html += `<p class="text-[9px] font-bold text-red-500 mt-4 text-center">Background sync failed last time: ${errorStr}</p>`;
             }
 
+            // Sync Button at the very bottom
+            html += `
+                <div class="text-center mt-6">
+                    <button onclick="window.startBackgroundSync(); window.renderAcademicData();" class="px-6 py-2.5 bg-black/5 dark:bg-white/10 rounded-full text-xs font-bold spring">
+                        🔄 Refresh Data
+                    </button>
+                </div>
+            `;
+
             contentEl.innerHTML = html;
 
         } catch (e) {
+            console.error(e);
             contentEl.innerHTML = `<p class="text-sm font-bold text-red-500">Error reading data. Please clear cache and try again.</p>`;
         }
     };

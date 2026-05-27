@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-ai.js";
+import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCfRvyKJdTkMHqNHJfsVd2g-hwnTjcXvL8",
@@ -9,10 +10,19 @@ const firebaseConfig = {
   storageBucket: "machub-6af39.firebasestorage.app",
   messagingSenderId: "141522174204",
   appId: "1:141522174204:web:5e987cf127e4fc6112d779",
-  measurementId: "G-W7FCBVLF4F"
+  measurementId: "G-W7FCBVLF4F",
+  databaseURL: "https://machub-6af39-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
 const app = initializeApp(firebaseConfig);
+const db = getDatabase(app, firebaseConfig.databaseURL);
+
+// Expose database references globally
+window.firebaseDb = db;
+window.firebaseDbRef = ref;
+window.firebaseDbOnValue = onValue;
+window.firebaseDbGet = get;
+
 
 if (!['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)) {
   try { getAnalytics(app); } catch (e) { console.warn('Analytics skipped:', e.message); }
