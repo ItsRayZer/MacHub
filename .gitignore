@@ -1,3 +1,18 @@
 node_modules/
 .firebase/
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+
+# Local tests / temp files
+sync_test.json
+*.json.bak
+*.json.tmp
+serviceAccountKey.json
