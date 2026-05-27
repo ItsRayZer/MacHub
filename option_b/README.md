@@ -1,10 +1,10 @@
 # Option B: Node.js Express Headless Bridge API
 
-This is the backup/fallback architecture (Option B) for the **MAC Exam Hub** data pipeline. It executes a direct, headless ASP.NET Web Forms login handshake and data sync completely on-demand without using GitHub Actions or Cloudflare Workers.
+This is the backup/fallback architecture (Option B) for the **Machub** data pipeline. It executes a direct, headless ASP.NET Web Forms login handshake and data sync completely on-demand without using GitHub Actions or Cloudflare Workers.
 
 ## How it works
 
-1. **Client Request**: Frontend calls the Express backend via `MachinSDK.js` with the student's Admission Number.
+1. **Client Request**: Frontend calls the Express backend via `MachubSDK.js` with the student's Admission Number.
 2. **Dynamic Session Handshake**:
    - Backend performs pre-flight GET request to `/Login.aspx` to extract ASP.NET viewstate tokens.
    - Executes dynamic POST request to authenticate the session.
@@ -26,22 +26,22 @@ npm install
 ```bash
 npm start
 ```
-The server will start listening on port `5000` (e.g., `http://localhost:5000`).
+The server will start listening on port `3000` (or `process.env.PORT`).
 
 ---
 
 ## Client Integration
 
 ### 1. Include the SDK
-Include the `MachinSDK.js` file in your client-side assets:
+Include the `MachubSDK.js` file in your client-side assets:
 ```html
-<script src="option_b/MachinSDK.js"></script>
+<script src="option_b/MachubSDK.js"></script>
 ```
 
 ### 2. Invoke Sync
 Use the SDK class to trigger syncs:
 ```javascript
-const sdk = new MachinSDK('http://localhost:5000');
+const sdk = new MachubSDK('http://localhost:3000');
 
 try {
   const data = await sdk.syncAll('12965');

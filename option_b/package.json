@@ -1,7 +1,7 @@
 {
   "name": "machin-express-bridge",
   "version": "1.0.0",
-  "description": "Option B Headless Bridge API for MAC Exam Hub",
+  "description": "Option B Headless Bridge API for Machub",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -9,6 +9,8 @@
   "dependencies": {
     "express": "^4.19.2",
     "axios": "^1.6.8",
+    "axios-cookiejar-support": "^5.0.1",
+    "tough-cookie": "^4.1.3",
     "cheerio": "^1.0.0-rc.12",
     "qs": "^6.12.1",
     "cors": "^2.8.5"
