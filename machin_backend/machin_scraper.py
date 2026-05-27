@@ -231,7 +231,7 @@ def is_logged_in(soup: BeautifulSoup) -> bool:
 #  FIREBASE REALTIME DATABASE HELPERS
 # ══════════════════════════════════════════════
 
-DEFAULT_FIREBASE_DB_URL = "https://machub-6af39-default-rtdb.firebaseio.com"
+DEFAULT_FIREBASE_DB_URL = "https://machub-6af39-default-rtdb.asia-southeast1.firebasedatabase.app/"
 
 def init_firebase() -> bool:
     """Initialize Firebase Admin SDK from env vars. Safe to call multiple times."""
