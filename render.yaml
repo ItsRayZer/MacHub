@@ -1,14 +1,10 @@
 services:
   - type: web
-    name: machin-scraper-api
-    runtime: docker
-    dockerfilePath: ./machin_backend/Dockerfile
-    dockerContext: ./machin_backend
+    name: machub-portal-proxy
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
     plan: free
     envVars:
-      - key: GEMINI_API_KEY
-        value: AIzaSyCab4NSZPeVgwJ4hlzjgSoxE55OnV-Nnbs
-      - key: FIREBASE_DATABASE_URL
-        value: https://machub-6af39-default-rtdb.asia-southeast1.firebasedatabase.app
-      - key: FIREBASE_SERVICE_ACCOUNT_JSON
-        sync: false   # ← You will paste your service account JSON here in Render dashboard
+      - key: PORT
+        value: 3001

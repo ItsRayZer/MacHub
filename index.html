@@ -120,11 +120,37 @@
     <div id="guideHighlight" class="highlight-box"></div>
 
     <!-- Header: shown only on home view -->
-    <header id="appHeader" class="max-w-md mx-auto mt-4 mb-6 px-6 text-center">
-        <div class="logo-container">
-            <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="logo" id="userGreeting">
+    <header id="appHeader" class="max-w-md mx-auto mt-4 mb-4 px-6 relative flex flex-col items-center">
+        <div class="w-full flex items-center justify-between">
+            <!-- Left: Side Menu Hamburger Button -->
+            <button onclick="window.openPortalDrawer()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);" aria-label="Open Portal Menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+
+            <!-- Center: mac hub logo -->
+            <div class="logo-container">
+                <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="logo" id="userGreeting" style="margin: 0;">
+            </div>
+
+            <!-- Right: Insta-like pulsing announcement bell button -->
+            <button onclick="openAnnouncements()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30 relative" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);" aria-label="Open Announcements">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <!-- Pulsing Blue Dot -->
+                <span class="absolute top-1.5 right-1.5 flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0071e3] opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-[#0071e3]"></span>
+                </span>
+            </button>
         </div>
-        <p id="liveClock" class="text-[var(--mac-blue)] text-[10px] font-black tracking-[0.3em] mt-2 uppercase">00:00:00 AM</p>
+        <!-- Time/Clock -->
+        <p id="liveClock" class="text-[var(--mac-blue)] text-[10px] font-black tracking-[0.2em] mt-3 uppercase">00:00:00 AM IST</p>
     </header>
 
     <div id="view-seats" class="view-panel">
@@ -139,7 +165,7 @@
 
         <div class="max-w-md mx-auto px-4 mt-3 mb-3">
             <div class="seat-toolbar">
-                <div id="departmentFilters" class="seat-dropdown"></div>
+                <div id="departmentFilters" class="seat-dropdown hidden"></div>
                 <div id="daySelector" class="seat-dropdown"></div>
             </div>
         </div>
@@ -217,81 +243,202 @@
     </div> <!-- end view-seats -->
 
     <div id="view-home" class="view-panel is-active max-w-md mx-auto p-6 relative">
-        <!-- Insta-like pulsing announcement bell button -->
-        <button onclick="openAnnouncements()" class="absolute top-8 right-8 w-11 h-11 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-xl z-30" style="background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.5);" aria-label="Open Announcements">
-            🔔
-            <!-- Pulsing Red Dot -->
-            <span class="absolute top-2 right-2.5 flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-            </span>
-        </button>
-        <div class="glass-panel p-8 rounded-[3rem] text-center mb-8 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-[var(--mac-blue)] opacity-10 rounded-full -mr-16 -mt-16"></div>
-            <div class="glass-panel w-20 h-20 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 shadow-xl floating">🏠</div>
-            <h2 id="homeGreeting" class="text-3xl font-bold mb-2">Hello!</h2>
-            <p class="text-[#86868b] text-[10px] font-bold uppercase tracking-widest pl-2 mb-8">Mac Ramapuram • 2026</p>
-
-            <div class="bg-black/5 dark:bg-white/5 rounded-3xl p-6 mb-6">
-                <p class="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-4">Time Remaining</p>
-                <div class="flex items-center justify-center gap-3">
-                    <div class="flex flex-col items-center w-14">
-                        <span id="daysLeft" class="text-3xl font-black tracking-tighter text-[var(--mac-blue)]">00</span>
-                        <span class="text-[7px] font-bold text-[#86868b] uppercase">Days</span>
-                    </div>
-                    <span class="text-xl font-black text-[var(--mac-blue)] opacity-20">:</span>
-                    <div class="flex flex-col items-center w-14">
-                        <span id="hoursLeft" class="text-3xl font-black tracking-tighter text-[var(--mac-blue)]">00</span>
-                        <span class="text-[7px] font-bold text-[#86868b] uppercase">Hours</span>
-                    </div>
-                    <span class="text-xl font-black text-[var(--mac-blue)] opacity-20">:</span>
-                    <div class="flex flex-col items-center w-14">
-                        <span id="minsLeft" class="text-3xl font-black tracking-tighter text-[var(--mac-blue)]">00</span>
-                        <span class="text-[7px] font-bold text-[#86868b] uppercase">Mins</span>
-                    </div>
-                    <span class="text-xl font-black text-[var(--mac-blue)] opacity-20">:</span>
-                    <div class="flex flex-col items-center w-14 text-red-500">
-                        <span id="secsLeft" class="text-3xl font-black tracking-tighter">00</span>
-                        <span class="text-[7px] font-bold opacity-50 uppercase">Secs</span>
-                    </div>
-                </div>
-
-                <div class="mt-6 pt-6 border-t border-black/5 dark:border-white/5">
-                    <h3 id="nextExamTitle" class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Searching...</h3>
-                    <p id="nextExamDate" class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-1">Calculating Schedule</p>
+        <!-- Greeting Card -->
+        <div class="glass-panel p-6 rounded-3xl mb-6 flex items-center justify-between gap-4 relative overflow-hidden border border-white/5">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-[var(--mac-blue)] opacity-5 rounded-full -mr-12 -mt-12"></div>
+            <div class="flex-1 min-w-0">
+                <h2 id="homeGreeting" class="text-2xl font-black text-white leading-tight">Hello!</h2>
+                <p class="text-[#86868b] text-[10px] font-bold uppercase tracking-widest mt-1">MAC RAMAPURAM • 2026</p>
+                
+                <div class="flex items-start gap-1.5 mt-4 text-xs font-semibold text-[#a1a1a6] leading-relaxed">
+                    <span class="text-[var(--mac-blue)] text-lg leading-none select-none">“</span>
+                    <p class="italic">Discipline today, success tomorrow. You've got this!</p>
                 </div>
             </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="switchExamView('view-timetable')" class="liquid-button py-4 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-full font-bold spring">Exam Hub</button>
-                <button onclick="switchView('view-resources')" class="liquid-button py-4 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-full font-bold spring">Resources</button>
+            
+            <!-- 3D Circular House Icon on Right -->
+            <div class="relative w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0" style="background: radial-gradient(circle, rgba(0,113,227,0.15) 0%, rgba(0,0,0,0) 70%);">
+                <!-- Outer glowing border ring -->
+                <div class="absolute inset-0 rounded-full border border-[var(--mac-blue)]/20 animate-pulse"></div>
+                <!-- Inner glossy circle containing house emoji -->
+                <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-white/10 to-white/5 border border-white/10 shadow-lg flex items-center justify-center text-3xl backdrop-blur-md">
+                    🏠
+                </div>
             </div>
-            <div class="grid grid-cols-2 gap-3 mt-3">
-                <button onclick="openAcademicSheet()" class="bg-[var(--mac-blue)]/10 border border-[var(--mac-blue)]/20 py-4 text-[var(--mac-blue)] rounded-[1.5rem] font-bold spring flex items-center justify-center gap-2">
-                    <span>📊</span>
-                    <span class="text-sm">Attendance & Marks</span>
+        </div>
+
+        <!-- Status Banner -->
+        <div id="statusBanner" class="glass-panel p-4 rounded-2xl mb-6 flex items-center justify-between relative overflow-hidden border border-[var(--mac-blue)]/20" style="background: linear-gradient(135deg, rgba(0,113,227,0.06) 0%, rgba(0,0,0,0) 100%);">
+            <div class="flex items-center gap-3">
+                <!-- Checkmark / icon on the left -->
+                <div class="w-10 h-10 rounded-full bg-[var(--mac-blue)]/10 flex items-center justify-center text-[var(--mac-blue)] text-lg border border-[var(--mac-blue)]/30">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
+                <div>
+                    <h3 id="nextExamTitle" class="text-xs font-black text-white leading-tight">All exams completed!</h3>
+                    <p id="nextExamDate" class="text-[9px] font-extrabold text-[var(--mac-blue)] uppercase tracking-wider mt-0.5">GOOD LUCK WITH YOUR RESULTS!</p>
+                </div>
+            </div>
+            <!-- Right confetti popper icon -->
+            <div class="text-xl flex-shrink-0 animate-bounce">🎉</div>
+        </div>
+
+        <!-- Live Portal Dashboard Section -->
+        <div class="mb-6">
+            <h4 class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-widest mb-3 pl-1 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> LIVE PORTAL DASHBOARD
+            </h4>
+            <div class="grid grid-cols-2 gap-2.5" id="homePortalDashboard">
+                <!-- Active Course Skeleton -->
+                <div class="col-span-2 glass-panel p-5 rounded-3xl border border-white/5 animate-pulse min-h-[64px]">
+                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/4 mb-2"></div>
+                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-2/3"></div>
+                </div>
+                <!-- 6 smaller card skeletons -->
+                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
+                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
+                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
+                </div>
+                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
+                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
+                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
+                </div>
+                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
+                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
+                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
+                </div>
+                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
+                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
+                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
+                </div>
+                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
+                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
+                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
+                </div>
+                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
+                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
+                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events & Profile Grid -->
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <!-- Upcoming Events Card -->
+            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between border border-white/5">
+                <div>
+                    <h4 class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <span>📅</span> UPCOMING EVENTS
+                    </h4>
+                    <div class="space-y-3">
+                        <!-- Event 1 -->
+                        <div onclick="switchExamView('view-timetable')" class="flex items-center gap-2 cursor-pointer group">
+                            <div class="bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] rounded-lg p-1.5 text-center min-w-[36px]">
+                                <p class="text-[11px] font-black leading-none">24</p>
+                                <p class="text-[7px] font-bold uppercase tracking-tighter">May</p>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[10px] font-bold text-white truncate leading-tight">Department Seminar</p>
+                                <p class="text-[8px] font-semibold text-[#86868b] mt-0.5 truncate">10:30 AM • Seminar Hall</p>
+                            </div>
+                            <svg class="w-2.5 h-2.5 text-[#86868b] group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                        <!-- Event 2 -->
+                        <div onclick="switchExamView('view-timetable')" class="flex items-center gap-2 cursor-pointer group">
+                            <div class="bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] rounded-lg p-1.5 text-center min-w-[36px]">
+                                <p class="text-[11px] font-black leading-none">29</p>
+                                <p class="text-[7px] font-bold uppercase tracking-tighter">May</p>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[10px] font-bold text-white truncate leading-tight">Technical Workshop</p>
+                                <p class="text-[8px] font-semibold text-[#86868b] mt-0.5 truncate">02:00 PM • Lab Block</p>
+                            </div>
+                            <svg class="w-2.5 h-2.5 text-[#86868b] group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="switchExamView('view-timetable')" class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider text-left w-full">
+                    <span>View all events</span>
+                    <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
-                <button onclick="openExternalApp('https://eportal.maraugusthinosecollege.org/Login.aspx', 'Student Portal')" class="bg-[var(--mac-blue)]/10 border border-[var(--mac-blue)]/20 py-4 text-[var(--mac-blue)] rounded-[1.5rem] font-bold spring flex items-center justify-center gap-2">
-                    <span>🌐</span>
-                    <span class="text-sm">Student Portal</span>
+            </div>
+
+            <!-- My Profile Card -->
+            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between border border-white/5">
+                <div>
+                    <h4 class="text-[9px] font-black text-purple-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <span>👤</span> MY PROFILE
+                    </h4>
+                    <div class="space-y-3">
+                        <!-- Dept info -->
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <p class="text-[8px] font-bold text-[#86868b]">Department</p>
+                                <p id="homeUserDept" class="text-[11px] font-black text-[var(--mac-blue)]">BCA</p>
+                            </div>
+                            <div class="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 text-xs">🎓</div>
+                        </div>
+                        <!-- Year info -->
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <p class="text-[8px] font-bold text-[#86868b]">Year</p>
+                                <p class="text-[11px] font-black text-[var(--mac-blue)]">2023 – 2026</p>
+                            </div>
+                            <div class="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 text-xs">📅</div>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="switchView('view-profile')" class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[9px] font-black text-purple-400 uppercase tracking-wider text-left w-full">
+                    <span>View profile</span>
+                    <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <div class="glass-panel p-6 rounded-[2.5rem]">
-                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">My Dept</p>
-                <p id="homeUserDept" class="text-2xl font-bold text-[var(--mac-blue)]">---</p>
+        <!-- Quick Access Section -->
+        <div class="glass-panel p-4 rounded-2xl mb-6 border border-white/5">
+            <h4 class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <span>⚡</span> QUICK ACCESS
+            </h4>
+            <div class="flex items-center justify-around gap-2">
+                <button onclick="switchExamView('view-timetable')" class="flex flex-col items-center gap-1 active:scale-95 spring">
+                    <div class="w-10 h-10 rounded-full border border-blue-500/30 bg-blue-500/10 flex items-center justify-center text-blue-400">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                        </svg>
+                    </div>
+                    <span class="text-[9px] font-bold text-[#86868b]">Timetable</span>
+                </button>
+                <button onclick="loadPortalSection('Attendance','Attendance')" class="flex flex-col items-center gap-1 active:scale-95 spring">
+                    <div class="w-10 h-10 rounded-full border border-green-500/30 bg-green-500/10 flex items-center justify-center text-green-400">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <span class="text-[9px] font-bold text-[#86868b]">Attendance</span>
+                </button>
+                <button onclick="loadPortalSection('Assignment','Assignments')" class="flex flex-col items-center gap-1 active:scale-95 spring">
+                    <div class="w-10 h-10 rounded-full border border-orange-500/30 bg-orange-500/10 flex items-center justify-center text-orange-400">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-[9px] font-bold text-[#86868b]">Assignments</span>
+                </button>
+                <button onclick="openAnnouncements()" class="flex flex-col items-center gap-1 active:scale-95 spring">
+                    <div class="w-10 h-10 rounded-full border border-pink-500/30 bg-pink-500/10 flex items-center justify-center text-pink-400">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        </svg>
+                    </div>
+                    <span class="text-[9px] font-bold text-[#86868b]">Notices</span>
+                </button>
             </div>
-            <div class="glass-panel p-6 rounded-[2.5rem]">
-                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">Hall</p>
-                <p id="homeUserHall" class="text-2xl font-bold text-[var(--mac-blue)]">---</p>
-            </div>
-            <div class="glass-panel p-6 rounded-[2.5rem] col-span-2">
-                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">Location</p>
-                <p id="homeUserSeat" class="text-xl font-bold text-[var(--mac-blue)]">---</p>
-            </div>
-
         </div>
 
         <div id="externalAppShell" class="external-app-shell hidden" aria-live="polite">
@@ -340,7 +487,7 @@
         <!-- Class Portal Top Dropdowns -->
         <div class="max-w-md mx-auto mt-3 mb-4">
             <div class="seat-toolbar">
-                <div id="classDepartmentFilters" class="seat-dropdown"></div>
+                <div id="classDepartmentFilters" class="seat-dropdown hidden"></div>
                 <div id="classDaySelector" class="seat-dropdown"></div>
             </div>
         </div>
@@ -351,7 +498,7 @@
             <div class="exam-subnav subnav-3col mb-4 mt-2" aria-label="Inner Class Menu">
                 <button type="button" id="tab-class-timetable" onclick="switchClassTab('timetable')" class="exam-subnav-item is-active" data-class-target="view-class-timetable">Timetable</button>
                 <button type="button" id="tab-class-subjects" onclick="switchClassTab('subjects')" class="exam-subnav-item" data-class-target="view-class-subjects">Subjects</button>
-                <button type="button" id="tab-class-teachers" onclick="switchClassTab('teachers')" class="exam-subnav-item" data-class-target="view-class-teachers">Teachers</button>
+                <button type="button" id="tab-class-attendance" onclick="switchClassTab('attendance')" class="exam-subnav-item" data-class-target="view-class-attendance">Attendance</button>
             </div>
 
             <!-- Class Sub-views -->
@@ -363,8 +510,8 @@
                 <div id="classSubjectsContent" class="grid gap-4"></div>
             </div>
 
-            <div id="sub-view-class-teachers" class="hidden w-full">
-                <div id="classTeachersContent" class="space-y-4"></div>
+            <div id="sub-view-class-attendance" class="hidden w-full">
+                <div id="classAttendanceContent" class="space-y-4"></div>
             </div>
         </div>
     </div>
@@ -500,7 +647,7 @@
                 <div id="drawerDeptIcon" class="w-14 h-14 bg-[#0071e3] rounded-[1.25rem] flex items-center justify-center text-white text-2xl font-bold shadow-lg">B</div>
                 <div>
                     <h3 id="drawerDeptName" class="text-xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-none">BCA</h3>
-                    <p class="text-[#86868b] text-[9px] font-bold mt-1 tracking-wider uppercase">Mac Ramapuram</p>
+                    <p id="drawerDeptNameSub" class="text-[#86868b] text-[9px] font-bold mt-1 tracking-wider uppercase">Mac Ramapuram</p>
                 </div>
             </div>
 
@@ -710,6 +857,14 @@
             <span id="profileAttendanceBadge" class="text-[10px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider">---</span>
         </div>
 
+        <!-- Subject-wise Attendance Breakdown -->
+        <div id="profileAttendanceBreakdownCard" class="glass-panel p-5 rounded-[2.5rem] mb-6 space-y-4 hidden">
+            <h4 class="text-xs font-black text-[var(--mac-blue)] uppercase tracking-widest mb-1">📊 Subject Attendance</h4>
+            <div id="profileAttendanceBreakdownList" class="space-y-3">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
         <!-- Academic Info Grid -->
         <div class="glass-panel p-5 rounded-[2.5rem] mb-6 space-y-4">
             <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
@@ -731,6 +886,87 @@
             <div class="flex justify-between items-center">
                 <span class="text-xs font-bold text-[#86868b]">Academic Regulation</span>
                 <span class="text-sm font-black text-[var(--mac-blue)]">MGU-UGP 2024</span>
+            </div>
+        </div>
+
+        <!-- Personal Details Card -->
+        <div id="profileGridPersonalCard" class="glass-panel p-5 rounded-[2.5rem] mb-6 space-y-4 hidden">
+            <h4 class="text-xs font-black text-[var(--mac-blue)] uppercase tracking-widest mb-1">👤 Personal Details</h4>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Date of Birth</p>
+                    <p id="profilePersonalDob" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Gender</p>
+                    <p id="profilePersonalGender" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Mobile</p>
+                    <p id="profilePersonalPhone" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Email</p>
+                    <p id="profilePersonalEmail" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5 truncate">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Blood Group</p>
+                    <p id="profilePersonalBlood" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Aadhaar Card</p>
+                    <p id="profilePersonalAadhaar" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Religion & Caste</p>
+                    <p id="profilePersonalReligion" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">ABC Student ID</p>
+                    <p id="profilePersonalAbc" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+            </div>
+            <div class="pt-2 border-t border-[#86868b]/10">
+                <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Permanent Address</p>
+                <p id="profilePersonalAddress" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5 leading-relaxed">---</p>
+            </div>
+        </div>
+
+        <!-- Parent / Guardian Details Card -->
+        <div id="profileGridGuardianCard" class="glass-panel p-5 rounded-[2.5rem] mb-6 space-y-4 hidden">
+            <h4 class="text-xs font-black text-[var(--mac-blue)] uppercase tracking-widest mb-1">👨‍👩‍👦 Parent / Guardian</h4>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Father Name</p>
+                    <p id="profileGuardianName" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Father Phone</p>
+                    <p id="profileGuardianPhone" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bank Account Details Card -->
+        <div id="profileGridBankCard" class="glass-panel p-5 rounded-[2.5rem] mb-6 space-y-4 hidden">
+            <h4 class="text-xs font-black text-[var(--mac-blue)] uppercase tracking-widest mb-1">💳 Bank Account</h4>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Holder Name</p>
+                    <p id="profileBankHolder" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Account Number</p>
+                    <p id="profileBankAcc" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">Bank Name</p>
+                    <p id="profileBankName" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-[#86868b] uppercase tracking-wide">IFSC Code</p>
+                    <p id="profileBankIfsc" class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5">---</p>
+                </div>
             </div>
         </div>
 
@@ -1177,6 +1413,326 @@
     <script defer src="js/app.js"></script>
     <script defer src="js/onboarding.js"></script>
     <script defer src="js/bootstrap.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- PORTAL NAV DRAWER — slides up from bottom when 🎓 is tapped    -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- Backdrop -->
+    <div id="portalNavBackdrop"
+         class="fixed inset-0 z-[200] bg-black/40 backdrop-blur-[3px] hidden"
+         style="z-index:200;"
+         onclick="window.closePortalDrawer()"
+         aria-hidden="true">
+    </div>
+
+    <!-- Drawer Panel -->
+    <div id="portalNavDrawer"
+         class="fixed inset-x-0 bottom-0 z-[210] max-w-md mx-auto pointer-events-none"
+         style="z-index:210; pointer-events:none; transform:translateY(100%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);">
+
+        <!-- Inner card -->
+        <div class="bg-[var(--bg-1,#f5f5f7)] dark:bg-[#1c1c1e] rounded-t-[2.5rem] shadow-2xl border-t border-white/10 pointer-events-auto"
+             style="max-height:92svh; overflow-y:auto; pointer-events:auto;">
+
+            <!-- Drag Handle -->
+            <div class="pt-3 pb-1 flex justify-center" onclick="window.closePortalDrawer()" style="cursor:pointer">
+                <div class="w-10 h-1 bg-black/15 dark:bg-white/20 rounded-full"></div>
+            </div>
+
+            <!-- Header -->
+            <div class="flex flex-col px-6 pt-4 pb-4 border-b border-black/5 dark:border-white/5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[var(--mac-blue)]/10 flex items-center justify-center text-[var(--mac-blue)] text-lg border border-[var(--mac-blue)]/20 shadow-sm font-black">
+                            👤
+                        </div>
+                        <div>
+                            <h3 id="portalDrawerStudentName" class="text-base font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">ABEN SOJAN</h3>
+                            <p class="text-[9px] font-bold text-[#86868b] tracking-wider uppercase">Student Portal</p>
+                        </div>
+                    </div>
+                    <button onclick="window.closePortalDrawer()"
+                            class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-xs font-black spring active:scale-90"
+                            aria-label="Close portal menu">✕</button>
+                </div>
+            </div>
+
+            <!-- Admission number quick-entry (shows when no admin no saved) -->
+            <div id="portalAdminEntry" class="px-6 mt-4 mb-2 hidden">
+                <div class="glass-panel rounded-2xl p-4 flex items-center gap-3 border border-[#0071e3]/20">
+                    <span class="text-xl">🔑</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1">Admission Number</p>
+                        <div class="flex gap-2">
+                            <input id="portalAdminInput" type="text" inputmode="numeric" placeholder="e.g. 12965"
+                                   class="flex-1 bg-black/5 dark:bg-white/10 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-[#0071e3]/40"
+                                   onkeydown="if(event.key==='Enter') window._savePortalAdmin()">
+                            <button onclick="window._savePortalAdmin()"
+                                    class="px-4 py-2 bg-[#0071e3] text-white rounded-xl text-xs font-black spring">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Navigation Header -->
+            <div class="px-6 pt-4 pb-2">
+                <p class="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em]">Main Navigation</p>
+            </div>
+
+            <!-- Section List -->
+            <div class="px-5 pb-6 space-y-2">
+                <!-- Dashboard -->
+                <button onclick="window.closePortalDrawer(); window.loadPortalSection('Dashboard','Dashboard')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">🏠</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Dashboard</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- About -->
+                <button onclick="window.closePortalDrawer(); window.loadPortalSection('Profile','About')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">👤</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">About</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Allotment Memo -->
+                <button onclick="window.closePortalDrawer(); window.loadPortalSection('AllotmentMemo','Allotment Memo')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">📄</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Allotment Memo</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- HallTicket -->
+                <button onclick="window.closePortalDrawer(); window.loadPortalSection('HallTicket','Hall Ticket')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">🎫</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">HallTicket</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Academic -->
+                <button onclick="window.closePortalDrawer(); window.loadPortalSection('Assessment','Academic')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">📚</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Academic</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Fee Payment -->
+                <button onclick="window.closePortalDrawer(); window.loadPortalSection('FeePay','Fee Payment')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">💳</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Fee Payment</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Feed Back -->
+                <button onclick="window.closePortalDrawer(); window.loadPortalSection('FeedBack','Feed Back')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">💬</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Feed Back</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Attendance -->
+                <button onclick="window.closePortalDrawer(); window.loadPortalSection('Attendance','Attendance')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">📅</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Attendance</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Grievance Form -->
+                <button onclick="window.closePortalDrawer(); window.loadPortalSection('Grievance','Grievance Form')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">📬</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Grievance Form</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Student Concession Card -->
+                <button onclick="window.closePortalDrawer(); window.loadPortalSection('Concession','Student Concession Card')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">🪪</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Student Concession Card</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Logout -->
+                <button onclick="window.closePortalDrawer(); window.portalLogout()"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-red-500/10 dark:bg-red-500/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center text-red-500">🚪</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-red-500 dark:text-red-400">Logout</p>
+                    </div>
+                    <span class="text-red-500 text-xs">›</span>
+                </button>
+
+                <!-- Spacer for bottom nav -->
+                <div class="h-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- EDIT PROFILE BOTTOM SHEET                                      -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div id="editProfileSheet" class="fixed inset-0 z-[250] hidden bg-black/40 backdrop-blur-[3px] flex items-end justify-center">
+        <!-- Backdrop clickable to close -->
+        <div class="absolute inset-0" onclick="closeEditProfile()"></div>
+        
+        <!-- Sheet Container -->
+        <div class="relative w-full max-w-md bg-[var(--bg-1,#f5f5f7)] dark:bg-[#1c1c1e] rounded-t-[2.5rem] shadow-2xl border-t border-white/10 flex flex-col" style="max-height:85vh;">
+            <!-- Drag Handle -->
+            <div class="pt-3 pb-1 flex justify-center" onclick="closeEditProfile()" style="cursor:pointer">
+                <div class="w-10 h-1 bg-black/15 dark:bg-white/20 rounded-full"></div>
+            </div>
+
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 pt-2 pb-4 border-b border-black/5 dark:border-white/5">
+                <div>
+                    <h3 class="text-lg font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Edit Settings &amp; Overrides</h3>
+                    <p class="text-[10px] text-[#86868b]">Update your identity, contact info, and bank details.</p>
+                </div>
+                <button onclick="closeEditProfile()" class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-xs font-black spring">✕</button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4 no-scrollbar">
+                <!-- Section: Student Identity -->
+                <div class="space-y-3">
+                    <p class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider">🎓 Academic Identity</p>
+                    <div>
+                        <label class="text-[9px] font-bold text-[#86868b] uppercase">Full Name</label>
+                        <input type="text" id="editName" placeholder="Full name" class="w-full mt-1 p-3 bg-black/5 dark:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="text-[9px] font-bold text-[#86868b] uppercase">Admission Number</label>
+                          <input type="text" id="editAdminNo" placeholder="e.g. 12965" class="w-full mt-1 p-3 bg-black/5 dark:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]" />
+                        </div>
+                        <div>
+                          <label class="text-[9px] font-bold text-[#86868b] uppercase">Registration Number</label>
+                          <input type="text" id="editReg" placeholder="e.g. 240021074744" class="w-full mt-1 p-3 bg-black/5 dark:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-[#86868b] uppercase">Department / Course Group</label>
+                        <div class="grid grid-cols-3 gap-2 mt-1">
+                            <button onclick="selectEditDept('BCA')" id="edit-btn-BCA" class="py-2.5 border rounded-xl text-xs font-bold spring">BCA</button>
+                            <button onclick="selectEditDept('BBA')" id="edit-btn-BBA" class="py-2.5 border rounded-xl text-xs font-bold spring">BBA</button>
+                            <button onclick="selectEditDept('BSW')" id="edit-btn-BSW" class="py-2.5 border rounded-xl text-xs font-bold spring">BSW</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-px bg-black/5 dark:bg-white/5"></div>
+
+                <!-- Section: Personal Info Overrides -->
+                <div class="space-y-3">
+                    <p class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider">👤 Profile Info Overrides</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Phone Number</label>
+                            <input type="text" id="editPhone" placeholder="Mobile" class="w-full mt-1 p-3 bg-black/5 dark:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]" />
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Email ID</label>
+                            <input type="email" id="editEmail" placeholder="Email Address" class="w-full mt-1 p-3 bg-black/5 dark:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-[#86868b] uppercase">Permanent Address</label>
+                        <textarea id="editAddress" rows="2" placeholder="Address..." class="w-full mt-1 p-3 bg-black/5 dark:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="h-px bg-black/5 dark:bg-white/5"></div>
+
+                <!-- Section: Bank Account Details -->
+                <div class="space-y-3 pb-4">
+                    <p class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider">💳 Bank Account details</p>
+                    <div>
+                        <label class="text-[9px] font-bold text-[#86868b] uppercase">Account Holder Name</label>
+                        <input type="text" id="editBankHolder" placeholder="Account Holder Name" class="w-full mt-1 p-3 bg-black/5 dark:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Bank Name</label>
+                            <input type="text" id="editBankName" placeholder="e.g. Federal Bank" class="w-full mt-1 p-3 bg-black/5 dark:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]" />
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Account Number</label>
+                            <input type="text" id="editBankAccNo" placeholder="Account Number" class="w-full mt-1 p-3 bg-black/5 dark:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">IFSC Code</label>
+                            <input type="text" id="editBankIfsc" placeholder="IFSC Code" class="w-full mt-1 p-3 bg-black/5 dark:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]" />
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Branch Name</label>
+                            <input type="text" id="editBankBranch" placeholder="Branch Name" class="w-full mt-1 p-3 bg-black/5 dark:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Action Button -->
+            <div class="p-5 border-t border-black/5 dark:border-white/5 bg-black/5 dark:bg-black/20 flex gap-3 rounded-b-[2.5rem]">
+                <button onclick="closeEditProfile()" class="flex-1 py-3.5 bg-black/5 dark:bg-white/10 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs spring active:scale-95">Cancel</button>
+                <button onclick="saveEditProfile()" class="flex-1 py-3.5 bg-[var(--mac-blue)] text-white rounded-xl font-bold text-xs spring active:scale-95">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script: save admin number from drawer input -->
+    <script>
+        window._savePortalAdmin = function() {
+            const input = document.getElementById('portalAdminInput');
+            const val = (input?.value || '').trim();
+            if (!val) return;
+            localStorage.setItem('machub_student_id', val);
+            if (window.MacHubPortal) window.MacHubPortal.saveAdminNo(val);
+            const entry = document.getElementById('portalAdminEntry');
+            if (entry) entry.classList.add('hidden');
+            alert('Admission number saved! Tap any section to load data.');
+        };
+
+        // Show admin entry bar if no admission number found
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const saved = localStorage.getItem('machub_student_id');
+                const entry = document.getElementById('portalAdminEntry');
+                if (!saved && entry) entry.classList.remove('hidden');
+            }, 500);
+        });
+    </script>
 
 </body>
 </html>

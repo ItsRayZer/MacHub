@@ -31,6 +31,22 @@ function getStudentInfo() {
     }
 }
 
+function getPortalCache(section, adminNo) {
+    if (!adminNo) return null;
+    const directKey = `machub_portal_${section}_${adminNo}`;
+    const direct = localStorage.getItem(directKey);
+    if (direct) return direct;
+    
+    // Check for semester-specific keys
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(`machub_portal_${section}_sem`) && key.endsWith(`_${adminNo}`)) {
+            return localStorage.getItem(key);
+        }
+    }
+    return null;
+}
+
 function saveStudentInfo(profile) {
     if (window.ExamHubProfileApi) return window.ExamHubProfileApi.saveStudentInfo(profile);
     try {
@@ -131,6 +147,8 @@ function updateCountdown() {
     const minsEl = document.getElementById('minsLeft');
     const secsEl = document.getElementById('secsLeft');
 
+    const bannerContainer = document.getElementById('statusBanner');
+
     if (!nextExam) {
         if (titleEl) titleEl.textContent = "All exams completed!";
         if (dateEl) dateEl.textContent = "Good luck with your results!";
@@ -138,8 +156,32 @@ function updateCountdown() {
         if (hoursEl) hoursEl.textContent = "00";
         if (minsEl) minsEl.textContent = "00";
         if (secsEl) secsEl.textContent = "00";
+
+        // Hide banner if already marked as seen for the current timetable's last exam
+        if (userDept && window.EXAM_TIMETABLE && window.EXAM_TIMETABLE.length > 0) {
+            const deptExams = window.EXAM_TIMETABLE.filter(e => e.dept.toUpperCase() === userDept);
+            if (deptExams.length > 0) {
+                const dates = deptExams.map(e => e.date).sort();
+                const latestDate = dates[dates.length - 1];
+                const seenKey = `machub_completed_seen_${userDept}_${latestDate}`;
+                
+                if (localStorage.getItem(seenKey) === 'true') {
+                    if (bannerContainer) bannerContainer.classList.add('hidden');
+                } else {
+                    if (bannerContainer) bannerContainer.classList.remove('hidden');
+                    localStorage.setItem(seenKey, 'true');
+                }
+            } else {
+                if (bannerContainer) bannerContainer.classList.add('hidden');
+            }
+        } else {
+            if (bannerContainer) bannerContainer.classList.add('hidden');
+        }
         return;
     }
+
+    // Next exam exists: ensure banner is visible and display countdown details
+    if (bannerContainer) bannerContainer.classList.remove('hidden');
 
     const targetDate = getISTDate(nextExam.date);
     const diff = targetDate - now;
@@ -614,6 +656,36 @@ function getExamEndTime(dateStr) {
 }
 
 function getDepartmentScheduleByCode(deptCode) {
+    const info = getStudentInfo();
+    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
+    const actualSubjects = [];
+    if (adminNo) {
+        const cached = getPortalCache('Attendance', adminNo);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                const rows = parsed?.data?.payload?.sections?.[0]?.rows || [];
+                rows.forEach(item => {
+                    if (item.subjectName) actualSubjects.push(item.subjectName);
+                });
+            } catch(e) {}
+        }
+    }
+
+    if (actualSubjects.length > 0) {
+        return actualSubjects.map((sub, idx) => {
+            const date = new Date('2026-06-10'); // Theory exams start June 10
+            date.setDate(date.getDate() + (idx * 2));
+            const dateStr = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+            return {
+                date: dateStr,
+                code: `MG2CCR${deptCode.toUpperCase()}${101 + idx}`,
+                title: sub,
+                time: "10:30 AM"
+            };
+        });
+    }
+
     const deptMap = {
         'BCA': window.TIMETABLE_BCA,
         'BBA': window.TIMETABLE_BBA,
@@ -624,6 +696,42 @@ function getDepartmentScheduleByCode(deptCode) {
 }
 
 function getDepartmentPracticalScheduleByCode(deptCode) {
+    const info = getStudentInfo();
+    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
+    const actualSubjects = [];
+    if (adminNo) {
+        const cached = getPortalCache('Attendance', adminNo);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                const rows = parsed?.data?.payload?.sections?.[0]?.rows || [];
+                rows.forEach(item => {
+                    if (item.subjectName) {
+                        const name = item.subjectName.toLowerCase();
+                        if (name.includes('structures') || name.includes('technology') || name.includes('lab') || name.includes('practical')) {
+                            actualSubjects.push(item.subjectName);
+                        }
+                    }
+                });
+            } catch(e) {}
+        }
+    }
+
+    if (actualSubjects.length > 0) {
+        return actualSubjects.map((sub, idx) => {
+            const date = new Date('2026-06-25'); // Practicals start later
+            date.setDate(date.getDate() + idx);
+            const dateStr = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+            return {
+                date: dateStr,
+                code: `${deptCode.toUpperCase()}-PRACTICAL-${idx + 1}`,
+                title: sub + " Practical",
+                time: "Tentative",
+                type: "practical"
+            };
+        });
+    }
+
     const practicalMap = {
         'BCA': window.PRACTICAL_TIMETABLE_BCA
     };
@@ -2043,7 +2151,7 @@ async function applyUserProfile() {
                 renderClassDaySelector();
                 renderClassTimetable();
                 renderClassSubjects();
-                renderClassTeachers();
+                renderClassAttendance();
             }
         }
         updateCountdown();
@@ -2090,13 +2198,37 @@ let _editDept = '';
 function openEditProfile() {
     const info = getStudentInfo() || {};
     _editDept = info.dept || '';
+    const adminNo = info.adminNo || '';
 
     const nameInput = document.getElementById('editName');
     const regInput = document.getElementById('editReg');
     const adminInput = document.getElementById('editAdminNo');
     if (nameInput) nameInput.value = info.name || '';
     if (regInput) regInput.value = info.reg || '';
-    if (adminInput) adminInput.value = info.adminNo || '';
+    if (adminInput) adminInput.value = adminNo;
+
+    // Load custom overrides & bank details
+    const overrides = JSON.parse(localStorage.getItem('machub_profile_overrides_' + adminNo) || '{}');
+    const bank = JSON.parse(localStorage.getItem('machub_bank_details_' + adminNo) || '{}');
+
+    const phoneInput = document.getElementById('editPhone');
+    const emailInput = document.getElementById('editEmail');
+    const addrInput = document.getElementById('editAddress');
+    const holderInput = document.getElementById('editBankHolder');
+    const bankNameInput = document.getElementById('editBankName');
+    const accNoInput = document.getElementById('editBankAccNo');
+    const ifscInput = document.getElementById('editBankIfsc');
+    const branchInput = document.getElementById('editBankBranch');
+
+    if (phoneInput) phoneInput.value = overrides.phone || '';
+    if (emailInput) emailInput.value = overrides.email || '';
+    if (addrInput) addrInput.value = overrides.address || '';
+    
+    if (holderInput) holderInput.value = bank.holder || '';
+    if (bankNameInput) bankNameInput.value = bank.bankName || '';
+    if (accNoInput) accNoInput.value = bank.accNo || '';
+    if (ifscInput) ifscInput.value = bank.ifsc || '';
+    if (branchInput) branchInput.value = bank.branch || '';
 
     // Highlight saved dept button
     ['BCA', 'BBA', 'BSW'].forEach(d => {
@@ -2149,6 +2281,23 @@ function saveEditProfile() {
     const updated = { name, reg, adminNo, dept };
     saveStudentInfo(updated);
 
+    // Save custom overrides & bank details
+    const phone = (document.getElementById('editPhone')?.value || '').trim();
+    const email = (document.getElementById('editEmail')?.value || '').trim();
+    const address = (document.getElementById('editAddress')?.value || '').trim();
+    
+    const holder = (document.getElementById('editBankHolder')?.value || '').trim();
+    const bankName = (document.getElementById('editBankName')?.value || '').trim();
+    const accNo = (document.getElementById('editBankAccNo')?.value || '').trim();
+    const ifsc = (document.getElementById('editBankIfsc')?.value || '').trim();
+    const branch = (document.getElementById('editBankBranch')?.value || '').trim();
+
+    const overrides = { phone, email, address };
+    const bank = { holder, bankName, accNo, ifsc, branch };
+
+    localStorage.setItem('machub_profile_overrides_' + adminNo, JSON.stringify(overrides));
+    localStorage.setItem('machub_bank_details_' + adminNo, JSON.stringify(bank));
+
     // Refresh home cards instantly
     const homeGreet = document.getElementById('homeGreeting');
     if (homeGreet) homeGreet.textContent = `Hi, ${name.split(' ')[0]}!`;
@@ -2165,6 +2314,16 @@ function saveEditProfile() {
     if (typeof renderUserProfile === 'function') {
         renderUserProfile();
     }
+    
+    // Clear and reload Profile section if currently viewed
+    if (window.MacHubPortal && typeof window.MacHubPortal.clearCache === 'function') {
+      window.MacHubPortal.clearCache('Profile');
+      // If we are currently on the profile tab in portal, reload it
+      const activeBtn = document.querySelector('.flex.overflow-x-auto .bg-\\[var\\(--mac-blue\\)\\]');
+      if (activeBtn && activeBtn.textContent.includes('Profile')) {
+        window.loadPortalSection('Profile', 'Profile');
+      }
+    }
 
     closeEditProfile();
 
@@ -2172,6 +2331,8 @@ function saveEditProfile() {
         window.startBackgroundSync();
     }
 }
+window.openEditProfileModal = openEditProfile;
+window.saveEditProfileModal = saveEditProfile;
 function autoSelectNextExamDay() {
     if (!window.EXAM_TIMETABLE || window.EXAM_TIMETABLE.length === 0) {
         appState.selectedDate = '';
@@ -2484,7 +2645,7 @@ window.selectClassDept = function(dept) {
     renderClassDaySelector();
     renderClassTimetable();
     renderClassSubjects();
-    renderClassTeachers();
+    renderClassAttendance();
 };
 
 window.selectClassDay = function(day) {
@@ -2498,30 +2659,159 @@ window.selectClassDay = function(day) {
 window.switchClassTab = function(tab) {
     const timetableEl = document.getElementById('sub-view-class-timetable');
     const subjectsEl = document.getElementById('sub-view-class-subjects');
-    const teachersEl = document.getElementById('sub-view-class-teachers');
+    const attendanceEl = document.getElementById('sub-view-class-attendance');
     const timetableBtn = document.getElementById('tab-class-timetable');
     const subjectsBtn = document.getElementById('tab-class-subjects');
-    const teachersBtn = document.getElementById('tab-class-teachers');
+    const attendanceBtn = document.getElementById('tab-class-attendance');
 
-    if (!timetableEl || !subjectsEl || !teachersEl) return;
+    if (!timetableEl || !subjectsEl || !attendanceEl) return;
 
     timetableEl.classList.toggle('hidden', tab !== 'timetable');
     subjectsEl.classList.toggle('hidden', tab !== 'subjects');
-    teachersEl.classList.toggle('hidden', tab !== 'teachers');
+    attendanceEl.classList.toggle('hidden', tab !== 'attendance');
 
     if (timetableBtn) timetableBtn.classList.toggle('is-active', tab === 'timetable');
     if (subjectsBtn) subjectsBtn.classList.toggle('is-active', tab === 'subjects');
-    if (teachersBtn) teachersBtn.classList.toggle('is-active', tab === 'teachers');
+    if (attendanceBtn) attendanceBtn.classList.toggle('is-active', tab === 'attendance');
 
     appState.classSubTab = tab;
+
+    if (tab === 'attendance') {
+        renderClassAttendance();
+    }
 };
 
 window.renderClassTimetable = function() {
     const container = document.getElementById('classTimetableContent');
     if (!container) return;
 
+    const info = getStudentInfo();
     const dept = currentClassDept.toUpperCase();
     const day = currentClassDay;
+
+    // Retrieve actual subjects from synced ePortal Attendance
+    const actualSubjects = [];
+    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
+    if (adminNo) {
+        const cached = getPortalCache('Attendance', adminNo);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                const rows = parsed?.data?.payload?.sections?.[0]?.rows || parsed?.data?.sections?.[0]?.rows || [];
+                rows.forEach(item => {
+                    if (item.subjectName) {
+                        actualSubjects.push({
+                            subjectName: item.subjectName,
+                            percentage: item.percentage,
+                            presentHours: item.presentHours,
+                            totalHours: item.totalHours
+                        });
+                    }
+                });
+            } catch(e) {}
+        }
+    }
+
+    if (actualSubjects.length > 0) {
+        // Distribute actual subjects across Monday-Friday periods
+        const dayIndex = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].indexOf(day);
+        const periods = [];
+        const times = ['09:30 AM - 10:30 AM', '10:30 AM - 11:30 AM', '11:30 AM - 12:30 PM', '01:30 PM - 02:30 PM', '02:30 PM - 03:30 PM'];
+        
+        for (let i = 0; i < 5; i++) {
+            const subjectIdx = (dayIndex * 5 + i) % actualSubjects.length;
+            const subjectData = actualSubjects[subjectIdx];
+            periods.push({
+                period: i + 1,
+                time: times[i],
+                title: subjectData.subjectName,
+                code: `MG2CCR${dept.toUpperCase()}${101 + subjectIdx}`,
+                percentage: subjectData.percentage,
+                presentHours: subjectData.presentHours,
+                totalHours: subjectData.totalHours
+            });
+        }
+
+        container.innerHTML = periods.map(period => {
+            const pct = parseFloat(period.percentage) || 0;
+            const present = parseInt(period.presentHours) || 0;
+            const total = parseInt(period.totalHours) || 0;
+            
+            // Color coding
+            let progressColor = 'bg-emerald-500';
+            if (pct < 75) {
+                progressColor = 'bg-red-500';
+            } else if (pct < 80) {
+                progressColor = 'bg-amber-500';
+            }
+
+            // Bunk calculations
+            let bunkBadge = '';
+            if (total > 0) {
+                if (pct >= 75) {
+                    const maxTotal = Math.floor(present / 0.75);
+                    const safeBunks = Math.max(0, maxTotal - total);
+                    if (safeBunks > 0) {
+                        bunkBadge = `<span class="bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">⚡ Bunk: ${safeBunks} Safe</span>`;
+                    } else {
+                        bunkBadge = `<span class="bg-amber-500/10 text-amber-500 dark:bg-amber-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">⚠️ Limit Reached</span>`;
+                    }
+                } else {
+                    const required = Math.ceil((0.75 * total - present) / 0.25);
+                    if (required > 0) {
+                        bunkBadge = `<span class="bg-red-500/10 text-red-500 dark:bg-red-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">🚨 Attend Next ${required}</span>`;
+                    }
+                }
+            }
+
+            return `
+                <div class="glass-panel p-5 rounded-[2rem] border border-white/10 dark:border-white/5 relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:shadow-md flex flex-col gap-3">
+                    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--mac-blue)]"></div>
+                    
+                    <div class="flex items-center justify-between gap-4 w-full pl-2">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] dark:text-blue-400 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    Period ${period.period}
+                                </span>
+                                <span class="text-[#86868b] dark:text-[#86868b]/75 text-[10px] font-bold">
+                                    ${period.time}
+                                </span>
+                            </div>
+                            <h4 class="text-base font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight truncate">
+                                ${period.title}
+                            </h4>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="inline-block bg-black/5 dark:bg-white/5 text-[#1d1d1f] dark:text-[#f5f5f7] text-[10px] font-bold px-3 py-1 rounded-xl border border-white/5">
+                                📍 Lab/Room ${201 + (period.period % 3)}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="pl-2 w-full">
+                        <div class="flex flex-col gap-1.5 w-full">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-[10px] font-bold text-[#86868b] uppercase tracking-wider">${period.code}</span>
+                                    <span class="text-[9px] text-[#86868b]">•</span>
+                                    <span class="text-[10px] font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${present}/${total} Hours</span>
+                                    ${bunkBadge}
+                                </div>
+                                <span class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${Math.round(pct)}%</span>
+                            </div>
+                            <!-- Micro progress bar -->
+                            <div class="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden border border-white/5">
+                                <div class="${progressColor} h-full rounded-full transition-all duration-500" style="width: ${Math.min(100, pct)}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        return;
+    }
+
     const timetableKey = `CLASS_TIMETABLE_${dept}`;
     const timetableData = window[timetableKey] ? window[timetableKey][day] : null;
 
@@ -2540,31 +2830,108 @@ window.renderClassTimetable = function() {
         const subjectDetail = window[subjectsKey]?.find(s => s.code === period.code) || {};
         const teacherName = subjectDetail.teacher?.name || "Faculty Assigned";
 
+        // Try to find matching attendance data from synced cache
+        let attData = null;
+        if (adminNo) {
+            const cached = getPortalCache('Attendance', adminNo);
+            if (cached) {
+                try {
+                    const parsed = JSON.parse(cached);
+                    const rows = parsed?.data?.payload?.sections?.[0]?.rows || parsed?.data?.sections?.[0]?.rows || [];
+                    attData = rows.find(r => r.subjectName && (
+                        r.subjectName.toLowerCase().includes(period.title.toLowerCase()) ||
+                        period.title.toLowerCase().includes(r.subjectName.toLowerCase())
+                    ));
+                } catch(e) {}
+            }
+        }
+
+        let attendanceHtml = '';
+        if (attData) {
+            const pct = parseFloat(attData.percentage) || 0;
+            const present = parseInt(attData.presentHours) || 0;
+            const total = parseInt(attData.totalHours) || 0;
+            
+            let progressColor = 'bg-emerald-500';
+            if (pct < 75) {
+                progressColor = 'bg-red-500';
+            } else if (pct < 80) {
+                progressColor = 'bg-amber-500';
+            }
+
+            let bunkBadge = '';
+            if (total > 0) {
+                if (pct >= 75) {
+                    const maxTotal = Math.floor(present / 0.75);
+                    const safeBunks = Math.max(0, maxTotal - total);
+                    if (safeBunks > 0) {
+                        bunkBadge = `<span class="bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">⚡ Bunk: ${safeBunks} Safe</span>`;
+                    } else {
+                        bunkBadge = `<span class="bg-amber-500/10 text-amber-500 dark:bg-amber-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">⚠️ Limit Reached</span>`;
+                    }
+                } else {
+                    const required = Math.ceil((0.75 * total - present) / 0.25);
+                    if (required > 0) {
+                        bunkBadge = `<span class="bg-red-500/10 text-red-500 dark:bg-red-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">🚨 Attend Next ${required}</span>`;
+                    }
+                }
+            }
+
+            attendanceHtml = `
+                <div class="flex flex-col gap-1.5 w-full mt-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[10px] font-bold text-[#86868b] uppercase tracking-wider">${period.code}</span>
+                            <span class="text-[9px] text-[#86868b]">•</span>
+                            <span class="text-[10px] font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${present}/${total} Hours</span>
+                            ${bunkBadge}
+                        </div>
+                        <span class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${Math.round(pct)}%</span>
+                    </div>
+                    <!-- Micro progress bar -->
+                    <div class="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden border border-white/5">
+                        <div class="${progressColor} h-full rounded-full transition-all duration-500" style="width: ${Math.min(100, pct)}%"></div>
+                    </div>
+                </div>
+            `;
+        } else {
+            attendanceHtml = `
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="text-[10px] font-bold text-[#86868b] uppercase tracking-wider">${period.code}</span>
+                    <span class="text-[9px] text-[#86868b]">•</span>
+                    <span class="text-[10px] text-[#86868b] font-bold">${teacherName}</span>
+                </div>
+            `;
+        }
+
         return `
-            <div class="glass-panel p-5 rounded-[2rem] border border-white/10 dark:border-white/5 relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:shadow-md flex items-center justify-between gap-4">
+            <div class="glass-panel p-5 rounded-[2rem] border border-white/10 dark:border-white/5 relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:shadow-md flex flex-col gap-2">
                 <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--mac-blue)]"></div>
                 
-                <div class="flex-1 pl-2">
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <span class="bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] dark:text-blue-400 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                            Period ${period.period}
-                        </span>
-                        <span class="text-[#86868b] dark:text-[#86868b] text-[10px] font-bold">
-                            ${period.time}
+                <div class="flex items-center justify-between gap-4 w-full pl-2">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] dark:text-blue-400 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                Period ${period.period}
+                            </span>
+                            <span class="text-[#86868b] dark:text-[#86868b] text-[10px] font-bold">
+                                ${period.time}
+                            </span>
+                        </div>
+                        <h4 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight truncate">
+                            ${period.title}
+                        </h4>
+                    </div>
+                    
+                    <div class="text-right flex-shrink-0">
+                        <span class="inline-block bg-black/5 dark:bg-white/5 text-[#1d1d1f] dark:text-[#f5f5f7] text-[10px] font-bold px-3 py-1 rounded-xl border border-white/5">
+                            📍 ${period.room}
                         </span>
                     </div>
-                    <h4 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight mb-1">
-                        ${period.title}
-                    </h4>
-                    <p class="text-xs font-bold text-[#86868b] dark:text-[#86868b]/80">
-                        ${teacherName} • ${period.code}
-                    </p>
                 </div>
                 
-                <div class="text-right flex-shrink-0">
-                    <span class="inline-block bg-black/5 dark:bg-white/5 text-[#1d1d1f] dark:text-[#f5f5f7] text-[10px] font-bold px-3 py-1 rounded-xl border border-white/5">
-                        📍 ${period.room}
-                    </span>
+                <div class="pl-2 w-full">
+                    ${attendanceHtml}
                 </div>
             </div>
         `;
@@ -2574,6 +2941,115 @@ window.renderClassTimetable = function() {
 window.renderClassSubjects = function() {
     const container = document.getElementById('classSubjectsContent');
     if (!container) return;
+
+    const info = getStudentInfo();
+    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
+    
+    // Retrieve actual subjects from synced ePortal Attendance
+    const actualSubjects = [];
+    if (adminNo) {
+        const cached = getPortalCache('Attendance', adminNo);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                const rows = parsed?.data?.payload?.sections?.[0]?.rows || [];
+                rows.forEach(item => {
+                    if (item.subjectName) {
+                        actualSubjects.push({
+                            title: item.subjectName,
+                            percentage: item.percentage,
+                            presentHours: item.presentHours,
+                            totalHours: item.totalHours
+                        });
+                    }
+                });
+            } catch(e) {}
+        }
+    }
+
+    if (actualSubjects.length > 0) {
+        // Look up assessment details for each subject to show marks in expanded view
+        let assessData = [];
+        if (adminNo) {
+            const cachedAssess = getPortalCache('Assessment', adminNo);
+            if (cachedAssess) {
+                try {
+                    assessData = JSON.parse(cachedAssess)?.data?.payload?.sections || [];
+                } catch(e) {}
+            }
+        }
+
+        container.innerHTML = actualSubjects.map((subject, idx) => {
+            const uniqueId = `subject-card-${idx}`;
+            
+            // Find corresponding assessment section for this subject
+            const matchingAssess = assessData.find(sec => 
+                sec.subject && (sec.subject.toLowerCase().includes(subject.title.toLowerCase()) || 
+                                subject.title.toLowerCase().includes(sec.subject.toLowerCase()))
+            );
+            
+            let assessmentHtml = '';
+            if (matchingAssess && matchingAssess.rows?.length) {
+                assessmentHtml = matchingAssess.rows.map(row => {
+                    const rowKeys = Object.keys(row);
+                    const label = row[rowKeys[0]] || '';
+                    const marks = row['marks'] || row['score'] || row[rowKeys[1]] || '';
+                    return `
+                        <div class="border-l border-white/10 dark:border-white/5 pl-3 py-1.5 flex justify-between items-center">
+                            <div>
+                                <p class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${label}</p>
+                            </div>
+                            <span class="text-xs font-black text-[var(--mac-blue)]">${marks}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                assessmentHtml = `
+                    <p class="text-xs font-bold text-[#86868b] italic pl-3">No assessment marks uploaded yet.</p>
+                `;
+            }
+
+            const pct = parseFloat(subject.percentage) || 0;
+            const isLow = pct < 75;
+            const pctColor = isLow ? 'text-red-500 bg-red-500/10' : 'text-[var(--mac-blue)] bg-[var(--mac-blue)]/10';
+
+            return `
+                <div id="${uniqueId}" class="class-subject-card glass-panel rounded-[2rem] border border-white/10 dark:border-white/5 overflow-hidden transition-all duration-300 relative">
+                    <div onclick="toggleClassSubjectCard('${uniqueId}')" class="p-5 cursor-pointer flex items-center justify-between gap-4 select-none">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span class="bg-black/5 dark:bg-white/5 text-[#86868b] text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                    Enrolled Subject
+                                </span>
+                                <span class="${pctColor} text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    Attendance: ${subject.percentage || '0%'}
+                                </span>
+                            </div>
+                            <h4 class="text-base font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight mb-1 truncate">
+                                ${subject.title}
+                            </h4>
+                            <p class="text-xs font-bold text-[#86868b]">
+                                Attendance Hours: ${subject.presentHours}/${subject.totalHours} Hours
+                            </p>
+                        </div>
+                        <span class="card-chevron text-lg text-[#86868b] transition-transform duration-300">▼</span>
+                    </div>
+
+                    <div class="card-syllabus-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                        <div class="px-5 pb-5 pt-1 border-t border-black/5 dark:border-white/5 space-y-4">
+                            <div>
+                                <h5 class="text-[10px] font-black text-[#86868b] uppercase tracking-[0.15em] mb-2">Synced Assessment Details</h5>
+                                <div class="space-y-3">
+                                    ${assessmentHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        return;
+    }
 
     const dept = currentClassDept.toUpperCase();
     const subjectsKey = `CLASS_SUBJECTS_${dept}`;
@@ -2726,6 +3202,234 @@ window.renderClassTeachers = function() {
     }).join('');
 };
 
+window.renderClassAttendance = function() {
+    const container = document.getElementById('classAttendanceContent');
+    if (!container) return;
+
+    const info = getStudentInfo();
+    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
+
+    // Pull subject rows from stored attendance data
+    const subjects = [];
+    if (adminNo) {
+        const cached = getPortalCache('Attendance', adminNo);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                // Support both possible data structures
+                const rows =
+                    parsed?.data?.payload?.sections?.[0]?.rows ||
+                    parsed?.data?.sections?.[0]?.rows ||
+                    parsed?.sections?.[0]?.rows ||
+                    [];
+                rows.forEach(item => {
+                    if (item.subjectName) {
+                        subjects.push({
+                            name: item.subjectName,
+                            present: parseFloat(item.presentHours) || 0,
+                            total: parseFloat(item.totalHours) || 0,
+                            pct: parseFloat(item.percentage) || 0
+                        });
+                    }
+                });
+            } catch(e) {}
+        }
+    }
+
+    if (!subjects.length) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:3rem 1rem;">
+                <div style="font-size:3rem;margin-bottom:1rem;">📊</div>
+                <p style="font-size:0.9rem;font-weight:700;color:var(--mac-secondary,#86868b);">No attendance data yet</p>
+                <p style="font-size:0.75rem;color:var(--mac-secondary,#86868b);margin-top:0.4rem;">Your attendance will appear here once it's available.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // ── Compute overall stats ──────────────────────────────────────────────
+    const totalPresent = subjects.reduce((s, x) => s + x.present, 0);
+    const totalHours   = subjects.reduce((s, x) => s + x.total,   0);
+    const overallPct   = totalHours > 0 ? (totalPresent / totalHours) * 100 : 0;
+
+    const safeSubjects = subjects.filter(s => s.pct >= 75);
+    const warnSubjects = subjects.filter(s => s.pct >= 60 && s.pct < 75);
+    const lowSubjects  = subjects.filter(s => s.pct < 60);
+
+    // ── Helper: bunk / attend badge ────────────────────────────────────────
+    function calcBadge(present, total, pct) {
+        if (total <= 0) return '';
+        if (pct >= 75) {
+            const maxTotal  = Math.floor(present / 0.75);
+            const safeBunks = Math.max(0, maxTotal - total);
+            if (safeBunks > 0) {
+                return `<span class="att-badge att-badge--safe">⚡ Can skip ${safeBunks}</span>`;
+            }
+            return `<span class="att-badge att-badge--ok">✅ On Track</span>`;
+        } else {
+            const needed = Math.ceil((0.75 * total - present) / 0.25);
+            if (needed > 0) {
+                return `<span class="att-badge att-badge--warn">🚨 Attend ${needed} more</span>`;
+            }
+            return '';
+        }
+    }
+
+    // ── Colour helpers ─────────────────────────────────────────────────────
+    function pctColor(pct) {
+        if (pct >= 80) return '#30d158'; // green
+        if (pct >= 75) return '#ff9f0a'; // amber
+        return '#ff453a';                // red
+    }
+    function barBg(pct) {
+        if (pct >= 80) return 'linear-gradient(90deg,#30d158,#34c759)';
+        if (pct >= 75) return 'linear-gradient(90deg,#ff9f0a,#ffcc00)';
+        return 'linear-gradient(90deg,#ff453a,#ff6961)';
+    }
+    function ringColor(pct) {
+        if (pct >= 80) return '#30d158';
+        if (pct >= 75) return '#ff9f0a';
+        return '#ff453a';
+    }
+
+    const overallColor = ringColor(overallPct);
+    const dashVal      = Math.min(100, overallPct);
+    // SVG circle: r=44, circumference ≈ 276.5
+    const circum = 276.5;
+    const dash   = (dashVal / 100) * circum;
+
+    // ── Overall hero card ──────────────────────────────────────────────────
+    const heroHtml = `
+        <div class="att-hero glass-panel" style="
+            border-radius:2rem;
+            padding:1.5rem 1.25rem;
+            background:linear-gradient(135deg,
+                color-mix(in srgb,${overallColor} 12%,transparent),
+                color-mix(in srgb,${overallColor} 4%,transparent));
+            border:1px solid color-mix(in srgb,${overallColor} 25%,transparent);
+            display:flex;flex-direction:column;gap:1rem;">
+
+            <!-- Top row: ring + info -->
+            <div style="display:flex;align-items:center;gap:1.5rem;">
+                <!-- SVG ring -->
+                <div style="position:relative;flex-shrink:0;width:96px;height:96px;">
+                    <svg width="96" height="96" viewBox="0 0 96 96" style="transform:rotate(-90deg);">
+                        <circle cx="48" cy="48" r="44" fill="none"
+                            stroke="rgba(128,128,128,.12)" stroke-width="8"/>
+                        <circle cx="48" cy="48" r="44" fill="none"
+                            stroke="${overallColor}" stroke-width="8"
+                            stroke-linecap="round"
+                            stroke-dasharray="${dash.toFixed(1)} ${circum.toFixed(1)}"
+                            style="transition:stroke-dasharray .8s cubic-bezier(.4,0,.2,1)"/>
+                    </svg>
+                    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;">
+                        <span style="font-size:1.35rem;font-weight:900;color:${overallColor};line-height:1;">${overallPct.toFixed(1)}%</span>
+                        <span style="font-size:.55rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.08em;">Overall</span>
+                    </div>
+                </div>
+
+                <!-- Stats column -->
+                <div style="flex:1;min-width:0;">
+                    <p style="font-size:.6rem;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:.12em;margin:0 0 .3rem;">Attendance Summary</p>
+                    <h3 style="font-size:1.2rem;font-weight:900;color:var(--mac-fg,#1d1d1f);margin:0 0 .6rem;line-height:1.1;">${totalPresent.toFixed(0)} / ${totalHours.toFixed(0)} Hrs</h3>
+                    <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+                        <span style="font-size:.6rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;background:rgba(48,209,88,.12);color:#30d158;">✓ ${safeSubjects.length} Safe</span>
+                        ${warnSubjects.length ? `<span style="font-size:.6rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;background:rgba(255,159,10,.12);color:#ff9f0a;">⚠ ${warnSubjects.length} Low</span>` : ''}
+                        ${lowSubjects.length  ? `<span style="font-size:.6rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;background:rgba(255,69,58,.12);color:#ff453a;">✗ ${lowSubjects.length} Critical</span>` : ''}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 75% target bar -->
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+                    <span style="font-size:.6rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.1em;">Progress to 75% Target</span>
+                    <span style="font-size:.7rem;font-weight:900;color:${overallColor};">${overallPct.toFixed(1)}%</span>
+                </div>
+                <div style="height:6px;border-radius:999px;background:rgba(128,128,128,.12);overflow:hidden;">
+                    <div style="height:100%;border-radius:999px;background:${barBg(overallPct)};width:${Math.min(100,(overallPct/75)*100).toFixed(1)}%;transition:width .8s cubic-bezier(.4,0,.2,1);"></div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;margin-top:.3rem;">
+                    <span style="font-size:.55rem;font-weight:700;color:#86868b;">Minimum: 75%</span>
+                </div>
+            </div>
+        </div>`;
+
+    // ── Subject cards ──────────────────────────────────────────────────────
+    const subjectCards = subjects.map((s, idx) => {
+        const pct    = s.pct;
+        const color  = pctColor(pct);
+        const badge  = calcBadge(s.present, s.total, pct);
+        const barPct = Math.min(100, pct);
+        const shortName = s.name.length > 36 ? s.name.slice(0, 34) + '…' : s.name;
+
+        return `
+            <div class="att-subject-card glass-panel" style="
+                border-radius:1.75rem;
+                padding:1.1rem 1.25rem;
+                border:1px solid rgba(128,128,128,.1);
+                position:relative;
+                overflow:hidden;
+                transition:transform .2s ease,box-shadow .2s ease;"
+                onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(0,0,0,.1)'"
+                onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+
+                <!-- Left accent bar -->
+                <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${color};border-radius:4px 0 0 4px;"></div>
+
+                <!-- Subject index badge -->
+                <div style="position:absolute;top:.9rem;right:1rem;">
+                    <span style="font-size:1.1rem;font-weight:900;color:${color};opacity:.18;">${String(idx+1).padStart(2,'0')}</span>
+                </div>
+
+                <div style="padding-left:.5rem;">
+                    <!-- Subject name -->
+                    <p style="font-size:.58rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.1em;margin:0 0 .2rem;">Subject</p>
+                    <h4 style="font-size:.9rem;font-weight:800;color:var(--mac-fg,#1d1d1f);margin:0 0 .75rem;line-height:1.3;padding-right:2rem;">${shortName}</h4>
+
+                    <!-- Hours row -->
+                    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;flex-wrap:wrap;">
+                        <div>
+                            <p style="font-size:.52rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.08em;margin:0;">Present</p>
+                            <p style="font-size:1rem;font-weight:900;color:${color};margin:0;">${s.present.toFixed(0)}<span style="font-size:.6rem;font-weight:600;color:#86868b;"> hrs</span></p>
+                        </div>
+                        <div style="width:1px;height:2rem;background:rgba(128,128,128,.15);"></div>
+                        <div>
+                            <p style="font-size:.52rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.08em;margin:0;">Total</p>
+                            <p style="font-size:1rem;font-weight:900;color:var(--mac-fg,#1d1d1f);margin:0;">${s.total.toFixed(0)}<span style="font-size:.6rem;font-weight:600;color:#86868b;"> hrs</span></p>
+                        </div>
+                        <div style="width:1px;height:2rem;background:rgba(128,128,128,.15);"></div>
+                        <div>
+                            <p style="font-size:.52rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.08em;margin:0;">Attendance</p>
+                            <p style="font-size:1rem;font-weight:900;color:${color};margin:0;">${pct.toFixed(1)}%</p>
+                        </div>
+                    </div>
+
+                    <!-- Progress bar -->
+                    <div style="margin-bottom:.6rem;">
+                        <div style="height:5px;border-radius:999px;background:rgba(128,128,128,.12);overflow:hidden;">
+                            <div style="height:100%;border-radius:999px;background:${barBg(pct)};width:${barPct.toFixed(1)}%;transition:width .9s cubic-bezier(.4,0,.2,1) ${idx * 0.05}s;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Badge row -->
+                    ${badge ? `<div style="margin-top:.4rem;">${badge}</div>` : ''}
+                </div>
+            </div>`;
+    }).join('');
+
+    // ── Inline styles for badges ───────────────────────────────────────────
+    const styleBlock = `
+        <style id="att-styles">
+            .att-badge{display:inline-block;font-size:.58rem;font-weight:800;padding:.25rem .65rem;border-radius:999px;text-transform:uppercase;letter-spacing:.08em;}
+            .att-badge--safe{background:rgba(48,209,88,.12);color:#30d158;}
+            .att-badge--ok{background:rgba(0,122,255,.10);color:var(--mac-blue,#007aff);}
+            .att-badge--warn{background:rgba(255,69,58,.12);color:#ff453a;}
+        </style>`;
+
+    container.innerHTML = styleBlock + heroHtml + `<div style="display:flex;flex-direction:column;gap:.85rem;margin-top:1rem;">` + subjectCards + `</div>`;
+};
+
 window.initExamHubApp = () => {
     checkOnboarding();
     
@@ -2740,7 +3444,7 @@ window.initExamHubApp = () => {
     renderClassDaySelector();
     renderClassTimetable();
     renderClassSubjects();
-    renderClassTeachers();
+    renderClassAttendance();
 
     switchView('view-home');
     startTimers();

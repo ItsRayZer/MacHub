@@ -2,6 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebas
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-ai.js";
 import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+import { getAuth, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCfRvyKJdTkMHqNHJfsVd2g-hwnTjcXvL8",
@@ -16,6 +18,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app, firebaseConfig.databaseURL);
+const firestore = getFirestore(app);
+const auth = getAuth(app);
 
 // Expose database references globally
 window.firebaseDb = db;
@@ -23,11 +27,15 @@ window.firebaseDbRef = ref;
 window.firebaseDbOnValue = onValue;
 window.firebaseDbGet = get;
 
+window.firebaseFirestore = firestore;
+window.firestoreDoc = doc;
+window.firestoreGetDoc = getDoc;
+window.firestoreSetDoc = setDoc;
 
-if (!['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)) {
-  try { getAnalytics(app); } catch (e) { console.warn('Analytics skipped:', e.message); }
-}
-
+window.firebaseAuth = auth;
+window.firebaseSignInWithCustomToken = signInWithCustomToken;
+window.firebaseOnAuthStateChanged = onAuthStateChanged;
+window.firebaseSignOut = signOut;
 // ── Firebase AI Logic → Gemini Developer API (no billing required) ──────────
 // Requires: Firebase Console → Build → AI Logic → Enabled ✅
 try {

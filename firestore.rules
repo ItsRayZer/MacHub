@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /students/{admissionNumber} {
+      allow read: if request.auth != null
+                  && request.auth.token.admissionNumber == admissionNumber;
+
+      allow write: if request.auth != null
+                   && request.auth.token.admissionNumber == admissionNumber;
+
+      allow create: if request.auth != null
+                    && request.auth.token.admissionNumber == admissionNumber;
+    }
+  }
+}
