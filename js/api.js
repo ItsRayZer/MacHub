@@ -15,7 +15,7 @@
   // Priority: 1) window.MACHUB_PROXY_URL (override)
   //           2) localhost when running locally  → Node proxy on :3001
   //           3) Cloudflare Worker on production → works from any device/browser
-  const CF_WORKER_URL = 'https://machub-proxy.itsrayzer.workers.dev';
+  const CF_WORKER_URL = 'https://machub-proxy.mrabensojan.workers.dev';
 
   const PROXY_BASE = window.MACHUB_PROXY_URL ||
     (['localhost', '127.0.0.1'].includes(window.location.hostname) ||
