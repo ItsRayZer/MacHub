@@ -130,7 +130,7 @@ export default {
         const parsed = await scrapePage('StudyMaterialDetail', path, cookie);
         return corsResponse({
           success: true,
-          data: parsed.data,
+          data: parsed,
           page: 'StudyMaterialDetail',
           timestamp: new Date().toISOString(),
         });
@@ -202,7 +202,7 @@ async function executeScrape(section, scraperFn, admissionNumber, body = {}, isR
       success: true,
       section,
       admissionNumber,
-      data: data.data,
+      data: data,
       page: data.page,
       timestamp: new Date().toISOString(),
     });
