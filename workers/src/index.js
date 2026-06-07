@@ -157,14 +157,20 @@ export default {
         return errorResponse('admissionNumber is required', 400);
       }
 
+      // Normalize section name from Client API (Capitalized/lowercase) to match Worker SCRAPERS keys
+      let targetSection = section.charAt(0).toLowerCase() + section.slice(1);
+      if (targetSection === 'feePay') targetSection = 'feePayment';
+      if (targetSection === 'feedBack') targetSection = 'feedback';
+      if (targetSection === 'internalToUniversity') targetSection = 'internalUniversity';
+
       // Validate section
-      const scraperFn = SCRAPERS[section];
+      const scraperFn = SCRAPERS[targetSection];
       if (!scraperFn) {
         return errorResponse(`Unknown section: ${section}. Valid sections: ${Object.keys(SCRAPERS).join(', ')}`, 404);
       }
 
       // Execute with automatic session retry
-      const result = await executeScrape(section, scraperFn, admissionNumber, body);
+      const result = await executeScrape(targetSection, scraperFn, admissionNumber, body);
       return result;
     }
 

@@ -110,6 +110,10 @@ async function finishSmartOnboarding(event) {
     if (profile.adminNo) {
         (async () => {
             try {
+                // Authenticate first
+                if (window.authenticateFirebase) {
+                    await window.authenticateFirebase(profile.adminNo);
+                }
                 // Attempt Firestore restore if Firebase is available (silent, no UI)
                 if (window.firebaseFirestore && window.firestoreDoc && window.firestoreGetDoc) {
                     const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', profile.adminNo);
@@ -463,13 +467,51 @@ window.selectObDept = function(dept) {
 
 window.validateObStep2 = function() {
     if (!window.obData) window.obData = { name: '', dept: '', reg: '', adminNo: '' };
-    const nameVal = (document.getElementById('ob-name')?.value || "").trim();
-    const regVal = (document.getElementById('ob-reg')?.value || "").trim();
-    const adminNoVal = (document.getElementById('ob-adminNo')?.value || "").trim();
     
-    window.obData.name = nameVal;
-    window.obData.reg = regVal;
-    window.obData.adminNo = adminNoVal;
+    const nameInput = document.getElementById('ob-name');
+    const regInput = document.getElementById('ob-reg');
+    const adminInput = document.getElementById('ob-adminNo');
+
+    const nameVal = (nameInput?.value || "").trim();
+    const regVal = (regInput?.value || "").trim();
+    const adminNoVal = (adminInput?.value || "").trim();
+    
+    // Auto-lookup if admin number matches or name matches exactly in the DB
+    let matchedStudent = null;
+    if (/^\d{4,6}$/.test(adminNoVal)) {
+        matchedStudent = window.STUDENTS_DB?.find(x => x.adminNo === adminNoVal);
+    } else if (nameVal.length > 2) {
+        const nameUpper = nameVal.toUpperCase();
+        const matches = window.STUDENTS_DB?.filter(x => x.name.toUpperCase() === nameUpper);
+        if (matches && matches.length === 1) {
+            matchedStudent = matches[0];
+        }
+    }
+
+    if (matchedStudent) {
+        _selectedStudentFromDB = matchedStudent;
+        syncSelectedProfileToObData();
+        
+        // Populate input fields if they are empty or different
+        if (nameInput && nameInput.value.toUpperCase() !== matchedStudent.name.toUpperCase()) {
+            nameInput.value = matchedStudent.name;
+        }
+        if (regInput && regInput.value.toUpperCase() !== matchedStudent.regNo.toUpperCase()) {
+            regInput.value = matchedStudent.regNo;
+        }
+        if (adminInput && adminInput.value !== matchedStudent.adminNo) {
+            adminInput.value = matchedStudent.adminNo;
+        }
+        if (matchedStudent.department) {
+            window.selectObDept(matchedStudent.department.toUpperCase());
+        }
+    } else {
+        // If they cleared the input or changed it to something else, clear DB link
+        _selectedStudentFromDB = null;
+        window.obData.name = nameVal;
+        window.obData.reg = regVal;
+        window.obData.adminNo = adminNoVal;
+    }
 
     const btn = document.getElementById('ob-final-btn');
     if (window.obData.name && window.obData.dept) {

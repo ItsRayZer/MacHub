@@ -92,11 +92,51 @@
     }
 
     return '';
-  }
-
   function saveAdminNo(no) {
     if (no) localStorage.setItem('machub_student_id', no);
   }
+
+  async function authenticateFirebase(adminNo) {
+    if (!adminNo) return;
+    if (!window.firebaseAuth || !window.firebaseSignInWithCustomToken) {
+      // Retry in 500ms if Firebase Auth SDK is not fully loaded yet
+      setTimeout(() => authenticateFirebase(adminNo), 500);
+      return;
+    }
+    
+    // If already authenticated as the same student, skip
+    if (window.firebaseAuth.currentUser) {
+      const currentUid = window.firebaseAuth.currentUser.uid;
+      if (currentUid === `student_${adminNo}`) {
+        console.log('[MacHub API] Already authenticated in Firebase Auth.');
+        return;
+      }
+    }
+
+    try {
+      console.log(`[MacHub API] Authenticating with Firebase for student: ${adminNo}...`);
+      
+      // Always get the Firebase Custom Token from the Cloudflare Worker (which has service account credentials)
+      const res = await fetch(`${CF_WORKER_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admissionNumber: adminNo }),
+        signal: AbortSignal.timeout(10000)
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+      const token = json.token;
+
+      if (token) {
+        await window.firebaseSignInWithCustomToken(window.firebaseAuth, token);
+        console.log(`[MacHub API] ✅ Firebase Auth successful for student_${adminNo}`);
+      }
+    } catch (err) {
+      console.warn('[MacHub API] Firebase Auth failed:', err.message);
+    }
+  }
+
+  window.authenticateFirebase = authenticateFirebase;
 
   // Helper to mask profile details before saving to Firestore or local storage cache
   function maskSensitiveFields(profileData) {
@@ -1538,7 +1578,10 @@
   // Auto-save admission number and sync dashboard on startup
   document.addEventListener('DOMContentLoaded', () => {
     const adminNo = getAdminNo();
-    if (adminNo) saveAdminNo(adminNo);
+    if (adminNo) {
+      saveAdminNo(adminNo);
+      authenticateFirebase(adminNo);
+    }
     setTimeout(() => {
       if (window.syncHomePortalDashboard) window.syncHomePortalDashboard();
     }, 500);
