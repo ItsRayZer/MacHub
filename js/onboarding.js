@@ -388,6 +388,23 @@ window.handleSmartSearch = function(query) {
     const q = (query || '').trim();
     if (!q) { resultsEl.innerHTML = ''; return; }
 
+    // Direct admin number entry → instantly select that student
+    if (/^\d{4,6}$/.test(q)) {
+        const direct = window.STUDENTS_DB?.find(x => x.adminNo === q);
+        if (direct) {
+            resultsEl.innerHTML = `
+                <button onclick="selectStudentFromDB('${escapeHtml(direct.adminNo)}')" class="ob-result-row spring">
+                    <span class="ob-result-avatar">${escapeHtml((direct.name || '?').charAt(0))}</span>
+                    <div class="flex-1 min-w-0">
+                        <p>${escapeHtml(direct.name)}</p>
+                        <small>${escapeHtml(direct.classGroup)} / ADMN ${escapeHtml(direct.adminNo)} / ROLL ${escapeHtml(direct.classNo)}</small>
+                    </div>
+                    <span class="ob-result-arrow" aria-hidden="true"></span>
+                </button>`;
+            return;
+        }
+    }
+
     const matches = window.SmartFinder ? window.SmartFinder.findStudent(q) : [];
 
     if (matches.length === 0) {
@@ -418,6 +435,8 @@ window.selectStudentFromDB = function(adminNo) {
     if (!s) return;
     _selectedStudentFromDB = s;
     syncSelectedProfileToObData();
+    // Store adminNo persistently so portal sync works immediately after login
+    localStorage.setItem('machub_student_id', adminNo);
     window.nextObStep(3);
 };
 window.showManualEntry = function() {

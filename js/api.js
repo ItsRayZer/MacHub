@@ -12,19 +12,21 @@
   'use strict';
 
   // ── Config ─────────────────────────────────────────────────────────────────
-  // Priority: 1) window.MACHUB_PROXY_URL (override via index.html)
-  //           2) localhost when running locally
-  //           3) empty string on Firebase — triggers cloud-cache-only mode
+  // Priority: 1) window.MACHUB_PROXY_URL (override)
+  //           2) localhost when running locally  → Node proxy on :3001
+  //           3) Cloudflare Worker on production → works from any device/browser
+  const CF_WORKER_URL = 'https://machub-proxy.itsrayzer.workers.dev';
+
   const PROXY_BASE = window.MACHUB_PROXY_URL ||
-    (['localhost', '127.0.0.1'].includes(window.location.hostname)
+    (['localhost', '127.0.0.1'].includes(window.location.hostname) ||
+     window.location.protocol === 'file:'
       ? 'http://localhost:3001'
-      : (window.location.protocol === 'file:'
-          ? 'http://localhost:3001'
-          : ''   // Firebase hosting — no proxy available; falls back to Firestore cache
-        )
+      : CF_WORKER_URL
     );
 
-  const HAS_PROXY = Boolean(PROXY_BASE);
+  // Worker uses POST /api/scrape/:section  (localhost uses GET /api/sync-portal/:section)
+  const USE_WORKER_API = PROXY_BASE === CF_WORKER_URL;
+  const HAS_PROXY = true;   // always available — either local or CF Worker
 
   // Local cache TTL: 10 minutes per section
   const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -224,39 +226,39 @@
     const t0 = Date.now();
 
     try {
-      // ── No proxy configured (Firebase hosting) — serve from cloud cache only ──
-      if (!HAS_PROXY) {
-        const cloudCached = await readCloudCache(sectionName, semester);
-        if (cloudCached) {
-          localStorage.setItem(cacheKey(sectionName, semester), JSON.stringify({ data: cloudCached, savedAt: Date.now() }));
-          console.log(`[MacHub API] Cloud cache restored: ${sectionName}`);
-          return cloudCached;
-        }
-        throw new Error('NO_PROXY');
-      }
+      let res, json;
 
-      let url = `${PROXY_BASE}/api/sync-portal/${encodeURIComponent(sectionName)}?admissionNumber=${encodeURIComponent(adminNo)}`;
-      if (semester) {
-        url += `&semester=${encodeURIComponent(semester)}`;
-      }
-      const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
-
-      const json = await res.json();
-
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || `HTTP ${res.status}`);
+      if (USE_WORKER_API) {
+        // ── Cloudflare Worker: POST /api/scrape/:section ──────────────────────
+        res = await fetch(`${PROXY_BASE}/api/scrape/${encodeURIComponent(sectionName)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ admissionNumber: adminNo, semester: semester || undefined }),
+          signal: AbortSignal.timeout(20000)
+        });
+        json = await res.json();
+        if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+        // Worker returns { success, data, section } — normalise to match local format
+        json = { success: true, payload: json.data };
+      } else {
+        // ── Local Node proxy: GET /api/sync-portal/:section ───────────────────
+        let url = `${PROXY_BASE}/api/sync-portal/${encodeURIComponent(sectionName)}?admissionNumber=${encodeURIComponent(adminNo)}`;
+        if (semester) url += `&semester=${encodeURIComponent(semester)}`;
+        res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+        json = await res.json();
+        if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
       }
 
       console.log(`[MacHub API] ✅ ${sectionName} fetched in ${Date.now() - t0}ms`);
-      
-      // Mask profile details for the cache write, but return the full unmasked json in-memory
       writeCache(sectionName, json, semester);
       return json;
 
     } catch (err) {
+      // Always fall back to cloud cache on any network error
       const cloudCached = await readCloudCache(sectionName, semester);
       if (cloudCached) {
         localStorage.setItem(cacheKey(sectionName, semester), JSON.stringify({ data: cloudCached, savedAt: Date.now() }));
+        console.log(`[MacHub API] Fallback to cloud cache: ${sectionName}`);
         return cloudCached;
       }
       throw err;
@@ -264,7 +266,6 @@
       currentlyLoading[loadKey] = false;
     }
   }
-
 
   window.startBackgroundSync = function () {
     const adminNo = getAdminNo();
