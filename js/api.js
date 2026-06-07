@@ -12,11 +12,19 @@
   'use strict';
 
   // ── Config ─────────────────────────────────────────────────────────────────
-  // Proxy is served from same origin when Node.js serves static files.
-  // Falls back to a deployed Render URL if needed.
-  const PROXY_BASE = window.MACHUB_PROXY_URL || 
-    (['localhost', '127.0.0.1'].includes(window.location.hostname) ? 'http://localhost:3001' : 
-     (window.location.protocol === 'file:' ? 'http://localhost:3001' : ''));
+  // Priority: 1) window.MACHUB_PROXY_URL (override via index.html)
+  //           2) localhost when running locally
+  //           3) empty string on Firebase — triggers cloud-cache-only mode
+  const PROXY_BASE = window.MACHUB_PROXY_URL ||
+    (['localhost', '127.0.0.1'].includes(window.location.hostname)
+      ? 'http://localhost:3001'
+      : (window.location.protocol === 'file:'
+          ? 'http://localhost:3001'
+          : ''   // Firebase hosting — no proxy available; falls back to Firestore cache
+        )
+    );
+
+  const HAS_PROXY = Boolean(PROXY_BASE);
 
   // Local cache TTL: 10 minutes per section
   const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -216,6 +224,17 @@
     const t0 = Date.now();
 
     try {
+      // ── No proxy configured (Firebase hosting) — serve from cloud cache only ──
+      if (!HAS_PROXY) {
+        const cloudCached = await readCloudCache(sectionName, semester);
+        if (cloudCached) {
+          localStorage.setItem(cacheKey(sectionName, semester), JSON.stringify({ data: cloudCached, savedAt: Date.now() }));
+          console.log(`[MacHub API] Cloud cache restored: ${sectionName}`);
+          return cloudCached;
+        }
+        throw new Error('NO_PROXY');
+      }
+
       let url = `${PROXY_BASE}/api/sync-portal/${encodeURIComponent(sectionName)}?admissionNumber=${encodeURIComponent(adminNo)}`;
       if (semester) {
         url += `&semester=${encodeURIComponent(semester)}`;
@@ -245,6 +264,7 @@
       currentlyLoading[loadKey] = false;
     }
   }
+
 
   window.startBackgroundSync = function () {
     const adminNo = getAdminNo();
@@ -1442,12 +1462,20 @@
 
   function _errorCard(label, msg) {
     if (msg === 'ALREADY_LOADING') return _skeletonHtml(2);
+    if (msg === 'NO_PROXY') {
+      return `<div class="glass-panel p-5 rounded-2xl border border-[#007aff]/20 text-center mb-4">
+        <div class="text-3xl mb-2">☁️</div>
+        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${_esc(label)} Not Yet Synced</p>
+        <p class="text-[10px] font-bold text-[#86868b] mt-2">Open the app on your device to sync fresh data from the portal.</p>
+      </div>`;
+    }
     return `<div class="glass-panel p-5 rounded-2xl border border-[#ff3b30]/20 text-center mb-4">
       <div class="text-3xl mb-2">⚠️</div>
       <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${_esc(label)} Unavailable</p>
       <p class="text-[10px] font-bold text-[#86868b] mt-2">${_esc(msg)}</p>
     </div>`;
   }
+
 
   function _retryBtn(jsCall) {
     return `<div class="text-center mt-3">

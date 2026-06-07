@@ -102,180 +102,54 @@ async function finishSmartOnboarding(event) {
         return false;
     }
 
-    const card = document.querySelector('.onboarding-card');
-    if (!card) {
-        enterAppWithProfile(profile);
-        return false;
-    }
+    // Save profile and enter app immediately — no loading screen, no portal handshake
+    localStorage.setItem('machub_student_id', profile.adminNo || '');
+    saveProfile(profile);
 
-    // Ensure style is registered
-    if (!document.getElementById('ob-spinner-style')) {
-        const style = document.createElement('style');
-        style.id = 'ob-spinner-style';
-        style.innerHTML = `
-            @keyframes ob-spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-            .ob-animate-spin {
-                animation: ob-spin 1s linear infinite;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    // Remove existing overlay if any
-    const existingOverlay = document.getElementById('ob-loading-overlay');
-    if (existingOverlay) existingOverlay.remove();
-
-    card.style.position = 'relative';
-    const overlay = document.createElement('div');
-    overlay.id = 'ob-loading-overlay';
-    overlay.style.position = 'absolute';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.background = 'rgba(255, 255, 255, 0.95)';
-    overlay.style.borderRadius = '3rem';
-    overlay.style.display = 'flex';
-    overlay.style.flexDirection = 'column';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '500';
-    overlay.style.padding = '2rem';
-    overlay.innerHTML = `
-        <div class="flex flex-col items-center gap-4 text-center">
-            <div id="ob-loading-spinner" class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full ob-animate-spin"></div>
-            <h3 class="text-lg font-black text-slate-800 dark:text-white" id="ob-loading-title" style="margin-top: 1rem;">Contacting portal...</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400" id="ob-loading-status" style="margin-top: 0.5rem;">Starting authentication handshake</p>
-        </div>
-    `;
-    if (document.documentElement.classList.contains('dark') || document.body.classList.contains('dark')) {
-        overlay.style.background = 'rgba(28, 28, 30, 0.95)';
-    }
-    card.appendChild(overlay);
-
-    const statusEl = document.getElementById('ob-loading-status');
-
-    try {
-        if (statusEl) statusEl.textContent = 'Authenticating with ePortal...';
-        
-        const workerUrl = window.MACHUB_WORKER_URL || 'http://localhost:8787';
-        const loginRes = await fetch(`${workerUrl}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ admissionNumber: profile.adminNo })
-        });
-        
-        const loginJson = await loginRes.json();
-        if (!loginRes.ok || !loginJson.success || !loginJson.token) {
-            throw new Error(loginJson.error || `HTTP ${loginRes.status}`);
-        }
-
-        const customToken = loginJson.token;
-
-        if (statusEl) statusEl.textContent = 'Connecting to Cloud Sync...';
-        if (!window.firebaseSignInWithCustomToken || !window.firebaseAuth) {
-            throw new Error('Firebase Auth system not fully loaded.');
-        }
-
-        await window.firebaseSignInWithCustomToken(window.firebaseAuth, customToken);
-
-        if (statusEl) statusEl.textContent = 'Checking Cloud database...';
-        if (!window.firebaseFirestore || !window.firestoreDoc || !window.firestoreGetDoc) {
-            throw new Error('Firebase Firestore system not fully loaded.');
-        }
-
-        const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', profile.adminNo);
-        const docSnap = await window.firestoreGetDoc(docRef);
-        const exists = docSnap.exists();
-
-        if (exists) {
-            if (statusEl) statusEl.textContent = 'Restoring offline cache...';
-            const docData = docSnap.data();
-            
-            localStorage.setItem('machub_student_id', profile.adminNo);
-            saveProfile(profile);
-
-            for (const key of Object.keys(docData)) {
-                const cachedSection = docData[key];
-                if (cachedSection && cachedSection.data) {
-                    let section = key;
-                    let semester = '';
-                    if (key.includes('_sem')) {
-                        const parts = key.split('_sem');
-                        section = parts[0];
-                        semester = parts[1];
+    // Try to restore any existing cloud cache silently in the background
+    if (profile.adminNo) {
+        (async () => {
+            try {
+                // Attempt Firestore restore if Firebase is available (silent, no UI)
+                if (window.firebaseFirestore && window.firestoreDoc && window.firestoreGetDoc) {
+                    const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', profile.adminNo);
+                    const docSnap = await window.firestoreGetDoc(docRef);
+                    if (docSnap.exists()) {
+                        const docData = docSnap.data();
+                        for (const key of Object.keys(docData)) {
+                            const cachedSection = docData[key];
+                            if (cachedSection && cachedSection.data) {
+                                let section = key;
+                                let semester = '';
+                                if (key.includes('_sem')) {
+                                    const parts = key.split('_sem');
+                                    section = parts[0];
+                                    semester = parts[1];
+                                }
+                                const keyName = `machub_portal_${section}${semester ? `_sem${semester}` : ''}_${profile.adminNo}`;
+                                // Only write if not already cached locally
+                                if (!localStorage.getItem(keyName)) {
+                                    localStorage.setItem(keyName, JSON.stringify({
+                                        data: cachedSection.data,
+                                        savedAt: Date.now()
+                                    }));
+                                }
+                            }
+                        }
                     }
-                    const keyName = `machub_portal_${section}${semester ? `_sem${semester}` : ''}_${profile.adminNo}`;
-                    localStorage.setItem(keyName, JSON.stringify({
-                        data: cachedSection.data,
-                        savedAt: Date.now()
-                    }));
                 }
+            } catch (e) {
+                // Silent — cloud restore is best-effort only
             }
 
-            overlay.remove();
-            enterAppWithProfile(profile);
-
+            // Trigger background scrape after entering app
             if (window.startBackgroundScrapeQueue) {
                 window.startBackgroundScrapeQueue(profile.adminNo);
             }
-        } else {
-            localStorage.setItem('machub_student_id', profile.adminNo);
-            saveProfile(profile);
-
-            if (statusEl) statusEl.textContent = 'Downloading profile details...';
-            await window.MacHubPortal.fetchSection('Profile', true);
-
-            await new Promise(resolve => setTimeout(resolve, 300));
-            if (statusEl) statusEl.textContent = 'Downloading study materials...';
-            await window.MacHubPortal.fetchSection('StudyMaterial', true);
-
-            await new Promise(resolve => setTimeout(resolve, 300));
-            if (statusEl) statusEl.textContent = 'Finalizing dashboard...';
-            await window.MacHubPortal.fetchSection('Dashboard', true);
-
-            overlay.remove();
-            enterAppWithProfile(profile);
-
-            if (window.startBackgroundScrapeQueue) {
-                window.startBackgroundScrapeQueue(profile.adminNo);
-            }
-        }
-
-    } catch (err) {
-        console.error('[Onboarding] Smart login handshake/scraping failed:', err);
-        if (statusEl) {
-            statusEl.innerHTML = `<span style="color: #ff3b30; font-weight: bold;">Error: ${escapeHtml(err.message || 'Connection failed')}</span>`;
-        }
-        
-        const existingBtns = overlay.querySelector('.ob-error-actions');
-        if (!existingBtns) {
-            const btnContainer = document.createElement('div');
-            btnContainer.className = 'ob-error-actions';
-            btnContainer.style.marginTop = '1.5rem';
-            btnContainer.style.display = 'flex';
-            btnContainer.style.gap = '0.75rem';
-            btnContainer.style.width = '100%';
-            btnContainer.style.justifyContent = 'center';
-            btnContainer.innerHTML = `
-                <button type="button" onclick="document.getElementById('ob-loading-overlay').remove();" 
-                    style="padding: 0.6rem 1.2rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 800; background: rgba(0,0,0,0.05); color: #86868b;" class="spring">
-                    Cancel
-                </button>
-                <button type="button" onclick="window.finishOnboarding(event);" 
-                    style="padding: 0.6rem 1.2rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 800; background: var(--mac-blue); color: #fff;" class="spring">
-                    Retry
-                </button>
-            `;
-            const spinner = document.getElementById('ob-loading-spinner');
-            if (spinner) spinner.style.display = 'none';
-            const overlayContent = overlay.querySelector('.flex');
-            if (overlayContent) overlayContent.appendChild(btnContainer);
-        }
+        })();
     }
+
+    enterAppWithProfile(profile);
     return false;
 }
 

@@ -12,10 +12,10 @@
       "machub-app/**",
       "machin_backend/**",
       "workers/**",
-      "data/**",
       "docs/**",
       "option_b/**",
       "scratch/**",
+      "tools/**",
       "node_modules/**",
       "package.json",
       "package-lock.json",
@@ -24,15 +24,16 @@
       "script.js",
       "README.md",
       "KNOWLEAGE.txt",
-      "*.py",
-      "*.json",
-      "*.log",
-      "*.html.bak",
+      "render.yaml",
       "students.json",
+      "students_all.json",
+      "sync_errors.json",
       "sync_test.json",
       "portal_specs.json",
       "browser_discovery.json",
-      "render.yaml"
+      "*.py",
+      "*.log",
+      "*.html.bak"
     ],
     "rewrites": [
       {
