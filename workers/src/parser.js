@@ -33,8 +33,9 @@ function parseSingleTable($, tableEl) {
 
 /** Attendance page parser — extracts subject-wise attendance */
 function parseAttendance(html) {
-  const $       = cheerio.load(html);
-  const records = [];
+  const $ = cheerio.load(html);
+  const subjects = [];
+  let dataTable = null;
 
   // Extract semesters list
   const semesters = [];
@@ -49,46 +50,90 @@ function parseAttendance(html) {
     });
   }
 
-  $('table').each((_, table) => {
-    const headerText = $(table).find('tr').first().text().toLowerCase();
-    if (!headerText.includes('subject') && !headerText.includes('attendance') && !headerText.includes('present')) {
-      return;
+  // LOCK TARGET: Isolate table containing summary statistics 
+  $("table").each((_, el) => {
+    const tableText = $(el).text();
+    if (tableText.includes("Subjects") || tableText.includes("No. of Sessions") || tableText.includes("Total %")) {
+      dataTable = $(el);
     }
+  });
 
-    const headers = [];
-    $(table).find('tr').first().find('th, td').each((_, el) => {
-      headers.push($(el).text().trim().toLowerCase());
+  if (!dataTable || !dataTable.length) {
+    return { page: 'Attendance', sections: [], semesters };
+  }
+
+  // Dynamic Header Matrix Generation
+  const headers = [];
+  dataTable.find("tr").each((_, row) => {
+    if (headers.length > 0) return;
+    const cells = $(row).find("th, td");
+    if (cells.text().includes("Subjects") || cells.text().includes("Sessions")) {
+      cells.each((_, cell) => {
+        headers.push($(cell).text().trim().toLowerCase());
+      });
+    }
+  });
+
+  // Row loop calculations
+  dataTable.find("tr").each((_, row) => {
+    const cells = $(row).find("td");
+    if (!cells.length) return;
+
+    const rowData = {};
+    cells.each((i, cell) => {
+      const key = headers[i] || `col_${i}`;
+      rowData[key] = $(cell).text().trim();
     });
 
-    $(table).find('tr').slice(1).each((_, rowEl) => {
-      const cells = $(rowEl).find('td');
-      if (!cells.length) return;
+    const subjectTitle = rowData["subjects"] || rowData["subject"] || rowData["subject name"] || rowData["programme"] || rowData[headers[0]] || "";
+    // Exclude structural headings or spacer rows
+    if (!subjectTitle || subjectTitle.toLowerCase().includes("subjects") || subjectTitle.toLowerCase().includes("total")) return;
 
-      const row = {};
-      cells.each((i, cell) => {
-        row[headers[i] || `col_${i}`] = $(cell).text().trim();
-      });
+    const sessions = parseFloat(rowData["no. of sessions"] || rowData["total"] || rowData["total hours"] || rowData["conducted"] || rowData["col_3"] || "0");
+    const present  = parseFloat(rowData["no. of present"] || rowData["present"] || rowData["present hours"] || rowData["col_2"] || "0");
+    const absent = parseFloat(rowData["no. of absent"] || rowData["absent"] || "0");
+    const odAttendance = rowData["od attendance"] || rowData["od"] || "0";
+    const medical = rowData["medical"] || "0";
+    let percentageText = rowData["total %"] || rowData["total%"] || rowData["%"] || rowData["percentage"] || rowData["pct"] || "";
 
-      // Map common field aliases
-      const record = {
-        subjectName  : row['subject'] || row['subject name'] || row['programme'] || row[headers[1]] || '',
-        presentHours : row['present'] || row['present hours'] || row['present days'] || '',
-        totalHours   : row['total'] || row['total hours'] || row['total days'] || row['conducted'] || '',
-        percentage   : row['percentage'] || row['%'] || row['attendance %'] || '',
-      };
+    if (!percentageText && sessions > 0) {
+      percentageText = ((present / sessions) * 100).toFixed(2) + "%";
+    }
 
-      // Try to compute percentage if missing
-      if (!record.percentage && record.presentHours && record.totalHours) {
-        const p = parseFloat(record.presentHours);
-        const t = parseFloat(record.totalHours);
-        if (t > 0) record.percentage = ((p / t) * 100).toFixed(1) + '%';
-      }
-
-      if (record.subjectName) records.push(record);
+    const cleanPct = parseFloat(percentageText);
+    subjects.push({
+      subject: subjectTitle,
+      subjectName: subjectTitle,
+      Subjects: subjectTitle,
+      sessions: sessions,
+      totalHours: String(sessions),
+      "No. of Sessions": String(sessions),
+      present: present,
+      presentHours: String(present),
+      "No. of Present": String(present),
+      absent: absent,
+      absentHours: String(absent),
+      "No. of Absent": String(absent),
+      odAttendance: odAttendance,
+      od: odAttendance,
+      "OD Attendance": odAttendance,
+      medical: medical,
+      Medical: medical,
+      percentage: percentageText,
+      percentageClean: cleanPct,
+      "Total %": percentageText,
+      "Total%": percentageText,
+      belowThreshold: !isNaN(cleanPct) && cleanPct < 75
     });
   });
 
-  return { page: 'Attendance', sections: [{ headers: ['Subject', 'Present', 'Total', '%'], rows: records }], semesters };
+  return { 
+    page: 'Attendance', 
+    sections: [{ headers: ['Subject', 'Present', 'Total', '%'], rows: subjects }],
+    data: subjects,
+    semesters,
+    semesterOptions: semesters
+  };
 }
 
 /** Assessment page parser — groups rows by subject heading */
@@ -466,6 +511,103 @@ function parseGrievance(html) {
   return { page: 'Grievance', sections: [{ data: { options, tokens } }] };
 }
 
+function parseAttendanceDetails(html) {
+  const $ = cheerio.load(html);
+  const records = [];
+  let dataTable = null;
+
+  // Extract semesters list
+  const semesters = [];
+  const semSelect = $('#MainContent_ddlsem, #MainContent_drpsem');
+  if (semSelect.length) {
+    semSelect.find('option').each((_, opt) => {
+      semesters.push({
+        value: $(opt).attr('value'),
+        text: $(opt).text().trim(),
+        selected: $(opt).attr('selected') === 'selected' || $(opt).prop('selected') || false
+      });
+    });
+  }
+
+  // DETERMINISTIC SCAN: Identify the precise table matching the transactional schema
+  $("table").each((_, el) => {
+    const tableText = $(el).text();
+    if (tableText.includes("1st Hour") || tableText.includes("Date") || tableText.includes("SL")) {
+      dataTable = $(el);
+    }
+  });
+
+  if (!dataTable || !dataTable.length) {
+    return { page: 'AttendanceDetails', sections: [], semesters };
+  }
+
+  // Isolate Headers securely
+  const headers = [];
+  dataTable.find("tr").each((rowIndex, row) => {
+    if (headers.length > 0) return; // Keep only the first matched header row
+    const cells = $(row).find("th, td");
+    const sampleText = cells.text();
+    if (sampleText.includes("Date") || sampleText.includes("1st Hour")) {
+      cells.each((_, cell) => {
+        headers.push($(cell).text().trim());
+      });
+    }
+  });
+
+  // Process Transactional Rows cleanly
+  dataTable.find("tr").each((_, row) => {
+    const cells = $(row).find("td");
+    if (!cells.length) return;
+
+    const rowData = {};
+    let hasMeaningfulData = false;
+
+    cells.each((i, cell) => {
+      const key = headers[i] || `col_${i}`;
+      if (key === `col_${i}`) return; // Skip unmatched alignment bounds
+
+      const cellText = $(cell).text().trim();
+      rowData[key] = cellText;
+      if (cellText) hasMeaningfulData = true;
+
+      // Hour-column validation & Status detection rules
+      if (key.toLowerCase().includes("hour") || key.toLowerCase().includes("b2")) {
+        let status = "present";
+        const cellHtml = $(cell).html() || "";
+        
+        if (cellHtml.includes("color:Red") || cellHtml.includes("color: red") || cellHtml.includes('color="Red"') || $(cell).find("[style*='red'], [style*='Red']").length) {
+          status = "absent";
+        } else if (cellHtml.includes("color:Orange") || cellHtml.includes("color: orange") || cellText.toLowerCase().includes("special")) {
+          status = "special";
+        }
+        rowData[`${key}_status`] = status;
+      }
+    });
+
+    // Filter out system spacer rows or layout paddings
+    if (hasMeaningfulData && (rowData["SL"] || rowData["Date"])) {
+      records.push(rowData);
+    }
+  });
+
+  return { 
+    page: 'AttendanceDetails', 
+    sections: [{ headers, rows: records }],
+    data: records,
+    semesters,
+    semesterOptions: semesters,
+    meta: {
+      totalLogCount: records.length
+    }
+  };
+}
+
+function parseAttendanceSubjectWise(html) {
+  const parsed = parseAttendance(html);
+  parsed.page = 'AttendanceSubjectWise';
+  return parsed;
+}
+
 /** Generic fallback parser for unknown pages */
 function parseGeneric(page, html) {
   const $        = cheerio.load(html);
@@ -485,6 +627,9 @@ export function parseHtml(pageName, html) {
     case 'Dashboard': return parseDashboard(html);
     case 'Profile': return parseProfile(html);
     case 'Attendance': return parseAttendance(html);
+    case 'AttendanceDetails': return parseAttendanceDetails(html);
+    case 'AttendanceSubjectWise': return parseAttendanceSubjectWise(html);
+    case 'SubjectWiseAttendance': return parseAttendanceSubjectWise(html);
     case 'Assessment': return parseAssessment(html);
     case 'Assignment': return parseAssignment(html);
     case 'Seminar': return parseSeminar(html);

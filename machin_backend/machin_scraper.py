@@ -1000,32 +1000,184 @@ def scrape_exam_results(mac: MachinSession) -> list:
     return results
 
 
-def scrape_attendance(mac: MachinSession) -> list:
-    """Scrapes AttendanceNew.aspx for attendance details."""
+def scrape_attendance(mac: MachinSession, semester: str = None) -> list:
+    """Scrapes AttendanceNew.aspx and posts to AttendanceDetails.aspx for attendance details."""
     soup = safe_get(mac.session, f"{BASE_URL}/AttendanceNew.aspx")
     if not soup:
         return []
 
-    tables = soup.find_all("table")
-    for table in tables:
-        rows = parse_table_rows(table)
-        if rows:
-            return rows
+    # Find semester select dropdown
+    sem_select = soup.find("select", id=re.compile(r"MainContent_ddlsem|MainContent_drpsem"))
+    if not sem_select:
+        # Fallback to direct parsing if there are tables
+        tables = soup.find_all("table")
+        for table in tables:
+            rows = parse_table_rows(table)
+            if rows:
+                return rows
+        return []
+
+    # Determine target semester
+    target_sem = semester
+    if not target_sem:
+        # Find selected option
+        opt = sem_select.find("option", selected=True) or sem_select.find("option", selected="selected")
+        if opt:
+            target_sem = opt.get("value")
+        else:
+            # Fallback to the highest numeric semester value (most recent)
+            opts = sem_select.find_all("option")
+            max_val = -1
+            for o in opts:
+                val = o.get("value")
+                try:
+                    numeric_val = int(val)
+                    if numeric_val > max_val:
+                        max_val = numeric_val
+                        target_sem = val
+                except (ValueError, TypeError):
+                    pass
+            if not target_sem:
+                # Fallback to first non-empty
+                for o in opts:
+                    val = o.get("value")
+                    if val and val != "0":
+                        target_sem = val
+                        break
+    
+    if not target_sem:
+        return []
+
+    # Extract hidden inputs/tokens for postback
+    tokens = get_asp_tokens(soup)
+    
+    hid_batch = soup.find("input", {"id": "MainContent_hid_batch"}) or soup.find("input", {"name": "ctl00$MainContent$hid_batch"})
+    hid_student = soup.find("input", {"id": "MainContent_hid_student"}) or soup.find("input", {"name": "ctl00$MainContent$hid_student"})
+    hdstdid = soup.find("input", {"id": "MainContent_hdstdid"}) or soup.find("input", {"name": "ctl00$MainContent$hdstdid"})
+
+    payload = {
+        "__VIEWSTATE": tokens.get("__VIEWSTATE", ""),
+        "__VIEWSTATEGENERATOR": tokens.get("__VIEWSTATEGENERATOR", ""),
+        "__EVENTVALIDATION": tokens.get("__EVENTVALIDATION", ""),
+        "__EVENTTARGET": sem_select.get("name", "ctl00$MainContent$ddlsem"),
+        "__EVENTARGUMENT": "",
+        sem_select.get("name", "ctl00$MainContent$ddlsem"): target_sem,
+        "ctl00$MainContent$btnsubmit": "Submit"
+    }
+    
+    if hid_batch:
+        payload[hid_batch.get("name", "ctl00$MainContent$hid_batch")] = hid_batch.get("value", "")
+    if hid_student:
+        payload[hid_student.get("name", "ctl00$MainContent$hid_student")] = hid_student.get("value", "")
+    if hdstdid:
+        payload[hdstdid.get("name", "ctl00$MainContent$hdstdid")] = hdstdid.get("value", "0")
+
+    # POST back to AttendanceDetails.aspx
+    post_url = f"{BASE_URL}/AttendanceDetails.aspx"
+    try:
+        res = mac.session.post(post_url, data=payload, allow_redirects=True, timeout=15)
+        if res.status_code == 200:
+            detail_soup = BeautifulSoup(res.text, "lxml")
             
-    # AI Fallback
-    if not tables:
-        # Try parent page AttendanceMenu.aspx
-        soup = safe_get(mac.session, f"{BASE_URL}/AttendanceMenu.aspx")
-        if soup:
-            schema = '[{"subject": "string", "percentage": "string", "attended": "string", "total": "string"}]'
-            ai_res = gemini_parse_html(
-                str(soup),
-                "Extract subject attendance percentages from the page.",
-                schema
-            )
-            if ai_res and isinstance(ai_res, list):
-                return ai_res
+            # Find result table
+            tables = detail_soup.find_all("table")
+            records = []
+            for table in tables:
+                rows = table.find_all("tr")
+                if len(rows) < 2:
+                    continue
                 
+                header_text = txt(rows[0]).lower()
+                if "subject" not in header_text and "attendance" not in header_text and "present" not in header_text:
+                    continue
+
+                # Handle merged cell header row
+                header_row = rows[0]
+                headers = [txt(cell).lower() for cell in header_row.find_all(["th", "td"])]
+                data_start_idx = 1
+                
+                if len(headers) <= 2:
+                    header_row = rows[1]
+                    headers = [txt(cell).lower() for cell in header_row.find_all(["th", "td"])]
+                    data_start_idx = 2
+
+                for row in rows[data_start_idx:]:
+                    cells = row.find_all("td")
+                    if not cells:
+                         continue
+                    
+                    row_data = {}
+                    for idx, cell in enumerate(cells):
+                        col_name = headers[idx] if idx < len(headers) else f"col_{idx}"
+                        row_data[col_name] = txt(cell)
+
+                    subj = row_data.get("subject") or row_data.get("subject name") or row_data.get("programme") or (row_data.get(headers[1]) if len(headers) > 1 else "") or ""
+                    present = row_data.get("present") or row_data.get("present hours") or row_data.get("present days") or ""
+                    total = row_data.get("total") or row_data.get("total hours") or row_data.get("total days") or row_data.get("conducted") or ""
+                    pct = row_data.get("percentage") or row_data.get("%") or row_data.get("attendance %") or ""
+
+                    if not pct and present and total:
+                        try:
+                            p_val = float(present)
+                            t_val = float(total)
+                            if t_val > 0:
+                                pct = f"{((p_val / t_val) * 100):.1f}%"
+                        except:
+                            pass
+
+                    # Cleanup values
+                    subj = subj.strip()
+                    present = present.strip()
+                    total = total.strip()
+                    pct = pct.strip()
+
+                    if subj:
+                        sessions_val = 0.0
+                        present_val = 0.0
+                        try:
+                            sessions_val = float(total)
+                        except:
+                            pass
+                        try:
+                            present_val = float(present)
+                        except:
+                            pass
+                        absent_val = max(0.0, sessions_val - present_val)
+                        
+                        clean_pct = 0.0
+                        pct_str = pct.replace("%", "").strip()
+                        try:
+                            clean_pct = float(pct_str)
+                        except:
+                            pass
+
+                        records.append({
+                            "subjectName": subj,
+                            "subject": subj,
+                            "Subjects": subj,
+                            "presentHours": present,
+                            "present": present_val,
+                            "No. of Present": str(present),
+                            "totalHours": total,
+                            "sessions": sessions_val,
+                            "No. of Sessions": str(total),
+                            "percentage": pct_str,
+                            "Total %": pct,
+                            "Total%": pct,
+                            "percentageClean": clean_pct,
+                            "absentHours": str(absent_val),
+                            "absent": absent_val,
+                            "No. of Absent": str(absent_val),
+                            "od": "0",
+                            "odAttendance": "0",
+                            "OD Attendance": "0",
+                            "medical": "0",
+                            "Medical": "0"
+                        })
+            return records
+    except Exception as e:
+        print(f"POST to AttendanceDetails.aspx failed: {e}")
+        
     return []
 
 

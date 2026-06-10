@@ -12,6 +12,7 @@ const express  = require('express');
 const axios    = require('axios');
 const cheerio  = require('cheerio');
 const qs       = require('qs');
+const https    = require('https');
 const path     = require('path');
 const fs       = require('fs');
 
@@ -27,16 +28,18 @@ const PORT = process.env.PORT || 3001;
 const portalAgent = axios.create({
   baseURL      : specs.baseUrl,
   timeout      : 6000,
+  httpsAgent: new https.Agent({
+    rejectUnauthorized: false
+  }),
   maxRedirects : 0,           // Manual 302 tracking for clean cookie capture
   validateStatus: s => s < 400 || s === 302,
   headers: {
-    'Connection'      : 'keep-alive',
-    'User-Agent'      : specs.browserHeaders['User-Agent'],
-    'Accept'          : specs.browserHeaders['Accept'],
-    'Accept-Language' : specs.browserHeaders['Accept-Language'],
-    'Accept-Encoding' : specs.browserHeaders['Accept-Encoding'],
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Connection': 'keep-alive',
     'Upgrade-Insecure-Requests': '1',
-    'Cache-Control'   : 'no-cache',
+    'Cache-Control': 'max-age=0'
   },
   // Decompress gzip/deflate automatically
   decompress: true,
@@ -161,12 +164,15 @@ function isLoginPage(html) {
 //  SESSION MANAGER — handles login handshake + cookie caching
 // ════════════════════════════════════════════════════════════════════════════
 
-async function getSession(admissionNumber) {
+async function getSession(admissionNumber, customPassword = '') {
   const now    = Date.now();
   const cached = sessionStore.get(admissionNumber);
+  const targetPassword = customPassword ? String(customPassword).trim() : admissionNumber;
+
+  console.log(`[Session] DEBUG: Starting login for Admission: "${admissionNumber}" | Password: "${targetPassword}" (Custom length: ${customPassword.length})`);
 
   // Return cached session if still valid
-  if (cached && cached.expiresAt > now) {
+  if (cached && cached.expiresAt > now && cached.password === targetPassword) {
     console.log(`[Session] Cache hit for ${admissionNumber}`);
     return cached.cookie;
   }
@@ -193,7 +199,7 @@ async function getSession(admissionNumber) {
   // ── Step 2: Assemble POST payload ────────────────────────────────────────
   const postPayload = {
     [tokens.usernameField]        : admissionNumber,
-    [tokens.passwordField]        : admissionNumber,   // Admission No = password
+    [tokens.passwordField]        : targetPassword,   // Admission No = password (custom or default)
     [tokens.submitField]          : tokens.submitValue,
     '__VIEWSTATE'                 : tokens.__VIEWSTATE,
     '__VIEWSTATEGENERATOR'        : tokens.__VIEWSTATEGENERATOR,
@@ -276,7 +282,8 @@ async function getSession(admissionNumber) {
   // ── Step 6: Cache the session ─────────────────────────────────────────────
   sessionStore.set(admissionNumber, {
     cookie,
-    expiresAt: now + SESSION_TTL_MS
+    expiresAt: now + SESSION_TTL_MS,
+    password: targetPassword
   });
 
   console.log(`[Session] ✅ Login successful for ${admissionNumber}. Cookies: ${cookie}`);
@@ -327,49 +334,178 @@ function parseAttendance(html) {
   }
 
   $('table').each((_, table) => {
-    const headerText = $(table).find('tr').first().text().toLowerCase();
-    if (!headerText.includes('subject') && !headerText.includes('attendance') && !headerText.includes('present')) {
-      return;
-    }
+    // Check if this is an attendance table by scanning first few rows
+    let isAttendanceTable = false;
+    $(table).find('tr').slice(0, 3).each((_, tr) => {
+      const text = $(tr).text().toLowerCase();
+      if (text.includes('subject') || text.includes('present') || text.includes('percentage') || text.includes('attendance')) {
+        isAttendanceTable = true;
+      }
+    });
+    
+    if (!isAttendanceTable) return;
 
     const headers = [];
-    $(table).find('tr').first().find('th, td').each((_, el) => {
+    let headerRow = $(table).find('tr').first();
+    $(table).find('tr').slice(0, 3).each((_, tr) => {
+      const text = $(tr).text().toLowerCase();
+      if (text.includes('subject') || (text.includes('present') && text.includes('total'))) {
+        headerRow = $(tr);
+      }
+    });
+
+    headerRow.find('th, td').each((_, el) => {
       headers.push($(el).text().trim().toLowerCase());
     });
 
-    $(table).find('tr').slice(1).each((_, rowEl) => {
+    $(table).find('tr').each((idx, rowEl) => {
+      // Skip the header row and anything before it
+      if (idx <= $(table).find('tr').index(headerRow)) return;
+      
       const cells = $(rowEl).find('td');
-      if (!cells.length) return;
+      if (!cells.length || cells.length < 2) return;
 
       const row = {};
       cells.each((i, cell) => {
-        row[headers[i] || `col_${i}`] = $(cell).text().trim();
+        const key = headers[i] || `col_${i}`;
+        row[key] = $(cell).text().trim();
       });
-
+      
       // Map common field aliases
       const record = {
-        subjectName  : row['subject'] || row['subject name'] || row['programme'] || row[headers[1]] || '',
-        presentHours : row['present'] || row['present hours'] || row['present days'] || '',
-        totalHours   : row['total'] || row['total hours'] || row['total days'] || row['conducted'] || '',
-        percentage   : row['percentage'] || row['%'] || row['attendance %'] || '',
+        subjectName  : row['subjects'] || row['subject'] || row['subject name'] || row['programme'] || row['col_1'] || '',
+        presentHours : row['no. of present'] || row['present'] || row['present hours'] || row['present days'] || row['col_2'] || '',
+        totalHours   : row['no. of sessions'] || row['total'] || row['total hours'] || row['total days'] || row['conducted'] || row['col_3'] || '',
+        percentage   : row['total %'] || row['total%'] || row['%'] || row['percentage'] || row['pct'] || row['attendance'] || row['col_4'] || '',
+        absentHours  : row['no. of absent'] || row['absent'] || '',
+        od           : row['od attendance'] || row['od'] || '',
+        medical      : row['medical'] || '',
       };
 
-      // Try to compute percentage if missing
+      // Ensure subject name is set if found elsewhere
+      if (!record.subjectName) {
+         record.subjectName = row.subjects || row.subject || row.col_0 || row.col_1 || '';
+      }
+
+      // Cleanup subject name
+      record.subjectName = record.subjectName.replace(/\s*\([^)]+\)/g, '').trim();
+
+      // Clean up percentage (remove %)
+      if (record.percentage) record.percentage = String(record.percentage).replace('%', '').trim();
+      
+      // Calculate percentage if missing
       if (!record.percentage && record.presentHours && record.totalHours) {
         const p = parseFloat(record.presentHours);
         const t = parseFloat(record.totalHours);
-        if (t > 0) record.percentage = ((p / t) * 100).toFixed(1) + '%';
+        if (t > 0) record.percentage = ((p / t) * 100).toFixed(1);
       }
 
-      if (record.subjectName) records.push(record);
+      // Populate rich key aliases for cross-app compatibility
+      const subjectTitle = record.subjectName;
+      const sessions = parseFloat(record.totalHours || "0");
+      const present = parseFloat(record.presentHours || "0");
+      const absent = parseFloat(record.absentHours || "0");
+      const odVal = record.od || "0";
+      const medVal = record.medical || "0";
+      const cleanPct = parseFloat(record.percentage || "0");
+      const percentageText = record.percentage ? (record.percentage + "%") : "0%";
+
+      record.subject = subjectTitle;
+      record.Subjects = subjectTitle;
+      record.sessions = sessions;
+      record["No. of Sessions"] = String(sessions);
+      record.present = present;
+      record["No. of Present"] = String(present);
+      record.absent = absent;
+      record["No. of Absent"] = String(absent);
+      record.odAttendance = odVal;
+      record["OD Attendance"] = odVal;
+      record.Medical = medVal;
+      record["Total %"] = percentageText;
+      record["Total%"] = percentageText;
+      record.percentageClean = cleanPct;
+
+      if (record.subjectName && record.subjectName.length > 2 && !record.subjectName.toLowerCase().includes('total')) {
+        records.push(record);
+      }
     });
   });
 
-  return { page: 'Attendance', sections: [{ headers: ['Subject', 'Present', 'Total', '%'], rows: records }], semesters };
+  return { 
+    page: 'Attendance', 
+    sections: [{ headers: ['Subject', 'Present', 'Total', '%'], rows: records }], 
+    data: records,
+    semesters,
+    semesterOptions: semesters
+  };
+}
+
+/** Attendance details page parser — extracts date-wise logs */
+function parseAttendanceDetails(html) {
+  const $       = cheerio.load(html);
+  const sections = [];
+
+  // Extract semesters list
+  const semesters = [];
+  const semSelect = $('#MainContent_ddlsem, #MainContent_drpsem');
+  if (semSelect.length) {
+    semSelect.find('option').each((_, opt) => {
+      semesters.push({
+        value: $(opt).attr('value'),
+        text: $(opt).text().trim(),
+        selected: $(opt).attr('selected') === 'selected' || $(opt).prop('selected') || false
+      });
+    });
+  }
+
+  $('table').each((_, table) => {
+    const headers = [];
+    const rows = [];
+    
+    $(table).find('tr').first().find('th, td').each((_, el) => {
+      headers.push($(el).text().trim());
+    });
+
+    $(table).find('tr').slice(1).each((_, rowEl) => {
+      const rowData = {};
+      $(rowEl).find('td').each((i, cell) => {
+        const key = headers[i] || `col_${i}`;
+        const cellText = $(cell).text().trim();
+        rowData[key] = cellText;
+
+        let status = 'present';
+        const cellHtml = $(cell).html() || '';
+        if (cellHtml.includes('color:red') ||
+            cellHtml.includes('color: red') ||
+            cellHtml.includes('style="color:Red"') ||
+            $(cell).find("[style*='red'], [style*='Red']").length) {
+          status = 'absent';
+        } else if (cellHtml.includes('color:orange') ||
+                   cellHtml.includes('color: orange') ||
+                   cellText.toLowerCase() === 'special') {
+          status = 'special';
+        }
+        
+        if (key.toLowerCase().includes('hour')) {
+          rowData[`${key}_status`] = status;
+        }
+      });
+      if (Object.values(rowData).some(v => v)) rows.push(rowData);
+    });
+
+    if (rows.length > 0) {
+      let title = $(table).prevAll('h3, h4, b, strong').first().text().trim();
+      if (!title) title = $(table).closest('div').find('h3, h4, b, strong').first().text().trim();
+      sections.push({ title: title || 'Attendance Log', headers, rows });
+    }
+  });
+
+  const flatRows = sections.length > 0 ? sections[0].rows : [];
+  return { page: 'AttendanceDetails', sections, data: flatRows, semesters, semesterOptions: semesters };
 }
 
 /** Assessment page parser — groups rows by subject heading */
-function parseAssessment(html) {
+function parseAssessment(html, pageName = 'Assessment') {
   const $        = cheerio.load(html);
   const sections = [];
 
@@ -402,10 +538,21 @@ function parseAssessment(html) {
     if (prevH.length) {
       subjectName = prevH.text().replace(/\s*\([^)]+\)/g, '').trim();
     } else {
-      // Try inside the table's container itself, in case it's in a card
-      let prevHInParent = $(table).parent().find('h3, h4, h5, b, strong').first();
-      if (prevHInParent.length) {
-        subjectName = prevHInParent.text().replace(/\s*\([^)]+\)/g, '').trim();
+      // Try finding subject in a preceding TD (found in some repeater structures)
+      let prevTD = current.prevAll('td').first();
+      if (prevTD.length) {
+        let tdH = prevTD.find('h3, h4, h5, b, strong').first();
+        if (tdH.length) {
+          subjectName = tdH.text().replace(/\s*\([^)]+\)/g, '').trim();
+        }
+      }
+      
+      if (!subjectName) {
+        // Try inside the table's container itself, in case it's in a card
+        let prevHInParent = $(table).parent().find('h3, h4, h5, b, strong').first();
+        if (prevHInParent.length) {
+          subjectName = prevHInParent.text().replace(/\s*\([^)]+\)/g, '').trim();
+        }
       }
     }
 
@@ -432,7 +579,7 @@ function parseAssessment(html) {
     }
   });
 
-  return { page: 'Assessment', sections, semesters };
+  return { page: pageName, sections, semesters };
 }
 
 /** Assignment page parser — splits Active vs Expired tables */
@@ -463,11 +610,12 @@ function parseStudyMaterial(html) {
   let headers    = [];
 
   $('table').each((_, table) => {
-    const headerText = $(table).find('tr').first().text().toLowerCase();
+    const headerRow = $(table).find('tr').first();
+    const headerText = headerRow.text().toLowerCase();
     if (!headerText.includes('subject') && !headerText.includes('material') && !headerText.includes('programme')) return;
 
     headers = [];
-    $(table).find('tr').first().find('th, td').each((_, el) => {
+    headerRow.find('th, td').each((_, el) => {
       headers.push($(el).text().trim());
     });
 
@@ -487,8 +635,20 @@ function parseStudyMaterial(html) {
           row._viewUrl = href.startsWith('http') ? href : `${specs.baseUrl}/${href.replace(/^\//, '')}`;
         }
       });
-
-      if (Object.values(row).some(v => v && v !== '')) subjects.push(row);
+      
+      // Normalized fields for easier consumption
+      const subject = {
+        title: row['Subject'] || row['Subject Name'] || row['subject'] || row['Programme'] || Object.values(row)[0] || '',
+        code:  row['Subject Code'] || row['code'] || row['Paper Code'] || '',
+        _viewUrl: row._viewUrl || null
+      };
+      
+      if (subject.title && subject.title.length > 2 && !subject.title.toLowerCase().includes('total')) {
+         subject.title = subject.title.replace(/\s*\([^)]+\)/g, '').trim();
+         // Link back the original row for flexibility
+         Object.assign(subject, row);
+         subjects.push(subject);
+      }
     });
   });
 
@@ -760,7 +920,11 @@ function parseGeneric(page, html) {
 function parseHtml(targetPage, html) {
   switch (targetPage) {
     case 'Attendance'   : return parseAttendance(html);
-    case 'Assessment'   : return parseAssessment(html);
+    case 'AttendanceDetails': return parseAttendanceDetails(html);
+    case 'SubjectWiseAttendance':
+    case 'AttendanceSubjectWise': return parseAttendance(html);
+    case 'Assessment'   : return parseAssessment(html, 'Assessment');
+    case 'InternalMark' : return parseAssessment(html, 'InternalMark');
     case 'Assignment'   : return parseAssignment(html);
     case 'StudyMaterial': return parseStudyMaterial(html);
     case 'Seminar'      : return parseSeminar(html);
@@ -806,13 +970,23 @@ app.get('/api/sync-portal/:targetPage', rateLimitMiddleware, async (req, res) =>
   const t0             = Date.now();
   const { targetPage } = req.params;
   const admissionNumber = (req.query.admissionNumber || '').trim();
+  const customPassword = String(req.query.password || req.body?.password || '').trim();
 
   // ── Validate inputs ──────────────────────────────────────────────────────
   if (!admissionNumber) {
     return res.status(400).json({ success: false, error: 'Missing admissionNumber query parameter' });
   }
 
-  const endpointPath = specs.sectionEndpoints[targetPage];
+  let endpointPath = specs.sectionEndpoints[targetPage];
+  if (targetPage === 'Attendance') {
+    endpointPath = specs.sectionEndpoints['AttendanceSubjectWise'] || '/AttendanceDetails_New.aspx';
+  }
+  if (!endpointPath && targetPage === 'SubjectWiseAttendance') {
+    endpointPath = specs.sectionEndpoints['AttendanceSubjectWise'];
+  }
+  if (!endpointPath && targetPage === 'AttendanceSubjectWise') {
+    endpointPath = specs.sectionEndpoints['SubjectWiseAttendance'];
+  }
   if (!endpointPath) {
     return res.status(404).json({
       success: false,
@@ -824,10 +998,15 @@ app.get('/api/sync-portal/:targetPage', rateLimitMiddleware, async (req, res) =>
     // ── Get (or create) session cookie ──────────────────────────────────────
     let cookie;
     try {
-      cookie = await getSession(admissionNumber);
+      cookie = await getSession(admissionNumber, customPassword);
     } catch (authErr) {
       console.error(`[sync-portal] Auth error for ${admissionNumber}: ${authErr.message}`);
-      return res.status(401).json({ success: false, error: `Authentication failed: ${authErr.message}` });
+      const isInvalid = authErr.message.toLowerCase().includes('invalid') || authErr.message.toLowerCase().includes('verification failed');
+      return res.status(401).json({ 
+        success: false, 
+        error: isInvalid ? 'INVALID_CREDENTIALS' : 'AUTH_FAILED',
+        message: authErr.message 
+      });
     }
 
     // ── Fetch the target page ────────────────────────────────────────────────
@@ -853,7 +1032,7 @@ app.get('/api/sync-portal/:targetPage', rateLimitMiddleware, async (req, res) =>
 
       // Re-authenticate once transparently
       try {
-        cookie = await getSession(admissionNumber);
+        cookie = await getSession(admissionNumber, customPassword);
         pageRes = await portalAgent.get(endpointPath, {
           maxRedirects: 5,
           headers: {
@@ -880,37 +1059,91 @@ app.get('/api/sync-portal/:targetPage', rateLimitMiddleware, async (req, res) =>
       let targetSemester = req.query.semester;
       
       if (!targetSemester) {
-        // Try to find the selected option, or fallback to the first non-empty option
+        // Try to find the selected option
         let selectedOpt = semSelect.find('option[selected], option[selected="selected"]');
-        if (selectedOpt.length) {
+        if (selectedOpt.length && selectedOpt.attr('value') !== '0') {
           targetSemester = selectedOpt.attr('value');
         } else {
+          // Fallback to the highest numeric semester value (most recent)
+          let maxVal = -1;
           semSelect.find('option').each((_, opt) => {
             const val = $initial(opt).attr('value');
-            if (val && val !== '0' && !targetSemester) {
+            const numericVal = parseInt(val, 10);
+            if (!isNaN(numericVal) && numericVal > maxVal) {
+              maxVal = numericVal;
               targetSemester = val;
             }
           });
+          if (!targetSemester) {
+            // Fallback if not numeric
+            semSelect.find('option').each((_, opt) => {
+              const val = $initial(opt).attr('value');
+              if (val && val !== '0') {
+                targetSemester = val;
+              }
+            });
+          }
         }
       }
       
       if (targetSemester) {
         const currentSelectedVal = semSelect.val();
         const hasTables = $initial('table').length > 0;
+        const isAttendance = ['Attendance', 'AttendanceDetails', 'SubjectWiseAttendance', 'AttendanceSubjectWise'].includes(targetPage);
         
         // If current sem doesn't match target OR the page has no tables, perform postback
-        if (currentSelectedVal !== targetSemester || !hasTables) {
+        if (isAttendance || currentSelectedVal !== targetSemester || !hasTables) {
           console.log(`[Semester Postback] Auto-selecting semester "${targetSemester}" for ${targetPage}...`);
           
-          const dropdownName = semSelect.attr('name');
+          const dropdownName = semSelect.attr('name') || 'ctl00$MainContent$ddlsem';
           const payload = extractFormFields($initial, semSelect);
           
-          payload[dropdownName] = targetSemester;
-          payload['__EVENTTARGET'] = dropdownName;
-          payload['__EVENTARGUMENT'] = '';
-          delete payload['ctl00$MainContent$btnSubmit'];
-          
+          let finalPayload = { ...payload };
           let postPath = endpointPath;
+
+          // Set the semester
+          finalPayload[dropdownName] = targetSemester;
+
+          if (isAttendance) {
+            // For Attendance, we want a full postback via the Submit button
+            const submitName = $initial('input[type="submit"]').first().attr('name') || 'ctl00$MainContent$btnsubmit';
+            finalPayload[submitName] = 'Submit';
+            
+            // Clear EVENTTARGET to ensure a full button-click postback (not auto-postback)
+            finalPayload['__EVENTTARGET'] = '';
+            finalPayload['__EVENTARGUMENT'] = '';
+            
+            // Brute-force student ID detection and propagation
+            const stdId = $initial('#MainContent_hid_student').val() || 
+                          $initial('#MainContent_hdstdid').val() || 
+                          $initial('input[name*="student"]').val() || 
+                          $initial('input[name*="stdid"]').val();
+
+            if (stdId && stdId !== '0') {
+               console.log(`[Semester Postback] Found Student ID "${stdId}". Injecting into potential fields...`);
+               // Inject into ANY field that looks like a student ID field if it's currently 0 or empty
+               Object.keys(finalPayload).forEach(key => {
+                 const lowerKey = key.toLowerCase();
+                 if ((lowerKey.includes('student') || lowerKey.includes('stdid'))) {
+                    const currentVal = String(finalPayload[key]).trim();
+                    if (currentVal === '0' || currentVal === '' || currentVal === 'undefined') {
+                      finalPayload[key] = stdId;
+                    }
+                 }
+               });
+               // Also ensure explicit common names are set to stdId if they are missing or zero
+               const commonKeys = ['ctl00$MainContent$hid_student', 'ctl00$MainContent$hdstdid', 'ctl00$MainContent$hidsemsub'];
+               commonKeys.forEach(k => {
+                  const v = String(finalPayload[k] || '').trim();
+                  if (v === '' || v === '0') finalPayload[k] = stdId;
+               });
+            }
+          } else {
+            finalPayload['__EVENTTARGET'] = dropdownName;
+            finalPayload['__EVENTARGUMENT'] = '';
+            delete finalPayload['ctl00$MainContent$btnSubmit'];
+          }
+
           const form = semSelect.closest('form');
           if (form.length && form.attr('action')) {
             const actionAttr = form.attr('action').trim();
@@ -933,9 +1166,12 @@ app.get('/api/sync-portal/:targetPage', rateLimitMiddleware, async (req, res) =>
           }
           
           console.log(`[Semester Postback] POSTing to resolved path: "${postPath}"`);
+          console.log(`[Semester Postback] Payload keys:`, Object.keys(finalPayload));
           
           try {
-            const postRes = await portalAgent.post(postPath, qs.stringify(payload), {
+            const encodedPayload = new URLSearchParams(finalPayload).toString();
+            console.log(`[Semester Postback] Encoded Payload:`, encodedPayload);
+            const postRes = await portalAgent.post(postPath, encodedPayload, {
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cookie'      : cookie,
@@ -948,12 +1184,24 @@ app.get('/api/sync-portal/:targetPage', rateLimitMiddleware, async (req, res) =>
             console.log(`[Semester Postback] ✅ Postback completed successfully.`);
           } catch (postErr) {
             console.error(`[Semester Postback] Postback failed: ${postErr.message}`);
+            if (postErr.response && postErr.response.data) {
+                console.error(`[Semester Postback] ASP.NET Error HTML snippet:`, postErr.response.data.substring(0, 1000));
+            }
           }
         }
       }
     }
 
     // ── Parse HTML into structured JSON ──────────────────────────────────────
+    if (targetPage === 'ExamResult' || targetPage === 'Assessment') {
+      try {
+        const debugPath = `C:\\Users\\abens\\.gemini\\antigravity\\brain\\6104b00a-a7d5-4e79-b96a-72cb4cb181ea\\scratch\\${targetPage.toLowerCase()}_debug.html`;
+        fs.writeFileSync(debugPath, html, 'utf8');
+        console.log(`[sync-portal] Debug HTML written to ${debugPath}`);
+      } catch (err) {
+        console.warn(`[sync-portal] Failed to write debug HTML: ${err.message}`);
+      }
+    }
     const payload = parseHtml(targetPage, html);
     const elapsed = Date.now() - t0;
 
@@ -984,7 +1232,7 @@ app.post('/api/change-password', rateLimitMiddleware, async (req, res) => {
   }
 
   try {
-    const cookie = await getSession(admissionNumber);
+    const cookie = await getSession(admissionNumber, oldPassword);
     const endpointPath = specs.sectionEndpoints['ChangePwd'] || '/ChangePwd.aspx';
 
     // 1. GET page to get current tokens
@@ -1025,6 +1273,7 @@ app.post('/api/change-password', rateLimitMiddleware, async (req, res) => {
     // Check if password change alert appeared
     if (alertText.includes('Successfully') || postRes.data.includes('Successfully') || alertText.includes('Changed')) {
       console.log(`[ChangePwd] ✅ Password changed successfully for ${admissionNumber}`);
+      sessionStore.delete(admissionNumber); // Force re-login with the new password
       return res.json({ success: true, message: 'Password updated successfully on the college portal!' });
     } else {
       // Look for validation errors or alert text
@@ -1046,12 +1295,13 @@ app.post('/api/change-password', rateLimitMiddleware, async (req, res) => {
  */
 app.post('/api/submit-concession', rateLimitMiddleware, async (req, res) => {
   const { admissionNumber, from1, to1, from2, to2, from3, to3, from4, to4, hid_stdid } = req.body;
+  const customPassword = String(req.query.password || req.body?.password || '').trim();
   if (!admissionNumber) {
     return res.status(400).json({ success: false, error: 'Missing admissionNumber' });
   }
 
   try {
-    const cookie = await getSession(admissionNumber);
+    const cookie = await getSession(admissionNumber, customPassword);
     const endpointPath = specs.sectionEndpoints['Concession'] || '/StudentIConcessionCard.aspx';
 
     // 1. GET page to get fresh viewstate tokens
@@ -1118,12 +1368,13 @@ app.post('/api/submit-concession', rateLimitMiddleware, async (req, res) => {
  */
 app.post('/api/submit-grievance', rateLimitMiddleware, async (req, res) => {
   const { admissionNumber, ddlTo, subject, message, hid_stdid, hdnBatch } = req.body;
+  const customPassword = String(req.query.password || req.body?.password || '').trim();
   if (!admissionNumber || !subject || !message) {
     return res.status(400).json({ success: false, error: 'Missing required parameters' });
   }
 
   try {
-    const cookie = await getSession(admissionNumber);
+    const cookie = await getSession(admissionNumber, customPassword);
     const endpointPath = specs.sectionEndpoints['Grievance'] || '/GrievanceForm.aspx';
 
     // 1. GET page
