@@ -307,11 +307,36 @@
                 </h4>
             </div>
 
+            <script>
+                window.syncAndOpenNative = async function(sectionName, mainView, subTab) {
+                    // Instantly open the tab so UI feels fast
+                    if (typeof switchExamView === 'function') switchExamView(mainView);
+                    if (subTab && typeof switchClassTab === 'function') {
+                        setTimeout(() => switchClassTab(subTab), 50);
+                    }
+                    
+                    // Forcefully sync data in background and re-render
+                    if (typeof fetchSection === 'function') {
+                        try {
+                            const data = await fetchSection(sectionName, true); // true = force sync
+                            
+                            // After sync, re-render the view
+                            if (sectionName === 'Attendance' && typeof renderClassAttendance === 'function') renderClassAttendance();
+                            if (sectionName === 'Assignment' && typeof renderClassAssignment === 'function') renderClassAssignment();
+                            if (sectionName === 'Seminar' && typeof renderClassSeminar === 'function') renderClassSeminar();
+                            if (sectionName === 'ExamResult' && typeof renderExamResults === 'function') renderExamResults();
+                        } catch(e) {
+                            console.error("Sync failed for", sectionName, e);
+                        }
+                    }
+                };
+            </script>
+
             <div class="grid grid-cols-2 gap-3" id="homeShortcutsGrid">
 
                 <!-- Attendance -->
                 <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
-                     onclick="if(typeof switchExamView==='function') { switchExamView('view-class'); setTimeout(()=>switchClassTab('attendance'),50); } else { window.loadPortalSection('Attendance', 'Attendance'); }"
+                     onclick="window.syncAndOpenNative('Attendance', 'view-class', 'attendance')"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
                          style="background: rgba(0, 212, 170, 0.15); color: #00d4aa; border: 1px solid rgba(0, 212, 170, 0.3);">
@@ -325,7 +350,7 @@
 
                 <!-- Exam Results -->
                 <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
-                     onclick="if(typeof switchExamView==='function') { switchExamView('view-results'); } else { window.loadPortalSection('ExamResult', 'Exam Results'); }"
+                     onclick="window.syncAndOpenNative('ExamResult', 'view-results', null)"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
                          style="background: rgba(255, 179, 71, 0.15); color: #ffb347; border: 1px solid rgba(255, 179, 71, 0.3);">
@@ -339,7 +364,7 @@
 
                 <!-- Assignment -->
                 <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
-                     onclick="window.loadPortalSection('Assignment', 'Assignment')"
+                     onclick="window.syncAndOpenNative('Assignment', 'view-class', 'assignment')"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
                          style="background: rgba(45, 152, 218, 0.15); color: #2d98da; border: 1px solid rgba(45, 152, 218, 0.3);">
@@ -353,7 +378,7 @@
 
                 <!-- Seminar -->
                 <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
-                     onclick="window.loadPortalSection('Seminar', 'Seminar')"
+                     onclick="window.syncAndOpenNative('Seminar', 'view-class', 'seminar')"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
                          style="background: rgba(252, 92, 101, 0.15); color: #fc5c65; border: 1px solid rgba(252, 92, 101, 0.3);">
