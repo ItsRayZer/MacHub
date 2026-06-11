@@ -1,0 +1,1 @@
+"  filtersRow: {\n    display: 'grid',\n    gridTemplateColumns: '1fr 1fr',\n    gap: '12px',\n    marginBottom: '20px',\n  },"

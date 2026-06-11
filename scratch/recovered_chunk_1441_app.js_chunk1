@@ -1,0 +1,8 @@
+            currentClassDept = info.dept.toUpperCase();
+            if (typeof renderClassFilters === 'function') {
+                renderClassFilters();
+                renderClassDaySelector();
+                renderClassTimetable();
+                renderClassSubjects();
+                renderClassAttendance();
+            }

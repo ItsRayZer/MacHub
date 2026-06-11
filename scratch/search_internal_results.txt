@@ -1,0 +1,849 @@
+
+========================================
+STEP: 358 | TOOL: write_to_file | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machub-app\\src\\pages\\InternalMark.jsx"
+INSTRUCTION: 
+CONTENT LENGTH: 2064
+--- START ---
+"import { usePortalData } from '../hooks/usePortalData';\nimport PageHeader from '../components/PageHeader';\nimport DataTable from '../components/DataTable';\nimport SkeletonLoader from '../components/SkeletonLoader';\n\nexport default function InternalMark() {\n  const { data, isLoading, refresh, error } = usePortalData('internalMark');\n\n  return (\n    <div className=\"fade-in\">\n      <PageHeader\n        title=\"Final Internal Marks\"\n        subtitle=\"Official internal marks submitted to MGU University\"\n        onRefresh={refresh}\n        isLoading={isLoading}\n      />\n\n      {error && (\n        <div className=\"alert alert-warning\">\n          <span>⚠️</span>\n          <span>Could not refresh live internal marks. Showing cached view.</span>\n        </div>\n      )}\n\n      {isLoading ? (\n        <div style={styles.loadingWrapper}>\n          <SkeletonLoader lines={6} />\n        </div>\n      ) : (\n        <div style={styles.container}>\n          {data?.subjects && data.subjects.length > 0 ? (\n            data.subjects.map((sub, idx) => (\n              <div key={idx} className=\"card\" style={styles.subjectCard}>\n                <div style={styles.subjectHeader}>\n                  <div style={styles.bullet}>📊</div>\n                  <h3 style={styles.subjectName}>{sub.subject}</h3>\n                </div>\n                <DataTable\n                  headers={sub.headers}\n                  rows={sub.rows}\n                />\n              </
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 360 | TOOL: write_to_file | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machub-app\\src\\pages\\ExamResult.jsx"
+INSTRUCTION: 
+CONTENT LENGTH: 2065
+--- START ---
+"import { usePortalData } from '../hooks/usePortalData';\nimport PageHeader from '../components/PageHeader';\nimport DataTable from '../components/DataTable';\nimport SkeletonLoader from '../components/SkeletonLoader';\n\nexport default function ExamResult() {\n  const { data, isLoading, refresh, error } = usePortalData('examResult');\n\n  return (\n    <div className=\"fade-in\">\n      <PageHeader\n        title=\"University Exam Results\"\n        subtitle=\"Your semester publication grades and GPA details\"\n        onRefresh={refresh}\n        isLoading={isLoading}\n      />\n\n      {error && (\n        <div className=\"alert alert-warning\">\n          <span>⚠️</span>\n          <span>Could not refresh live exam results. Showing cached view.</span>\n        </div>\n      )}\n\n      {isLoading ? (\n        <div style={styles.loadingWrapper}>\n          <SkeletonLoader lines={5} />\n        </div>\n      ) : (\n        <div style={styles.container}>\n          {data?.results && data.results.length > 0 ? (\n            data.results.map((resTable, idx) => (\n              <div key={idx} className=\"card\" style={styles.resultCard}>\n                <div style={styles.resultHeader}>\n                  <div style={styles.bullet}>🎓</div>\n                  <h3 style={styles.resultTitle}>Semester {data.results.length - idx} Results</h3>\n                </div>\n                <DataTable\n                  headers={resTable.headers}\n                  rows={resTable.rows}\n 
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 913 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Modify getDepartmentScheduleByCode and getDepartmentPracticalScheduleByCode to return dynamic timetables based on ePortal Attendance cache."
+CONTENT LENGTH: 2071
+--- START ---
+"function getDepartmentScheduleByCode(deptCode) {\n    const info = getStudentInfo();\n    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';\n    const actualSubjects = [];\n    if (adminNo) {\n        const cached = localStorage.getItem(`machub_portal_Attendance_${adminNo}`);\n        if (cached) {\n            try {\n                const parsed = JSON.parse(cached);\n                const rows = parsed?.data?.payload?.sections?.[0]?.rows || [];\n                rows.forEach(item => {\n                    if (item.subjectName) actualSubjects.push(item.subjectName);\n                });\n            } catch(e) {}\n        }\n    }\n\n    if (actualSubjects.length > 0) {\n        return actualSubjects.map((sub, idx) => {\n            const date = new Date('2026-06-10'); // Theory exams start June 10\n            date.setDate(date.getDate() + (idx * 2));\n            const dateStr = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;\n            return {\n                date: dateStr,\n                code: `MG2CCR${deptCode.toUpperCase()}${101 + idx}`,\n                title: sub,\n                time: \"10:30 AM\"\n            };\n        });\n    }\n\n    const deptMap = {\n        'BCA': window.TIMETABLE_BCA,\n        'BBA': window.TIMETABLE_BBA,\n        'BSW': window.TIMETABLE_BSW\n    };\n\n    return (deptMap[deptCode] || []).slice().sort((a, b) => getISTDate(a.date) - ge
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 919 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Update window.renderClassTimetable and window.renderClassSubjects to dynamically fetch and display actual student subjects, attendance percentages, and internal assessment marks."
+CONTENT LENGTH: 2072
+--- START ---
+"window.renderClassTimetable = function() {\n    const container = document.getElementById('classTimetableContent');\n    if (!container) return;\n\n    const info = getStudentInfo();\n    const dept = currentClassDept.toUpperCase();\n    const day = currentClassDay;\n\n    // Retrieve actual subjects from synced ePortal Attendance\n    const actualSubjects = [];\n    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';\n    if (adminNo) {\n        const cached = localStorage.getItem(`machub_portal_Attendance_${adminNo}`);\n        if (cached) {\n            try {\n                const parsed = JSON.parse(cached);\n                const rows = parsed?.data?.payload?.sections?.[0]?.rows || [];\n                rows.forEach(item => {\n                    if (item.subjectName) actualSubjects.push(item.subjectName);\n                });\n            } catch(e) {}\n        }\n    }\n\n    if (actualSubjects.length > 0) {\n        // Distribute actual subjects across Monday-Friday periods\n        const dayIndex = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].indexOf(day);\n        const periods = [];\n        const times = ['09:30 AM - 10:30 AM', '10:30 AM - 11:30 AM', '11:30 AM - 12:30 PM', '01:30 PM - 02:30 PM', '02:30 PM - 03:30 PM'];\n        \n        for (let i = 0; i < 5; i++) {\n            const subjectIdx = (dayIndex * 5 + i) % actualSubjects.length;\n            periods.push({\n                period: i + 1,\n                time
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 1093 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Insert getPortalCache function after getStudentInfo."
+CONTENT LENGTH: 805
+--- START ---
+"function getStudentInfo() {\n    if (window.ExamHubProfileApi) return window.ExamHubProfileApi.getStudentInfo();\n    try {\n        return JSON.parse(localStorage.getItem('mac_student_info'));\n    } catch (error) {\n        return null;\n    }\n}\n\nfunction getPortalCache(section, adminNo) {\n    if (!adminNo) return null;\n    const directKey = `machub_portal_${section}_${adminNo}`;\n    const direct = localStorage.getItem(directKey);\n    if (direct) return direct;\n    \n    // Check for semester-specific keys\n    for (let i = 0; i < localStorage.length; i++) {\n        const key = localStorage.key(i);\n        if (key && key.startsWith(`machub_portal_${section}_sem`) && key.endsWith(`_${adminNo}`)) {\n            return localStorage.getItem(key);\n        }\n    }\n    return null;\n}"
+--- END ---
+
+========================================
+STEP: 1097 | TOOL: multi_replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Use getPortalCache helper instead of direct localStorage read for Attendance."
+CONTENT LENGTH: 0
+CHUNKS COUNT: 2
+  Chunk 1: Target starts with: "    if (adminNo) {
+        const cached = localStorage.getItem(`machub_portal_Attendance_${adminNo}`"
+  Chunk 1: Replacement starts with: "    if (adminNo) {
+        const cached = getPortalCache('Attendance', adminNo);"
+  Chunk 2: Target starts with: "    if (adminNo) {
+        const cached = localStorage.getItem(`machub_portal_Attendance_${adminNo}`"
+  Chunk 2: Replacement starts with: "    if (adminNo) {
+        const cached = getPortalCache('Attendance', adminNo);"
+
+========================================
+STEP: 1101 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Modify window.renderClassTimetable to query getPortalCache, retrieve detailed subject attendance, and render color-coded attendance cards with bunk details."
+CONTENT LENGTH: 2072
+--- START ---
+"window.renderClassTimetable = function() {\n    const container = document.getElementById('classTimetableContent');\n    if (!container) return;\n\n    const info = getStudentInfo();\n    const dept = currentClassDept.toUpperCase();\n    const day = currentClassDay;\n\n    // Retrieve actual subjects from synced ePortal Attendance\n    const actualSubjects = [];\n    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';\n    if (adminNo) {\n        const cached = getPortalCache('Attendance', adminNo);\n        if (cached) {\n            try {\n                const parsed = JSON.parse(cached);\n                const rows = parsed?.data?.payload?.sections?.[0]?.rows || parsed?.data?.sections?.[0]?.rows || [];\n                rows.forEach(item => {\n                    if (item.subjectName) {\n                        actualSubjects.push({\n                            subjectName: item.subjectName,\n                            percentage: item.percentage,\n                            presentHours: item.presentHours,\n                            totalHours: item.totalHours\n                        });\n                    }\n                });\n            } catch(e) {}\n        }\n    }\n\n    if (actualSubjects.length > 0) {\n        // Distribute actual subjects across Monday-Friday periods\n        const dayIndex = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].indexOf(day);\n        const periods = [];\n        const times = ['09:30 A
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 1163 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Change localStorage.getItem to getPortalCache for Attendance and Assessment lookups"
+CONTENT LENGTH: 1421
+--- START ---
+"    const info = getStudentInfo();\n    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';\n    \n    // Retrieve actual subjects from synced ePortal Attendance\n    const actualSubjects = [];\n    if (adminNo) {\n        const cached = getPortalCache('Attendance', adminNo);\n        if (cached) {\n            try {\n                const parsed = JSON.parse(cached);\n                const rows = parsed?.data?.payload?.sections?.[0]?.rows || [];\n                rows.forEach(item => {\n                    if (item.subjectName) {\n                        actualSubjects.push({\n                            title: item.subjectName,\n                            percentage: item.percentage,\n                            presentHours: item.presentHours,\n                            totalHours: item.totalHours\n                        });\n                    }\n                });\n            } catch(e) {}\n        }\n    }\n\n    if (actualSubjects.length > 0) {\n        // Look up assessment details for each subject to show marks in expanded view\n        let assessData = [];\n        if (adminNo) {\n            const cachedAssess = getPortalCache('Assessment', adminNo);\n            if (cachedAssess) {\n                try {\n                    assessData = JSON.parse(cachedAssess)?.data?.payload?.sections || [];\n                } catch(e) {}\n            }\n        }"
+--- END ---
+
+========================================
+STEP: 1339 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Change 'teachers' tab references to 'attendance' and update elements to match the new IDs."
+CONTENT LENGTH: 1067
+--- START ---
+"window.switchClassTab = function(tab) {\n    const timetableEl = document.getElementById('sub-view-class-timetable');\n    const subjectsEl = document.getElementById('sub-view-class-subjects');\n    const attendanceEl = document.getElementById('sub-view-class-attendance');\n    const timetableBtn = document.getElementById('tab-class-timetable');\n    const subjectsBtn = document.getElementById('tab-class-subjects');\n    const attendanceBtn = document.getElementById('tab-class-attendance');\n\n    if (!timetableEl || !subjectsEl || !attendanceEl) return;\n\n    timetableEl.classList.toggle('hidden', tab !== 'timetable');\n    subjectsEl.classList.toggle('hidden', tab !== 'subjects');\n    attendanceEl.classList.toggle('hidden', tab !== 'attendance');\n\n    if (timetableBtn) timetableBtn.classList.toggle('is-active', tab === 'timetable');\n    if (subjectsBtn) subjectsBtn.classList.toggle('is-active', tab === 'subjects');\n    if (attendanceBtn) attendanceBtn.classList.toggle('is-active', tab === 'attendance');\n\n    appState.classSubTab = tab;\n};"
+--- END ---
+
+========================================
+STEP: 1425 | TOOL: multi_replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "1. Update switchClassTab to call renderClassAttendance when attendance tab is selected. 2. Replace renderClassTeachers with renderClassAttendance in initExamHubApp. 3. Add a full renderClassAttendance function before initExamHubApp."
+CONTENT LENGTH: 0
+
+========================================
+STEP: 1429 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Insert window.renderClassAttendance function before initExamHubApp, providing a premium attendance dashboard UI with overall stats hero card, subject-wise breakdown with progress bars, and bunk/attend calculations."
+CONTENT LENGTH: 1984
+--- START ---
+"};\n\nwindow.renderClassAttendance = function() {\n    const container = document.getElementById('classAttendanceContent');\n    if (!container) return;\n\n    const info = getStudentInfo();\n    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';\n\n    // Pull subject rows from stored attendance data\n    const subjects = [];\n    if (adminNo) {\n        const cached = getPortalCache('Attendance', adminNo);\n        if (cached) {\n            try {\n                const parsed = JSON.parse(cached);\n                // Support both possible data structures\n                const rows =\n                    parsed?.data?.payload?.sections?.[0]?.rows ||\n                    parsed?.data?.sections?.[0]?.rows ||\n                    parsed?.sections?.[0]?.rows ||\n                    [];\n                rows.forEach(item => {\n                    if (item.subjectName) {\n                        subjects.push({\n                            name: item.subjectName,\n                            present: parseFloat(item.presentHours) || 0,\n                            total: parseFloat(item.totalHours) || 0,\n                            pct: parseFloat(item.percentage) || 0\n                        });\n                    }\n                });\n            } catch(e) {}\n        }\n    }\n\n    if (!subjects.length) {\n        container.innerHTML = `\n            <div style=\"text-align:center;padding:3rem 1rem;\">\n                <div style=\"font
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 1441 | TOOL: multi_replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Replace renderClassTeachers with renderClassAttendance in selectClassDept and in the onboarding/login dept-change handler."
+CONTENT LENGTH: 0
+CHUNKS COUNT: 2
+  Chunk 1: Target starts with: "            currentClassDept = info.dept.toUpperCase();
+            if (typeof renderClassFilters =="
+  Chunk 1: Replacement starts with: "            currentClassDept = info.dept.toUpperCase();
+            if (typeof renderClassFilters === 'function') {
+                renderClassFilters();
+                renderClassDaySelector();
+                renderClassTimetable();
+                renderClassSubjects();
+                renderClassAttendance();
+            }"
+  Chunk 2: Target starts with: "window.selectClassDept = function(dept) {
+    currentClassDept = dept;
+    closeClassDropdowns();
+  "
+  Chunk 2: Replacement starts with: "window.selectClassDept = function(dept) {
+    currentClassDept = dept;
+    closeClassDropdowns();
+    renderClassFilters();
+    renderClassDaySelector();
+    renderClassTimetable();
+    renderClassSubjects();
+    renderClassAttendance();
+};"
+
+========================================
+STEP: 3043 | TOOL: multi_replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Modify app.js to integrate native profile/results, circular progress widget, getStandardizedAttendance helper, and instant edits saving/refreshes."
+CONTENT LENGTH: 0
+
+========================================
+STEP: 3429 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Update renderExamResults to fetch and combine both Assessment and ExamResult sections with distinct headings"
+CONTENT LENGTH: 2063
+--- START ---
+"window.renderExamResults = function () {\n    const container = document.getElementById('sub-view-results');\n    if (!container) return;\n\n    const adminNo = (window.MacHubPortal && window.MacHubPortal.getAdminNo()) || localStorage.getItem('machub_student_id');\n    if (!adminNo) {\n        container.innerHTML = `\n            <div class=\"glass-panel rounded-3xl p-6 text-center my-6 border border-white/5\">\n                <div class=\"text-3xl mb-3\">🔑</div>\n                <h3 class=\"text-sm font-black text-white\">Admission Number Required</h3>\n                <p class=\"text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed\">\n                    Go to Profile → Edit and enter your Admission Number to sync exam results.\n                </p>\n            </div>`;\n        return;\n    }\n\n    const examRaw = localStorage.getItem(`machub_portal_ExamResult_${adminNo}`);\n    const assessRaw = localStorage.getItem(`machub_portal_Assessment_${adminNo}`);\n\n    if (!examRaw && !assessRaw) {\n        container.innerHTML = `\n            <div class=\"glass-panel rounded-3xl p-8 text-center my-6 relative overflow-hidden border border-white/5\">\n                <div class=\"w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating\">🏆</div>\n                <h3 class=\"text-base font-black text-white\">Academic Records Not Synced</h3>\n                <p class=\"text-[10px] font-bold text-[#86868b] mt-2 leadi
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 3962 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Update getPortalCache to prioritize current semester key and fallback to latest semester descending."
+CONTENT LENGTH: 1346
+--- START ---
+"function getPortalCache(section, adminNo) {\n    if (!adminNo) return null;\n    \n    // 1. Try direct key\n    const directKey = `machub_portal_${section}_${adminNo}`;\n    const direct = localStorage.getItem(directKey);\n    if (direct) return direct;\n    \n    // 2. Try current semester key if we can detect it\n    const info = getStudentInfo();\n    let semNum = '';\n    if (info && info.semester) {\n        const match = info.semester.match(/\\d+/);\n        if (match) semNum = match[0];\n    }\n    if (semNum) {\n        const semKey = `machub_portal_${section}_sem${semNum}_${adminNo}`;\n        const semData = localStorage.getItem(semKey);\n        if (semData) return semData;\n    }\n    \n    // 3. Fallback to any semester key, sorting in descending order to get the highest/latest semester first\n    const keys = [];\n    for (let i = 0; i < localStorage.length; i++) {\n        const key = localStorage.key(i);\n        if (key && key.startsWith(`machub_portal_${section}_sem`) && key.endsWith(`_${adminNo}`)) {\n            keys.push(key);\n        }\n    }\n    if (keys.length > 0) {\n        // Sort descending so \"sem2\" comes before \"sem1\"\n        keys.sort((a, b) => b.localeCompare(a));\n        return localStorage.getItem(keys[0]);\n    }\n    \n    return null;\n}\nwindow.getPortalCache = getPortalCache;"
+--- END ---
+
+========================================
+STEP: 3966 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Replace renderExamResults and syncExamResults with the unified implementation."
+CONTENT LENGTH: 2064
+--- START ---
+"window.renderExamResults = function () {\n    const container = document.getElementById('sub-view-results');\n    if (!container) return;\n\n    const adminNo = (window.MacHubPortal && window.MacHubPortal.getAdminNo()) || localStorage.getItem('machub_student_id');\n    if (!adminNo) {\n        container.innerHTML = `\n            <div class=\"glass-panel rounded-3xl p-6 text-center my-6 border border-white/5\">\n                <div class=\"text-3xl mb-3\">🔑</div>\n                <h3 class=\"text-sm font-black text-white\">Admission Number Required</h3>\n                <p class=\"text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed\">\n                    Go to Profile → Edit and enter your Admission Number to sync exam results.\n                </p>\n            </div>`;\n        return;\n    }\n\n    const examRaw = getPortalCache('ExamResult', adminNo);\n    const assessRaw = getPortalCache('Assessment', adminNo);\n\n    if (!examRaw && !assessRaw) {\n        container.innerHTML = `\n            <div class=\"glass-panel rounded-3xl p-8 text-center my-6 relative overflow-hidden border border-white/5\">\n                <div class=\"w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating\">🏆</div>\n                <h3 class=\"text-base font-black text-white\">Academic Records Not Synced</h3>\n                <p class=\"text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed mb-4\">\n                    Sync
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 3988 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Add showAttendanceTab and extend switchTab to route to attendance."
+CONTENT LENGTH: 658
+--- START ---
+"window.showAttendanceTab = function () {\n    switchView('view-class');\n    if (window.switchClassTab) {\n        window.switchClassTab('attendance');\n    }\n};\n\nwindow.showResultsTab = function (subTab = 'exam') {\n    appState.resultsSubTab = subTab;\n    switchExamView('view-results');\n};\n\nwindow.switchTab = function (tabName) {\n    if (tabName === 'profile') {\n        switchView('view-profile');\n    } else if (tabName === 'home') {\n        switchView('view-home');\n    } else if (tabName === 'results') {\n        window.showResultsTab('exam');\n    } else if (tabName === 'attendance') {\n        window.showAttendanceTab();\n    }\n};"
+--- END ---
+
+========================================
+STEP: 3992 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Replace the tab switcher block in js/app.js with the version that includes attendance tab routing."
+CONTENT LENGTH: 658
+--- START ---
+"window.showAttendanceTab = function () {\n    switchView('view-class');\n    if (window.switchClassTab) {\n        window.switchClassTab('attendance');\n    }\n};\n\nwindow.showResultsTab = function (subTab = 'exam') {\n    appState.resultsSubTab = subTab;\n    switchExamView('view-results');\n};\n\nwindow.switchTab = function (tabName) {\n    if (tabName === 'profile') {\n        switchView('view-profile');\n    } else if (tabName === 'home') {\n        switchView('view-home');\n    } else if (tabName === 'results') {\n        window.showResultsTab('exam');\n    } else if (tabName === 'attendance') {\n        window.showAttendanceTab();\n    }\n};"
+--- END ---
+
+========================================
+STEP: 3996 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Insert showAttendanceTab function."
+CONTENT LENGTH: 220
+--- START ---
+"window.showAttendanceTab = function () {\n    switchView('view-class');\n    if (window.switchClassTab) {\n        window.switchClassTab('attendance');\n    }\n};\n\nwindow.showResultsTab = function (subTab = 'exam') {"
+--- END ---
+
+========================================
+STEP: 3998 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Insert the attendance route into window.switchTab."
+CONTENT LENGTH: 115
+--- START ---
+"    if (tabName === 'attendance') {\n        window.showAttendanceTab();\n    } else if (tabName === 'profile') {"
+--- END ---
+
+========================================
+STEP: 4682 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Standardise how we retrieve sections from parsed assessment cache to support all structures"
+CONTENT LENGTH: 420
+--- START ---
+"        if (adminNo) {\n            const cachedAssess = getPortalCache('Assessment', adminNo);\n            if (cachedAssess) {\n                try {\n                    const parsed = JSON.parse(cachedAssess);\n                    assessData = parsed?.data?.payload?.sections || parsed?.data?.sections || parsed?.payload?.sections || parsed?.sections || [];\n                } catch(e) {}\n            }\n        }"
+--- END ---
+
+========================================
+STEP: 4686 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Update examRaw sections parsing to handle nested fields and avoid empty sections on correct cache structure"
+CONTENT LENGTH: 291
+--- START ---
+"            if (examRaw) {\n                const parsed = JSON.parse(examRaw);\n                const sections = parsed?.data?.payload?.sections || parsed?.data?.sections || parsed?.payload?.sections || parsed?.sections || [];\n                \n                if (sections.length > 0) {"
+--- END ---
+
+========================================
+STEP: 5258 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Support fallback structures in getDepartmentScheduleByCode."
+CONTENT LENGTH: 646
+--- START ---
+"    if (adminNo) {\n        const cached = getPortalCache('Attendance', adminNo);\n        if (cached) {\n            try {\n                const parsed = JSON.parse(cached);\n                const rows = parsed?.data?.payload?.sections?.[0]?.rows || \n                             parsed?.data?.sections?.[0]?.rows || \n                             parsed?.payload?.sections?.[0]?.rows || \n                             parsed?.sections?.[0]?.rows || [];\n                rows.forEach(item => {\n                    if (item.subjectName) actualSubjects.push(item.subjectName);\n                });\n            } catch(e) {}\n        }\n    }"
+--- END ---
+
+========================================
+STEP: 5260 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Support fallback structures in getDepartmentPracticalScheduleByCode."
+CONTENT LENGTH: 942
+--- START ---
+"    if (adminNo) {\n        const cached = getPortalCache('Attendance', adminNo);\n        if (cached) {\n            try {\n                const parsed = JSON.parse(cached);\n                const rows = parsed?.data?.payload?.sections?.[0]?.rows || \n                             parsed?.data?.sections?.[0]?.rows || \n                             parsed?.payload?.sections?.[0]?.rows || \n                             parsed?.sections?.[0]?.rows || [];\n                rows.forEach(item => {\n                    if (item.subjectName) {\n                        const name = item.subjectName.toLowerCase();\n                        if (name.includes('structures') || name.includes('technology') || name.includes('lab') || name.includes('practical')) {\n                            actualSubjects.push(item.subjectName);\n                        }\n                    }\n                });\n            } catch(e) {}\n        }\n    }"
+--- END ---
+
+========================================
+STEP: 5262 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Support fallback structures in timetable rendering."
+CONTENT LENGTH: 945
+--- START ---
+"    if (adminNo) {\n        const cached = getPortalCache('Attendance', adminNo);\n        if (cached) {\n            try {\n                const parsed = JSON.parse(cached);\n                const rows = parsed?.data?.payload?.sections?.[0]?.rows || \n                             parsed?.data?.sections?.[0]?.rows || \n                             parsed?.payload?.sections?.[0]?.rows || \n                             parsed?.sections?.[0]?.rows || [];\n                rows.forEach(item => {\n                    if (item.subjectName) {\n                        actualSubjects.push({\n                            subjectName: item.subjectName,\n                            percentage: item.percentage,\n                            presentHours: item.presentHours,\n                            totalHours: item.totalHours\n                        });\n                    }\n                });\n            } catch(e) {}\n        }\n    }"
+--- END ---
+
+========================================
+STEP: 5264 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Support nested fallbacks in period rendering."
+CONTENT LENGTH: 824
+--- START ---
+"        if (adminNo) {\n            const cached = getPortalCache('Attendance', adminNo);\n            if (cached) {\n                try {\n                    const parsed = JSON.parse(cached);\n                    const rows = parsed?.data?.payload?.sections?.[0]?.rows || \n                                 parsed?.data?.sections?.[0]?.rows || \n                                 parsed?.payload?.sections?.[0]?.rows || \n                                 parsed?.sections?.[0]?.rows || [];\n                    attData = rows.find(r => r.subjectName && (\n                        r.subjectName.toLowerCase().includes(period.title.toLowerCase()) ||\n                        period.title.toLowerCase().includes(r.subjectName.toLowerCase())\n                    ));\n                } catch(e) {}\n            }\n        }"
+--- END ---
+
+========================================
+STEP: 5266 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Support nested fallbacks in subject parsing."
+CONTENT LENGTH: 841
+--- START ---
+"            try { \n                const parsed = JSON.parse(cachedStudy);\n                studyMaterial = parsed?.data?.payload?.sections?.[0]?.rows || parsed?.data?.sections?.[0]?.rows || parsed?.payload?.sections?.[0]?.rows || parsed?.sections?.[0]?.rows || []; \n            } catch(e) {}\n            try { \n                const parsed = JSON.parse(cachedAtt);\n                attendanceData = parsed?.data?.payload?.sections?.[0]?.rows || parsed?.data?.sections?.[0]?.rows || parsed?.payload?.sections?.[0]?.rows || parsed?.sections?.[0]?.rows || []; \n            } catch(e) {}\n            try { \n                const parsed = JSON.parse(cachedAssess);\n                assessData = parsed?.data?.payload?.sections || parsed?.data?.sections || parsed?.payload?.sections || parsed?.sections || []; \n            } catch(e) {}"
+--- END ---
+
+========================================
+STEP: 5270 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Support fallback structures in Assessment parsing."
+CONTENT LENGTH: 290
+--- START ---
+"        if (cachedAssess) {\n            try { \n                const parsed = JSON.parse(cachedAssess);\n                assessData = parsed?.data?.payload?.sections || parsed?.data?.sections || parsed?.payload?.sections || parsed?.sections || []; \n            } catch(e) {}\n        }"
+--- END ---
+
+========================================
+STEP: 5272 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Add payload fallback to class attendance parsing."
+CONTENT LENGTH: 445
+--- START ---
+"        if (cached) {\n            try {\n                const parsed = JSON.parse(cached);\n                // Support both possible data structures\n                const rows =\n                    parsed?.data?.payload?.sections?.[0]?.rows ||\n                    parsed?.data?.sections?.[0]?.rows ||\n                    parsed?.payload?.sections?.[0]?.rows ||\n                    parsed?.sections?.[0]?.rows ||\n                    [];"
+--- END ---
+
+========================================
+STEP: 5278 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Insert renderExamResults, switchResultsSubTab, syncExamResults, and activeResultsTab before initExamHubApp."
+CONTENT LENGTH: 1958
+--- START ---
+"    container.innerHTML = styleBlock + heroHtml + `<div style=\"display:flex;flex-direction:column;gap:.85rem;margin-top:1rem;\">` + subjectCards + `</div>`;\n};\n\n// ── Native Exam Results ──────────────────────────────────────────────────────\nwindow.activeResultsTab = 'internal';\n\nwindow.switchResultsSubTab = function (tabName) {\n    window.activeResultsTab = tabName;\n    const internalBtn = document.getElementById('subtab-internal');\n    const semesterBtn = document.getElementById('subtab-semester');\n    \n    if (internalBtn) {\n        internalBtn.classList.toggle('is-active', tabName === 'internal');\n    }\n    if (semesterBtn) {\n        semesterBtn.classList.toggle('is-active', tabName === 'semester');\n    }\n    \n    window.renderExamResults();\n};\n\nwindow.syncExamResults = async function () {\n    const contentContainer = document.getElementById('resultsContent');\n    if (!contentContainer) return;\n\n    // Show loading spinner\n    contentContainer.innerHTML = `\n        <div class=\"glass-panel rounded-3xl p-8 text-center my-6 border border-white/5\">\n            <div class=\"animate-spin text-3xl mb-4\">⏳</div>\n            <h3 class=\"text-sm font-black text-white\">Syncing Academic Results...</h3>\n            <p class=\"text-[10px] font-bold text-[#86868b] mt-2\">Connecting to college portal to fetch your official marks.</p>\n        </div>`;\n\n    try {\n        if (window.fetchSection) {\n            // Fetch both sections\n            awai
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 5280 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Invoke renderExamResults in results tab branch."
+CONTENT LENGTH: 443
+--- START ---
+"    if (tab === 'timetable') {\n        appState.examSubView = 'view-timetable';\n        if (typeof renderTimetable === 'function') renderTimetable();\n    } else if (tab === 'seats') {\n        appState.examSubView = 'view-seats';\n        if (typeof showSeatNote === 'function') showSeatNote();\n    } else {\n        appState.examSubView = 'view-results';\n        if (typeof renderExamResults === 'function') renderExamResults();\n    }"
+--- END ---
+
+========================================
+STEP: 5312 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Retrieve syllabus modules and teacher details from CLASS_SUBJECTS_... dataset based on the subject title, and render them in the collapsible card content."
+CONTENT LENGTH: 2069
+--- START ---
+"        const dept = (info?.dept || currentClassDept || 'BCA').toUpperCase();\n        const subjectsKey = `CLASS_SUBJECTS_${dept}`;\n        const subjectsData = window[subjectsKey] || [];\n        const subjectDetail = subjectsData.find(s => \n            s.title.toLowerCase() === subject.title.toLowerCase() || \n            subject.title.toLowerCase().includes(s.title.toLowerCase()) ||\n            s.title.toLowerCase().includes(subject.title.toLowerCase())\n        );\n\n        let syllabusHtml = '';\n        if (subjectDetail && subjectDetail.syllabus && subjectDetail.syllabus.length > 0) {\n            syllabusHtml = `\n                <div class=\"mt-4 border-t border-black/10 dark:border-white/5 pt-4\">\n                    <div class=\"flex items-center justify-between mb-3\">\n                        <h5 class=\"text-[10px] font-black text-[#86868b] uppercase tracking-widest\">📋 Syllabus Modules</h5>\n                    </div>\n                    <div class=\"space-y-2\">\n                        ${subjectDetail.syllabus.map(mod => {\n                            const colonIdx = mod.indexOf(':');\n                            let modTitle = 'Module';\n                            let modDesc = mod;\n                            if (colonIdx !== -1) {\n                                modTitle = mod.substring(0, colonIdx).trim();\n                                modDesc = mod.substring(colonIdx + 1).trim();\n                            }\n                           
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 5362 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Re-insert the map call, uniqueId, att, matchingAssess, pct, isLow, color, assessmentHtml, and dept variables at the start of the card rendering mapping."
+CONTENT LENGTH: 2069
+--- START ---
+"    // 3. Render Cards\n    container.innerHTML = unifiedSubjects.map((subject, idx) => {\n        const uniqueId = `subject-card-${idx}`;\n        const att = attendanceData.find(a => (a.subjectName || a.subject || '').toLowerCase().includes(subject.title.toLowerCase()) || subject.title.toLowerCase().includes((a.subjectName || a.subject || '').toLowerCase())) || {};\n        const matchingAssess = assessData.find(sec => (sec.subject || '').toLowerCase().includes(subject.title.toLowerCase()) || subject.title.toLowerCase().includes((sec.subject || '').toLowerCase()));\n\n        const pct = parseFloat(att.percentage || att.pct || att.attendance) || 0;\n        const isLow = pct < 75;\n        const color = isLow ? 'text-red-500' : (pct < 80 ? 'text-amber-500' : 'text-emerald-500');\n\n        let assessmentHtml = '';\n        if (matchingAssess && matchingAssess.rows?.length) {\n            assessmentHtml = matchingAssess.rows.map(row => `\n                <div class=\"bg-black/5 dark:bg-white/5 rounded-xl p-3 flex justify-between items-center border border-white/5\">\n                    <div>\n                        <p class=\"text-[8px] font-black text-[#86868b] uppercase tracking-wide\">${row['Assessment Type'] || row.col_0 || 'Mark'}</p>\n                        <p class=\"text-xs font-black text-white mt-0.5\">${row['Score'] || row.col_1 || '0'} <span class=\"text-[10px] text-[#86868b]\">/ ${row['Max Mark'] || row.col_2 || '20'}</span></p>\n                    </div>\n
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 5689 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Define window.syncClassAttendance and insert Sync Now button in the empty state of renderClassAttendance."
+CONTENT LENGTH: 2063
+--- START ---
+"window.syncClassAttendance = async function() {\n    const container = document.getElementById('classAttendanceContent');\n    if (!container) return;\n\n    const info = getStudentInfo();\n    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';\n    if (!adminNo) {\n        container.innerHTML = `\n            <div class=\"glass-panel rounded-3xl p-8 text-center my-6 border border-white/5\">\n                <div class=\"text-3xl mb-3\">🔑</div>\n                <h3 class=\"text-sm font-black text-white\">Admission Number Required</h3>\n                <p class=\"text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed\">\n                    Please set your Admission Number in the Profile tab first to sync your class attendance.\n                </p>\n            </div>`;\n        return;\n    }\n\n    container.innerHTML = `\n        <div class=\"glass-panel rounded-[2rem] p-12 text-center my-6 border border-white/5\">\n            <div class=\"animate-spin text-4xl mb-4\">⏳</div>\n            <h3 class=\"text-sm font-black text-white\">Syncing Class Attendance...</h3>\n            <p class=\"text-[10px] font-bold text-[#86868b] mt-2\">Connecting to portal to fetch your attendance details.</p>\n        </div>`;\n\n    try {\n        if (window.fetchSection) {\n            await window.fetchSection('Attendance', true);\n            await window.fetchSection('AttendanceDetails', true).catch(e => {\n                console.warn('Detailed log sy
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 5695 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Insert the sync button inside the top row of the overall hero card, positioned absolute top-right."
+CONTENT LENGTH: 2071
+--- START ---
+"            <!-- Top row: ring + info -->\n            <div style=\"display:flex;align-items:center;gap:1.5rem;position:relative;width:100%;\">\n                <!-- SVG ring -->\n                <div style=\"position:relative;flex-shrink:0;width:96px;height:96px;\">\n                    <svg width=\"96\" height=\"96\" viewBox=\"0 0 96 96\" style=\"transform:rotate(-90deg);\">\n                        <circle cx=\"48\" cy=\"48\" r=\"44\" fill=\"none\"\n                            stroke=\"rgba(128,128,128,.12)\" stroke-width=\"8\"/>\n                        <circle cx=\"48\" cy=\"48\" r=\"44\" fill=\"none\"\n                            stroke=\"${overallColor}\" stroke-width=\"8\"\n                            stroke-linecap=\"round\"\n                            stroke-dasharray=\"${dash.toFixed(1)} ${circum.toFixed(1)}\"\n                            style=\"transition:stroke-dasharray .8s cubic-bezier(.4,0,.2,1)\"/>\n                    </svg>\n                    <div style=\"position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;\">\n                        <span style=\"font-size:1.35rem;font-weight:900;color:${overallColor};line-height:1;\">${overallPct.toFixed(1)}%</span>\n                        <span style=\"font-size:.55rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.08em;\">Overall</span>\n                    </div>\n                </div>\n\n                <!-- Stats column -->\n    
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 5786 | TOOL: replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/js/app.js"
+INSTRUCTION: "Define openPortalDrawer and closePortalDrawer, and update showBottomNav."
+CONTENT LENGTH: 2070
+--- START ---
+"function showBottomNav() {\n    const drawer = document.getElementById('detailDrawer');\n    const marksSheet = document.getElementById('marksSheet');\n    const timetableExamSheet = document.getElementById('timetableExamSheet');\n    const academicSheet = document.getElementById('academicSheet');\n    const portalNavDrawer = document.getElementById('portalNavDrawer');\n    const drawerOpen = drawer && drawer.style.transform !== 'translateY(100%)' && drawer.style.transform !== '';\n    const marksOpen = marksSheet && marksSheet.style.transform !== 'translateY(100%)' && marksSheet.style.transform !== '';\n    const timetableOpen = timetableExamSheet && timetableExamSheet.style.transform !== 'translateY(100%)' && timetableExamSheet.style.transform !== '';\n    const academicOpen = academicSheet && academicSheet.style.transform !== 'translateY(100%)' && academicSheet.style.transform !== '';\n    const portalDrawerOpen = portalNavDrawer && portalNavDrawer.style.transform !== 'translateY(100%)' && portalNavDrawer.style.transform !== '';\n    if (drawerOpen || marksOpen || timetableOpen || academicOpen || portalDrawerOpen) return;\n    _navLockedHidden = false;\n    const nav = document.getElementById('bottomNav');\n    if (nav) nav.classList.remove('nav-hidden');\n    _navHidden = false;\n}\n\n// Expose navigation/sheet utilities to global scope\nwindow.hideBottomNav = hideBottomNav;\nwindow.showBottomNav = showBottomNav;\n\nwindow.openPortalDrawer = function() {\n    const backd
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 6952 | TOOL: multi_replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Update getPortalCache, syncClassAttendance, and renderClassAttendance to add semester filter, detailed log rendering, and absent hours display."
+CONTENT LENGTH: 0
+
+========================================
+STEP: 6964 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Replace syncClassAttendance and renderClassAttendance implementation in js/app.js to support semester filters and detailed log lists."
+CONTENT LENGTH: 2064
+--- START ---
+"window.syncClassAttendance = async function(semester = '') {\n    const container = document.getElementById('classAttendanceContent');\n    if (!container) return;\n\n    const info = getStudentInfo();\n    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';\n    if (!adminNo) {\n        container.innerHTML = `\n            <div class=\"glass-panel rounded-3xl p-8 text-center my-6 border border-white/5\">\n                <div class=\"text-3xl mb-3\">🔑</div>\n                <h3 class=\"text-sm font-black text-white\">Admission Number Required</h3>\n                <p class=\"text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed\">\n                    Please set your Admission Number in the Profile tab first to sync your class attendance.\n                </p>\n            </div>`;\n        return;\n    }\n\n    const activeSem = semester || window.selectedAttendanceSemester || '';\n\n    container.innerHTML = `\n        <div class=\"glass-panel rounded-[2rem] p-12 text-center my-6 border border-white/5\">\n            <div class=\"animate-spin text-4xl mb-4\">⏳</div>\n            <h3 class=\"text-sm font-black text-white\">Syncing Attendance (Sem ${activeSem})...</h3>\n            <p class=\"text-[10px] font-bold text-[#86868b] mt-2\">Connecting to portal to fetch your attendance details.</p>\n        </div>`;\n\n    try {\n        if (window.fetchSection) {\n            await window.fetchSection('Attendance', true, activeSem);\n         
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 7107 | TOOL: multi_replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Edit js/app.js to apply loaders, auto-load logic, stale-while-revalidate checks, and remove sync/retry buttons."
+CONTENT LENGTH: 0
+
+========================================
+STEP: 7111 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Insert isCacheExpired helper below getPortalCache."
+CONTENT LENGTH: 600
+--- START ---
+"    if (bestKey) return localStorage.getItem(bestKey);\n    return null;\n}\n\nfunction isCacheExpired(section, adminNo, semester = '') {\n    if (!adminNo) return true;\n    const semSuffix = semester ? `_sem${semester}` : '';\n    const key = `machub_portal_${section}${semSuffix}_${adminNo}`;\n    try {\n        const raw = localStorage.getItem(key);\n        if (!raw) return true;\n        const parsed = JSON.parse(raw);\n        const savedAt = parsed?.savedAt || 0;\n        return Date.now() - savedAt > 10 * 60 * 1000; // 10 minutes TTL\n    } catch (e) {\n        return true;\n    }\n}"
+--- END ---
+
+========================================
+STEP: 7153 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Modify window.syncClassAttendance and window.renderClassAttendance to preserve the semester selector and dynamically show current/past semesters."
+CONTENT LENGTH: 2072
+--- START ---
+"window.syncClassAttendance = async function(semester = '') {\n    const activeSem = semester || window.selectedAttendanceSemester || '';\n    \n    let subContainer = document.getElementById('attendanceSubContent');\n    if (!subContainer) {\n        window.renderClassAttendance(activeSem);\n        subContainer = document.getElementById('attendanceSubContent');\n    }\n    if (!subContainer) return;\n\n    subContainer.innerHTML = `\n        <div class=\"flex items-center justify-center p-12 my-6\">\n            <div class=\"w-10 h-10 border-4 border-[var(--mac-blue)] border-t-transparent rounded-full animate-spin\"></div>\n        </div>`;\n\n    try {\n        if (window.fetchSection) {\n            await window.fetchSection('Attendance', true, activeSem);\n            await window.fetchSection('AttendanceDetails', true, activeSem).catch(e => {\n                console.warn('Detailed log sync failed:', e.message);\n            });\n            window.renderClassAttendance(activeSem);\n        } else {\n            throw new Error('Sync API not initialized');\n        }\n    } catch (err) {\n        subContainer.innerHTML = `\n            <div class=\"glass-panel rounded-[2rem] p-12 text-center my-6 border border-white/5\">\n                <p class=\"text-xs font-bold text-[#86868b]\">This semester has not started yet or data is currently unavailable. Please try again later.</p>\n            </div>`;\n    }\n};\n\nwindow.renderClassAttendance = function(semester = '') {\n
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 7161 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Add checking of window.selectedAttendanceSemester === activeSem before updating subContainer or calling renderClassAttendance in async fetch handlers."
+CONTENT LENGTH: 2071
+--- START ---
+"window.syncClassAttendance = async function(semester = '') {\n    const activeSem = semester || window.selectedAttendanceSemester || '';\n    \n    let subContainer = document.getElementById('attendanceSubContent');\n    if (!subContainer) {\n        window.renderClassAttendance(activeSem);\n        subContainer = document.getElementById('attendanceSubContent');\n    }\n    if (!subContainer) return;\n\n    subContainer.innerHTML = `\n        <div class=\"flex items-center justify-center p-12 my-6\">\n            <div class=\"w-10 h-10 border-4 border-[var(--mac-blue)] border-t-transparent rounded-full animate-spin\"></div>\n        </div>`;\n\n    try {\n        if (window.fetchSection) {\n            await window.fetchSection('Attendance', true, activeSem);\n            await window.fetchSection('AttendanceDetails', true, activeSem).catch(e => {\n                console.warn('Detailed log sync failed:', e.message);\n            });\n            if (window.selectedAttendanceSemester === activeSem) {\n                window.renderClassAttendance(activeSem);\n            }\n        } else {\n            throw new Error('Sync API not initialized');\n        }\n    } catch (err) {\n        if (window.selectedAttendanceSemester === activeSem) {\n            subContainer.innerHTML = `\n                <div class=\"glass-panel rounded-[2rem] p-12 text-center my-6 border border-white/5\">\n                    <p class=\"text-xs font-bold text-[#86868b]\">This semester has not start
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 7335 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Insert buildSubjectCodeMap and subjects toggle handlers, and rewrite renderClassSubjects to include the semester selection dropdown."
+CONTENT LENGTH: 2071
+--- START ---
+"window.buildSubjectCodeMap = function(adminNo, activeSem) {\n    const map = {};\n\n    // 1. Try from Attendance summary subjects\n    const cachedAtt = getPortalCache('Attendance', adminNo, activeSem);\n    if (cachedAtt) {\n        try {\n            const parsed = JSON.parse(cachedAtt);\n            const rows = parsed?.data?.payload?.sections?.[0]?.rows || parsed?.data?.sections?.[0]?.rows || parsed?.payload?.sections?.[0]?.rows || parsed?.sections?.[0]?.rows || [];\n            rows.forEach(item => {\n                const name = item.subjectName || item.subject || Object.values(item)[0];\n                if (name && !name.toLowerCase().includes('total')) {\n                    const parts = name.split('-');\n                    if (parts.length >= 2) {\n                        const code = parts[0].trim().toUpperCase();\n                        const sName = parts.slice(1).join('-').trim();\n                        map[code] = sName;\n                    }\n                }\n            });\n        } catch(e) {}\n    }\n\n    // 2. Try from StudyMaterial\n    const cachedStudy = getPortalCache('StudyMaterial', adminNo);\n    if (cachedStudy) {\n        try {\n            const parsed = JSON.parse(cachedStudy);\n            const rows = parsed?.data?.payload?.sections?.[0]?.rows || parsed?.data?.sections?.[0]?.rows || parsed?.payload?.sections?.[0]?.rows || parsed?.sections?.[0]?.rows || [];\n            rows.forEach(row => {\n                const name = row.title |
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 7349 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Remove the malformed duplicate block and change container.innerHTML to const cardsHtml."
+CONTENT LENGTH: 87
+--- START ---
+"    // 3. Render Cards\n    const cardsHtml = unifiedSubjects.map((subject, idx) => {"
+--- END ---
+
+========================================
+STEP: 7353 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Prepend semFilterHtml and wrap cardsHtml in a grid layout container."
+CONTENT LENGTH: 118
+--- START ---
+"    }).join('');\n    container.innerHTML = semFilterHtml + `<div class=\"grid gap-4\">` + cardsHtml + `</div>`;\n};"
+--- END ---
+
+========================================
+STEP: 7365 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Rewrite renderClassAttendance and add dropdown state handlers."
+CONTENT LENGTH: 2072
+--- START ---
+"window.toggleAttendanceDropdown = function(name) {\n    appState.openAttendanceDropdown = appState.openAttendanceDropdown === name ? null : name;\n    window.renderClassAttendance();\n};\n\nwindow.selectAttendanceSemester = function(sem) {\n    window.selectedAttendanceSemester = sem;\n    appState.openAttendanceDropdown = null;\n    window.renderClassAttendance(sem);\n};\n\nwindow.selectAttendanceViewMode = function(mode) {\n    window.selectedAttendanceViewMode = mode;\n    appState.openAttendanceDropdown = null;\n    window.renderClassAttendance();\n};\n\nwindow.renderClassAttendance = function(semester = '') {\n    const container = document.getElementById('classAttendanceContent');\n    if (!container) return;\n\n    const info = getStudentInfo();\n    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';\n\n    // Determine the active semester\n    let activeSem = semester || window.selectedAttendanceSemester || '';\n    if (!activeSem) {\n        let semText = info?.semester || '';\n        const match = semText.match(/\\d+/);\n        activeSem = match ? match[0] : '2'; // default to sem 2\n        window.selectedAttendanceSemester = activeSem;\n    } else {\n        window.selectedAttendanceSemester = activeSem;\n    }\n\n    if (!window.selectedAttendanceViewMode) {\n        window.selectedAttendanceViewMode = 'subject'; // default\n    }\n\n    // Determine max semester based on profile and cached records\n    let profileSem = 2;\n    i
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 7371 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Remove duplicate/leftover code block after subContainer.innerHTML = styleBlock + heroHtml + finalViewHtml;"
+CONTENT LENGTH: 73
+--- START ---
+"    subContainer.innerHTML = styleBlock + heroHtml + finalViewHtml;\n};"
+--- END ---
+
+========================================
+STEP: 7373 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Insert the new attendance log bottom sheet helper functions below renderClassAttendance."
+CONTENT LENGTH: 2071
+--- START ---
+"    subContainer.innerHTML = styleBlock + heroHtml + finalViewHtml;\n};\n\nwindow.openAttendanceLogSheet = function(subjectName, activeSem) {\n    const info = getStudentInfo();\n    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';\n    if (!adminNo) return;\n\n    const codeToNameMap = window.buildSubjectCodeMap(adminNo, activeSem);\n    \n    // Find the subject entry in the attendance data to get the code and stats\n    let targetSubject = null;\n    const cached = getPortalCache('Attendance', adminNo, activeSem);\n    if (cached) {\n        try {\n            const parsed = JSON.parse(cached);\n            const rows = parsed?.data?.payload?.sections?.[0]?.rows || parsed?.data?.sections?.[0]?.rows || parsed?.payload?.sections?.[0]?.rows || parsed?.sections?.[0]?.rows || [];\n            rows.forEach(item => {\n                const name = item.subjectName || item.subject || Object.values(item)[0];\n                if (name && (name.toLowerCase() === subjectName.toLowerCase() || name.toLowerCase().includes(subjectName.toLowerCase()) || subjectName.toLowerCase().includes(name.toLowerCase()))) {\n                    targetSubject = {\n                        name: name,\n                        present: parseFloat(item.presentHours || item.present) || 0,\n                        total: parseFloat(item.totalHours || item.total || item.sessions) || 0,\n                        pct: parseFloat(item.percentage || item.pct || item.attendance) || 0
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 7379 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Include checks for attendanceLogSheet in showBottomNav function."
+CONTENT LENGTH: 1577
+--- START ---
+"function showBottomNav() {\n    const drawer = document.getElementById('detailDrawer');\n    const marksSheet = document.getElementById('marksSheet');\n    const timetableExamSheet = document.getElementById('timetableExamSheet');\n    const academicSheet = document.getElementById('academicSheet');\n    const portalNavDrawer = document.getElementById('portalNavDrawer');\n    const attendanceLogSheet = document.getElementById('attendanceLogSheet');\n    \n    const drawerOpen = drawer && drawer.style.transform !== 'translateY(100%)' && drawer.style.transform !== '';\n    const marksOpen = marksSheet && marksSheet.style.transform !== 'translateY(100%)' && marksSheet.style.transform !== '';\n    const timetableOpen = timetableExamSheet && timetableExamSheet.style.transform !== 'translateY(100%)' && timetableExamSheet.style.transform !== '';\n    const academicOpen = academicSheet && academicSheet.style.transform !== 'translateY(100%)' && academicSheet.style.transform !== '';\n    const portalDrawerOpen = portalNavDrawer && portalNavDrawer.style.transform !== 'translateY(100%)' && portalNavDrawer.style.transform !== '';\n    const attendanceLogOpen = attendanceLogSheet && attendanceLogSheet.style.transform !== 'translateY(100%)' && attendanceLogSheet.style.transform !== '';\n    \n    if (drawerOpen || marksOpen || timetableOpen || academicOpen || portalDrawerOpen || attendanceLogOpen) return;\n    _navLockedHidden = false;\n    const nav = document.getElementById('bottomNav');\n
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 7385 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Include checks to close openSubjectsDropdown and openAttendanceDropdown in the click event listener."
+CONTENT LENGTH: 737
+--- START ---
+"document.addEventListener('click', (event) => {\n    if (!event.target.closest('.seat-dropdown')) {\n        if (appState.openSeatDropdown) {\n            closeSeatDropdowns();\n            renderDaySelector();\n            renderFilters();\n        }\n        if (appState.openClassDropdown) {\n            closeClassDropdowns();\n            renderClassFilters();\n            renderClassDaySelector();\n        }\n        if (appState.openAttendanceDropdown) {\n            appState.openAttendanceDropdown = null;\n            window.renderClassAttendance();\n        }\n        if (appState.openSubjectsDropdown) {\n            appState.openSubjectsDropdown = null;\n            window.renderClassSubjects();\n        }\n    }\n});"
+--- END ---
+
+========================================
+STEP: 7491 | TOOL: multi_replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Apply semester dropdown filters, detailed attendance view, course code translations, and Apple UI log sheet drawer in js/app.js"
+CONTENT LENGTH: 0
+
+========================================
+STEP: 8587 | TOOL: multi_replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Restore renderExamResults implementation, syncExamResults logic, and results tab switching in js/app.js"
+CONTENT LENGTH: 0
+
+========================================
+STEP: 8587 | TOOL: multi_replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Restore renderExamResults implementation, syncExamResults logic, and results tab switching in js/app.js"
+CONTENT LENGTH: 0
+
+========================================
+STEP: 8881 | TOOL: write_to_file | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\ExamResult.jsx"
+INSTRUCTION: 
+CONTENT LENGTH: 2072
+--- START ---
+"import React, { useState, useMemo } from 'react';\nimport {\n  Award,\n  Search,\n  Filter,\n  BookOpen,\n  Users,\n  UserCheck,\n  UserMinus,\n  Sparkles,\n  GraduationCap,\n  ChevronDown,\n  ChevronUp,\n  FileSpreadsheet,\n  TrendingUp,\n  Trophy,\n  Heart,\n  Smile,\n  ShieldAlert,\n  HelpCircle,\n  Maximize2,\n  X,\n  Flame,\n  Award as Crown\n} from 'lucide-react';\n\nimport { ALL_STUDENTS_DATA, BATCH_A_RECORDS, BATCH_B_RECORDS } from '../data/studentsResultsDb';\n\nexport default function ExamResult() {\n  const [searchTerm, setSearchTerm] = useState(\"\");\n  const [selectedDiv, setSelectedDiv] = useState(\"ALL\");\n  const [selectedStatus, setSelectedStatus] = useState(\"ALL\");\n  const [sortBy, setSortBy] = useState(\"rank\");\n  const [sortOrder, setSortOrder] = useState(\"asc\");\n  const [selectedStudent, setSelectedStudent] = useState(null);\n  const [activeTab, setActiveTab] = useState(\"spreadsheet\"); // spreadsheet | awards | batchCompare | abenCorner\n\n  // Map additional information from admission documents to student result lists dynamically\n  const students = useMemo(() => {\n    let resultList = ALL_STUDENTS_DATA.map((st) => {\n      const matchRec = BATCH_A_RECORDS.find(\n        (r) => r.name.toLowerCase() === st.name.toLowerCase()\n      ) || BATCH_B_RECORDS.find(\n        (r) => r.name.toLowerCase() === st.name.toLowerCase()\n      );\n      const totalMarks = st.ccr1 + st.ccr2 + st.ccr3 + st.sec1 + st.vac + st.aec1 + st.aec2;\n      return {\n  
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9099 | TOOL: replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/js/app.js"
+INSTRUCTION: "Replace the renderExamResults and syncExamResults implementations with the unified database rendering and final internals fetching logic"
+CONTENT LENGTH: 2064
+--- START ---
+"window.renderExamResults = function () {\n    const container = document.getElementById('sub-view-results');\n    if (!container) return;\n\n    const adminNo = (window.MacHubPortal && window.MacHubPortal.getAdminNo()) || localStorage.getItem('machub_student_id');\n    if (!adminNo) {\n        container.innerHTML = `\n            <div class=\"glass-panel rounded-[2rem] p-6 text-center my-6 border border-white/5\">\n                <div class=\"text-3xl mb-3\">🔑</div>\n                <h3 class=\"text-sm font-black text-white\">Admission Number Required</h3>\n                <p class=\"text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed\">\n                    Go to Profile → Edit and enter your Admission Number to sync exam results.\n                </p>\n            </div>`;\n        return;\n    }\n\n    if (!appState.resultsSubTab) {\n        appState.resultsSubTab = 'exam';\n    }\n\n    const examRaw = getPortalCache('ExamResult', adminNo);\n    const assessRaw = getPortalCache('Assessment', adminNo);\n    const internalRaw = getPortalCache('InternalMark', adminNo);\n\n    // Pill tab switch header\n    let headerHtml = `\n        <div class=\"flex justify-center mb-6\">\n            <div class=\"bg-black/10 dark:bg-white/5 p-1 rounded-2xl flex gap-1 border border-white/5\">\n                <button onclick=\"window.switchResultsSubTab('exam')\" class=\"px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.resultsSubTab ==
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9278 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\ExamResult.jsx"
+INSTRUCTION: "Import Crown icon directly from lucide-react"
+CONTENT LENGTH: 43
+--- START ---
+"  Flame,\n  Crown\n} from 'lucide-react';"
+--- END ---
+
+========================================
+STEP: 9337 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Define showResultsTab and map semester to exam subtab"
+CONTENT LENGTH: 433
+--- START ---
+"// ── Native Exam & Assessment Results ──────────────────────────────────────────\nwindow.showResultsTab = function (tab) {\n    if (tab === 'semester') tab = 'exam';\n    appState.resultsSubTab = tab;\n    if (window.switchExamView) {\n        window.switchExamView('view-results');\n    } else {\n        window.renderExamResults();\n    }\n};\n\nwindow.switchResultsSubTab = function (tab) {\n    window.showResultsTab(tab);\n};"
+--- END ---
+
+========================================
+STEP: 9526 | TOOL: write_to_file | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\InternalMark.jsx"
+INSTRUCTION: 
+CONTENT LENGTH: 2072
+--- START ---
+"import { useState, useEffect, useMemo } from 'react';\nimport { usePortalData } from '../hooks/usePortalData';\nimport PageHeader from '../components/PageHeader';\nimport SkeletonLoader from '../components/SkeletonLoader';\nimport { \n  BookOpen, \n  Calendar, \n  FileText, \n  Users, \n  Award, \n  CheckCircle2, \n  AlertCircle, \n  TrendingUp, \n  ChevronDown, \n  Sparkles,\n  Layers\n} from 'lucide-react';\n\nexport default function InternalMark() {\n  const [selectedSem, setSelectedSem] = useState('');\n  \n  // Fetch data stale-while-revalidate for the selected semester\n  const { data, isLoading, isRefreshing, refresh, error } = usePortalData(\n    'internalMark', \n    selectedSem ? { semester: selectedSem } : {}\n  );\n\n  // Auto-select active semester from ePortal response\n  useEffect(() => {\n    if (data?.semesters && data.semesters.length > 0) {\n      const active = data.semesters.find(s => s.selected);\n      if (active) {\n        setSelectedSem(active.value);\n      } else if (!selectedSem) {\n        setSelectedSem(data.semesters[0].value);\n      }\n    }\n  }, [data?.semesters]);\n\n  // Compute Overall Stats from parsed subjects\n  const stats = useMemo(() => {\n    let totalScore = 0;\n    let totalMax = 0;\n    let componentsCount = 0;\n    let passedComponents = 0;\n    let hasNumeric = false;\n\n    if (data?.subjects) {\n      data.subjects.forEach(sub => {\n        sub.rows?.forEach(row => {\n          const scoreStr = row['Score'] || row.col_1 ||
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9532 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Replace the basic internal mark tables in js/app.js with custom glass panels, progress bar tracks, and overview statistics cards."
+CONTENT LENGTH: 2068
+--- START ---
+"    } else {\n        // Internal marks subtab (renders both final university internals & monthly continuous assessments)\n        if (!assessRaw && !internalRaw) {\n            container.innerHTML = headerHtml + `\n                <div class=\"glass-panel rounded-[2rem] p-8 text-center my-6 relative overflow-hidden border border-white/5\">\n                    <div class=\"w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating\">📝</div>\n                    <h3 class=\"text-base font-black text-white\">Internal Marks Not Synced</h3>\n                    <p class=\"text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed mb-4\">\n                        Sync your continuous internal assessments from the college ePortal.\n                    </p>\n                    <button onclick=\"window.syncExamResults()\" class=\"px-6 py-2.5 bg-[var(--mac-blue)] text-white rounded-full text-xs font-black spring active:scale-95\">\n                        🔄 Sync Academic Data\n                    </button>\n                </div>`;\n            return;\n        }\n\n        try {\n            // Calculate overall stats\n            let totalScore = 0;\n            let totalMax = 0;\n            let componentsCount = 0;\n            let passedComponents = 0;\n            let totalSubjects = 0;\n\n            const processStats = (raw) => {\n                if (!raw) return;\n                try {\n                    const parse
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9556 | TOOL: write_to_file | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\InternalMark.jsx"
+INSTRUCTION: 
+CONTENT LENGTH: 2072
+--- START ---
+"import { useState, useEffect, useMemo } from 'react';\nimport { usePortalData } from '../hooks/usePortalData';\nimport { useStudentStore } from '../store/studentStore';\nimport PageHeader from '../components/PageHeader';\nimport SkeletonLoader from '../components/SkeletonLoader';\nimport { \n  BookOpen, \n  Calendar, \n  FileText, \n  Users, \n  Award, \n  TrendingUp, \n  Sparkles,\n  Layers\n} from 'lucide-react';\n\nexport default function InternalMark() {\n  const { profile } = useStudentStore();\n\n  // Auto-detect student's active semester and fallback to semester 2\n  const defaultSemNum = useMemo(() => {\n    const semStr = profile?.data?.semester || '2';\n    const match = semStr.match(/\\d+/);\n    return match ? match[0] : '2';\n  }, [profile?.data?.semester]);\n\n  const [selectedSem, setSelectedSem] = useState(defaultSemNum);\n  \n  // Fetch data stale-while-revalidate for the selected semester\n  const { data, isLoading } = usePortalData(\n    'internalMark', \n    selectedSem ? { semester: selectedSem } : {}\n  );\n\n  // Sync active semester if returned by portal\n  useEffect(() => {\n    if (data?.semesters && data.semesters.length > 0) {\n      const active = data.semesters.find(s => s.selected);\n      if (active) {\n        setSelectedSem(active.value);\n      }\n    }\n  }, [data?.semesters]);\n\n  // Construct segmented list of semesters (1 to 6)\n  const semestersList = useMemo(() => {\n    if (data?.semesters && data.semesters.length > 0) {\n      // M
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9624 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Support semester parameter in getPortalCache to prioritize semester-specific cached portal data."
+CONTENT LENGTH: 756
+--- START ---
+"function getPortalCache(section, adminNo, semester = '') {\n    if (!adminNo) return null;\n    if (semester) {\n        const key = `machub_portal_${section}_sem${semester}_${adminNo}`;\n        const data = localStorage.getItem(key);\n        if (data) return data;\n    }\n    const directKey = `machub_portal_${section}_${adminNo}`;\n    const direct = localStorage.getItem(directKey);\n    if (direct) return direct;\n    \n    // Check for any semester-specific keys\n    for (let i = 0; i < localStorage.length; i++) {\n        const key = localStorage.key(i);\n        if (key && key.startsWith(`machub_portal_${section}_sem`) && key.endsWith(`_${adminNo}`)) {\n            return localStorage.getItem(key);\n        }\n    }\n    return null;\n}"
+--- END ---
+
+========================================
+STEP: 9630 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Update renderExamResults internal subtab block to have semester selection, native design, no sync jargon, and wrap text."
+CONTENT LENGTH: 2072
+--- START ---
+"    } else {\n        // Internal marks subtab (renders both final university internals & monthly continuous assessments)\n        const activeSem = appState.selectedInternalSem || String(getStudentSemNumber());\n        const internalRaw = getPortalCache('InternalMark', adminNo, activeSem);\n        const assessRaw = getPortalCache('Assessment', adminNo, activeSem);\n\n        if (!appState.internalFetchStatus) {\n            appState.internalFetchStatus = {};\n        }\n\n        const fetchStatus = appState.internalFetchStatus[activeSem];\n\n        // 1. If not fetched yet and no cached data, show skeleton and trigger fetch\n        if (!internalRaw && !assessRaw && fetchStatus !== 'success' && fetchStatus !== 'error') {\n            container.innerHTML = headerHtml + `\n                <div class=\"flex justify-center mb-6 overflow-x-auto max-w-full no-scrollbar\">\n                    <div class=\"bg-black/10 dark:bg-white/5 p-1 rounded-2xl flex gap-1 border border-white/5\">\n                        ${['1', '2', '3', '4', '5', '6'].map(sem => {\n                            const isActive = activeSem === sem;\n                            return `\n                                <button onclick=\"window.switchInternalSemester('${sem}')\" \n                                        class=\"px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${isActive ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}\">\n  
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9634 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Define global helper functions switchInternalSemester and autoFetchInternals in js/app.js."
+CONTENT LENGTH: 1385
+--- START ---
+"};\n\nwindow.switchInternalSemester = function (sem) {\n    appState.selectedInternalSem = sem;\n    window.renderExamResults();\n};\n\nwindow.autoFetchInternals = async function (semester, force = false) {\n    const adminNo = (window.MacHubPortal && window.MacHubPortal.getAdminNo()) || localStorage.getItem('machub_student_id');\n    if (!adminNo) return;\n\n    if (!appState.internalFetchStatus) {\n        appState.internalFetchStatus = {};\n    }\n    \n    if (appState.internalFetchStatus[semester] === 'fetching') return;\n\n    appState.internalFetchStatus[semester] = 'fetching';\n    try {\n        if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {\n            await Promise.all([\n                window.MacHubPortal.fetchSection('InternalMark', force, semester),\n                window.MacHubPortal.fetchSection('Assessment', force, semester)\n            ]);\n            appState.internalFetchStatus[semester] = 'success';\n        } else {\n            throw new Error('Portal not initialized');\n        }\n    } catch (err) {\n        console.warn('Auto fetch internals failed:', err);\n        appState.internalFetchStatus[semester] = 'error';\n    } finally {\n        window.renderExamResults();\n    }\n};\n\nwindow.switchBcaResultsTab = function (tab) {\n    appState.bcaSubTab = tab;\n    window.renderExamResults();\n};"
+--- END ---
+
+========================================
+STEP: 9644 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\InternalMark.jsx"
+INSTRUCTION: "Sync selectedSem state with defaultSemNum when it changes in InternalMark.jsx."
+CONTENT LENGTH: 752
+--- START ---
+"  const [selectedSem, setSelectedSem] = useState(defaultSemNum);\n  \n  // Sync selectedSem when defaultSemNum is loaded/changed from student profile\n  useEffect(() => {\n    if (defaultSemNum) {\n      setSelectedSem(defaultSemNum);\n    }\n  }, [defaultSemNum]);\n  \n  // Fetch data stale-while-revalidate for the selected semester\n  const { data, isLoading } = usePortalData(\n    'internalMark', \n    selectedSem ? { semester: selectedSem } : {}\n  );\n\n  // Sync active semester if returned by portal\n  useEffect(() => {\n    if (data?.semesters && data.semesters.length > 0) {\n      const active = data.semesters.find(s => s.selected);\n      if (active) {\n        setSelectedSem(active.value);\n      }\n    }\n  }, [data?.semesters]);"
+--- END ---
+
+========================================
+STEP: 9793 | TOOL: write_to_file | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\InternalMark.jsx"
+INSTRUCTION: 
+CONTENT LENGTH: 2072
+--- START ---
+"import { useState, useEffect, useMemo } from 'react';\nimport { usePortalData } from '../hooks/usePortalData';\nimport { useStudentStore } from '../store/studentStore';\nimport PageHeader from '../components/PageHeader';\nimport SkeletonLoader from '../components/SkeletonLoader';\nimport { \n  BookOpen, \n  Calendar, \n  FileText, \n  Users, \n  Award, \n  TrendingUp, \n  Sparkles,\n  Layers,\n  ChevronDown\n} from 'lucide-react';\n\nexport default function InternalMark() {\n  const { profile } = useStudentStore();\n\n  // Auto-detect student's active semester and fallback to semester 2\n  const defaultSemNum = useMemo(() => {\n    const semStr = profile?.data?.semester || '2';\n    const match = semStr.match(/\\d+/);\n    return match ? match[0] : '2';\n  }, [profile?.data?.semester]);\n\n  const [selectedSem, setSelectedSem] = useState(defaultSemNum);\n  const [isFilterExpanded, setIsFilterExpanded] = useState(false);\n  const [filterType, setFilterType] = useState('university'); // 'university' | 'intrl' | 'model'\n  \n  // Sync selectedSem when defaultSemNum is loaded/changed from student profile\n  useEffect(() => {\n    if (defaultSemNum) {\n      setSelectedSem(defaultSemNum);\n    }\n  }, [defaultSemNum]);\n  \n  // Fetch data stale-while-revalidate in parallel\n  const { data: internalMarkData, isLoading: isInternalLoading } = usePortalData(\n    'internalMark', \n    selectedSem ? { semester: selectedSem } : {}\n  );\n\n  const { data: assessmentData, isLoading: is
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9797 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Replace lines 4441-4809 with the new expanding filter and dynamic filtering logic."
+CONTENT LENGTH: 2072
+--- START ---
+"    } else {\n        // Internal marks subtab (renders both final university internals & monthly continuous assessments)\n        const activeSem = appState.selectedInternalSem || String(getStudentSemNumber());\n        const internalRaw = getPortalCache('InternalMark', adminNo, activeSem);\n        const assessRaw = getPortalCache('Assessment', adminNo, activeSem);\n\n        if (!appState.internalFetchStatus) {\n            appState.internalFetchStatus = {};\n        }\n\n        const fetchStatus = appState.internalFetchStatus[activeSem];\n\n        // Ensure default filter type is set\n        if (!appState.selectedInternalType) {\n            appState.selectedInternalType = 'university';\n        }\n        const activeType = appState.selectedInternalType;\n        const isExpanded = appState.isInternalFilterExpanded || false;\n        \n        // Define label for display\n        const typeLabel = activeType === 'university' \n            ? 'University Internals (Final)' \n            : activeType === 'model' \n                ? 'Model Exams' \n                : 'Continuous Internals';\n\n        // Generate semesters list dynamically based on student's active semester\n        const maxSem = getStudentSemNumber();\n        const semesters = [];\n        for (let s = 1; s <= maxSem; s++) {\n            semesters.push(String(s));\n        }\n\n        // Expand/Collapse Filter Panel HTML\n        let filterHtml = `\n            <div class=\"mb-5 relative z-10 w-full\"
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9806 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Replace switchInternalSemester to collapse filter and add toggleInternalFilter and switchInternalType."
+CONTENT LENGTH: 514
+--- START ---
+"window.switchInternalSemester = function (sem) {\n    appState.selectedInternalSem = sem;\n    appState.isInternalFilterExpanded = false;\n    window.renderExamResults();\n};\n\nwindow.toggleInternalFilter = function () {\n    appState.isInternalFilterExpanded = !appState.isInternalFilterExpanded;\n    window.renderExamResults();\n};\n\nwindow.switchInternalType = function (type) {\n    appState.selectedInternalType = type;\n    appState.isInternalFilterExpanded = false;\n    window.renderExamResults();\n};"
+--- END ---
+
+========================================
+STEP: 9842 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\ExamResult.jsx"
+INSTRUCTION: "Add imports for usePortalData, useStudentStore, and lucide-react icons (Calendar, FileText, Layers)."
+CONTENT LENGTH: 628
+--- START ---
+"import React, { useState, useMemo, useEffect } from 'react';\nimport {\n  Award,\n  Search,\n  Filter,\n  BookOpen,\n  Users,\n  UserCheck,\n  UserMinus,\n  Sparkles,\n  GraduationCap,\n  ChevronDown,\n  ChevronUp,\n  FileSpreadsheet,\n  TrendingUp,\n  Trophy,\n  Heart,\n  Smile,\n  ShieldAlert,\n  HelpCircle,\n  Maximize2,\n  X,\n  Flame,\n  Crown,\n  Calendar,\n  FileText,\n  Layers\n} from 'lucide-react';\n\nimport { usePortalData } from '../hooks/usePortalData';\nimport { useStudentStore } from '../store/studentStore';\nimport { ALL_STUDENTS_DATA, BATCH_A_RECORDS, BATCH_B_RECORDS } from '../data/studentsResultsDb';"
+--- END ---
+
+========================================
+STEP: 9846 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\ExamResult.jsx"
+INSTRUCTION: "Replace state definition of activeTab with the resultsCategory and parallel fetch hooks."
+CONTENT LENGTH: 2071
+--- START ---
+"  const [activeTab, setActiveTab] = useState(\"spreadsheet\"); // spreadsheet | awards | batchCompare | abenCorner\n  const [resultsCategory, setResultsCategory] = useState(\"university\"); // university | college\n  \n  const { profile } = useStudentStore();\n\n  const defaultSemNum = useMemo(() => {\n    const semStr = profile?.data?.semester || '2';\n    const match = semStr.match(/\\d+/);\n    return match ? match[0] : '2';\n  }, [profile?.data?.semester]);\n\n  const [selectedSem, setSelectedSem] = useState(defaultSemNum);\n  const [filterType, setFilterType] = useState('both'); // 'internal' | 'model' | 'both'\n  \n  useEffect(() => {\n    if (defaultSemNum) {\n      setSelectedSem(defaultSemNum);\n    }\n  }, [defaultSemNum]);\n  \n  const { data: internalMarkData, isLoading: isInternalLoading } = usePortalData(\n    'internalMark', \n    selectedSem ? { semester: selectedSem } : {}\n  );\n\n  const { data: assessmentData, isLoading: isAssessmentLoading } = usePortalData(\n    'assessment', \n    selectedSem ? { semester: selectedSem } : {}\n  );\n\n  const semestersList = useMemo(() => {\n    const semStr = profile?.data?.semester || '2';\n    const match = semStr.match(/\\d+/);\n    const maxSem = match ? parseInt(match[0], 10) : 2;\n    \n    const list = [];\n    for (let s = 1; s <= maxSem; s++) {\n      list.push({ value: String(s), text: `Sem ${s}` });\n    }\n    return list;\n  }, [profile?.data?.semester]);\n\n  const filteredCollegeData = useMemo(() => {\n 
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9854 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\ExamResult.jsx"
+INSTRUCTION: "Replace return block from line 482 to 1184 with the consolidated Category toggle view."
+CONTENT LENGTH: 2068
+--- START ---
+"  return (\n    <div className=\"min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white p-4\">\n      {/* Category Selection Tabs */}\n      <div className=\"flex justify-center mb-6\">\n        <div className=\"bg-slate-900/60 border border-white/5 p-1 rounded-2xl flex gap-1 backdrop-blur-md\">\n          <button\n            onClick={() => setResultsCategory(\"university\")}\n            className={`px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all duration-200 ${\n              resultsCategory === \"university\"\n                ? \"bg-indigo-650 text-white shadow-md shadow-indigo-500/25\"\n                : \"text-slate-400 hover:text-white\"\n            }`}\n          >\n            🏆 University Results\n          </button>\n          <button\n            onClick={() => setResultsCategory(\"college\")}\n            className={`px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all duration-200 ${\n              resultsCategory === \"college\"\n                ? \"bg-indigo-650 text-white shadow-md shadow-indigo-500/25\"\n                : \"text-slate-400 hover:text-white\"\n            }`}\n          >\n            🏫 College Results\n          </button>\n        </div>\n      </div>\n\n      {resultsCategory === \"university\" ? (\n        <>\n          {/* ==========================================\n              HEADER BANNER\n              =======
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9878 | TOOL: replace_file_content | FILE: "C:/Users/abens/..//worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/ExamResult.jsx"
+INSTRUCTION: "Remove the duplicate modal markup and garbage characters starting from line 1394 to the end of the file, replacing it with the correct closing brackets and brace."
+CONTENT LENGTH: 11
+--- START ---
+"  );\n}\n"
+--- END ---
+
+========================================
+STEP: 9880 | TOOL: replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/ExamResult.jsx"
+INSTRUCTION: "Remove the duplicate modal markup and garbage characters starting from line 1394 to the end of the file, replacing it with the correct closing brackets and brace."
+CONTENT LENGTH: 9
+--- START ---
+"  );\n}"
+--- END ---
+
+========================================
+STEP: 9888 | TOOL: replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/InternalMark.jsx"
+INSTRUCTION: "Replace internal states and filteredData calculation to match the combined Internal + Assessment structure of ExamResult.jsx"
+CONTENT LENGTH: 2071
+--- START ---
+"  const [selectedSem, setSelectedSem] = useState(defaultSemNum);\n  const [filterType, setFilterType] = useState('both'); // 'internal' | 'model' | 'both'\n  \n  // Sync selectedSem when defaultSemNum is loaded/changed from student profile\n  useEffect(() => {\n    if (defaultSemNum) {\n      setSelectedSem(defaultSemNum);\n    }\n  }, [defaultSemNum]);\n  \n  // Fetch data stale-while-revalidate in parallel\n  const { data: internalMarkData, isLoading: isInternalLoading } = usePortalData(\n    'internalMark', \n    selectedSem ? { semester: selectedSem } : {}\n  );\n\n  const { data: assessmentData, isLoading: isAssessmentLoading } = usePortalData(\n    'assessment', \n    selectedSem ? { semester: selectedSem } : {}\n  );\n\n  // Construct list of semesters up to the student's active semester\n  const semestersList = useMemo(() => {\n    const semStr = profile?.data?.semester || '2';\n    const match = semStr.match(/\\d+/);\n    const maxSem = match ? parseInt(match[0], 10) : 2;\n    \n    const list = [];\n    for (let s = 1; s <= maxSem; s++) {\n      list.push({ value: String(s), text: `Sem ${s}` });\n    }\n    return list;\n  }, [profile?.data?.semester]);\n\n  // Compute filtered subjects and stats dynamically\n  const filteredData = useMemo(() => {\n    const subjectsMap = {};\n    let totalScore = 0;\n    let totalMax = 0;\n    let componentsCount = 0;\n    let passedComponents = 0;\n\n    if (filterType === 'internal' || filterType === 'both') {\n      const univS
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9896 | TOOL: replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/InternalMark.jsx"
+INSTRUCTION: "Replace the markTypeLabel useMemo and return statement to support side-by-side semester and mark filters, and render grouped mark categories inside subject cards"
+CONTENT LENGTH: 2071
+--- START ---
+"  const markTypeLabel = useMemo(() => {\n    if (filterType === 'internal') return 'Internal Marks';\n    if (filterType === 'model') return 'Model Exams';\n    return 'All College Marks';\n  }, [filterType]);\n\n  const renderComponentRow = (row, ri) => {\n    const type = row['Assessment Type'] || row.col_0 || row.col0 || 'Assessment';\n    const score = row['Score'] || row.col_1 || row.col1 || '0';\n    const max = row['Max Mark'] || row.col_2 || row.col2 || '20';\n    const status = row['P/F'] || row['Status'] || row.col_4 || row.col4 || '';\n\n    const scoreNum = parseFloat(score);\n    const maxNum = parseFloat(max);\n    const pct = (!isNaN(scoreNum) && !isNaN(maxNum) && maxNum > 0) ? (scoreNum / maxNum) * 100 : 0;\n    \n    const isFail = status.toLowerCase().includes('fail') || status.toLowerCase() === 'f' || status.toLowerCase().includes('absent');\n    const isPass = status.toLowerCase().includes('pass') || status.toLowerCase() === 'p';\n\n    const compIcon = getComponentIcon(type);\n    const CompIconComponent = compIcon.comp;\n\n    // Dynamic status badge style\n    const statusBadgeStyle = isPass \n      ? styles.badgeSuccess \n      : isFail \n        ? styles.badgeDanger \n        : styles.badgeMuted;\n\n    // Progress bar status class\n    const progressColor = isFail \n      ? 'danger' \n      : pct >= 75 \n        ? 'good' \n        : pct >= 40 \n          ? 'warning' \n          : 'danger';\n\n    return (\n      <div key={ri} style={styles.component
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9904 | TOOL: replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/InternalMark.jsx"
+INSTRUCTION: "Replace filterContainer and other trigger style elements with filtersRow style"
+CONTENT LENGTH: 156
+--- START ---
+"  filtersRow: {\n    display: 'grid',\n    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',\n    gap: '16px',\n    marginBottom: '20px',\n  },"
+--- END ---
+
+========================================
+STEP: 9908 | TOOL: replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/InternalMark.jsx"
+INSTRUCTION: "Add subCategoryBlock, subCategoryHeader, subCategoryEmoji, subCategoryTitle, subCategoryGrid, and subCategorySeparator styles before the closing brace in InternalMark.jsx"
+CONTENT LENGTH: 839
+--- START ---
+"  loadingWrapper: {\n    padding: '40px',\n    background: 'var(--glass-bg)',\n    borderRadius: '24px',\n    border: '1px solid var(--glass-border)',\n  },\n  subCategoryBlock: {\n    display: 'flex',\n    flexDirection: 'column',\n    gap: '8px',\n  },\n  subCategoryHeader: {\n    display: 'flex',\n    alignItems: 'center',\n    gap: '6px',\n    paddingLeft: '4px',\n  },\n  subCategoryEmoji: {\n    fontSize: '12px',\n  },\n  subCategoryTitle: {\n    fontSize: '9px',\n    fontWeight: 800,\n    color: '#4f8ef7',\n    textTransform: 'uppercase',\n    letterSpacing: '0.6px',\n  },\n  subCategoryGrid: {\n    display: 'grid',\n    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',\n    gap: '8px',\n  },\n  subCategorySeparator: {\n    borderTop: '1px solid rgba(255, 255, 255, 0.05)',\n    paddingTop: '14px',\n  },\n};\n"
+--- END ---
+
+========================================
+STEP: 9910 | TOOL: replace_file_content | FILE: "C:/Users/abens/..//worktrees/MacHub/machin-scraper-backend-engine/js/app.js"
+INSTRUCTION: "Rename switcher buttons to '🏆 University Results' and '🏫 College Results'"
+CONTENT LENGTH: 972
+--- START ---
+"    // Pill tab switch header\n    let headerHtml = `\n        <div class=\"flex justify-center mb-6\">\n            <div class=\"bg-black/10 dark:bg-white/5 p-1 rounded-2xl flex gap-1 border border-white/5\">\n                <button onclick=\"window.switchResultsSubTab('exam')\" class=\"px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.resultsSubTab === 'exam' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}\">\n                    🏆 University Results\n                </button>\n                <button onclick=\"window.switchResultsSubTab('internal')\" class=\"px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.resultsSubTab === 'internal' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}\">\n                    🏫 College Results\n                </button>\n            </div>\n        </div>\n    `;"
+--- END ---
+
+========================================
+STEP: 9912 | TOOL: replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/js/app.js"
+INSTRUCTION: "Rename switcher buttons to '🏆 University Results' and '🏫 College Results'"
+CONTENT LENGTH: 972
+--- START ---
+"    // Pill tab switch header\n    let headerHtml = `\n        <div class=\"flex justify-center mb-6\">\n            <div class=\"bg-black/10 dark:bg-white/5 p-1 rounded-2xl flex gap-1 border border-white/5\">\n                <button onclick=\"window.switchResultsSubTab('exam')\" class=\"px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.resultsSubTab === 'exam' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}\">\n                    🏆 University Results\n                </button>\n                <button onclick=\"window.switchResultsSubTab('internal')\" class=\"px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.resultsSubTab === 'internal' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}\">\n                    🏫 College Results\n                </button>\n            </div>\n        </div>\n    `;"
+--- END ---
+
+========================================
+STEP: 9914 | TOOL: replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/js/app.js"
+INSTRUCTION: "Replace the rendering else block of window.renderExamResults to support side-by-side controls, merged Internal/Assessment data processing, and structured mark categories inside cards."
+CONTENT LENGTH: 2072
+--- START ---
+"    } else {\n        // Internal marks subtab (renders both final university internals & monthly continuous assessments)\n        const activeSem = appState.selectedInternalSem || String(getStudentSemNumber());\n        const internalRaw = getPortalCache('InternalMark', adminNo, activeSem);\n        const assessRaw = getPortalCache('Assessment', adminNo, activeSem);\n\n        if (!appState.internalFetchStatus) {\n            appState.internalFetchStatus = {};\n        }\n\n        const fetchStatus = appState.internalFetchStatus[activeSem];\n\n        // Ensure default filter type is set\n        if (!appState.selectedInternalType) {\n            appState.selectedInternalType = 'both';\n        }\n        const activeType = appState.selectedInternalType;\n        \n        // Define label for display\n        const typeLabel = activeType === 'internal' \n            ? 'Internal Marks' \n            : activeType === 'model' \n                ? 'Model Exams' \n                : 'All College Marks';\n\n        // Generate semesters list dynamically based on student's active semester\n        const maxSem = getStudentSemNumber();\n        const semesters = [];\n        for (let s = 1; s <= maxSem; s++) {\n            semesters.push(String(s));\n        }\n\n        // Side-by-Side Filters HTML\n        let filterHtml = `\n            <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-5 w-full\">\n                <!-- Semester Filter -->\n                <div class=\"flex fl
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 10041 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Update getPortalCache to strictly return null if a specific semester was requested but not cached."
+CONTENT LENGTH: 778
+--- START ---
+"function getPortalCache(section, adminNo, semester = '') {\n    if (!adminNo) return null;\n    if (semester) {\n        const key = `machub_portal_${section}_sem${semester}_${adminNo}`;\n        const data = localStorage.getItem(key);\n        if (data) return data;\n        return null;\n    }\n    const directKey = `machub_portal_${section}_${adminNo}`;\n    const direct = localStorage.getItem(directKey);\n    if (direct) return direct;\n    \n    // Check for any semester-specific keys\n    for (let i = 0; i < localStorage.length; i++) {\n        const key = localStorage.key(i);\n        if (key && key.startsWith(`machub_portal_${section}_sem`) && key.endsWith(`_${adminNo}`)) {\n            return localStorage.getItem(key);\n        }\n    }\n    return null;\n}"
+--- END ---
+
+========================================
+STEP: 10047 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\InternalMark.jsx"
+INSTRUCTION: "Add openDropdown state and click-outside listener inside InternalMark.jsx."
+CONTENT LENGTH: 800
+--- START ---
+"  const [selectedSem, setSelectedSem] = useState(defaultSemNum);\n  const [filterType, setFilterType] = useState('both'); // 'internal' | 'model' | 'both'\n  const [openDropdown, setOpenDropdown] = useState(null); // 'semester' | 'markType' | null\n\n  // Close dropdown on click outside\n  useEffect(() => {\n    const handleOutsideClick = (e) => {\n      if (!e.target.closest('.seat-dropdown')) {\n        setOpenDropdown(null);\n      }\n    };\n    document.addEventListener('click', handleOutsideClick);\n    return () => document.removeEventListener('click', handleOutsideClick);\n  }, []);\n  \n  // Sync selectedSem when defaultSemNum is loaded/changed from student profile\n  useEffect(() => {\n    if (defaultSemNum) {\n      setSelectedSem(defaultSemNum);\n    }\n  }, [defaultSemNum]);"
+--- END ---
+
+========================================
+STEP: 10051 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\InternalMark.jsx"
+INSTRUCTION: "Replace segmented filter selectors with side-by-side expanding dropdown lists."
+CONTENT LENGTH: 2069
+--- START ---
+"      {/* Side-by-Side Filters */}\n      <div style={styles.filtersRow}>\n        {/* Semester Dropdown */}\n        <div className={`seat-dropdown ${openDropdown === 'semester' ? 'is-open' : ''}`}>\n          <button\n            type=\"button\"\n            className=\"seat-dropdown__trigger\"\n            onClick={() => setOpenDropdown(openDropdown === 'semester' ? null : 'semester')}\n          >\n            <div className=\"seat-dropdown__meta\">\n              <span className=\"seat-dropdown__label\">Semester</span>\n              <span className=\"seat-dropdown__value\">Sem {selectedSem}</span>\n            </div>\n            <span className=\"seat-dropdown__icon\">⌄</span>\n          </button>\n          <div className=\"seat-dropdown__menu\">\n            {semestersList.map(sem => {\n              const isActive = selectedSem === sem.value;\n              return (\n                <button\n                  key={sem.value}\n                  type=\"button\"\n                  className={`seat-dropdown__option ${isActive ? 'is-active' : ''}`}\n                  onClick={() => {\n                    setSelectedSem(sem.value);\n                    setOpenDropdown(null);\n                  }}\n                >\n                  <span className=\"seat-dropdown__option-title\">{sem.text}</span>\n                  <span className=\"seat-dropdown__option-meta\">View Semester {sem.value} Marks</span>\n                </button>\n              );\n            })}\n       
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 10059 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\InternalMark.jsx"
+INSTRUCTION: "Replace filtersRow gridTemplateColumns with 1fr 1fr and remove old segmented button styles."
+CONTENT LENGTH: 127
+--- START ---
+"  filtersRow: {\n    display: 'grid',\n    gridTemplateColumns: '1fr 1fr',\n    gap: '12px',\n    marginBottom: '20px',\n  },"
+--- END ---
+
+========================================
+STEP: 10063 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\ExamResult.jsx"
+INSTRUCTION: "Add openDropdown state and click-outside handler."
+CONTENT LENGTH: 681
+--- START ---
+"  const [selectedSem, setSelectedSem] = useState(defaultSemNum);\n  const [filterType, setFilterType] = useState('both'); // 'internal' | 'model' | 'both'\n  const [openDropdown, setOpenDropdown] = useState(null); // 'semester' | 'markType' | null\n\n  useEffect(() => {\n    const handleOutsideClick = (e) => {\n      if (!e.target.closest('.seat-dropdown')) {\n        setOpenDropdown(null);\n      }\n    };\n    document.addEventListener('click', handleOutsideClick);\n    return () => document.removeEventListener('click', handleOutsideClick);\n  }, []);\n  \n  useEffect(() => {\n    if (defaultSemNum) {\n      setSelectedSem(defaultSemNum);\n    }\n  }, [defaultSemNum]);"
+--- END ---
+
+========================================
+STEP: 10069 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\pages\\ExamResult.jsx"
+INSTRUCTION: "Replace college results filters container with side-by-side expanding seat-dropdown elements."
+CONTENT LENGTH: 2069
+--- START ---
+"          {/* Side-by-Side Filters */}\n          <div className=\"grid grid-cols-2 gap-3 mb-6\">\n            {/* Semester Dropdown */}\n            <div className={`seat-dropdown ${openDropdown === 'semester' ? 'is-open' : ''}`}>\n              <button\n                type=\"button\"\n                className=\"seat-dropdown__trigger\"\n                onClick={() => setOpenDropdown(openDropdown === 'semester' ? null : 'semester')}\n              >\n                <div className=\"seat-dropdown__meta\">\n                  <span className=\"seat-dropdown__label\">Semester</span>\n                  <span className=\"seat-dropdown__value\">Sem {selectedSem}</span>\n                </div>\n                <span className=\"seat-dropdown__icon\">⌄</span>\n              </button>\n              <div className=\"seat-dropdown__menu\">\n                {semestersList.map(sem => {\n                  const isActive = selectedSem === sem.value;\n                  return (\n                    <button\n                      key={sem.value}\n                      type=\"button\"\n                      className={`seat-dropdown__option ${isActive ? 'is-active' : ''}`}\n                      onClick={() => {\n                        setSelectedSem(sem.value);\n                        setOpenDropdown(null);\n                      }}\n                    >\n                      <span className=\"seat-dropdown__option-title\">{sem.text}</span>\n                      <span className=\"se
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 10077 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Replace filterHtml definition with side-by-side seat-dropdown elements."
+CONTENT LENGTH: 2069
+--- START ---
+"        const isSemOpen = appState.openInternalDropdown === 'semester';\n        const isTypeOpen = appState.openInternalDropdown === 'markType';\n\n        // Side-by-Side Filters HTML\n        let filterHtml = `\n            <div class=\"grid grid-cols-2 gap-3 mb-5 w-full\">\n                <!-- Semester Selector -->\n                <div class=\"seat-dropdown ${isSemOpen ? 'is-open' : ''}\">\n                    <button type=\"button\" onclick=\"window.toggleInternalDropdown('semester')\" class=\"seat-dropdown__trigger\">\n                        <div class=\"seat-dropdown__meta\">\n                            <span class=\"seat-dropdown__label\">Semester</span>\n                            <span class=\"seat-dropdown__value\">Sem ${activeSem}</span>\n                        </div>\n                        <span class=\"seat-dropdown__icon\">⌄</span>\n                    </button>\n                    <div class=\"seat-dropdown__menu\">\n                        ${semesters.map(sem => {\n                            const isActive = activeSem === sem;\n                            return `\n                                <button type=\"button\" onclick=\"window.switchInternalSemester('${sem}')\" class=\"seat-dropdown__option ${isActive ? 'is-active' : ''}\">\n                                    <span class=\"seat-dropdown__option-title\">Sem ${sem}</span>\n                                    <span class=\"seat-dropdown__option-meta\">View Semester ${sem} Marks</span>\n    
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 10079 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Replace the old toggleInternalFilter and switcher functions with toggleInternalDropdown and updated switcher functions."
+CONTENT LENGTH: 524
+--- START ---
+"window.toggleInternalDropdown = function (name) {\n    appState.openInternalDropdown = appState.openInternalDropdown === name ? null : name;\n    window.renderExamResults();\n};\n\nwindow.switchInternalSemester = function (sem) {\n    appState.selectedInternalSem = sem;\n    appState.openInternalDropdown = null;\n    window.renderExamResults();\n};\n\nwindow.switchInternalType = function (type) {\n    appState.selectedInternalType = type;\n    appState.openInternalDropdown = null;\n    window.renderExamResults();\n};"
+--- END ---
+
+========================================
+STEP: 10085 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\js\\app.js"
+INSTRUCTION: "Add check for appState.openInternalDropdown to document click listener."
+CONTENT LENGTH: 652
+--- START ---
+"document.addEventListener('click', (event) => {\n    if (!event.target.closest('.seat-dropdown')) {\n        if (appState.openSeatDropdown) {\n            closeSeatDropdowns();\n            renderDaySelector();\n            renderFilters();\n        }\n        if (appState.openClassDropdown) {\n            closeClassDropdowns();\n            renderClassFilters();\n            renderClassDaySelector();\n            renderClassSubjects();\n            renderClassAttendance();\n        }\n        if (appState.openInternalDropdown) {\n            appState.openInternalDropdown = null;\n            window.renderExamResults();\n        }\n    }\n});"
+--- END ---
+
+========================================
+STEP: 10202 | TOOL: multi_replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/InternalMark.jsx"
+INSTRUCTION: "Update subjects and sections extraction to fallback to payload property"
+CONTENT LENGTH: 0
+CHUNKS COUNT: 2
+  Chunk 1: Target starts with: "      const univSubjects = internalMarkData?.subjects || [];
+      univSubjects.forEach(sub => {"
+  Chunk 1: Replacement starts with: "      const univSubjects = internalMarkData?.payload?.subjects || internalMarkData?.subjects || [];
+      univSubjects.forEach(sub => {"
+  Chunk 2: Target starts with: "    const ccaSections = assessmentData?.sections || [];
+    ccaSections.forEach(sec => {"
+  Chunk 2: Replacement starts with: "    const ccaSections = assessmentData?.payload?.sections || assessmentData?.sections || [];
+    ccaSections.forEach(sec => {"
+
+========================================
+STEP: 10202 | TOOL: multi_replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/ExamResult.jsx"
+INSTRUCTION: "Update subjects and sections extraction to fallback to payload property"
+CONTENT LENGTH: 0
+CHUNKS COUNT: 2
+  Chunk 1: Target starts with: "      const univSubjects = internalMarkData?.subjects || [];
+      univSubjects.forEach(sub => {"
+  Chunk 1: Replacement starts with: "      const univSubjects = internalMarkData?.payload?.subjects || internalMarkData?.subjects || [];
+      univSubjects.forEach(sub => {"
+  Chunk 2: Target starts with: "    const ccaSections = assessmentData?.sections || [];
+    ccaSections.forEach(sec => {"
+  Chunk 2: Replacement starts with: "    const ccaSections = assessmentData?.payload?.sections || assessmentData?.sections || [];
+    ccaSections.forEach(sec => {"
+
+========================================
+STEP: 10223 | TOOL: multi_replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/InternalMark.jsx"
+INSTRUCTION: "Revert subjects and sections extraction back to their previous state without the payload fallback."
+CONTENT LENGTH: 0
+CHUNKS COUNT: 2
+  Chunk 1: Target starts with: "      const univSubjects = internalMarkData?.payload?.subjects || internalMarkData?.subjects || [];
+"
+  Chunk 1: Replacement starts with: "      const univSubjects = internalMarkData?.subjects || [];
+      univSubjects.forEach(sub => {"
+  Chunk 2: Target starts with: "    const ccaSections = assessmentData?.payload?.sections || assessmentData?.sections || [];
+    cca"
+  Chunk 2: Replacement starts with: "    const ccaSections = assessmentData?.sections || [];
+    ccaSections.forEach(sec => {"
+
+========================================
+STEP: 10223 | TOOL: multi_replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/ExamResult.jsx"
+INSTRUCTION: "Revert subjects and sections extraction back to their previous state without the payload fallback."
+CONTENT LENGTH: 0
+CHUNKS COUNT: 2
+  Chunk 1: Target starts with: "      const univSubjects = internalMarkData?.payload?.subjects || internalMarkData?.subjects || [];
+"
+  Chunk 1: Replacement starts with: "      const univSubjects = internalMarkData?.subjects || [];
+      univSubjects.forEach(sub => {"
+  Chunk 2: Target starts with: "    const ccaSections = assessmentData?.payload?.sections || assessmentData?.sections || [];
+    cca"
+  Chunk 2: Replacement starts with: "    const ccaSections = assessmentData?.sections || [];
+    ccaSections.forEach(sec => {"
+
+========================================
+STEP: 10340 | TOOL: multi_replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/InternalMark.jsx"
+INSTRUCTION: "Update subjects and sections extraction to fallback to payload property"
+CONTENT LENGTH: 0
+CHUNKS COUNT: 2
+  Chunk 1: Target starts with: "      const univSubjects = internalMarkData?.subjects || [];
+      univSubjects.forEach(sub => {"
+  Chunk 1: Replacement starts with: "      const univSubjects = internalMarkData?.payload?.subjects || internalMarkData?.subjects || [];
+      univSubjects.forEach(sub => {"
+  Chunk 2: Target starts with: "    const ccaSections = assessmentData?.sections || [];
+    ccaSections.forEach(sec => {"
+  Chunk 2: Replacement starts with: "    const ccaSections = assessmentData?.payload?.sections || assessmentData?.sections || [];
+    ccaSections.forEach(sec => {"
+
+========================================
+STEP: 10340 | TOOL: multi_replace_file_content | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/ExamResult.jsx"
+INSTRUCTION: "Update subjects and sections extraction to fallback to payload property"
+CONTENT LENGTH: 0
+CHUNKS COUNT: 2
+  Chunk 1: Target starts with: "      const univSubjects = internalMarkData?.subjects || [];
+      univSubjects.forEach(sub => {"
+  Chunk 1: Replacement starts with: "      const univSubjects = internalMarkData?.payload?.subjects || internalMarkData?.subjects || [];
+      univSubjects.forEach(sub => {"
+  Chunk 2: Target starts with: "    const ccaSections = assessmentData?.sections || [];
+    ccaSections.forEach(sec => {"
+  Chunk 2: Replacement starts with: "    const ccaSections = assessmentData?.payload?.sections || assessmentData?.sections || [];
+    ccaSections.forEach(sec => {"
+
+========================================
+STEP: 10438 | TOOL: write_to_file | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/InternalMark.jsx"
+INSTRUCTION: 
+CONTENT LENGTH: 1851
+--- START ---
+"import { useState, useEffect, useMemo } from 'react';\nimport { usePortalData } from '../hooks/usePortalData';\nimport { useStudentStore } from '../store/studentStore';\nimport PageHeader from '../components/PageHeader';\nimport DataTable from '../components/DataTable';\nimport SkeletonLoader from '../components/SkeletonLoader';\n\n/* ─── helpers ──────────────────────────────────────────────────── */\nfunction extractSubjects(data) {\n  if (!data) return [];\n  return data?.payload?.subjects || data?.subjects || [];\n}\nfunction extractSections(data) {\n  if (!data) return [];\n  return data?.payload?.sections || data?.sections || [];\n}\nfunction getMaxSem(profile) {\n  const s = profile?.data?.semester || profile?.semester || '2';\n  const m = String(s).match(/\\d+/);\n  return m ? parseInt(m[0], 10) : 2;\n}\n\n/* ─── filter panel ─────────────────────────────────────────────── */\nconst SEM_OPTS = (max) => Array.from({ length: max }, (_, i) => ({ value: String(i + 1), label: `Semester ${i + 1}` }));\nconst MARK_OPTS = [\n  { value: 'university', label: '🎓 University Marks' },\n  { value: 'assessment', label: '📋 CCA / Assessment' },\n];\n\nfunction FilterPanel({ sems, selectedSem, onSem, markType, onMark, expanded, onToggle }) {\n  return (\n    <div style={fp.wrap}>\n      <button style={fp.toggleBtn} onClick={onToggle} id=\"filter-toggle-btn\">\n        <span style={fp.icon}>⚙️</span>\n        <span>Filter</span>\n        <span style={{ ...fp.arrow, transform: expande
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 10440 | TOOL: write_to_file | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/pages/ExamResult.jsx"
+INSTRUCTION: 
+CONTENT LENGTH: 1873
+--- START ---
+"import { useState, useEffect, useMemo } from 'react';\nimport { usePortalData } from '../hooks/usePortalData';\nimport { useStudentStore } from '../store/studentStore';\nimport PageHeader from '../components/PageHeader';\nimport DataTable from '../components/DataTable';\nimport SkeletonLoader from '../components/SkeletonLoader';\n\n/* ─── helpers ──────────────────────────────────────────────────── */\nfunction extractResults(data) {\n  if (!data) return [];\n  return data?.payload?.results || data?.results || [];\n}\nfunction extractSections(data) {\n  if (!data) return [];\n  return data?.payload?.sections || data?.sections || [];\n}\nfunction getMaxSem(profile) {\n  const s = profile?.data?.semester || profile?.semester || '2';\n  const m = String(s).match(/\\d+/);\n  return m ? parseInt(m[0], 10) : 2;\n}\n\n/* ─── semester filter panel ─────────────────────────────────────── */\nconst SEM_OPTS = (max) => Array.from({ length: max }, (_, i) => ({ value: String(i + 1), label: `Semester ${i + 1}` }));\n\nfunction SemFilterPanel({ sems, selectedSem, onSem, expanded, onToggle }) {\n  return (\n    <div style={fp.wrap}>\n      <button style={fp.toggleBtn} onClick={onToggle} id=\"examresult-filter-toggle\">\n        <span style={fp.icon}>🎯</span>\n        <span>Filter by Semester</span>\n        <span style={{ ...fp.arrow, transform: expanded ? 'rotate(180deg)' : 'none' }}>▾</span>\n      </button>\n\n      <div style={{ ...fp.panel, maxHeight: expanded ? '160px' : '0', opacity
+... [TRUNCATED] ...
+--- END ---

@@ -1,0 +1,2 @@
+    if (adminNo) {
+        const cached = getPortalCache('Attendance', adminNo);

@@ -1,0 +1,2 @@
+    const ccaSections = assessmentData?.sections || [];
+    ccaSections.forEach(sec => {

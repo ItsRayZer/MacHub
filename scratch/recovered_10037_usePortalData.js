@@ -1,0 +1,1 @@
+"  const slowTimer  = useRef(null);\n  const isMounted  = useRef(true);\n  const hasFetched = useRef(false);\n\n  useEffect(() => {\n    hasFetched.current = false;\n  }, [section, paramsStr]);\n\n  useEffect(() => {\n    isMounted.current = true;\n    return () => { isMounted.current = false; };\n  }, []);"

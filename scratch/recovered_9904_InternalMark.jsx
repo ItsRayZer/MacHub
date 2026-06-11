@@ -1,0 +1,1 @@
+"  filtersRow: {\n    display: 'grid',\n    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',\n    gap: '16px',\n    marginBottom: '20px',\n  },"

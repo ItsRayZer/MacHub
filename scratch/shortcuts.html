@@ -1,0 +1,248 @@
+
+        <!-- Live Portal Dashboard Section (Redesigned as Shortcuts) -->
+        <div class="mb-6">
+            <h4 class="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-3 pl-1 flex items-center gap-1.5">
+                <span class="text-xl">⚡</span> QUICK SHORTCUTS
+            </h4>
+            <div class="grid grid-cols-2 gap-3" id="homePortalDashboard">
+
+                <!-- Attendance -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('Attendance', 'Attendance')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(0, 212, 170, 0.15); color: #00d4aa; border: 1px solid rgba(0, 212, 170, 0.3);">
+                        📅
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Attendance</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track daily class hours & percentage</p>
+                    </div>
+                </div>
+
+                <!-- Internal Marks -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('InternalMark', 'Internal Marks')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(79, 142, 247, 0.15); color: #4f8ef7; border: 1px solid rgba(79, 142, 247, 0.3);">
+                        📊
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Internal Marks</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">View continuous evaluation grades</p>
+                    </div>
+                </div>
+
+                <!-- Exam Results -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('ExamResult', 'Exam Results')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(255, 179, 71, 0.15); color: #ffb347; border: 1px solid rgba(255, 179, 71, 0.3);">
+                        🎓
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Exam Results</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Check university semester grades</p>
+                    </div>
+                </div>
+
+                <!-- Study Material -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('StudyMaterial', 'Study Material')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(165, 94, 234, 0.15); color: #a55eea; border: 1px solid rgba(165, 94, 234, 0.3);">
+                        📚
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Study Material</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Download lecture notes & PDFs</p>
+                    </div>
+                </div>
+
+                <!-- Assessment -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('Assessment', 'Assessment')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(253, 150, 68, 0.15); color: #fd9644; border: 1px solid rgba(253, 150, 68, 0.3);">
+                        📋
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Assessment</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Continuous evaluation test grades</p>
+                    </div>
+                </div>
+
+                <!-- Assignment -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('Assignment', 'Assignment')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(45, 152, 218, 0.15); color: #2d98da; border: 1px solid rgba(45, 152, 218, 0.3);">
+                        📂
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Assignment</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track pending submissions & deadlines</p>
+                    </div>
+                </div>
+
+                <!-- Seminar -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('Seminar', 'Seminar')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(252, 92, 101, 0.15); color: #fc5c65; border: 1px solid rgba(252, 92, 101, 0.3);">
+                        🎙️
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Seminar</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track seminar presentations & scores</p>
+                    </div>
+                </div>
+
+                <!-- Hall Ticket -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('HallTicket', 'Hall Ticket')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(75, 123, 236, 0.15); color: #4b7bec; border: 1px solid rgba(75, 123, 236, 0.3);">
+                        🎫
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Hall Ticket</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Download university hall ticket</p>
+                    </div>
+                </div>
+
+                <!-- Fee Payment -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('FeePayment', 'Fee Payment')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(38, 222, 129, 0.15); color: #26de81; border: 1px solid rgba(38, 222, 129, 0.3);">
+                        💳
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Fee Payment</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">View fee payment history & balances</p>
+                    </div>
+                </div>
+
+                <!-- Allotment Memo -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('AllotmentMemo', 'Allotment Memo')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(235, 59, 90, 0.15); color: #eb3b5a; border: 1px solid rgba(235, 59, 90, 0.3);">
+                        📄
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Allotment Memo</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">View college admission details</p>
+                    </div>
+                </div>
+
+                <!-- Online Class -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('OnlineClass', 'Online Class')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(56, 103, 214, 0.15); color: #3867d6; border: 1px solid rgba(56, 103, 214, 0.3);">
+                        💻
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Online Class</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Join scheduled video lectures</p>
+                    </div>
+                </div>
+
+                <!-- Online Exam -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('OnlineExam', 'Online Exam')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(254, 211, 48, 0.15); color: #fed330; border: 1px solid rgba(254, 211, 48, 0.3);">
+                        ✏️
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Online Exam</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Attend online tests and exams</p>
+                    </div>
+                </div>
+
+                <!-- FYUGP -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('FYUGP', 'FYUGP')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(32, 191, 107, 0.15); color: #20bf6b; border: 1px solid rgba(32, 191, 107, 0.3);">
+                        🌿
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">FYUGP</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Select 4-Year UG Program courses</p>
+                    </div>
+                </div>
+
+                <!-- Grace Mark -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('GraceMark', 'Grace Mark')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(250, 130, 49, 0.15); color: #fa8231; border: 1px solid rgba(250, 130, 49, 0.3);">
+                        🏆
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Grace Mark</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Sports/extracurricular applications</p>
+                    </div>
+                </div>
+
+                <!-- Feedback -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('Feedback', 'Feedback')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(165, 177, 194, 0.15); color: #a5b1c2; border: 1px solid rgba(165, 177, 194, 0.3);">
+                        💬
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Feedback</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Submit feedback for faculty & courses</p>
+                    </div>
+                </div>
+
+                <!-- Grievance -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('Grievance', 'Grievance')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(119, 140, 163, 0.15); color: #778ca3; border: 1px solid rgba(119, 140, 163, 0.3);">
+                        📬
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Grievance</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Raise complaints or suggestions</p>
+                    </div>
+                </div>
+
+                <!-- Concession -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('Concession', 'Concession')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(69, 170, 242, 0.15); color: #45aaf2; border: 1px solid rgba(69, 170, 242, 0.3);">
+                        🪪
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Concession</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Railway and KSRTC travel concessions</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>

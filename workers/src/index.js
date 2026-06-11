@@ -142,7 +142,7 @@ export default {
 
           // Check dropdown/semester postback
           const $initial = cheerio.load(html);
-          const semSelect = $initial('#MainContent_ddlsem, #MainContent_drpsem');
+          const semSelect = $initial('#MainContent_ddlsem, #MainContent_drpsem, #ContentPlaceHolder2_drpsemforma');
           
           if (semSelect.length) {
             let semValue = targetSemester;
@@ -388,14 +388,22 @@ export default {
             // 3. Fetch detailed date logs
             const details = await SCRAPERS.attendanceDetails(admissionNumber, cookie, body);
 
+            const payload = {
+              page: "Attendance",
+              sections: subjectWise.sections,
+              data: subjectWise.data,
+              subjectSummary: subjectWise.sections,
+              detailsLog: details.sections,
+              semesters: details.semesters?.length ? details.semesters : subjectWise.semesters,
+              semesterOptions: details.semesters?.length ? details.semesters : subjectWise.semesters,
+              meta: details.meta,
+            };
+
             return corsResponse({
               success: true,
               details,
               subjectWise,
-              data: {
-                subjectWise,
-                details
-              }
+              data: payload
             });
           } catch (err) {
             if (err.message === 'SESSION_EXPIRED' && !isRetry) {

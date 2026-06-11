@@ -21,8 +21,12 @@ export default function Profile() {
       try {
         const docRef = doc(db, 'students', admissionNumber);
         const snap = await getDoc(docRef);
-        if (snap.exists() && snap.data().profile) {
-          setCachedProfile(snap.data().profile.data);
+        const docData = snap.exists() ? snap.data() : null;
+        if (docData) {
+          const profileField = docData.Profile || docData.profile;
+          if (profileField) {
+            setCachedProfile(profileField.data);
+          }
         }
       } catch (err) {
         console.warn('Failed to load profile cache:', err);

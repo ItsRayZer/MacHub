@@ -1,0 +1,189 @@
+{
+  "admissionNumber": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "Attendance_sem2": {
+    "hasData": true,
+    "cachedAt": "2026-06-07T08:54:48.534Z",
+    "keys": [
+      "payload",
+      "success"
+    ],
+    "preview": "{\"payload\":{\"page\":\"Attendance\",\"semesters\":[],\"sections\":[{\"headers\":[\"Subject\",\"Present\",\"Total\",\"%\"],\"rows\":[]}]},\"success\":true}"
+  },
+  "adminNo": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "batch": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "dept": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "photoUrl": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "phone": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "reg": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "classGroup": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "classNo": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "name": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "course": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "semester": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "email": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "realAdmissionNo": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "regNo": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "department": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "AttendanceDetails": {
+    "hasData": true,
+    "cachedAt": "2026-06-07T17:34:46.554Z",
+    "keys": [
+      "payload",
+      "success",
+      "page",
+      "elapsed",
+      "timestamp"
+    ],
+    "preview": "{\"payload\":{\"page\":\"AttendanceDetails\",\"sections\":[]},\"success\":true,\"page\":\"AttendanceDetails\",\"elapsed\":374,\"timestamp\":\"2026-06-07T17:34:46.542Z\"}"
+  },
+  "ExamResult": {
+    "hasData": true,
+    "cachedAt": "2026-06-07T17:34:46.941Z",
+    "keys": [
+      "payload",
+      "success",
+      "page",
+      "elapsed",
+      "timestamp"
+    ],
+    "preview": "{\"payload\":{\"page\":\"ExamResult\",\"sections\":[]},\"success\":true,\"page\":\"ExamResult\",\"elapsed\":145,\"timestamp\":\"2026-06-07T17:34:46.930Z\"}"
+  },
+  "Profile": {
+    "hasData": true,
+    "cachedAt": "2026-06-07T17:34:47.247Z",
+    "keys": [
+      "payload",
+      "success",
+      "page",
+      "elapsed",
+      "timestamp"
+    ],
+    "preview": "{\"payload\":{\"division\":\"\",\"photoUrl\":\"\",\"phone\":\"\",\"admissionNo\":\"\",\"batch\":\"\",\"name\":\"\",\"course\":\"\",\"semester\":\"\",\"page\":\"Profile\",\"department\":\"\",\"isMasked\":true,\"sections\":[{\"data\":{\"name\":\"ABEN SOJAN\",\"admissionNo\":\"3954\",\"course\":\"BACHELOR OF COMPUTER APPLICATIONS (HONOURS)\",\"batch\":\"2025 - 2029\",\"dob\":\"20-10-2025\",\"phone\":\"7994255242\",\"email\":\"\",\"gender\":\"MALE\",\"bloodGroup\":\"B+\",\"aadhar\":\"871610568605\",\"nationality\":\"Other Details\",\"religion\":\"CHRISTIAN\",\"caste\":\"ROMAN CATHOLIC\",\"category\":\"GENERAL\",\"income\":\"\",\"address\":\"KAPPIL(H), MOONNILAVU, MOONNILAVU, 686586, INDIA, KERALA, KOTTAYAM, , , KERALA\",\"commAddress\":\"KAPPIL(H), MOONNILAVU, MOONNILAVU, 686586, INDIA, KERALA, KOTTAYAM, , , KERALA\",\"guardianName\":\"SOJAN SEBASTIAN\",\"guardianPhone\":\"8113968091\",\"guardianEmail\":\"\",\"photoUrl\":\"\",\"abcId\":\"\"}}]},\"success\":true,\"page\":\"Profile\",\"elapsed\":1217,\"timestamp\":\"2026-06-07T17:34:47.207Z\"}"
+  },
+  "Assessment": {
+    "hasData": true,
+    "cachedAt": "2026-06-10T07:42:55.048Z",
+    "keys": [
+      "payload",
+      "success",
+      "page",
+      "elapsed",
+      "timestamp"
+    ],
+    "preview": "{\"payload\":{\"page\":\"Assessment\",\"semesters\":[{\"value\":\"2\",\"text\":\"SECOND SEMESTER\",\"selected\":true},{\"value\":\"1\",\"text\":\"FIRST SEMESTER\",\"selected\":false}],\"sections\":[{\"subject\":\"Data Structures\",\"headers\":[\"Assessment Type\",\"Score\",\"Max Mark\",\"Pass Mark\",\"P/F\"],\"rows\":[{\"Assessment Type\":\"Internal I\",\"Score\":\"13.00\",\"Max Mark\":\"40.00\",\"Pass Mark\":\"15.00\",\"P/F\":\"Fail\"}]},{\"subject\":\"Ds Lab\",\"headers\":[\"Assessment Type\",\"Score\",\"Max Mark\",\"Pass Mark\",\"P/F\"],\"rows\":[{\"Assessment Type\":\"Internal I\",\"Score\":\"0.00\",\"Max Mark\":\"40.00\",\"Pass Mark\":\"15.00\",\"P/F\":\"Fail\"}]},{\"subject\":\"English for Science Part II\",\"headers\":[\"Assessment Type\",\"Score\",\"Max Mark\",\"Pass Mark\",\"P/F\"],\"rows\":[{\"Assessment Type\":\"Model\",\"Score\":\"14.00\",\"Max Mark\":\"50.00\",\"Pass Mark\":\"18.00\",\"P/F\":\"Fail\"},{\"Assessment Type\":\"Internal I\",\"Score\":\"9.00\",\"Max Mark\":\"30.00\",\"Pass Mark\":\"10.50\",\"P/F\":\"Fail\"}]},{\"subject\":\"Indian Constitution: Legal and Ethical Perspectives for It\",\"headers\":[\"Assessment Type\",\"Score\",\"Max "
+  },
+  "Attendance": {
+    "hasData": true,
+    "cachedAt": "2026-06-10T07:42:55.231Z",
+    "keys": [
+      "success",
+      "page",
+      "elapsed",
+      "timestamp",
+      "payload"
+    ],
+    "preview": "{\"success\":true,\"page\":\"Attendance\",\"elapsed\":1149,\"timestamp\":\"2026-06-07T17:34:47.331Z\",\"payload\":{\"page\":\"Attendance\",\"sections\":[{\"headers\":[\"Subject\",\"Present\",\"Total\",\"%\"],\"rows\":[]}],\"semesters\":[{\"value\":\"2\",\"text\":\"SECOND SEMESTER\",\"selected\":false},{\"value\":\"1\",\"text\":\"FIRST SEMESTER\",\"selected\":false}]}}"
+  },
+  "Assignment": {
+    "hasData": true,
+    "cachedAt": "2026-06-10T07:42:55.414Z",
+    "keys": [
+      "payload",
+      "success",
+      "page",
+      "elapsed",
+      "timestamp"
+    ],
+    "preview": "{\"payload\":{\"page\":\"Assignment\",\"sections\":[{\"label\":\"Active\",\"rows\":[{\"Slno\":\"1\",\"Assignment\":\"SECOND SEMESTER\\n                                                                -\\n                                                                Core CourseLast Submission Date : 21/01/2026 (Offline)\\n                                                                Created On : 27/02/2026\\n                                                                \\n                                                                \\n                                                                    Operating Systems\\n                                                            \\n                                                            \\n\\n                                                                Compare and contrast different CPU scheduling algorithms with suitable examples.\\n                                                            \\n                                                          "
+  },
+  "Seminar": {
+    "hasData": true,
+    "cachedAt": "2026-06-10T07:42:56.170Z",
+    "keys": [
+      "payload",
+      "success",
+      "page",
+      "elapsed",
+      "timestamp"
+    ],
+    "preview": "{\"payload\":{\"page\":\"Seminar\",\"sections\":[]},\"success\":true,\"page\":\"Seminar\",\"elapsed\":234,\"timestamp\":\"2026-06-07T17:18:19.292Z\"}"
+  },
+  "lastSeen": {
+    "hasData": false,
+    "keys": null,
+    "preview": null
+  },
+  "Dashboard": {
+    "hasData": true,
+    "cachedAt": "2026-06-10T07:42:56.361Z",
+    "keys": [
+      "payload",
+      "success"
+    ],
+    "preview": "{\"payload\":{\"page\":\"Dashboard\",\"sections\":[{\"data\":{\"study_material\":0,\"assessment\":12,\"assignment\":2,\"seminar\":0,\"internal_mark\":0,\"feedback\":12965,\"active_courses\":[]}}]},\"success\":true}"
+  }
+}

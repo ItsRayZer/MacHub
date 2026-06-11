@@ -1,0 +1,1 @@
+"    subContainer.innerHTML = styleBlock + heroHtml + finalViewHtml;\n};"

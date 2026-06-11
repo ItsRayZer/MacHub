@@ -322,7 +322,7 @@ function parseAttendance(html) {
 
   // Extract semesters list
   const semesters = [];
-  const semSelect = $('#MainContent_ddlsem, #MainContent_drpsem');
+  const semSelect = $('#MainContent_ddlsem, #MainContent_drpsem, #ContentPlaceHolder2_drpsemforma');
   if (semSelect.length) {
     semSelect.find('option').each((_, opt) => {
       semesters.push({
@@ -447,7 +447,7 @@ function parseAttendanceDetails(html) {
 
   // Extract semesters list
   const semesters = [];
-  const semSelect = $('#MainContent_ddlsem, #MainContent_drpsem');
+  const semSelect = $('#MainContent_ddlsem, #MainContent_drpsem, #ContentPlaceHolder2_drpsemforma');
   if (semSelect.length) {
     semSelect.find('option').each((_, opt) => {
       semesters.push({
@@ -511,7 +511,7 @@ function parseAssessment(html, pageName = 'Assessment') {
 
   // Extract semesters list
   const semesters = [];
-  const semSelect = $('#MainContent_ddlsem, #MainContent_drpsem');
+  const semSelect = $('#MainContent_ddlsem, #MainContent_drpsem, #ContentPlaceHolder2_drpsemforma');
   if (semSelect.length) {
     semSelect.find('option').each((_, opt) => {
       semesters.push({
@@ -707,7 +707,29 @@ function parseDashboard(html) {
     }
   });
 
-  return { page: 'Dashboard', sections: [{ data: result }] };
+  // Extract active courses using the SEM {N} format
+  const activeCoursesSet = new Set();
+  lines.forEach(line => {
+    if (/SEM\s*\d+\s*-\s*/i.test(line)) {
+      activeCoursesSet.add(line.trim());
+    }
+  });
+  result.active_courses = Array.from(activeCoursesSet);
+
+  return {
+    page: 'Dashboard',
+    studyMaterial: result.study_material,
+    study_material: result.study_material,
+    assessment: result.assessment,
+    assignment: result.assignment,
+    seminar: result.seminar,
+    internalMark: result.internal_mark,
+    internal_mark: result.internal_mark,
+    feedback: result.feedback,
+    activeCourses: result.active_courses,
+    active_courses: result.active_courses,
+    sections: [{ data: result }]
+  };
 }
 
 function deobfuscateCloudflareEmail(encodedString) {
@@ -851,7 +873,32 @@ function parseProfile(html) {
     result.guardianEmail = fatherEmail[1].trim();
   }
 
-  return { page: 'Profile', sections: [{ data: result }] };
+  return {
+    page: 'Profile',
+    name: result.name,
+    admissionNo: result.admissionNo,
+    course: result.course,
+    batch: result.batch,
+    dob: result.dob,
+    phone: result.phone,
+    email: result.email,
+    gender: result.gender,
+    bloodGroup: result.bloodGroup,
+    aadhar: result.aadhar,
+    nationality: result.nationality,
+    religion: result.religion,
+    caste: result.caste,
+    category: result.category,
+    income: result.income,
+    address: result.address,
+    commAddress: result.commAddress,
+    guardianName: result.guardianName,
+    guardianPhone: result.guardianPhone,
+    guardianEmail: result.guardianEmail,
+    photoUrl: result.photoUrl,
+    abcId: result.abcId,
+    sections: [{ data: result }]
+  };
 }
 
 /** Concession card page parser — extracts route inputs and security tokens */
@@ -1053,7 +1100,7 @@ app.get('/api/sync-portal/:targetPage', rateLimitMiddleware, async (req, res) =>
 
     let html = pageRes.data;
     const $initial = cheerio.load(html);
-    const semSelect = $initial('#MainContent_ddlsem, #MainContent_drpsem');
+    const semSelect = $initial('#MainContent_ddlsem, #MainContent_drpsem, #ContentPlaceHolder2_drpsemforma');
     
     if (semSelect.length) {
       let targetSemester = req.query.semester;
@@ -1193,7 +1240,7 @@ app.get('/api/sync-portal/:targetPage', rateLimitMiddleware, async (req, res) =>
     }
 
     // ── Parse HTML into structured JSON ──────────────────────────────────────
-    if (targetPage === 'ExamResult' || targetPage === 'Assessment') {
+    if (targetPage === 'ExamResult' || targetPage === 'Assessment' || targetPage === 'InternalMark') {
       try {
         const debugPath = `C:\\Users\\abens\\.gemini\\antigravity\\brain\\6104b00a-a7d5-4e79-b96a-72cb4cb181ea\\scratch\\${targetPage.toLowerCase()}_debug.html`;
         fs.writeFileSync(debugPath, html, 'utf8');

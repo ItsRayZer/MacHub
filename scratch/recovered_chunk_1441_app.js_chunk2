@@ -1,0 +1,9 @@
+window.selectClassDept = function(dept) {
+    currentClassDept = dept;
+    closeClassDropdowns();
+    renderClassFilters();
+    renderClassDaySelector();
+    renderClassTimetable();
+    renderClassSubjects();
+    renderClassAttendance();
+};

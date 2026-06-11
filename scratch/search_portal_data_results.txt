@@ -1,0 +1,73 @@
+
+========================================
+STEP: 65 | TOOL: write_to_file | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\hooks\\usePortalData.js"
+INSTRUCTION: 
+CONTENT LENGTH: 2065
+--- START ---
+"/**\n * usePortalData — Core stale-while-revalidate data hook.\n *\n * Flow:\n * 1. Read from Firestore (instant, ~50ms)\n * 2. If data exists → render immediately\n * 3. If stale or missing → fetch from Cloudflare Worker in background\n * 4. Update Firestore + React state with fresh data\n * 5. Errors show inline, never block navigation\n */\nimport { useState, useEffect, useCallback, useRef } from 'react';\nimport { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';\nimport { db } from '../firebase';\nimport { WORKER_URL, SECTION_TTL } from '../config';\nimport { useStudentStore } from '../store/studentStore';\n\nconst SLOW_FETCH_TIMEOUT = 3000; // Show \"Portal is slow\" after 3s\n\n/**\n * Check if a cached section is stale based on its TTL.\n */\nfunction isStale(cachedAt, ttl) {\n  if (!cachedAt || !ttl) return true;\n  if (ttl === Infinity) return false;\n  const cachedTime = cachedAt?.toMillis ? cachedAt.toMillis() : Number(cachedAt);\n  return Date.now() - cachedTime > ttl;\n}\n\n/**\n * Fetch data from Cloudflare Worker for a given section.\n */\nasync function fetchFromWorker(section, admissionNumber) {\n  const res = await fetch(`${WORKER_URL}/api/scrape/${section}`, {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ admissionNumber }),\n  });\n\n  if (res.status === 401) {\n    throw new Error('UNAUTHORIZED');\n  }\n  if (!res.ok) {\n    throw new Error(`WORKER_ERROR:${res.status}`);\n  }\n\n  const 
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 286 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\hooks\\usePortalData.js"
+INSTRUCTION: "Remove ownerUid and apply maskSensitiveFields for 'profile' section."
+CONTENT LENGTH: 1261
+--- START ---
+"function maskSensitiveFields(profileData) {\n  if (!profileData) return null;\n  return {\n    name:          profileData.name || '',\n    admissionNo:   profileData.admissionNo || '',\n    course:        profileData.course || '',\n    batch:         profileData.batch || '',\n    division:      profileData.division || '',\n    semester:      profileData.semester || '',\n    department:    profileData.department || '',\n    photoUrl:      profileData.photoUrl || '',\n    phone:         profileData.phone\n                   ? '****' + profileData.phone.slice(-4)\n                   : '',\n  };\n}\n\n/**\n * Save fresh data to Firestore under students/{admissionNumber}/{section}.\n */\nasync function saveToFirestore(admissionNumber, section, data) {\n  const docRef = doc(db, 'students', admissionNumber);\n  \n  let dataToSave = data;\n  if (section === 'profile') {\n    dataToSave = maskSensitiveFields(data);\n  }\n\n  const update = {\n    [`${section}.data`]: dataToSave,\n    [`${section}.cachedAt`]: new Date(),\n    lastSeen: new Date(),\n  };\n\n  try {\n    await setDoc(docRef, {\n      admissionNumber,\n      ...update,\n    }, { merge: true });\n  } catch (err) {\n    console.warn(`[Firestore] Failed to save ${section}:`, err);\n  }\n}"
+--- END ---
+
+========================================
+STEP: 292 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\hooks\\usePortalData.js"
+INSTRUCTION: "Remove firebaseUid from saveToFirestore call."
+CONTENT LENGTH: 124
+--- START ---
+"      // Save to Firestore (non-blocking)\n      saveToFirestore(admissionNumber, section, freshData).catch(console.warn);"
+--- END ---
+
+========================================
+STEP: 5477 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\hooks\\usePortalData.js"
+INSTRUCTION: "Alter saveToFirestore and the useEffect load block to handle target section 'attendance' as separate properties on the students document."
+CONTENT LENGTH: 2069
+--- START ---
+"async function saveToFirestore(admissionNumber, section, data) {\n  const docRef = doc(db, 'students', admissionNumber);\n  \n  if (section === 'attendance') {\n    const update = {\n      'attendanceSubjectWise.data': data.subjectWise || null,\n      'attendanceSubjectWise.cachedAt': new Date(),\n      'attendanceDetails.data': data.details || null,\n      'attendanceDetails.cachedAt': new Date(),\n      lastSeen: new Date(),\n    };\n    try {\n      await setDoc(docRef, { admissionNumber, ...update }, { merge: true });\n    } catch (err) {\n      console.warn(`[Firestore] Failed to save attendance to separate collections:`, err);\n    }\n    return;\n  }\n\n  let dataToSave = data;\n  if (section === 'profile') {\n    dataToSave = maskSensitiveFields(data);\n  }\n\n  const update = {\n    [`${section}.data`]: dataToSave,\n    [`${section}.cachedAt`]: new Date(),\n    lastSeen: new Date(),\n  };\n\n  try {\n    await setDoc(docRef, {\n      admissionNumber,\n      ...update,\n    }, { merge: true });\n  } catch (err) {\n    console.warn(`[Firestore] Failed to save ${section}:`, err);\n  }\n}\n\n/**\n * Main hook — use in every page component.\n *\n * @param {string} section - The section name (e.g., 'assessment', 'attendance')\n * @returns {{ data, isLoading, isRefreshing, error, refresh, isSlowLoad }}\n */\nexport function usePortalData(section) {\n  const { admissionNumber, firebaseUid, logout } = useStudentStore();\n  const [data, setData] = useState(null);\n  const [is
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 7625 | TOOL: write_to_file | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\hooks\\usePortalData.js"
+INSTRUCTION: 
+CONTENT LENGTH: 2065
+--- START ---
+"/**\n * usePortalData — Stale-while-revalidate data hook with Zustand store integration.\n *\n * Flow:\n * 1. Check Zustand store (in-memory, instant) → render if available\n * 2. If not in store: read from Firestore (IndexedDB cache, ~50ms)\n * 3. Render cached data if exists\n * 4. If stale or missing → fetch from Cloudflare Worker in background\n * 5. Update Zustand store + Firestore with fresh data\n *\n * Result: Navigating back to a page shows data instantly from the Zustand store.\n * Only the very first visit to a section ever shows a skeleton.\n */\nimport { useState, useEffect, useCallback, useRef } from 'react';\nimport { doc, getDoc, setDoc } from 'firebase/firestore';\nimport { db } from '../firebase';\nimport { WORKER_URL, SECTION_TTL } from '../config';\nimport { useStudentStore } from '../store/studentStore';\n\nconst SLOW_FETCH_TIMEOUT = 3000;\n\nfunction isStale(cachedAt, ttl) {\n  if (!cachedAt || !ttl) return true;\n  if (ttl === Infinity) return false;\n  const t = cachedAt?.toMillis ? cachedAt.toMillis() : Number(cachedAt);\n  return Date.now() - t > ttl;\n}\n\nasync function fetchFromWorker(section, admissionNumber) {\n  const res = await fetch(`${WORKER_URL}/api/scrape/${section}`, {\n    method:  'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body:    JSON.stringify({ admissionNumber }),\n  });\n\n  if (res.status === 401) throw new Error('UNAUTHORIZED');\n  if (!res.ok)           throw new Error(`WORKER_ERROR:${res.status}`);\n\n
+... [TRUNCATED] ...
+--- END ---
+
+========================================
+STEP: 9524 | TOOL: multi_replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\hooks\\usePortalData.js"
+INSTRUCTION: "Modify usePortalData.js to pass custom body params to the worker, dynamically key Firestore caching per-semester, and trigger updates when params change."
+CONTENT LENGTH: 0
+
+========================================
+STEP: 10037 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\..gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\hooks\\usePortalData.js"
+INSTRUCTION: "Add a useEffect to reset hasFetched.current when section or paramsStr changes."
+CONTENT LENGTH: 309
+--- START ---
+"  const slowTimer  = useRef(null);\n  const isMounted  = useRef(true);\n  const hasFetched = useRef(false);\n\n  useEffect(() => {\n    hasFetched.current = false;\n  }, [section, paramsStr]);\n\n  useEffect(() => {\n    isMounted.current = true;\n    return () => { isMounted.current = false; };\n  }, []);"
+--- END ---
+
+========================================
+STEP: 10039 | TOOL: replace_file_content | FILE: "C:\\Users\\abens\\.gemini\\antigravity\\worktrees\\MacHub\\machin-scraper-backend-engine\\machub-app\\src\\hooks\\usePortalData.js"
+INSTRUCTION: "Add a useEffect to reset hasFetched.current when section or paramsStr changes."
+CONTENT LENGTH: 309
+--- START ---
+"  const slowTimer  = useRef(null);\n  const isMounted  = useRef(true);\n  const hasFetched = useRef(false);\n\n  useEffect(() => {\n    hasFetched.current = false;\n  }, [section, paramsStr]);\n\n  useEffect(() => {\n    isMounted.current = true;\n    return () => { isMounted.current = false; };\n  }, []);"
+--- END ---
+
+========================================
+STEP: 10494 | TOOL: write_to_file | FILE: "C:/Users/abens/.gemini/antigravity/worktrees/MacHub/machin-scraper-backend-engine/machub-app/src/hooks/usePortalData.js"
+INSTRUCTION: 
+CONTENT LENGTH: 2065
+--- START ---
+"/**\n * usePortalData — Core stale-while-revalidate data hook.\n *\n * Flow:\n * 1. Read from Firestore (instant, ~50ms)\n * 2. If data exists → render immediately (unwraps payload if present)\n * 3. If stale or missing → fetch from Cloudflare Worker in background\n * 4. Update Firestore + React state with fresh data\n * 5. Errors show inline, never block navigation\n */\nimport { useState, useEffect, useCallback, useRef } from 'react';\nimport { doc, getDoc, setDoc } from 'firebase/firestore';\nimport { db } from '../firebase';\nimport { WORKER_URL, SECTION_TTL } from '../config';\nimport { useStudentStore } from '../store/studentStore';\n\nconst SLOW_FETCH_TIMEOUT = 3000; // Show \"Portal is slow\" after 3s\n\n/**\n * Firestore stores section keys in PascalCase (e.g. \"Attendance\", \"ExamResult\").\n * This map converts the hook's camelCase section name to the Firestore key.\n */\nconst FIRESTORE_KEY = {\n  attendance:         'Attendance',\n  attendanceDetails:  'AttendanceDetails',\n  examResult:         'ExamResult',\n  internalMark:       'InternalMark',\n  assessment:         'Assessment',\n  assignment:         'Assignment',\n  seminar:            'Seminar',\n  studyMaterial:      'StudyMaterial',\n  dashboard:          'Dashboard',\n  profile:            'Profile',\n  onlineExam:         'OnlineExam',\n  onlineClass:        'OnlineClass',\n  fyugp:              'FYUGP',\n  graceMark:          'GraceMark',\n  hallTicket:         'HallTicket',\n  allotmentMemo:      
+... [TRUNCATED] ...
+--- END ---

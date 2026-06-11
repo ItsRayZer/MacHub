@@ -1,0 +1,2 @@
+      const univSubjects = internalMarkData?.subjects || [];
+      univSubjects.forEach(sub => {

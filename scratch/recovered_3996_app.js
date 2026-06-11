@@ -1,0 +1,1 @@
+"window.showAttendanceTab = function () {\n    switchView('view-class');\n    if (window.switchClassTab) {\n        window.switchClassTab('attendance');\n    }\n};\n\nwindow.showResultsTab = function (subTab = 'exam') {"

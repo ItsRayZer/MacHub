@@ -1,0 +1,1 @@
+"            if (examRaw) {\n                const parsed = JSON.parse(examRaw);\n                const sections = parsed?.data?.payload?.sections || parsed?.data?.sections || parsed?.payload?.sections || parsed?.sections || [];\n                \n                if (sections.length > 0) {"

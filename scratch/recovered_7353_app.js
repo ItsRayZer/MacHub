@@ -1,0 +1,1 @@
+"    }).join('');\n    container.innerHTML = semFilterHtml + `<div class=\"grid gap-4\">` + cardsHtml + `</div>`;\n};"

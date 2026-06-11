@@ -243,201 +243,128 @@
     </div> <!-- end view-seats -->
 
     <div id="view-home" class="view-panel is-active max-w-md mx-auto p-6 relative">
-        <!-- Greeting Card -->
-        <div class="glass-panel p-6 rounded-3xl mb-6 flex items-center justify-between gap-4 relative overflow-hidden border border-white/5">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-[var(--mac-blue)] opacity-5 rounded-full -mr-12 -mt-12"></div>
-            <div class="flex-1 min-w-0">
-                <h2 id="homeGreeting" class="text-2xl font-black text-white leading-tight">Hello!</h2>
-                <p class="text-[#86868b] text-[10px] font-bold uppercase tracking-widest mt-1">MAC RAMAPURAM • 2026</p>
+        <!-- Apple Premium Glass Greeting Card -->
+        <div class="glass-panel p-6 rounded-[2rem] mb-6 flex items-center justify-between gap-4 relative overflow-hidden cursor-pointer group active:scale-[0.98] transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/10" 
+             style="background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.01) 100%); backdrop-filter: blur(20px);"
+             onclick="switchView('view-profile')">
+             
+            <!-- Decorative animated glows -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-[var(--mac-blue)] rounded-full mix-blend-screen filter blur-[40px] opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-[#00d4aa] rounded-full mix-blend-screen filter blur-[40px] opacity-10 group-hover:opacity-30 transition-opacity duration-500"></div>
+
+            <div class="flex items-center gap-4 relative z-10">
+                <!-- Premium Avatar -->
+                <div class="relative w-14 h-14 rounded-[1.25rem] bg-gradient-to-br from-[var(--mac-blue)] to-[#00d4aa] p-[1px] shadow-lg group-hover:scale-105 transition-transform duration-300">
+                    <div class="absolute inset-0 bg-white/20 rounded-[1.25rem] blur-sm mix-blend-overlay"></div>
+                    <div class="w-full h-full rounded-[1.25rem] bg-[#1d1d1f]/80 backdrop-blur-md flex items-center justify-center relative overflow-hidden">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-br from-white to-white/70 font-black text-lg" id="homeProfileInitials">MAC</span>
+                    </div>
+                </div>
                 
-                <div class="flex items-start gap-1.5 mt-4 text-xs font-semibold text-[#a1a1a6] leading-relaxed">
-                    <span class="text-[var(--mac-blue)] text-lg leading-none select-none">“</span>
-                    <p class="italic">Discipline today, success tomorrow. You've got this!</p>
+                <!-- Welcome Text -->
+                <div class="flex flex-col justify-center">
+                    <p class="text-white/60 text-[10px] font-bold uppercase tracking-[0.2em] mb-0.5 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[var(--mac-blue)] animate-pulse"></span>
+                        <span id="homeProfileSub">Welcome Back</span>
+                    </p>
+                    <h2 id="homeGreeting" class="text-2xl font-black text-white leading-tight tracking-tight drop-shadow-sm">Hello!</h2>
                 </div>
             </div>
             
-            <!-- 3D Circular House Icon on Right -->
-            <div class="relative w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0" style="background: radial-gradient(circle, rgba(0,113,227,0.15) 0%, rgba(0,0,0,0) 70%);">
-                <!-- Outer glowing border ring -->
-                <div class="absolute inset-0 rounded-full border border-[var(--mac-blue)]/20 animate-pulse"></div>
-                <!-- Inner glossy circle containing house emoji -->
-                <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-white/10 to-white/5 border border-white/10 shadow-lg flex items-center justify-center text-3xl backdrop-blur-md">
-                    🏠
+            <!-- Right Side Course Badge -->
+            <div class="relative z-10 flex flex-col items-end justify-center">
+                <div class="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col items-end shadow-inner group-hover:bg-white/10 transition-colors duration-300">
+                    <span class="text-[10px] font-black text-white tracking-widest drop-shadow-md" id="homeUserDept">COURSE</span>
+                    <span class="text-[8px] font-extrabold text-[var(--mac-blue)] uppercase tracking-widest mt-0.5" id="homeUserSem">SEM -</span>
                 </div>
             </div>
         </div>
 
-        <!-- Status Banner -->
-        <div id="statusBanner" class="glass-panel p-4 rounded-2xl mb-6 flex items-center justify-between relative overflow-hidden border border-[var(--mac-blue)]/20" style="background: linear-gradient(135deg, rgba(0,113,227,0.06) 0%, rgba(0,0,0,0) 100%);">
-            <div class="flex items-center gap-3">
-                <!-- Checkmark / icon on the left -->
-                <div class="w-10 h-10 rounded-full bg-[var(--mac-blue)]/10 flex items-center justify-center text-[var(--mac-blue)] text-lg border border-[var(--mac-blue)]/30">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                </div>
-                <div>
-                    <h3 id="nextExamTitle" class="text-xs font-black text-white leading-tight">All exams completed!</h3>
-                    <p id="nextExamDate" class="text-[9px] font-extrabold text-[var(--mac-blue)] uppercase tracking-wider mt-0.5">GOOD LUCK WITH YOUR RESULTS!</p>
-                </div>
-            </div>
-            <!-- Right confetti popper icon -->
-            <div class="text-xl flex-shrink-0 animate-bounce">🎉</div>
-        </div>
+        <script>
+            // Inject mini profile data
+            setTimeout(() => {
+                try {
+                    const info = typeof getStudentInfo === 'function' ? getStudentInfo() : null;
+                    if (info) {
+                        const firstName = info.name ? info.name.split(' ')[0] : 'Hello!';
+                        document.getElementById('homeGreeting').textContent = firstName;
+                        const initials = info.name ? info.name.substring(0, 2).toUpperCase() : 'MAC';
+                        document.getElementById('homeProfileInitials').textContent = initials;
+                        document.getElementById('homeUserDept').textContent = info.dept || 'COURSE';
+                        document.getElementById('homeUserSem').textContent = `SEM ${info.semester || '-'}`;
+                        document.getElementById('homeProfileSub').textContent = info.adminNo || 'VIEW PROFILE';
+                    }
+                } catch(e) {}
+            }, 500);
+        </script>
 
-        <!-- Live Portal Dashboard Section -->
+
+        <!-- Course Details & Shortcuts -->
         <div class="mb-6">
-            <h4 class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-widest mb-3 pl-1 flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> LIVE PORTAL DASHBOARD
-            </h4>
-            <div class="grid grid-cols-2 gap-2.5" id="homePortalDashboard">
-                <!-- Active Course Skeleton -->
-                <div class="col-span-2 glass-panel p-5 rounded-3xl border border-white/5 animate-pulse min-h-[64px]">
-                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/4 mb-2"></div>
-                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-2/3"></div>
-                </div>
-                <!-- 6 smaller card skeletons -->
-                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
-                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
-                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
-                </div>
-                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
-                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
-                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
-                </div>
-                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
-                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
-                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
-                </div>
-                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
-                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
-                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
-                </div>
-                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
-                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
-                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
-                </div>
-                <div class="glass-panel p-4.5 rounded-2xl flex flex-col justify-between min-h-[110px] border border-white/5 animate-pulse">
-                    <div class="h-4 bg-black/10 dark:bg-white/10 rounded w-1/2 mb-2"></div>
-                    <div class="h-3 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Events & Profile Grid -->
-        <div class="grid grid-cols-2 gap-3 mb-6">
-            <!-- Upcoming Events Card -->
-            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between border border-white/5">
-                <div>
-                    <h4 class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                        <span>📅</span> UPCOMING EVENTS
-                    </h4>
-                    <div class="space-y-3">
-                        <!-- Event 1 -->
-                        <div onclick="switchExamView('view-timetable')" class="flex items-center gap-2 cursor-pointer group">
-                            <div class="bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] rounded-lg p-1.5 text-center min-w-[36px]">
-                                <p class="text-[11px] font-black leading-none">24</p>
-                                <p class="text-[7px] font-bold uppercase tracking-tighter">May</p>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-[10px] font-bold text-white truncate leading-tight">Department Seminar</p>
-                                <p class="text-[8px] font-semibold text-[#86868b] mt-0.5 truncate">10:30 AM • Seminar Hall</p>
-                            </div>
-                            <svg class="w-2.5 h-2.5 text-[#86868b] group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </div>
-                        <!-- Event 2 -->
-                        <div onclick="switchExamView('view-timetable')" class="flex items-center gap-2 cursor-pointer group">
-                            <div class="bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] rounded-lg p-1.5 text-center min-w-[36px]">
-                                <p class="text-[11px] font-black leading-none">29</p>
-                                <p class="text-[7px] font-bold uppercase tracking-tighter">May</p>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-[10px] font-bold text-white truncate leading-tight">Technical Workshop</p>
-                                <p class="text-[8px] font-semibold text-[#86868b] mt-0.5 truncate">02:00 PM • Lab Block</p>
-                            </div>
-                            <svg class="w-2.5 h-2.5 text-[#86868b] group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </div>
-                    </div>
-                </div>
-                <button onclick="switchExamView('view-timetable')" class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider text-left w-full">
-                    <span>View all events</span>
-                    <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </button>
+            <div class="flex items-center justify-between mb-3 pl-1">
+                <h4 class="text-[10px] font-black text-[#86868b] uppercase tracking-widest flex items-center gap-1.5">
+                    <span class="text-xl">⚡</span> QUICK SHORTCUTS
+                </h4>
             </div>
 
-            <!-- My Profile Card -->
-            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between border border-white/5">
-                <div>
-                    <h4 class="text-[9px] font-black text-purple-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                        <span>👤</span> MY PROFILE
-                    </h4>
-                    <div class="space-y-3">
-                        <!-- Dept info -->
-                        <div class="flex items-center justify-between gap-2">
-                            <div>
-                                <p class="text-[8px] font-bold text-[#86868b]">Department</p>
-                                <p id="homeUserDept" class="text-[11px] font-black text-[var(--mac-blue)]">BCA</p>
-                            </div>
-                            <div class="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 text-xs">🎓</div>
-                        </div>
-                        <!-- Year info -->
-                        <div class="flex items-center justify-between gap-2">
-                            <div>
-                                <p class="text-[8px] font-bold text-[#86868b]">Year</p>
-                                <p class="text-[11px] font-black text-[var(--mac-blue)]">2023 – 2026</p>
-                            </div>
-                            <div class="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 text-xs">📅</div>
-                        </div>
+            <div class="grid grid-cols-2 gap-3" id="homeShortcutsGrid">
+
+                <!-- Attendance -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="if(typeof switchExamView==='function') { switchExamView('view-class'); setTimeout(()=>switchClassTab('attendance'),50); } else { window.loadPortalSection('Attendance', 'Attendance'); }"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(0, 212, 170, 0.15); color: #00d4aa; border: 1px solid rgba(0, 212, 170, 0.3);">
+                        📅
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Attendance</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track daily class hours & percentage</p>
                     </div>
                 </div>
-                <button onclick="switchView('view-profile')" class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[9px] font-black text-purple-400 uppercase tracking-wider text-left w-full">
-                    <span>View profile</span>
-                    <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </button>
-            </div>
-        </div>
 
-        <!-- Quick Access Section -->
-        <div class="glass-panel p-4 rounded-2xl mb-6 border border-white/5">
-            <h4 class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                <span>⚡</span> QUICK ACCESS
-            </h4>
-            <div class="flex items-center justify-around gap-2">
-                <button onclick="switchExamView('view-timetable')" class="flex flex-col items-center gap-1 active:scale-95 spring">
-                    <div class="w-10 h-10 rounded-full border border-blue-500/30 bg-blue-500/10 flex items-center justify-center text-blue-400">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                        </svg>
+                <!-- Exam Results -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="if(typeof switchExamView==='function') { switchExamView('view-results'); } else { window.loadPortalSection('ExamResult', 'Exam Results'); }"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(255, 179, 71, 0.15); color: #ffb347; border: 1px solid rgba(255, 179, 71, 0.3);">
+                        🎓
                     </div>
-                    <span class="text-[9px] font-bold text-[#86868b]">Timetable</span>
-                </button>
-                <button onclick="loadPortalSection('Attendance','Attendance')" class="flex flex-col items-center gap-1 active:scale-95 spring">
-                    <div class="w-10 h-10 rounded-full border border-green-500/30 bg-green-500/10 flex items-center justify-center text-green-400">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                        </svg>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Exam Results</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Check university semester grades</p>
                     </div>
-                    <span class="text-[9px] font-bold text-[#86868b]">Attendance</span>
-                </button>
-                <button onclick="loadPortalSection('Assignment','Assignments')" class="flex flex-col items-center gap-1 active:scale-95 spring">
-                    <div class="w-10 h-10 rounded-full border border-orange-500/30 bg-orange-500/10 flex items-center justify-center text-orange-400">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        </svg>
+                </div>
+
+                <!-- Assignment -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('Assignment', 'Assignment')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(45, 152, 218, 0.15); color: #2d98da; border: 1px solid rgba(45, 152, 218, 0.3);">
+                        📂
                     </div>
-                    <span class="text-[9px] font-bold text-[#86868b]">Assignments</span>
-                </button>
-                <button onclick="openAnnouncements()" class="flex flex-col items-center gap-1 active:scale-95 spring">
-                    <div class="w-10 h-10 rounded-full border border-pink-500/30 bg-pink-500/10 flex items-center justify-center text-pink-400">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                        </svg>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Assignment</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track pending submissions & deadlines</p>
                     </div>
-                    <span class="text-[9px] font-bold text-[#86868b]">Notices</span>
-                </button>
+                </div>
+
+                <!-- Seminar -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.loadPortalSection('Seminar', 'Seminar')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(252, 92, 101, 0.15); color: #fc5c65; border: 1px solid rgba(252, 92, 101, 0.3);">
+                        🎙️
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Seminar</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track seminar presentations & scores</p>
+                    </div>
+                </div>
+
             </div>
         </div>
 

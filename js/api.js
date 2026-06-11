@@ -92,6 +92,8 @@
     }
 
     return '';
+  }
+
   function saveAdminNo(no) {
     if (no) localStorage.setItem('machub_student_id', no);
   }

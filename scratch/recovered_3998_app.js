@@ -1,0 +1,1 @@
+"    if (tabName === 'attendance') {\n        window.showAttendanceTab();\n    } else if (tabName === 'profile') {"

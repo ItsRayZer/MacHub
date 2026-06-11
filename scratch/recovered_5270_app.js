@@ -1,0 +1,1 @@
+"        if (cachedAssess) {\n            try { \n                const parsed = JSON.parse(cachedAssess);\n                assessData = parsed?.data?.payload?.sections || parsed?.data?.sections || parsed?.payload?.sections || parsed?.sections || []; \n            } catch(e) {}\n        }"

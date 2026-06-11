@@ -5,6 +5,30 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useStudentStore } from '../store/studentStore';
 import { WORKER_URL } from '../config';
 
+const FIRESTORE_KEY = {
+  attendance:         'Attendance',
+  attendanceDetails:  'AttendanceDetails',
+  examResult:         'ExamResult',
+  internalMark:       'InternalMark',
+  assessment:         'Assessment',
+  assignment:         'Assignment',
+  seminar:            'Seminar',
+  studyMaterial:      'StudyMaterial',
+  dashboard:          'Dashboard',
+  profile:            'Profile',
+  onlineExam:         'OnlineExam',
+  onlineClass:        'OnlineClass',
+  fyugp:              'FYUGP',
+  graceMark:          'GraceMark',
+  hallTicket:         'HallTicket',
+  allotmentMemo:      'AllotmentMemo',
+  feePayment:         'FeePayment',
+  feedback:           'FeedBack',
+  grievance:          'Grievance',
+  concession:         'Concession',
+  internalUniversity: 'InternalUniversity',
+};
+
 export default function Login() {
   const [adm, setAdm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,6 +41,7 @@ export default function Login() {
   // Helper to save a section's scraped data to Firestore
   const saveSectionToFirestore = async (admissionNumber, section, data) => {
     const docRef = doc(db, 'students', admissionNumber);
+    const fKey = FIRESTORE_KEY[section] || section;
     
     // Mask profile fields if it's the profile section
     let dataToSave = data;
@@ -35,8 +60,8 @@ export default function Login() {
     }
 
     const update = {
-      [`${section}.data`]: dataToSave,
-      [`${section}.cachedAt`]: new Date(),
+      [`${fKey}.data`]: dataToSave,
+      [`${fKey}.cachedAt`]: new Date(),
       lastSeen: new Date(),
     };
 
@@ -111,7 +136,7 @@ export default function Login() {
       const docRef = doc(db, 'students', admissionNumber);
       const docSnap = await getDoc(docRef);
 
-      if (docSnap.exists() && docSnap.data().profile) {
+      if (docSnap.exists() && (docSnap.data().Profile || docSnap.data().profile)) {
         // Returning Student
         setStatusText('Welcome back! Loading cache...');
         setAdmissionNumber(admissionNumber);
