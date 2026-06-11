@@ -636,8 +636,99 @@ export const scrapeOnlineClass = (adm, cookie) =>
 export const scrapeFYUGP = (adm, cookie) =>
   scrapePage('FYUGP', SPECS.sectionEndpoints.FYUGP, cookie);
 
-export const scrapeExamResult = (adm, cookie) =>
-  scrapePage('ExamResult', SPECS.sectionEndpoints.ExamResult, cookie);
+export const scrapeExamResult = async (adm, cookie, body) => {
+  const PORTAL_BASE = "https://eportal.maraugusthinosecollege.org";
+  const url = SPECS.sectionEndpoints.ExamResult;
+  const requestHeaders = {
+    "Cookie": cookie,
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Host": "eportal.maraugusthinosecollege.org",
+    "Referer": PORTAL_BASE + "/Dashboard.aspx"
+  };
+
+  const getResponse = await fetch(PORTAL_BASE + url, { method: "GET", headers: requestHeaders, redirect: "manual" });
+  if (getResponse.status === 302) throw new Error("SESSION_EXPIRED");
+  const getHtml = await getResponse.text();
+  if (getHtml.includes("btnLogin") || getHtml.includes("txtUser")) throw new Error("SESSION_EXPIRED");
+
+  const $ = cheerio.load(getHtml);
+  const finalPayload = helperExtractFormFields($);
+  
+  const semesterOptions = [];
+  let semesterFieldName = "ctl00$MainContent$drop_exam"; // Changed default
+  let portalDefaultSem = null;
+  $("select").each((_, el) => {
+    const name = $(el).attr("name") || "";
+    if (name.toLowerCase().includes("sem") || name.toLowerCase().includes("exam")) semesterFieldName = name;
+    $(el).find("option").each((_, opt) => {
+      const value = $(opt).attr("value");
+      const text = $(opt).text().trim();
+      if (value && text) {
+        semesterOptions.push({ value, text, selected: false });
+        if ($(opt).prop("selected") || $(opt).attr("selected")) portalDefaultSem = value;
+      }
+    });
+  });
+
+  if (semesterOptions.length === 0) {
+    return { page: "ExamResult", sections: [], semesters: [], semesterOptions: [] };
+  }
+
+  let targetSemester = body?.semester || null;
+  if (!targetSemester) {
+    let maxVal = -1;
+    let maxSemVal = "";
+    semesterOptions.forEach(opt => {
+      const numericVal = parseInt(opt.value, 10);
+      if (!isNaN(numericVal) && numericVal > maxVal) { maxVal = numericVal; maxSemVal = opt.value; }
+    });
+    targetSemester = maxSemVal || portalDefaultSem || semesterOptions[0]?.value || "2";
+  }
+
+  if (targetSemester && !semesterOptions.find(o => o.value == targetSemester)) {
+    throw new Error("No exams available");
+  }
+
+  semesterOptions.forEach(opt => opt.selected = (opt.value === targetSemester));
+
+  finalPayload[semesterFieldName] = targetSemester;
+  finalPayload["__EVENTTARGET"] = semesterFieldName;
+  finalPayload["__EVENTARGUMENT"] = "";
+  delete finalPayload["ctl00$MainContent$btnSubmit"];
+  delete finalPayload["ctl00$MainContent$btn_Cancel"];
+
+  const bodyParams = new URLSearchParams();
+  for (const [k, v] of Object.entries(finalPayload)) bodyParams.append(k, v);
+
+  let postPath = url;
+  const form = $("input[name='__VIEWSTATE']").closest("form");
+  if (form.length && form.attr("action")) {
+    const actionAttr = form.attr("action").trim();
+    if (actionAttr && actionAttr !== "#") {
+      if (actionAttr.startsWith("./")) postPath = "/" + actionAttr.substring(2);
+      else if (actionAttr.startsWith("/")) postPath = actionAttr;
+      else if (!actionAttr.startsWith("http")) {
+        const lastSlash = url.lastIndexOf("/");
+        postPath = (lastSlash >= 0 ? url.substring(0, lastSlash) : "") + "/" + actionAttr;
+      }
+    }
+  }
+
+  const postHeaders = { ...requestHeaders, "Content-Type": "application/x-www-form-urlencoded" };
+  const postResponse = await fetch(PORTAL_BASE + postPath, { method: "POST", headers: postHeaders, body: bodyParams.toString() });
+  
+  let postHtml = await postResponse.text();
+  if (postHtml.includes("btnLogin") || postHtml.includes("txtUser")) throw new Error("SESSION_EXPIRED");
+
+  postHtml = parseUpdatePanelDelta(postHtml);
+
+  const parsed = parseHtml("ExamResult", postHtml);
+  parsed.semesters = semesterOptions;
+  parsed.semesterOptions = semesterOptions;
+  parsed.debugHtml = postHtml.substring(0, 500);
+  parsed.debugLength = postHtml.length;
+  return parsed;
+};
 
 export const scrapeGraceMark = (adm, cookie) =>
   scrapePage('GraceMark', SPECS.sectionEndpoints.GraceMark, cookie);

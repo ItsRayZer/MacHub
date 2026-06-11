@@ -3290,6 +3290,7 @@ window.renderClassAttendance = function() {
                 const dataObj = parsed?.data?.payload || parsed?.payload || parsed?.data || parsed;
                 // Support both possible data structures
                 const rows =
+                    dataObj?.subjectWise?.sections?.[0]?.rows ||
                     dataObj?.sections?.[0]?.rows ||
                     dataObj?.sections?.[0]?.data ||
                     dataObj?.subjects ||

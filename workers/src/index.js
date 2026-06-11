@@ -367,7 +367,7 @@ export default {
       }
 
       // ── POST /api/scrape/attendance (Combined) ───────────────────────────────
-      if (request.method === 'POST' && pathname === '/api/scrape/attendance') {
+      if (request.method === 'POST' && pathname.toLowerCase() === '/api/scrape/attendance') {
         let body;
         try { body = await request.json(); } catch { body = {}; }
         const admissionNumber = String(body.admissionNumber || '').trim();

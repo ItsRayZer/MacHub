@@ -33,9 +33,8 @@ function parseSingleTable($, tableEl) {
 
 /** Attendance page parser — extracts subject-wise attendance */
 function parseAttendance(html) {
-  const $ = cheerio.load(html);
-  const subjects = [];
-  let dataTable = null;
+  const $       = cheerio.load(html);
+  const records = [];
 
   // Extract semesters list
   const semesters = [];
@@ -50,91 +49,114 @@ function parseAttendance(html) {
     });
   }
 
-  // LOCK TARGET: Isolate table containing summary statistics 
-  $("table").each((_, el) => {
-    const tableText = $(el).text();
-    if (tableText.includes("Subjects") || tableText.includes("No. of Sessions") || tableText.includes("Total %")) {
-      dataTable = $(el);
-    }
-  });
+  $('table').each((_, table) => {
+    // Check if this is an attendance table by scanning first few rows
+    let isAttendanceTable = false;
+    $(table).find('tr').slice(0, 3).each((_, tr) => {
+      const text = $(tr).text().toLowerCase();
+      if (text.includes('subject') || text.includes('present') || text.includes('percentage') || text.includes('attendance')) {
+        isAttendanceTable = true;
+      }
+    });
+    
+    if (!isAttendanceTable) return;
 
-  if (!dataTable || !dataTable.length) {
-    return { page: 'Attendance', sections: [], semesters };
-  }
-
-  // Dynamic Header Matrix Generation
-  const headers = [];
-  dataTable.find("tr").each((_, row) => {
-    if (headers.length > 0) return;
-    const cells = $(row).find("th, td");
-    if (cells.text().includes("Subjects") || cells.text().includes("Sessions")) {
-      cells.each((_, cell) => {
-        headers.push($(cell).text().trim().toLowerCase());
-      });
-    }
-  });
-
-  // Row loop calculations
-  dataTable.find("tr").each((_, row) => {
-    const cells = $(row).find("td");
-    if (!cells.length) return;
-
-    const rowData = {};
-    cells.each((i, cell) => {
-      const key = headers[i] || `col_${i}`;
-      rowData[key] = $(cell).text().trim();
+    const headers = [];
+    let headerRow = $(table).find('tr').first();
+    $(table).find('tr').slice(0, 3).each((_, tr) => {
+      const text = $(tr).text().toLowerCase();
+      if (text.includes('subject') || (text.includes('present') && text.includes('total'))) {
+        headerRow = $(tr);
+      }
     });
 
-    const subjectTitle = rowData["subjects"] || rowData["subject"] || rowData["subject name"] || rowData["programme"] || rowData[headers[0]] || "";
-    // Exclude structural headings or spacer rows
-    if (!subjectTitle || subjectTitle.toLowerCase().includes("subjects") || subjectTitle.toLowerCase().includes("total")) return;
+    headerRow.find('th, td').each((_, el) => {
+      headers.push($(el).text().trim().toLowerCase());
+    });
 
-    const sessions = parseFloat(rowData["no. of sessions"] || rowData["total"] || rowData["total hours"] || rowData["conducted"] || rowData["col_3"] || "0");
-    const present  = parseFloat(rowData["no. of present"] || rowData["present"] || rowData["present hours"] || rowData["col_2"] || "0");
-    const absent = parseFloat(rowData["no. of absent"] || rowData["absent"] || "0");
-    const odAttendance = rowData["od attendance"] || rowData["od"] || "0";
-    const medical = rowData["medical"] || "0";
-    let percentageText = rowData["total %"] || rowData["total%"] || rowData["%"] || rowData["percentage"] || rowData["pct"] || "";
+    $(table).find('tr').each((idx, rowEl) => {
+      // Skip the header row and anything before it
+      if (idx <= $(table).find('tr').index(headerRow)) return;
+      
+      const cells = $(rowEl).find('td');
+      if (!cells.length || cells.length < 2) return;
 
-    if (!percentageText && sessions > 0) {
-      percentageText = ((present / sessions) * 100).toFixed(2) + "%";
-    }
+      const row = {};
+      cells.each((i, cell) => {
+        const key = headers[i] || `col_${i}`;
+        row[key] = $(cell).text().trim();
+      });
+      
+      // Map common field aliases
+      const record = {
+        subjectName  : row['subjects'] || row['subject'] || row['subject name'] || row['programme'] || row['col_1'] || '',
+        presentHours : row['no. of present'] || row['present'] || row['present hours'] || row['present days'] || row['col_2'] || '',
+        totalHours   : row['no. of sessions'] || row['total'] || row['total hours'] || row['total days'] || row['conducted'] || row['col_3'] || '',
+        percentage   : row['total %'] || row['total%'] || row['%'] || row['percentage'] || row['pct'] || row['attendance'] || row['col_4'] || '',
+        absentHours  : row['no. of absent'] || row['absent'] || '',
+        od           : row['od attendance'] || row['od'] || '',
+        medical      : row['medical'] || '',
+      };
 
-    const cleanPct = parseFloat(percentageText);
-    subjects.push({
-      subject: subjectTitle,
-      subjectName: subjectTitle,
-      Subjects: subjectTitle,
-      sessions: sessions,
-      totalHours: String(sessions),
-      "No. of Sessions": String(sessions),
-      present: present,
-      presentHours: String(present),
-      "No. of Present": String(present),
-      absent: absent,
-      absentHours: String(absent),
-      "No. of Absent": String(absent),
-      odAttendance: odAttendance,
-      od: odAttendance,
-      "OD Attendance": odAttendance,
-      medical: medical,
-      Medical: medical,
-      percentage: percentageText,
-      percentageClean: cleanPct,
-      "Total %": percentageText,
-      "Total%": percentageText,
-      belowThreshold: !isNaN(cleanPct) && cleanPct < 75
+      // Ensure subject name is set if found elsewhere
+      if (!record.subjectName) {
+         record.subjectName = row.subjects || row.subject || row.col_0 || row.col_1 || '';
+      }
+
+      // Cleanup subject name
+      record.subjectName = record.subjectName.replace(/\s*\([^)]+\)/g, '').trim();
+
+      // Clean up percentage (remove %)
+      if (record.percentage) record.percentage = String(record.percentage).replace('%', '').trim();
+      
+      // Calculate percentage if missing
+      if (!record.percentage && record.presentHours && record.totalHours) {
+        const p = parseFloat(record.presentHours);
+        const t = parseFloat(record.totalHours);
+        if (t > 0) record.percentage = ((p / t) * 100).toFixed(1);
+      }
+
+      // Populate rich key aliases for cross-app compatibility
+      const subjectTitle = record.subjectName;
+      const sessions = parseFloat(record.totalHours || "0");
+      const present = parseFloat(record.presentHours || "0");
+      const absent = parseFloat(record.absentHours || "0");
+      const odVal = record.od || "0";
+      const medVal = record.medical || "0";
+      const cleanPct = parseFloat(record.percentage || "0");
+      const percentageText = record.percentage ? (record.percentage + "%") : "0%";
+
+      record.subject = subjectTitle;
+      record.Subjects = subjectTitle;
+      record.sessions = sessions;
+      record["No. of Sessions"] = String(sessions);
+      record.present = present;
+      record["No. of Present"] = String(present);
+      record.absent = absent;
+      record["No. of Absent"] = String(absent);
+      record.odAttendance = odVal;
+      record["OD Attendance"] = odVal;
+      record.Medical = medVal;
+      record["Total %"] = percentageText;
+      record["Total%"] = percentageText;
+      record.percentageClean = cleanPct;
+
+      if (record.subjectName && record.subjectName.length > 2 && !record.subjectName.toLowerCase().includes('total')) {
+        records.push(record);
+      }
     });
   });
 
   return { 
     page: 'Attendance', 
-    sections: [{ headers: ['Subject', 'Present', 'Total', '%'], rows: subjects }],
-    data: subjects,
+    sections: [{ headers: ['Subject', 'Present', 'Total', '%'], rows: records }], 
+    data: records,
     semesters,
     semesterOptions: semesters
   };
 }
+
+
 
 /** Assessment page parser — groups rows by subject heading */
 function parseAssessment(html) {
