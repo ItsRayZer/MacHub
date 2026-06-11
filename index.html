@@ -316,9 +316,15 @@
                     }
                     
                     // Forcefully sync data in background and re-render
-                    if (typeof fetchSection === 'function') {
+                    if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
                         try {
-                            const data = await fetchSection(sectionName, true); // true = force sync
+                            // Pass current semester if they have a filter active
+                            let sem = '';
+                            if (sectionName === 'Attendance' && typeof appState !== 'undefined' && appState.selectedAttendanceSem && appState.selectedAttendanceSem !== 'all') {
+                                sem = appState.selectedAttendanceSem;
+                            }
+                            
+                            const data = await window.MacHubPortal.fetchSection(sectionName, true, sem); // true = force sync
                             
                             // After sync, re-render the view
                             if (sectionName === 'Attendance' && typeof renderClassAttendance === 'function') renderClassAttendance();
