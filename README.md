@@ -67,6 +67,18 @@ Since it's a Vanilla JS app without a heavy framework, you can simply serve the 
 
 Open `http://localhost:8000` (or the port provided) in your browser.
 
+## 🤖 Automated Student Ledger Sync Engine
+
+The project features a fully automated sync engine (`sync_ledger.py`) coupled with a GitHub Actions workflow (`.github/workflows/annual_sync.yml`) designed to keep Firestore data up-to-date.
+
+### 📅 Execution & Traversal
+- **Bidirectional Sequential Walk:** Starting from a pivot admission number, the script walks both backwards and forwards to discover and parse student records.
+- **Auto-Halting:** The walker stops in a direction after encountering **50 consecutive invalid logins** (preventing infinite scanning).
+
+### 🎓 Passed-Out (Graduated) Student Filtering
+- **Year Check Rule:** The sync engine automatically excludes passed-out students. After scraping a student's profile, it checks their `batch` end year (e.g., `2021 - 2024` ends in 2024).
+- **Rule Criteria:** If the batch end year is strictly less than the current system calendar year (e.g., `2024 < 2026`), the student is identified as graduated, and their records are **skipped** from being written to Cloud Firestore.
+
 ## 🤝 Maintenance Notes
 - **UI Modifications:** If you add new buttons or cards to `index.html`, make sure to add the `.spring` and `.liquid-button` (or `.glass-panel`) classes to maintain the Apple-inspired animations and styling.
 - **Mobile Optimization:** The app relies heavily on `max-w-md mx-auto` to simulate a mobile app feel on desktop browsers. Always test UI changes on smaller viewport widths (e.g., 375px or 390px).

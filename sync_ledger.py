@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 sync_ledger.py -- MacHub Annual Student Ledger Sync Engine v2.0.0
 Target   : eportal.maraugusthinosecollege.org (EduloomPro / ASP.NET)
@@ -619,6 +619,20 @@ def _process_student(admission_no: Any) -> bool:
     except Exception as exc:
         log.warning("    profile err %s: %s", adm, exc)
         profile = {"admission_no": adm, "name": result.student_name}
+
+    # Year check rule: Filter out passed out (graduated) students
+    batch = profile.get("batch", "")
+    if batch:
+        match = re.search(r"\d{4}\s*[-]\s*(\d{4})", batch)
+        if match:
+            end_year = int(match.group(1))
+            current_year = datetime.now().year
+            if end_year < current_year:
+                log.info("    SKIP passed-out student '%s' [%s] (Batch end year %d < %d)", profile.get("name", adm), adm, end_year, current_year)
+                session.close()
+                del session
+                gc.collect()
+                return True
 
     try:
         semesters = _scrape_exam_results(session)
