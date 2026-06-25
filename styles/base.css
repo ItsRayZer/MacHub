@@ -46,13 +46,16 @@
             opacity: 0.28;
             z-index: -1;
         }
-
         .view-panel {
             display: none;
         }
 
         .view-panel.is-active {
             display: block;
+        }
+
+        .view-panel.is-active.flex {
+            display: flex;
         }
 
         body:not(.app-ready) .view-panel {
@@ -122,6 +125,8 @@
         #bottomNav.nav-hidden {
             transform: translateX(-50%) translateY(120%);
             opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
         }
 
         .nav-pill {
@@ -2177,4 +2182,191 @@
             }
         }
 
-    
+
+/* ═══════════════════════════════════════════════════════════
+   ZIP DESIGN SYSTEM — New Profile & Settings
+   ═══════════════════════════════════════════════════════════ */
+
+/* Liquid Glass Cards */
+.liquid-glass {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.liquid-glass:hover {
+    background: rgba(255,255,255,0.07);
+}
+
+/* ── New 4-tab Profile Tab Bar ── */
+.new-profile-tab-bar {
+    display: flex;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 3px;
+    gap: 2px;
+    margin: 0 8px 16px;
+    position: relative;
+}
+.new-profile-tab-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border-radius: 11px;
+    border: none;
+    background: transparent;
+    color: #86868b;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+}
+.new-profile-tab-btn.active {
+    background: rgba(255,255,255,0.10);
+    color: #f5f5f7;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* ── Avatar Picker Modal ── */
+#avatarPickerModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 350;
+    align-items: flex-end;
+    justify-content: center;
+}
+#avatarPickerModal.open {
+    display: flex;
+}
+#avatarPickerBackdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+#avatarPickerSheet {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    max-height: 75vh;
+    display: flex;
+    flex-direction: column;
+    background: rgba(9,9,11,0.97);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.6);
+    animation: slideUp 0.3s cubic-bezier(0.32,0.72,0,1);
+}
+.av-pill { display:flex; justify-content:center; padding: 10px 0 4px; }
+.av-pill-bar { width:36px; height:4px; background:rgba(255,255,255,0.18); border-radius:9px; }
+.av-header { display:flex; align-items:center; justify-content:space-between; padding: 8px 18px 12px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.av-header h3 { font-size:14px; font-weight:800; color:#f5f5f7; margin:0; }
+.av-header p { font-size:10px; color:#8d99ae; margin: 2px 0 0; }
+.av-close-btn { width:28px; height:28px; border-radius:50%; border:none; background:rgba(255,255,255,0.08); color:#f5f5f7; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; }
+
+/* Category pills */
+.av-cats { display:flex; gap:8px; overflow-x:auto; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); scrollbar-width:none; }
+.av-cats::-webkit-scrollbar { display:none; }
+.av-cat-btn { flex-shrink:0; padding: 5px 12px; border-radius:20px; border: 1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.05); color:#8d99ae; font-size:10px; font-weight:700; cursor:pointer; transition:all 0.2s; font-family:'Outfit',sans-serif; }
+.av-cat-btn.active { background:#00F5D4; color:#000; border-color:transparent; }
+
+/* Avatar grid */
+.av-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; padding:16px; overflow-y:auto; scrollbar-width:none; }
+.av-grid::-webkit-scrollbar { display:none; }
+.av-item { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; border:none; background:none; padding:0; }
+.av-ring { width:64px; height:64px; border-radius:50%; padding:2.5px; transition:all 0.2s; }
+.av-ring.selected, .av-ring:hover { transform:scale(1.06); }
+.av-inner { width:100%; height:100%; border-radius:50%; overflow:hidden; background:#111; display:flex; align-items:center; justify-content:center; }
+.av-inner img { width:100%; height:100%; object-fit:cover; }
+.av-inner .av-emoji { font-size:26px; line-height:1; }
+.av-label { font-size:9px; font-weight:600; color:#8d99ae; font-family:'Outfit',sans-serif; }
+.av-check { position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; border:2px solid #000; display:flex; align-items:center; justify-content:center; font-size:9px; }
+
+/* ── Settings Sub-view Navigation ── */
+.settings-subview { display:none; }
+.settings-subview.active { display:block; }
+
+.settings-nav-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 13px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    cursor:pointer;
+    transition: opacity 0.15s;
+}
+.settings-nav-row:last-child { border-bottom:none; }
+.settings-nav-row:active { opacity:0.6; }
+.settings-nav-row-left { display:flex; align-items:center; gap:12px; }
+.settings-nav-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+.settings-nav-label { font-size:13px; font-weight:600; color:#f5f5f7; }
+.settings-nav-sub { font-size:10px; color:#8d99ae; margin-top:1px; }
+.settings-nav-arrow { font-size:16px; color:#8d99ae; }
+
+/* Section headers in settings */
+.settings-section-title {
+    font-size:10px; font-weight:700; color:#8d99ae;
+    text-transform:uppercase; letter-spacing:0.1em;
+    padding: 16px 0 6px;
+}
+
+/* Profile header accent ring for black bg */
+.new-profile-avatar-ring {
+    width:80px; height:80px; border-radius:50%;
+    padding:2.5px;
+    background: linear-gradient(135deg,#f9ce34,#ee2a7b,#6228d7);
+    box-shadow: 0 0 20px rgba(238,42,123,0.3);
+    cursor:pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    flex-shrink:0;
+}
+.new-profile-avatar-ring:hover, .new-profile-avatar-ring:active { transform:scale(1.04); }
+.new-profile-avatar-ring-inner { width:100%; height:100%; border-radius:50%; overflow:hidden; background:#111; display:flex; align-items:center; justify-content:center; position:relative; }
+
+/* Attendance badge pill */
+.att-badge {
+    display:inline-flex; align-items:center; gap:4px;
+    padding: 3px 10px; border-radius:20px;
+    font-size:10px; font-weight:700;
+}
+
+/* Subject attendance card */
+.sub-att-card {
+    padding:12px; border-radius:14px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.07);
+    transition: transform 0.15s;
+}
+.sub-att-card:active { transform:scale(0.97); }
+
+/* Marks row */
+.marks-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; border-radius:14px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.07);
+}
+
+/* Info grid row */
+.info-grid-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:11px 0;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.info-grid-row:last-child { border-bottom:none; }
+.info-grid-label { font-size:11px; color:#8d99ae; font-weight:600; }
+.info-grid-value { font-size:12px; color:#f5f5f7; font-weight:700; text-align:right; max-width:55%; }
+
+/* Slide up animation */
+@keyframes slideUp {
+    from { transform: translateY(100%); opacity:0; }
+    to   { transform: translateY(0);    opacity:1; }
+}
+@keyframes newFadeIn {
+    from { opacity:0; transform:translateY(6px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+.animate-new-fade { animation: newFadeIn 0.25s ease forwards; }

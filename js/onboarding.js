@@ -92,7 +92,7 @@ function enterAppWithProfile(profile) {
     if (profile.adminNo && typeof window.startBackgroundSync === 'function') window.startBackgroundSync();
 }
 
-function finishSmartOnboarding(event) {
+async function finishSmartOnboarding(event) {
     if (event?.preventDefault) event.preventDefault();
     const profile = buildProfileFromObData();
 
@@ -100,6 +100,57 @@ function finishSmartOnboarding(event) {
         alert('Please choose your profile or complete the manual setup.');
         window.nextObStep(_selectedStudentFromDB ? 3 : 2.5);
         return false;
+    }
+
+    // Save profile and enter app immediately — no loading screen, no portal handshake
+    localStorage.setItem('machub_student_id', profile.adminNo || '');
+    saveProfile(profile);
+
+    // Try to restore any existing cloud cache silently in the background
+    if (profile.adminNo) {
+        (async () => {
+            try {
+                // Authenticate first
+                if (window.authenticateFirebase) {
+                    await window.authenticateFirebase(profile.adminNo);
+                }
+                // Attempt Firestore restore if Firebase is available (silent, no UI)
+                if (window.firebaseFirestore && window.firestoreDoc && window.firestoreGetDoc) {
+                    const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', profile.adminNo);
+                    const docSnap = await window.firestoreGetDoc(docRef);
+                    if (docSnap.exists()) {
+                        const docData = docSnap.data();
+                        for (const key of Object.keys(docData)) {
+                            const cachedSection = docData[key];
+                            if (cachedSection && cachedSection.data) {
+                                let section = key;
+                                let semester = '';
+                                if (key.includes('_sem')) {
+                                    const parts = key.split('_sem');
+                                    section = parts[0];
+                                    semester = parts[1];
+                                }
+                                const keyName = `machub_portal_${section}${semester ? `_sem${semester}` : ''}_${profile.adminNo}`;
+                                // Only write if not already cached locally
+                                if (!localStorage.getItem(keyName)) {
+                                    localStorage.setItem(keyName, JSON.stringify({
+                                        data: cachedSection.data,
+                                        savedAt: Date.now()
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                // Silent — cloud restore is best-effort only
+            }
+
+            // Trigger background scrape after entering app
+            if (window.startBackgroundScrapeQueue) {
+                window.startBackgroundScrapeQueue(profile.adminNo);
+            }
+        })();
     }
 
     enterAppWithProfile(profile);
@@ -341,6 +392,23 @@ window.handleSmartSearch = function(query) {
     const q = (query || '').trim();
     if (!q) { resultsEl.innerHTML = ''; return; }
 
+    // Direct admin number entry → instantly select that student
+    if (/^\d{4,6}$/.test(q)) {
+        const direct = window.STUDENTS_DB?.find(x => x.adminNo === q);
+        if (direct) {
+            resultsEl.innerHTML = `
+                <button onclick="selectStudentFromDB('${escapeHtml(direct.adminNo)}')" class="ob-result-row spring">
+                    <span class="ob-result-avatar">${escapeHtml((direct.name || '?').charAt(0))}</span>
+                    <div class="flex-1 min-w-0">
+                        <p>${escapeHtml(direct.name)}</p>
+                        <small>${escapeHtml(direct.classGroup)} / ADMN ${escapeHtml(direct.adminNo)} / ROLL ${escapeHtml(direct.classNo)}</small>
+                    </div>
+                    <span class="ob-result-arrow" aria-hidden="true"></span>
+                </button>`;
+            return;
+        }
+    }
+
     const matches = window.SmartFinder ? window.SmartFinder.findStudent(q) : [];
 
     if (matches.length === 0) {
@@ -371,6 +439,8 @@ window.selectStudentFromDB = function(adminNo) {
     if (!s) return;
     _selectedStudentFromDB = s;
     syncSelectedProfileToObData();
+    // Store adminNo persistently so portal sync works immediately after login
+    localStorage.setItem('machub_student_id', adminNo);
     window.nextObStep(3);
 };
 window.showManualEntry = function() {
@@ -397,13 +467,51 @@ window.selectObDept = function(dept) {
 
 window.validateObStep2 = function() {
     if (!window.obData) window.obData = { name: '', dept: '', reg: '', adminNo: '' };
-    const nameVal = (document.getElementById('ob-name')?.value || "").trim();
-    const regVal = (document.getElementById('ob-reg')?.value || "").trim();
-    const adminNoVal = (document.getElementById('ob-adminNo')?.value || "").trim();
     
-    window.obData.name = nameVal;
-    window.obData.reg = regVal;
-    window.obData.adminNo = adminNoVal;
+    const nameInput = document.getElementById('ob-name');
+    const regInput = document.getElementById('ob-reg');
+    const adminInput = document.getElementById('ob-adminNo');
+
+    const nameVal = (nameInput?.value || "").trim();
+    const regVal = (regInput?.value || "").trim();
+    const adminNoVal = (adminInput?.value || "").trim();
+    
+    // Auto-lookup if admin number matches or name matches exactly in the DB
+    let matchedStudent = null;
+    if (/^\d{4,6}$/.test(adminNoVal)) {
+        matchedStudent = window.STUDENTS_DB?.find(x => x.adminNo === adminNoVal);
+    } else if (nameVal.length > 2) {
+        const nameUpper = nameVal.toUpperCase();
+        const matches = window.STUDENTS_DB?.filter(x => x.name.toUpperCase() === nameUpper);
+        if (matches && matches.length === 1) {
+            matchedStudent = matches[0];
+        }
+    }
+
+    if (matchedStudent) {
+        _selectedStudentFromDB = matchedStudent;
+        syncSelectedProfileToObData();
+        
+        // Populate input fields if they are empty or different
+        if (nameInput && nameInput.value.toUpperCase() !== matchedStudent.name.toUpperCase()) {
+            nameInput.value = matchedStudent.name;
+        }
+        if (regInput && regInput.value.toUpperCase() !== matchedStudent.regNo.toUpperCase()) {
+            regInput.value = matchedStudent.regNo;
+        }
+        if (adminInput && adminInput.value !== matchedStudent.adminNo) {
+            adminInput.value = matchedStudent.adminNo;
+        }
+        if (matchedStudent.department) {
+            window.selectObDept(matchedStudent.department.toUpperCase());
+        }
+    } else {
+        // If they cleared the input or changed it to something else, clear DB link
+        _selectedStudentFromDB = null;
+        window.obData.name = nameVal;
+        window.obData.reg = regVal;
+        window.obData.adminNo = adminNoVal;
+    }
 
     const btn = document.getElementById('ob-final-btn');
     if (window.obData.name && window.obData.dept) {

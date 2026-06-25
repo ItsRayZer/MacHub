@@ -56,11 +56,27 @@
     }
 
     // ── Build Gemini System Prompt from MacHub Live Data ───────────────────
+    function _getPortalCache(section, adminNo) {
+        if (!adminNo) return null;
+        const directKey = `machub_portal_${section}_${adminNo}`;
+        const direct = localStorage.getItem(directKey);
+        if (direct) return direct;
+        
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(`machub_portal_${section}_sem`) && key.endsWith(`_${adminNo}`)) {
+                return localStorage.getItem(key);
+            }
+        }
+        return null;
+    }
+
     function _buildSystemPrompt() {
         const info = _getStudentInfo();
         const name = info?.name || 'Student';
         const dept = info?.dept?.toUpperCase() || 'BCA';
         const reg  = info?.reg  || 'Not set';
+        const adminNo = info?.adminNo || '';
 
         let prompt = `You are MacAI, an intelligent academic assistant embedded inside MacHub — a college companion app for Macfast College (Mahathma Gandhi University, Kerala, India).
 
@@ -70,8 +86,103 @@ Student Profile:
 - Name: ${name}
 - Department: ${dept}
 - Registration No: ${reg}
-
+- Admission No: ${adminNo}
 `;
+
+        // 1. Live profile details from ePortal
+        if (adminNo) {
+            const cachedProfile = _getPortalCache('Profile', adminNo);
+            if (cachedProfile) {
+                try {
+                    const parsed = JSON.parse(cachedProfile);
+                    const p = parsed?.data?.payload?.sections?.[0]?.data || parsed?.data?.sections?.[0]?.data;
+                    const overrides = JSON.parse(localStorage.getItem('machub_profile_overrides_' + adminNo) || '{}');
+                    const profile = { ...p, ...overrides };
+                    if (profile) {
+                        prompt += `\nStudent Live Profile Details:\n`;
+                        if (profile.dob) prompt += `- Date of Birth: ${profile.dob}\n`;
+                        if (profile.gender) prompt += `- Gender: ${profile.gender}\n`;
+                        if (profile.phone) prompt += `- Mobile: ${profile.phone}\n`;
+                        if (profile.email) prompt += `- Email: ${profile.email}\n`;
+                        if (profile.bloodGroup) prompt += `- Blood Group: ${profile.bloodGroup}\n`;
+                        if (profile.religion || profile.caste) prompt += `- Religion & Caste: ${profile.religion || ''} ${profile.caste || ''}\n`;
+                        if (profile.abcId) prompt += `- ABC Student ID: ${profile.abcId}\n`;
+                        if (profile.address) prompt += `- Address: ${profile.address}\n`;
+                        if (profile.guardianName) prompt += `- Father/Guardian Name: ${profile.guardianName}\n`;
+                        if (profile.guardianPhone) prompt += `- Father/Guardian Phone: ${profile.guardianPhone}\n`;
+                    }
+                } catch(e) {}
+            }
+        }
+
+        // 2. Live attendance details from ePortal
+        if (adminNo) {
+            const cachedAtt = _getPortalCache('Attendance', adminNo);
+            if (cachedAtt) {
+                try {
+                    const parsed = JSON.parse(cachedAtt);
+                    const rows = parsed?.data?.payload?.sections?.[0]?.rows || parsed?.data?.sections?.[0]?.rows || [];
+                    if (rows.length > 0) {
+                        prompt += `\nLive Attendance (Subject-wise):\n`;
+                        rows.forEach(item => {
+                            if (item.subjectName) {
+                                prompt += `- ${item.subjectName}: ${item.percentage}% (${item.presentHours}/${item.totalHours} Hours)\n`;
+                            }
+                        });
+                    }
+                } catch(e) {}
+            }
+        }
+
+        // 3. Live assessment marks from ePortal
+        if (adminNo) {
+            const cachedAssess = _getPortalCache('Assessment', adminNo);
+            if (cachedAssess) {
+                try {
+                    const parsed = JSON.parse(cachedAssess);
+                    const sections = parsed?.data?.payload?.sections || parsed?.data?.sections || [];
+                    if (sections.length > 0) {
+                        prompt += `\nLive Assessment Marks (Internals/Tests):\n`;
+                        sections.forEach(sec => {
+                            if (sec.subject && sec.rows?.length) {
+                                prompt += `- ${sec.subject}:\n`;
+                                sec.rows.forEach(row => {
+                                    const keys = Object.keys(row);
+                                    const label = row[keys[0]] || '';
+                                    const marks = row['marks'] || row['score'] || row[keys[1]] || '';
+                                    prompt += `  * ${label}: ${marks}\n`;
+                                });
+                            }
+                        });
+                    }
+                } catch(e) {}
+            }
+        }
+
+        // 4. Live assignments from ePortal
+        if (adminNo) {
+            const cachedAssign = _getPortalCache('Assignment', adminNo);
+            if (cachedAssign) {
+                try {
+                    const parsed = JSON.parse(cachedAssign);
+                    const sections = parsed?.data?.payload?.sections || parsed?.data?.sections || [];
+                    if (sections.length > 0) {
+                        prompt += `\nLive Assignments:\n`;
+                        sections.forEach(sec => {
+                            if (sec.rows?.length) {
+                                prompt += `- Status: ${sec.label || 'Active'}\n`;
+                                sec.rows.forEach(row => {
+                                    const vals = Object.values(row).filter(Boolean);
+                                    prompt += `  * ${vals[0] || ''} - ${vals[1] || ''}\n`;
+                                });
+                            }
+                        });
+                    }
+                } catch(e) {}
+            }
+        }
+
+        prompt += '\n';
 
         // Inject timetable context
         const ttKey = `CLASS_TIMETABLE_${dept}`;

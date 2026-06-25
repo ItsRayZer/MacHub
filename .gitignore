@@ -16,3 +16,8 @@ sync_test.json
 *.json.bak
 *.json.tmp
 serviceAccountKey.json
+
+# Cloudflare Worker secrets & build artifacts
+.dev.vars
+workers/.dev.vars
+workers/.wrangler/

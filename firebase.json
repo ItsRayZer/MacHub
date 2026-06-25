@@ -1,4 +1,7 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "hosting": {
     "site": "machub",
     "public": ".",
@@ -6,18 +9,36 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "MAC-EXAM-Hub-Scraper/**",
+      "machub-app/**",
+      "machin_backend/**",
+      "workers/**",
+      "docs/**",
+      "option_b/**",
       "scratch/**",
-      "Exam full detailed time table/**",
+      "tools/**",
+      "node_modules/**",
       "package.json",
       "package-lock.json",
+      "server.js",
+      "batch_scrape.py",
+      "script.js",
       "README.md",
-      "SAMPLE UI WITH REAL DATA.HTML"
+      "KNOWLEAGE.txt",
+      "render.yaml",
+      "students.json",
+      "students_all.json",
+      "sync_errors.json",
+      "sync_test.json",
+      "portal_specs.json",
+      "browser_discovery.json",
+      "*.py",
+      "*.log",
+      "*.html.bak"
     ],
     "rewrites": [
       {
-        "source": "/api/**",
-        "function": "api"
+        "source": "**",
+        "destination": "/index.html"
       }
     ]
   },

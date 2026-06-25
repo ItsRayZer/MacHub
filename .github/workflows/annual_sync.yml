@@ -1,0 +1,169 @@
+﻿# ==============================================================================
+#  .github/workflows/annual_sync.yml
+#  MacHub Annual Student Ledger Sync -- GitHub Actions Workflow
+#
+#  Schedule : July 20 every year at 03:00 AM IST (21:30 UTC on July 19)
+#  Trigger  : Scheduled cron + manual workflow_dispatch override
+#  Runtime  : ubuntu-latest (GitHub-hosted free runner)
+#  Secrets  :
+#    FIREBASE_SERVICE_ACCOUNT  -- GCP Service Account JSON (for Firestore writes)
+#    HF_TOKEN                  -- HuggingFace token (reserved for future AI use)
+#    VITE_API_SECRET_KEY       -- API secret key (passed through for server.js proxy)
+# ==============================================================================
+
+name: "Annual Student Ledger Sync"
+
+on:
+  # -------------------------------------------------------------------
+  # POSIX cron: July 20 at 21:30 UTC == July 20 at 03:00 AM IST
+  # -------------------------------------------------------------------
+  schedule:
+    - cron: "30 21 20 7 *"
+
+  # -------------------------------------------------------------------
+  # Manual override -- run from GitHub Actions UI at any time
+  # -------------------------------------------------------------------
+  workflow_dispatch:
+    inputs:
+      pivot_adm:
+        description: "Pivot admission number to start walk from (default: 12965)"
+        required: false
+        default: "12965"
+      dry_run:
+        description: "Set to 'true' to skip Firestore writes (test mode)"
+        required: false
+        default: "false"
+
+# Prevent multiple concurrent runs (queues rather than cancels)
+concurrency:
+  group: annual-ledger-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: "Bidirectional Ledger Sync"
+    runs-on: ubuntu-latest
+
+    # Safety ceiling: 6 hours covers ~400 students at 3-5s jitter + scrape time
+    timeout-minutes: 360
+
+    steps:
+      # ----------------------------------------------------------------
+      # 1. Checkout repository at HEAD
+      # ----------------------------------------------------------------
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ----------------------------------------------------------------
+      # 2. Set up Python 3.10 runtime
+      # ----------------------------------------------------------------
+      - name: "Set up Python 3.10"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          # Cache based on the dedicated requirements file for this script
+          cache-dependency-path: "requirements_ledger.txt"
+
+      # ----------------------------------------------------------------
+      # 3. Install core dependencies (write requirements_ledger.txt first)
+      # ----------------------------------------------------------------
+      - name: "Write dependency manifest"
+        run: |
+          cat > requirements_ledger.txt << 'EOF'
+          requests==2.32.3
+          beautifulsoup4==4.12.3
+          lxml==5.2.2
+          google-cloud-firestore==2.16.1
+          google-auth==2.30.0
+          EOF
+
+      - name: "Install dependencies"
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements_ledger.txt
+
+      # ----------------------------------------------------------------
+      # 4. Verify critical secrets are present (fail fast, not mid-run)
+      # ----------------------------------------------------------------
+      - name: "Verify secrets are configured"
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT secret is not set. Aborting."
+            exit 1
+          fi
+          echo "::notice::All required secrets present. Starting sync."
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # ----------------------------------------------------------------
+      # 5. Run the Annual Ledger Sync script
+      # ----------------------------------------------------------------
+      - name: "Run sync_ledger.py"
+        run: python sync_ledger.py 2>&1 | tee sync_ledger.log
+        env:
+          # --- Cloud credentials ---
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # --- Reserved tokens ---
+          HF_TOKEN:              ${{ secrets.HF_TOKEN }}
+          VITE_API_SECRET_KEY:   ${{ secrets.VITE_API_SECRET_KEY }}
+          # --- Behaviour configuration ---
+          PIVOT_ADM: >-
+            ${{
+              github.event.inputs.pivot_adm ||
+              '12965'
+            }}
+          DRY_RUN: >-
+            ${{
+              github.event.inputs.dry_run ||
+              'false'
+            }}
+          # Improve output clarity in CI environments
+          PYTHONUNBUFFERED: "1"
+
+      # ----------------------------------------------------------------
+      # 6. Always upload the log as a downloadable artifact
+      # ----------------------------------------------------------------
+      - name: "Upload sync log"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "sync-ledger-log-${{ github.run_id }}"
+          path: sync_ledger.log
+          retention-days: 90
+
+      # ----------------------------------------------------------------
+      # 7. On failure -- commit log to repo for persistent debugging
+      # ----------------------------------------------------------------
+      - name: "Commit failure log to repository"
+        if: failure()
+        run: |
+          git config --global user.name  "GitHub Actions [Ledger Sync]"
+          git config --global user.email "actions@github.com"
+          git add sync_ledger.log || true
+          git commit -m "ci: upload sync_ledger failure log [run ${{ github.run_id }}] [skip ci]" || true
+          git push origin HEAD:${{ github.ref }} || true
+
+      # ----------------------------------------------------------------
+      # 8. Job summary -- rich Markdown output in Actions UI
+      # ----------------------------------------------------------------
+      - name: "Write job summary"
+        if: always()
+        run: |
+          echo "## MacHub Annual Ledger Sync" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Run ID | \`${{ github.run_id }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trigger | \`${{ github.event_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Pivot ADM | \`${{ github.event.inputs.pivot_adm || '12965' }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Started | \`$(date -u +%Y-%m-%dT%H:%M:%SZ)\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f sync_ledger.log ]; then
+            echo "### Last 30 lines of sync log" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -n 30 sync_ledger.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
