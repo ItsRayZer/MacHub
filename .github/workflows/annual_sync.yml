@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 #  .github/workflows/annual_sync.yml
 #  MacHub Annual Student Ledger Sync -- GitHub Actions Workflow
 #
@@ -43,9 +43,9 @@ jobs:
   sync:
     name: "Bidirectional Ledger Sync"
     runs-on: ubuntu-latest
-
-    # Safety ceiling: 6 hours covers ~400 students at 3-5s jitter + scrape time
     timeout-minutes: 360
+    permissions:
+      contents: write
 
     steps:
       # ----------------------------------------------------------------
@@ -57,18 +57,7 @@ jobs:
           fetch-depth: 1
 
       # ----------------------------------------------------------------
-      # 2. Set up Python 3.10 runtime
-      # ----------------------------------------------------------------
-      - name: "Set up Python 3.10"
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-          cache: "pip"
-          # Cache based on the dedicated requirements file for this script
-          cache-dependency-path: "requirements_ledger.txt"
-
-      # ----------------------------------------------------------------
-      # 3. Install core dependencies (write requirements_ledger.txt first)
+      # 2. Write dependency manifest (done before python setup to enable caching)
       # ----------------------------------------------------------------
       - name: "Write dependency manifest"
         run: |
@@ -79,6 +68,16 @@ jobs:
           google-cloud-firestore==2.16.1
           google-auth==2.30.0
           EOF
+
+      # ----------------------------------------------------------------
+      # 3. Set up Python 3.10 runtime (caches using requirements_ledger.txt)
+      # ----------------------------------------------------------------
+      - name: "Set up Python 3.10"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: "requirements_ledger.txt"
 
       - name: "Install dependencies"
         run: |
