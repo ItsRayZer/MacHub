@@ -324,50 +324,85 @@ def _scrape_profile(
         return {"admission_no": admission_no, "name": student_name, "_error": "profile_unreachable"}
 
     _strip_cf_emails(soup)
-    lines = [l.strip() for l in soup.get_text(separator="\n").split("\n") if l.strip()]
 
-    student_lines: List[str] = []
-    parent_lines:  List[str] = []
-    in_parent = False
-    for line in lines:
-        if any(p in line.lower() for p in ("father info", "mother info", "guardian info")):
-            in_parent = True
-        (parent_lines if in_parent else student_lines).append(line)
-
-    profile: Dict[str, Any] = {
-        "admission_no": admission_no,
-        "name":         student_name,
-        "prn":          "",   # University PRN / Register Number
-        "course":       "",
-        "department":   "",
-        "batch":        "",
-        "division":     "",
-        "semester":     "",
-        "email":        "",
-        "phone":        "",
-        "dob":          "",
-        "gender":       "",
-        "category":     "",
-        "nationality":  "",
-        "abc_id":       "",
-        "photo_url":    "",
+    profile = {
+        "admission_no":   admission_no,
+        "name":           student_name or "",
+        "prn":            "",
+        "course":         "",
+        "department":     "",
+        "batch":          "",
+        "division":       "",
+        "semester":       "",
+        "email":          "",
+        "phone":          "",
+        "dob":            "",
+        "gender":         "",
+        "blood_group":    "",
+        "bloodGroup":     "",
+        "aadhar":         "",
+        "category":       "",
+        "nationality":    "",
+        "religion":       "",
+        "caste":          "",
+        "income":         "",
+        "address":        "",
+        "comm_address":   "",
+        "commAddress":    "",
+        "guardian_name":  "",
+        "guardianName":   "",
+        "guardian_phone": "",
+        "guardianPhone":  "",
+        "guardian_email": "",
+        "guardianEmail":  "",
+        "abc_id":         "",
+        "photo_url":      "",
+        "photoUrl":       "",
     }
 
-    LABEL_MAP = {
-        "date of birth":   "dob",
-        "mobile":          "phone",
-        "email":           "email",
-        "gender":          "gender",
-        "nationality":     "nationality",
-        "reservation":     "category",
-        "abc id":          "abc_id",
-        "register number": "prn",
-        "reg no":          "prn",
-        "registration no": "prn",
-        "prn":             "prn",
-        "division":        "division",
-        "semester":        "semester",
-    }
+    def _by_id(span_id: str) -> str:
+        el = soup.find(id=span_id)
+        return el.get_text().strip() if el else ""
+
+    profile["name"]           = _by_id("MainContent_lblStudName") or profile["name"]
+    profile["prn"]            = _by_id("MainContent_lblRegNo")
+    profile["course"]         = _by_id("MainContent_lblCourse")
+    profile["batch"]          = _by_id("MainContent_lblBatch")
+    profile["dob"]            = _by_id("MainContent_lblDOB")
+    profile["phone"]          = _by_id("MainContent_lblMobile")
+    profile["email"]          = _by_id("MainContent_lblEmail")
+    profile["gender"]         = _by_id("MainContent_lblGender")
+    profile["blood_group"]    = _by_id("MainContent_lblBlood")
+    profile["bloodGroup"]     = profile["blood_group"]
+    profile["aadhar"]         = _by_id("MainContent_lblAdhar")
+    profile["nationality"]    = _by_id("MainContent_lblnation")
+    profile["religion"]       = _by_id("MainContent_lblReligion")
+    profile["caste"]          = _by_id("MainContent_lblCaste")
+    profile["category"]       = _by_id("MainContent_lblReserv")
+    profile["income"]         = _by_id("MainContent_lblAnnualInc")
+    profile["address"]        = _by_id("MainContent_lblPerAddr")
+    profile["comm_address"]   = _by_id("MainContent_lblComAddr")
+    profile["commAddress"]    = profile["comm_address"]
+    
+    # Guardian details fallback: check Father Info first, then Mother, then Guardian
+    f_name = _by_id("MainContent_lblFather")
+    f_phone = _by_id("MainContent_lblFathphone")
+    f_email = _by_id("MainContent_lblFathEmail")
+    
+    m_name = _by_id("MainContent_lblMother")
+    m_phone = _by_id("MainContent_lblMothPhone")
+    m_email = _by_id("MainContent_lblMothEmail")
+    
+    g_name = _by_id("MainContent_lblGuardian")
+    g_phone = _by_id("MainContent_lblGuardph") or _by_id("MainContent_lblGuardMob")
+    g_email = _by_id("MainContent_lblGuardMail")
+    
+    profile["guardian_name"]  = f_name or m_name or g_name
+    profile["guardianName"]   = profile["guardian_name"]
+    profile["guardian_phone"] = f_phone or m_phone or g_phone
+    profile["guardianPhone"]  = profile["guardian_phone"]
+    profile["guardian_email"] = f_email or m_email or g_email
+    profile["guardianEmail"]  = profile["guardian_email"]
 
     DEPT_MAP = {
         "COMPUTER APPLICATIONS": "BCA",
@@ -377,45 +412,134 @@ def _scrape_profile(
         "SCIENCE":     "BSC",
         "ARTS":        "BA",
     }
+    if profile["course"]:
+        for kw, code in DEPT_MAP.items():
+            if kw in profile["course"].upper():
+                profile["department"] = code
+                break
+        if not profile["department"]:
+            profile["department"] = profile["course"].split()[0] if profile["course"] else ""
 
-    for i, line in enumerate(student_lines):
-        lower = line.lower()
-
-        if "view student profile" in lower and i + 1 < len(student_lines):
-            profile["name"] = student_lines[i + 1]
-            if i + 3 < len(student_lines):
-                raw = student_lines[i + 3]
-                profile["course"] = raw
-                for kw, code in DEPT_MAP.items():
-                    if kw in raw.upper():
-                        profile["department"] = code
-                        break
-                if not profile["department"]:
-                    profile["department"] = raw.split()[0] if raw else ""
-            for off in range(3, 10):
-                idx = i + off
-                if idx < len(student_lines) and re.search(r"\d{4}\s*[-]\s*\d{4}", student_lines[idx]):
-                    profile["batch"] = student_lines[idx]
-                    break
-
-        for label, key in LABEL_MAP.items():
-            if label in lower and i + 1 < len(student_lines):
-                val = student_lines[i + 1]
-                if val.lower() not in ("other details", "religion", "personal information"):
-                    if not profile.get(key):
-                        profile[key] = val
-
-    # Photo URL
-    photo = (
-        soup.find("img", id=re.compile(r"photo|profile|student", re.I))
-        or soup.find("img", src=re.compile(r"student|photo|profile", re.I))
-    )
+    photo = soup.find("img", id=re.compile(r"profimg|photo|profile|student", re.I)) or \
+            soup.find("img", src=re.compile(r"student|photo|profile", re.I))
     if photo and photo.get("src"):
         src = photo["src"]
         profile["photo_url"] = src if src.startswith("http") else f"{BASE_URL}/{src.lstrip('/')}"
+        profile["photoUrl"] = profile["photo_url"]
+
+    clean_soup = BeautifulSoup(str(soup), "lxml")
+    for s in clean_soup(["script", "style", "select", "input", "textarea", "button"]):
+        s.decompose()
+    
+    body_text = re.sub(r"\s+", " ", clean_soup.get_text()).strip()
+
+    def _extract_field(pattern: str) -> str:
+        m = re.search(pattern, body_text, re.I)
+        return m.group(1).strip() if m else ""
+
+    # Regex Fallback Extraction
+    if not profile["name"]:
+        m = re.search(r"View Student Profile\s*([A-Z\s]+?)\s*(\d+)", body_text, re.I)
+        if m:
+            profile["name"] = m.group(1).strip()
+    
+    if not profile["course"]:
+        m = re.search(r"View Student Profile[^]+?\d+\s*([A-Z\s()&,-]+?)\s*\(\s*\d{4}", body_text, re.I)
+        if m:
+            profile["course"] = m.group(1).strip()
+
+    if not profile["batch"]:
+        m = re.search(r"\(\s*(\d{4}\s*-\s*\d{4})\s*\)", body_text)
+        if m:
+            profile["batch"] = m.group(1).strip()
+
+    if not profile["dob"]:
+        profile["dob"] = _extract_field(r"Date Of Birth[^\d]*(\d{2}[-/]\d{2}[-/]\d{4})")
+
+    if not profile["phone"]:
+        profile["phone"] = _extract_field(r"Mobile[^\d]*(\d{10})")
+
+    if not profile["email"]:
+        profile["email"] = _extract_field(r"Email[^\w]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})")
+
+    if not profile["gender"]:
+        profile["gender"] = _extract_field(r"Gender[^\w]*(MALE|FEMALE|OTHER)")
+
+    if not profile["blood_group"]:
+        bg_m = re.search(r"Blood Group[^\w]*(A\+|A-|B\+|B-|AB\+|AB-|O\+|O-)", body_text, re.I)
+        if bg_m:
+            profile["blood_group"] = bg_m.group(1).strip()
+            profile["bloodGroup"] = profile["blood_group"]
+
+    if not profile["aadhar"]:
+        profile["aadhar"] = _extract_field(r"Aadhaar[^\d]*(\d{12})")
+
+    if not profile["category"]:
+        profile["category"] = _extract_field(r"Reservation[^\w]*([A-Z\s]+?)\s*Annual Income")
+
+    if not profile["nationality"]:
+        profile["nationality"] = _extract_field(r"Nationality[^\w]*([A-Z\s]+?)\s*(?:Other Details|Religion)")
+
+    if not profile["religion"]:
+        profile["religion"] = _extract_field(r"Religion[^\w]*([A-Z\s]+?)\s*Caste")
+
+    if not profile["caste"]:
+        profile["caste"] = _extract_field(r"Caste[^\w]*([A-Z\s]+?)\s*Reservation")
+
+    if not profile["income"]:
+        profile["income"] = _extract_field(r"Annual Income[^\d]*([0-9\s]*?)\s*(?:Permanent Address|Communication Address|Other Details)")
+
+    if not profile["address"]:
+        m = re.search(r"Permanent Address\s*([^]+?)\s*Communication Address", body_text, re.I)
+        if m:
+            profile["address"] = m.group(1).strip().rstrip("-").strip()
+
+    if not profile["comm_address"]:
+        m = re.search(r"Communication Address\s*([^]+?)\s*(Father Info|Mother Info|Guardian Info)", body_text, re.I)
+        if m:
+            profile["comm_address"] = m.group(1).strip().rstrip("-").strip()
+            profile["commAddress"] = profile["comm_address"]
+
+    if not profile["guardian_name"]:
+        m_m = re.search(r"Father Info\s*Name\s*([A-Z\s]+?)\s*(Occupation|Phone|Email)", body_text, re.I)
+        m_m2 = re.search(r"Mother Info\s*Name\s*([A-Z\s]+?)\s*(Occupation|Phone|Email)", body_text, re.I)
+        g_m = re.search(r"Guardian Info\s*Name\s*([A-Z\s]+?)\s*(Relation|Phone|Mobile|Email)", body_text, re.I)
+        if m_m:
+            profile["guardian_name"] = m_m.group(1).strip()
+        elif m_m2:
+            profile["guardian_name"] = m_m2.group(1).strip()
+        elif g_m:
+            profile["guardian_name"] = g_m.group(1).strip()
+        profile["guardianName"] = profile["guardian_name"]
+            
+    if not profile["guardian_phone"]:
+        m_m = re.search(r"Father Info[^]+?Phone\s*(\d{10})", body_text, re.I)
+        m_m2 = re.search(r"Mother Info[^]+?Phone\s*(\d{10})", body_text, re.I)
+        g_m = re.search(r"Guardian Info[^]+?Phone\s*(\d{10})", body_text, re.I)
+        g_m2 = re.search(r"Guardian Info[^]+?Mobile\s*(\d{10})", body_text, re.I)
+        if m_m:
+            profile["guardian_phone"] = m_m.group(1).strip()
+        elif m_m2:
+            profile["guardian_phone"] = m_m2.group(1).strip()
+        elif g_m:
+            profile["guardian_phone"] = g_m.group(1).strip()
+        elif g_m2:
+            profile["guardian_phone"] = g_m2.group(1).strip()
+        profile["guardianPhone"] = profile["guardian_phone"]
+
+    if not profile["guardian_email"]:
+        m_m = re.search(r"Father Info[^]+?Email\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})", body_text, re.I)
+        m_m2 = re.search(r"Mother Info[^]+?Email\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})", body_text, re.I)
+        g_m = re.search(r"Guardian Info[^]+?Email\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})", body_text, re.I)
+        if m_m:
+            profile["guardian_email"] = m_m.group(1).strip()
+        elif m_m2:
+            profile["guardian_email"] = m_m2.group(1).strip()
+        elif g_m:
+            profile["guardian_email"] = g_m.group(1).strip()
+        profile["guardianEmail"] = profile["guardian_email"]
 
     return profile
-
 
 # ==============================================================================
 #  EXAM RESULTS SCRAPER -- SEMESTER LEDGER
@@ -440,17 +564,51 @@ def _parse_table(table: Any) -> List[Dict[str, str]]:
     return records
 
 
-def _scrape_exam_results(session: requests.Session) -> Dict[str, List[Dict[str, Any]]]:
-    """
-    Scrapes ExamResult.aspx.
-    Returns dict keyed by semester number string ("1" to "6"), each value
-    being a list of subject records with canonical fields:
-        subject_code, subject_title, isa, esa, total, grade
-    """
-    soup = _safe_get(session, f"{BASE_URL}/ExamResult.aspx")
-    if not soup:
-        return {}
+def _parse_exam_tables_on_page(soup: BeautifulSoup) -> List[Dict[str, Any]]:
+    FIELD_ALIASES = {
+        "subject_code":  ["subject code", "code", "course code", "sub code"],
+        "subject_title": ["subject", "subject name", "title", "paper", "course name"],
+        "isa":           ["isa", "internal", "int mark", "internal mark", "ca", "ia"],
+        "esa":           ["esa", "external", "ext mark", "external mark", "univ mark", "university"],
+        "total":         ["total", "total marks", "aggregate", "obtained"],
+        "grade":         ["grade", "letter grade", "result", "status"],
+    }
 
+    def _norm(h: str) -> str:
+        h = h.lower().strip()
+        for canon, aliases in FIELD_ALIASES.items():
+            if any(a in h for a in aliases):
+                return canon
+        return h
+
+    records = []
+    tables = soup.find_all("table")
+    for table in tables:
+        rows = table.find_all("tr")
+        if not rows:
+            continue
+
+        raw_hdrs  = [_txt(th) for th in rows[0].find_all(["th", "td"])]
+        h_str = " ".join(raw_hdrs).lower()
+        if not any(x in h_str for x in ["subject", "grade", "mark", "isa", "esa", "internal", "external"]):
+            continue
+
+        norm_hdrs = [_norm(h) for h in raw_hdrs]
+
+        for row in rows[1:]:
+            cells = row.find_all("td")
+            if not cells:
+                continue
+            rec: Dict[str, Any] = {}
+            for i, cell in enumerate(cells):
+                key = norm_hdrs[i] if i < len(norm_hdrs) else f"col_{i}"
+                rec[key] = _txt(cell)
+            if any(v.strip() for v in rec.values()) and (rec.get("subject_title") or rec.get("subject_code")):
+                records.append(rec)
+    return records
+
+
+def _parse_exam_page(soup: BeautifulSoup) -> Dict[str, List[Dict[str, Any]]]:
     FIELD_ALIASES = {
         "subject_code":  ["subject code", "code", "course code", "sub code"],
         "subject_title": ["subject", "subject name", "title", "paper", "course name"],
@@ -506,15 +664,99 @@ def _scrape_exam_results(session: requests.Session) -> Dict[str, List[Dict[str, 
         if records and current_sem:
             semesters.setdefault(current_sem, []).extend(records)
 
-    # Flat fallback if heading-guided parse missed everything
     if not semesters:
-        log.debug("ExamResult: using flat fallback parse")
         for i, table in enumerate(tables):
             rows_data = _parse_table(table)
             if rows_data:
                 semesters[str(i + 1)] = rows_data
 
     return semesters
+
+
+def _scrape_exam_results(session: requests.Session) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Scrapes ExamResult.aspx for all available semesters.
+    Uses ASP.NET postbacks to navigate through the semesters in the dropdown.
+    """
+    url = f"{BASE_URL}/ExamResult.aspx"
+    soup = _safe_get(session, url)
+    if not soup:
+        return {}
+
+    select_el = soup.find("select", id=re.compile(r"drop_exam|drp_exam|ddlsem|drpsem", re.I)) or \
+                soup.find("select", name=re.compile(r"drop_exam|drp_exam|sem|exam", re.I))
+                
+    if not select_el:
+        log.debug("ExamResult: no semester dropdown found, parsing default page")
+        return _parse_exam_page(soup)
+
+    select_name = select_el.get("name", "ctl00$MainContent$drop_exam")
+    
+    options = []
+    for opt in select_el.find_all("option"):
+        val = opt.get("value", "").strip()
+        txt_val = opt.get_text().strip()
+        if val and val != "0":
+            options.append((val, txt_val))
+
+    if not options:
+        log.debug("ExamResult: no semester options found in dropdown, parsing default page")
+        return _parse_exam_page(soup)
+
+    semesters_data: Dict[str, List[Dict[str, Any]]] = {}
+
+    form = soup.find("form")
+    action = form.get("action", "/ExamResult.aspx") if form else "/ExamResult.aspx"
+    if action.startswith("."):
+        post_url = BASE_URL + action.lstrip(".")
+    elif action.startswith("/"):
+        post_url = BASE_URL + action
+    else:
+        post_url = action if action.startswith("http") else BASE_URL + "/" + action
+
+    for val, txt_val in options:
+        sem_num = val
+        num_match = re.search(r"\d+", txt_val)
+        if num_match:
+            sem_num = num_match.group(0)
+            
+        log.debug("ExamResult: fetching semester %s (%s)", sem_num, txt_val)
+        tokens = _asp_tokens(soup)
+        
+        payload = {
+            "__VIEWSTATE":          tokens.get("__VIEWSTATE", ""),
+            "__VIEWSTATEGENERATOR": tokens.get("__VIEWSTATEGENERATOR", ""),
+            "__EVENTVALIDATION":    tokens.get("__EVENTVALIDATION", ""),
+            "__VIEWSTATEENCRYPTED": tokens.get("__VIEWSTATEENCRYPTED", ""),
+            "__EVENTTARGET":        select_name,
+            "__EVENTARGUMENT":      "",
+            select_name:            val,
+        }
+        
+        for inp in soup.find_all("input", type="hidden"):
+            inp_name = inp.get("name")
+            if inp_name and inp_name not in payload:
+                payload[inp_name] = inp.get("value", "")
+
+        try:
+            resp = session.post(post_url, data=payload, timeout=REQUEST_TIMEOUT)
+            if resp.status_code == 200:
+                soup = BeautifulSoup(resp.text, "lxml")
+                sem_results = _parse_exam_tables_on_page(soup)
+                if sem_results:
+                    semesters_data[sem_num] = sem_results
+            else:
+                log.warning("ExamResult: POST for sem %s returned status %d", sem_num, resp.status_code)
+        except Exception as exc:
+            log.warning("ExamResult: failed to fetch sem %s: %s", sem_num, exc)
+            
+    if not semesters_data:
+        log.debug("ExamResult: postback walk returned nothing, parsing default page")
+        soup = _safe_get(session, url)
+        if soup:
+            return _parse_exam_page(soup)
+
+    return semesters_data
 
 
 # ==============================================================================
