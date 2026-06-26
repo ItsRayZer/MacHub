@@ -42,7 +42,7 @@ BASE_URL  = "https://eportal.maraugusthinosecollege.org"
 LOGIN_URL = f"{BASE_URL}/Default.aspx"
 PIVOT_ADM = int(os.environ.get("PIVOT_ADM", "12965"))  # Configurable via env
 
-MAX_CONSECUTIVE_FAILURES = 50   # Halt threshold per direction
+MAX_CONSECUTIVE_FAILURES = 100   # Halt threshold per direction
 JITTER_MIN      = 2.0           # seconds
 JITTER_MAX      = 5.0
 REQUEST_TIMEOUT = 18            # per request
