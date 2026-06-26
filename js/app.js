@@ -15,17 +15,44 @@ appState.externalApp = appState.externalApp || { isOpen: false, url: '', title: 
 if (typeof appState.completedSubjectsExpanded !== 'boolean') appState.completedSubjectsExpanded = false;
 
 // Class Hub state
+let timetableDisplayMode = 'today';
 let currentClassDay = (function() {
     const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const currentDayName = DAYS_OF_WEEK[new Date().getDay()];
+    const now = new Date();
+    const currentDayName = DAYS_OF_WEEK[now.getDay()];
+    const isWeekend = [0, 6].includes(now.getDay());
+    const totalSecsToday = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    
+    if (isWeekend || totalSecsToday >= 15.5 * 3600) {
+        timetableDisplayMode = 'next';
+        let nextSchoolDayName = "Monday";
+        if (now.getDay() === 5 || now.getDay() === 6 || now.getDay() === 0) {
+            nextSchoolDayName = "Monday";
+        } else {
+            nextSchoolDayName = DAYS_OF_WEEK[now.getDay() + 1];
+        }
+        return nextSchoolDayName;
+    }
     return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].includes(currentDayName) ? currentDayName : "Monday";
 })();
 let currentClassDept = 'BCA';
 
 function getStudentInfo() {
-    if (window.ExamHubProfileApi) return window.ExamHubProfileApi.getStudentInfo();
+    if (window.ExamHubProfileApi) {
+        const info = window.ExamHubProfileApi.getStudentInfo();
+        if (info) {
+            info.dept = info.dept || info.department || info.course || '';
+            info.adminNo = info.adminNo || info.admissionNo || info.admissionNumber || '';
+        }
+        return info;
+    }
     try {
-        return JSON.parse(localStorage.getItem('mac_student_info'));
+        const info = JSON.parse(localStorage.getItem('mac_student_info'));
+        if (info) {
+            info.dept = info.dept || info.department || info.course || '';
+            info.adminNo = info.adminNo || info.admissionNo || info.admissionNumber || '';
+        }
+        return info;
     } catch (error) {
         return null;
     }
@@ -229,6 +256,9 @@ function startTimers() {
     setInterval(() => {
         updateCountdown();
         updateLiveClock();
+        if (typeof window.tickClassTimetable === 'function') {
+            window.tickClassTimetable();
+        }
     }, 1000);
 }
 
@@ -241,7 +271,7 @@ let HALL_KEYS = [];
 function getMainNavView(viewId) {
     if (['view-timetable', 'view-seats', 'view-exam-resources', 'view-class'].includes(viewId)) return 'view-exam';
     if (viewId === 'view-resources') return 'view-resources';
-    if (viewId === 'view-profile') return 'view-profile';
+    if (viewId === 'view-profile' || viewId === 'view-profile-edit' || viewId === 'view-settings' || (viewId && viewId.startsWith('view-settings-'))) return 'view-profile';
     return 'view-home';
 }
 
@@ -375,6 +405,15 @@ window.switchExamTab = function(tab) {
 };
 
 function switchView(viewId) {
+    // Save current view state before normalization
+    if (viewId) {
+        localStorage.setItem('machub_current_view', viewId);
+        if (['view-class', 'view-seats', 'view-timetable', 'view-results', 'view-exam-resources'].includes(viewId)) {
+            appState.examSubView = viewId;
+            localStorage.setItem('machub_exam_sub_view', viewId);
+        }
+    }
+
     // Handle unified view-exam-hub alias and old aliases
     if (viewId === 'view-exam-hub' || viewId === 'view-exam') {
         viewId = 'view-class';
@@ -387,40 +426,38 @@ function switchView(viewId) {
         }
         viewId = 'view-seats';
     }
+    const currentViewId = appState.view;
 
-    const getViewIndex = (id) => {
+    const getViewDepth = (id) => {
         if (!id) return 0;
-        if (id === 'view-home') return 0;
-        if (['view-class', 'view-seats', 'view-results', 'view-exam-resources', 'view-announcements', 'view-departments'].includes(id)) return 1;
-        if (id === 'view-resources') return 2;
-        if (id === 'view-profile') return 3;
-        if (id === 'view-settings') return 4;
-        if (id.startsWith('view-settings-') || id === 'view-profile-edit') return 5;
-        if (id === 'view-ai') return 6;
-        return 0;
+        if (id === 'view-home' || id === 'view-class' || id === 'view-seats' || id === 'view-resources' || id === 'view-profile') {
+            return 0; // Main Tabs
+        }
+        if (id === 'view-announcements' || id === 'view-settings' || id === 'view-profile-edit' || id === 'view-departments' || id === 'view-exam-resources' || id === 'view-ai') {
+            return 1; // Primary Child Pages
+        }
+        if (id.startsWith('view-settings-')) {
+            return 2; // Secondary Child Pages
+        }
+        return 1;
     };
 
-    const currentIndex = getViewIndex(appState.view);
-    const targetIndex = getViewIndex(viewId);
+    const currentDepth = getViewDepth(currentViewId);
+    const targetDepth = getViewDepth(viewId);
 
-    const htmlEl = document.documentElement;
-    htmlEl.classList.remove('transition-forward', 'transition-backward');
-
-    if (targetIndex > currentIndex) {
-        // Going forward (e.g. Home -> Exam): Left to Right movement (transition-backward)
-        htmlEl.classList.add('transition-backward');
-    } else if (targetIndex < currentIndex) {
-        // Going backward (e.g. Profile -> Home): Right to Left movement (transition-forward)
-        htmlEl.classList.add('transition-forward');
-    } else {
-        htmlEl.classList.add('transition-backward');
-    }
+    const fromPanel = document.getElementById(currentViewId);
+    const toPanel = document.getElementById(viewId);
 
     const performUpdate = () => {
         appState.view = viewId;
+        
+        // Scroll to top of page when changing view
+        window.scrollTo(0, 0);
+
         document.querySelectorAll('.view-panel').forEach(el => {
-            el.classList.remove('is-active');
+            el.classList.remove('is-active', 'page-from', 'page-to', 'page-slide-in-right', 'page-slide-out-left', 'page-slide-in-left', 'page-slide-out-right', 'page-fade-in');
         });
+        
         const panel = document.getElementById(viewId);
         if (panel) {
             panel.classList.add('is-active');
@@ -473,25 +510,45 @@ function switchView(viewId) {
             indicator.style.transform = `translateX(${nextIndex * 100}%)`;
         }
 
-        // Automatically manage bottom nav bar visibility
-        const mainTabs = ['view-home', 'view-class', 'view-seats', 'view-resources', 'view-profile', 'view-departments', 'view-announcements'];
-        if (mainTabs.includes(viewId)) {
-            if (typeof showBottomNav === 'function') showBottomNav();
-        } else {
-            if (typeof hideBottomNav === 'function') hideBottomNav();
-        }
+        // Automatically manage bottom nav bar visibility - always show by default
+        if (typeof showBottomNav === 'function') showBottomNav();
     };
 
-    if (document.startViewTransition) {
-        const transition = document.startViewTransition(() => {
-            performUpdate();
-        });
-        transition.finished.finally(() => {
-            htmlEl.classList.remove('transition-forward', 'transition-backward');
-        });
-    } else {
+    // If either panel is missing or it's a tab switch (depth 0 to 0), switch instantly with a quick fade
+    if (!fromPanel || !toPanel || (currentDepth === 0 && targetDepth === 0)) {
         performUpdate();
+        if (toPanel) {
+            toPanel.classList.add('page-fade-in');
+        }
+        return;
     }
+
+    // Otherwise, perform iOS sliding page transition
+    // Disable interaction during transition to prevent double clicks
+    document.body.style.pointerEvents = 'none';
+
+    // Make both panels visible and positioned correctly
+    fromPanel.classList.add('is-active', 'page-from');
+    toPanel.classList.add('is-active', 'page-to');
+
+    // Trigger reflow to apply positions
+    void toPanel.offsetWidth;
+
+    if (targetDepth > currentDepth) {
+        // PUSH: Slide from right
+        fromPanel.classList.add('page-slide-out-left');
+        toPanel.classList.add('page-slide-in-right');
+    } else {
+        // POP: Slide from left (going back)
+        fromPanel.classList.add('page-slide-out-right');
+        toPanel.classList.add('page-slide-in-left');
+    }
+
+    // Wait for transition to complete (320ms matches animation-duration in CSS)
+    setTimeout(() => {
+        performUpdate();
+        document.body.style.pointerEvents = '';
+    }, 320);
 }
 
 window.openExternalApp = openExternalApp;
@@ -2071,25 +2128,15 @@ function validateObStep2() {
     obData = window.obData || obData || { name: '', dept: '', reg: '', adminNo: '' };
     window.obData = obData;
 
-    const nameVal = (document.getElementById('ob-name')?.value || "").trim();
-    const regVal = (document.getElementById('ob-reg')?.value || "").trim();
     const adminNoVal = (document.getElementById('ob-adminNo')?.value || "").trim();
-    
-    obData.name = nameVal;
-    obData.reg = regVal;
     obData.adminNo = adminNoVal;
 
     const btn = document.getElementById('ob-final-btn');
-    if (obData.name && obData.dept) {
+    if (obData.adminNo.length > 2) {
         if (btn) {
             btn.classList.remove('opacity-30', 'pointer-events-none');
             btn.classList.add('spring');
         }
-        // Update greeting and countdown in background
-        // Temporarily save to local storage to let updateCountdown use it
-        const tempInfo = { name: obData.name, dept: obData.dept, reg: obData.reg, adminNo: obData.adminNo };
-        saveStudentInfo(tempInfo);
-        updateCountdown();
     } else {
         if (btn) {
             btn.classList.add('opacity-30', 'pointer-events-none');
@@ -2097,6 +2144,52 @@ function validateObStep2() {
         }
     }
 }
+
+async function fetchAndFinishOnboarding() {
+    obData = window.obData || obData || { name: '', dept: '', reg: '', adminNo: '' };
+    const adminNo = (document.getElementById('ob-adminNo')?.value || "").trim();
+    if (!adminNo) return;
+    
+    const btn = document.getElementById('ob-final-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `Loading...`;
+    btn.classList.add('opacity-50', 'pointer-events-none');
+    
+    try {
+        const docRef = window.db ? window.db.collection('students').doc(adminNo) : null;
+        if (!docRef) {
+            throw new Error("Database not initialized");
+        }
+        
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+            const data = docSnap.data();
+            obData.name = data.name || data.profile?.data?.name || "Student";
+            
+            let dept = data.department || data.profile?.data?.department || "BCA";
+            if (dept === '(' || !dept || dept.length < 2) dept = "BCA";
+            obData.dept = dept;
+            
+            obData.reg = data.regNo || data.prn || data.profile?.data?.prn || "";
+            obData.adminNo = adminNo;
+            window.obData = obData;
+            
+            // Proceed to next step internally, then finish
+            nextObStep(3);
+            finishOnboarding();
+        } else {
+            alert("Student profile not found! Please check the Admission Number.");
+        }
+    } catch (err) {
+        console.error("Error fetching student profile:", err);
+        alert("Failed to fetch student profile. Please try again.");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.classList.remove('opacity-50', 'pointer-events-none');
+    }
+}
+
+window.fetchAndFinishOnboarding = fetchAndFinishOnboarding;
 
 function nextObStep(step) {
     ['ob-step-1', 'ob-step-2', 'ob-step-2b', 'ob-step-3'].forEach(id => {
@@ -2245,7 +2338,7 @@ function checkOnboarding() {
 
 let _editDept = '';
 
-function openEditProfile() {
+function legacyOpenEditProfile() {
     const info = getStudentInfo() || {};
     _editDept = info.dept || '';
     const adminNo = info.adminNo || '';
@@ -2297,12 +2390,12 @@ function openEditProfile() {
     if (sheet) sheet.classList.remove('hidden');
 }
 
-function closeEditProfile() {
+function legacyCloseEditProfile() {
     const sheet = document.getElementById('editProfileSheet');
     if (sheet) sheet.classList.add('hidden');
 }
 
-function selectEditDept(dept) {
+function legacySelectEditDept(dept) {
     _editDept = dept;
     ['BCA', 'BBA', 'BSW'].forEach(d => {
         const btn = document.getElementById('edit-btn-' + d);
@@ -2317,7 +2410,7 @@ function selectEditDept(dept) {
     });
 }
 
-function saveEditProfile() {
+function legacySaveEditProfile() {
     const name = (document.getElementById('editName')?.value || '').trim();
     const reg  = (document.getElementById('editReg')?.value || '').trim();
     const adminNo = (document.getElementById('editAdminNo')?.value || '').trim();
@@ -2375,14 +2468,14 @@ function saveEditProfile() {
       }
     }
 
-    closeEditProfile();
+    legacyCloseEditProfile();
 
     if (window.startBackgroundSync) {
         window.startBackgroundSync();
     }
 }
-window.openEditProfileModal = openEditProfile;
-window.saveEditProfileModal = saveEditProfile;
+window.openEditProfileModal = legacyOpenEditProfile;
+window.saveEditProfileModal = legacySaveEditProfile;
 function autoSelectNextExamDay() {
     if (!window.EXAM_TIMETABLE || window.EXAM_TIMETABLE.length === 0) {
         appState.selectedDate = '';
@@ -2477,11 +2570,13 @@ function showBottomNav() {
     const marksSheet = document.getElementById('marksSheet');
     const timetableExamSheet = document.getElementById('timetableExamSheet');
     const academicSheet = document.getElementById('academicSheet');
+    const portalNavDrawer = document.getElementById('portalNavDrawer');
     const drawerOpen = drawer && drawer.style.transform !== 'translateY(100%)' && drawer.style.transform !== '';
     const marksOpen = marksSheet && marksSheet.style.transform !== 'translateY(100%)' && marksSheet.style.transform !== '';
     const timetableOpen = timetableExamSheet && timetableExamSheet.style.transform !== 'translateY(100%)' && timetableExamSheet.style.transform !== '';
     const academicOpen = academicSheet && academicSheet.style.transform !== 'translateY(100%)' && academicSheet.style.transform !== '';
-    if (drawerOpen || marksOpen || timetableOpen || academicOpen) return;
+    const portalDrawerOpen = portalNavDrawer && portalNavDrawer.style.transform !== 'translateY(100%)' && portalNavDrawer.style.transform !== '';
+    if (drawerOpen || marksOpen || timetableOpen || academicOpen || portalDrawerOpen) return;
     _navLockedHidden = false;
     const nav = document.getElementById('bottomNav');
     if (nav) nav.classList.remove('nav-hidden');
@@ -2725,10 +2820,308 @@ window.switchClassTab = function(tab) {
     if (attendanceBtn) attendanceBtn.classList.toggle('is-active', tab === 'attendance');
 
     appState.classSubTab = tab;
+    localStorage.setItem('machub_class_sub_tab', tab);
 
     if (tab === 'attendance') {
         renderClassAttendance();
     }
+};
+
+function getDayNames() {
+    const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const today = new Date();
+    const todayName = DAYS_OF_WEEK[today.getDay()];
+    
+    let nextSchoolDayName = "Monday";
+    if (today.getDay() === 5) { // Friday -> Monday
+        nextSchoolDayName = "Monday";
+    } else if (today.getDay() === 6) { // Saturday -> Monday
+        nextSchoolDayName = "Monday";
+    } else if (today.getDay() === 0) { // Sunday -> Monday
+        nextSchoolDayName = "Monday";
+    } else {
+        nextSchoolDayName = DAYS_OF_WEEK[today.getDay() + 1];
+    }
+    return { todayName, nextSchoolDayName, dayOfWeek: today.getDay() };
+}
+
+function formatTimeRemaining(secs) {
+    if (secs <= 0) return '0s';
+    const days = Math.floor(secs / (24 * 3600));
+    let rem = secs % (24 * 3600);
+    const hours = Math.floor(rem / 3600);
+    rem %= 3600;
+    const mins = Math.floor(rem / 60);
+    const seconds = Math.floor(rem % 60);
+    
+    let parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0 || days > 0) parts.push(`${hours}h`);
+    if (mins > 0 || hours > 0 || days > 0) parts.push(`${mins}m`);
+    parts.push(`${seconds}s`);
+    return parts.join(' ');
+}
+
+window.getCurrentScheduleState = function(now = new Date()) {
+    const { todayName, nextSchoolDayName, dayOfWeek } = getDayNames();
+    const dept = currentClassDept.toUpperCase();
+    const ttKey = `CLASS_TIMETABLE_${dept}`;
+    const todayTimetable = window[ttKey]?.[todayName] || [];
+    const nextTimetable = window[ttKey]?.[nextSchoolDayName] || [];
+    
+    const isWeekend = [0, 6].includes(dayOfWeek);
+    const hour = now.getHours();
+    const min = now.getMinutes();
+    const sec = now.getSeconds();
+    const totalSecsToday = (hour * 3600) + (min * 60) + sec;
+    
+    const P1_START = 9 * 3600 + 30 * 60; // 09:30 AM
+    const P1_END = 10 * 3600 + 30 * 60;   // 10:30 AM
+    const P2_END = 11 * 3600 + 30 * 60;   // 11:30 AM
+    const P3_END = 12 * 3600 + 30 * 60;   // 12:30 PM
+    const LUNCH_END = 13 * 3600 + 30 * 60; // 01:30 PM
+    const P4_END = 14 * 3600 + 30 * 60;   // 02:30 PM
+    const P5_END = 15 * 3600 + 30 * 60;   // 03:30 PM
+    
+    let state = {
+        status: 'weekend',
+        periodIndex: -1,
+        currentTitle: 'Weekend Mode',
+        currentSubtitle: 'School is closed',
+        currentRoom: 'Closed',
+        currentCode: '',
+        nextTitle: '',
+        nextSubtitle: '',
+        remainingSecs: 0,
+        elapsedSecs: 0,
+        totalSecs: 0,
+        progressPct: 0,
+        timerLabel: 'MONDAY CLASSES START IN'
+    };
+    
+    if (isWeekend) {
+        state.status = 'weekend';
+        let daysToMonday = (dayOfWeek === 6) ? 2 : 1;
+        const secsToMidnight = (24 * 3600) - totalSecsToday;
+        state.remainingSecs = secsToMidnight + ((daysToMonday - 1) * 24 * 3600) + P1_START;
+        
+        const firstPeriod = nextTimetable[0];
+        state.nextTitle = firstPeriod ? firstPeriod.title : 'Classes';
+        state.nextSubtitle = firstPeriod ? `Period 1 • ${firstPeriod.time}` : '09:30 AM';
+        return state;
+    }
+    
+    if (totalSecsToday < P1_START) {
+        state.status = 'before_school';
+        state.currentTitle = 'Before College';
+        state.currentSubtitle = 'Morning Prep';
+        state.currentRoom = 'Lobby';
+        state.remainingSecs = P1_START - totalSecsToday;
+        state.timerLabel = 'FIRST BELL RINGS IN';
+        
+        const firstPeriod = todayTimetable[0];
+        state.nextTitle = firstPeriod ? firstPeriod.title : 'Classes';
+        state.nextSubtitle = firstPeriod ? `Period 1 • ${firstPeriod.time}` : '09:30 AM';
+    } else if (totalSecsToday >= P1_START && totalSecsToday < P1_END) {
+        state.status = 'period1';
+        state.periodIndex = 0;
+        const p = todayTimetable[0];
+        state.currentTitle = p ? p.title : 'Software Engineering';
+        state.currentSubtitle = 'Period 1 • 09:30 AM - 10:30 AM';
+        state.currentRoom = p ? p.room : 'Room 201';
+        state.currentCode = p ? p.code : '';
+        state.remainingSecs = P1_END - totalSecsToday;
+        state.elapsedSecs = totalSecsToday - P1_START;
+        state.totalSecs = 3600;
+        state.timerLabel = 'BELL RINGS IN';
+        
+        const nextP = todayTimetable[1];
+        state.nextTitle = nextP ? nextP.title : 'Feature Engineering';
+        state.nextSubtitle = nextP ? `Period 2 • ${nextP.time}` : '10:30 AM';
+    } else if (totalSecsToday >= P1_END && totalSecsToday < P2_END) {
+        state.status = 'period2';
+        state.periodIndex = 1;
+        const p = todayTimetable[1];
+        state.currentTitle = p ? p.title : 'Feature Engineering';
+        state.currentSubtitle = 'Period 2 • 10:30 AM - 11:30 AM';
+        state.currentRoom = p ? p.room : 'Room 201';
+        state.currentCode = p ? p.code : '';
+        state.remainingSecs = P2_END - totalSecsToday;
+        state.elapsedSecs = totalSecsToday - P1_END;
+        state.totalSecs = 3600;
+        state.timerLabel = 'BELL RINGS IN';
+        
+        const nextP = todayTimetable[2];
+        state.nextTitle = nextP ? nextP.title : 'Feature Engineering Lab';
+        state.nextSubtitle = nextP ? `Period 3 • ${nextP.time}` : '11:30 AM';
+    } else if (totalSecsToday >= P2_END && totalSecsToday < P3_END) {
+        state.status = 'period3';
+        state.periodIndex = 2;
+        const p = todayTimetable[2];
+        state.currentTitle = p ? p.title : 'Feature Engineering Lab';
+        state.currentSubtitle = 'Period 3 • 11:30 AM - 12:30 PM';
+        state.currentRoom = p ? p.room : 'Lab 2';
+        state.currentCode = p ? p.code : '';
+        state.remainingSecs = P3_END - totalSecsToday;
+        state.elapsedSecs = totalSecsToday - P2_END;
+        state.totalSecs = 3600;
+        state.timerLabel = 'BELL RINGS IN';
+        
+        state.nextTitle = 'Lunch Break';
+        state.nextSubtitle = 'Interval • 12:30 PM - 01:30 PM';
+    } else if (totalSecsToday >= P3_END && totalSecsToday < LUNCH_END) {
+        state.status = 'lunch_break';
+        state.currentTitle = 'Lunch Break';
+        state.currentSubtitle = 'Interval';
+        state.currentRoom = 'Canteen';
+        state.remainingSecs = LUNCH_END - totalSecsToday;
+        state.elapsedSecs = totalSecsToday - P3_END;
+        state.totalSecs = 3600;
+        state.timerLabel = 'INTERVAL ENDS IN';
+        
+        const nextP = todayTimetable[3];
+        state.nextTitle = nextP ? nextP.title : 'Database Management Systems';
+        state.nextSubtitle = nextP ? `Period 4 • ${nextP.time}` : '01:30 PM';
+    } else if (totalSecsToday >= LUNCH_END && totalSecsToday < P4_END) {
+        state.status = 'period4';
+        state.periodIndex = 3;
+        const p = todayTimetable[3];
+        state.currentTitle = p ? p.title : 'Database Management Systems';
+        state.currentSubtitle = 'Period 4 • 01:30 PM - 02:30 PM';
+        state.currentRoom = p ? p.room : 'Room 201';
+        state.currentCode = p ? p.code : '';
+        state.remainingSecs = P4_END - totalSecsToday;
+        state.elapsedSecs = totalSecsToday - LUNCH_END;
+        state.totalSecs = 3600;
+        state.timerLabel = 'BELL RINGS IN';
+        
+        const nextP = todayTimetable[4];
+        state.nextTitle = nextP ? nextP.title : 'Quantitative Techniques';
+        state.nextSubtitle = nextP ? `Period 5 • ${nextP.time}` : '02:30 PM';
+    } else if (totalSecsToday >= P4_END && totalSecsToday < P5_END) {
+        state.status = 'period5';
+        state.periodIndex = 4;
+        const p = todayTimetable[4];
+        state.currentTitle = p ? p.title : 'Quantitative Techniques';
+        state.currentSubtitle = 'Period 5 • 02:30 PM - 03:30 PM';
+        state.currentRoom = p ? p.room : 'Room 201';
+        state.currentCode = p ? p.code : '';
+        state.remainingSecs = P5_END - totalSecsToday;
+        state.elapsedSecs = totalSecsToday - P4_END;
+        state.totalSecs = 3600;
+        state.timerLabel = 'FINAL BELL RINGS IN';
+        
+        state.nextTitle = 'School Closed';
+        state.nextSubtitle = 'Classes complete for today';
+    } else {
+        state.status = 'after_school';
+        state.currentTitle = 'Classes Finished';
+        state.currentSubtitle = 'All periods completed for today';
+        state.currentRoom = 'Closed';
+        state.timerLabel = 'NEXT SCHOOL DAY STARTS IN';
+        
+        let daysToNext = (dayOfWeek === 5) ? 3 : 1;
+        const secsToMidnight = (24 * 3600) - totalSecsToday;
+        state.remainingSecs = secsToMidnight + ((daysToNext - 1) * 24 * 3600) + P1_START;
+        
+        const firstPeriod = nextTimetable[0];
+        state.nextTitle = firstPeriod ? firstPeriod.title : 'Classes';
+        state.nextSubtitle = firstPeriod ? `Period 1 • ${firstPeriod.time}` : '09:30 AM';
+    }
+    
+    if (state.totalSecs > 0) {
+        state.progressPct = Math.min(100, (state.elapsedSecs / state.totalSecs) * 100);
+    }
+    
+    return state;
+};
+
+window.setTimetableDisplayMode = function(mode) {
+    timetableDisplayMode = mode;
+    localStorage.setItem('machub_timetable_user_toggled', 'true');
+    const { todayName, nextSchoolDayName } = getDayNames();
+    const isWeekend = [0, 6].includes(new Date().getDay());
+    
+    if (mode === 'today') {
+        currentClassDay = isWeekend ? "Monday" : todayName;
+    } else {
+        currentClassDay = nextSchoolDayName;
+    }
+    
+    renderClassFilters();
+    renderClassDaySelector();
+    renderClassTimetable();
+};
+
+window.tickClassTimetable = function() {
+    const clockEl = document.getElementById('timetable-live-clock');
+    if (!clockEl) return;
+    
+    const now = new Date();
+    clockEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) + ' IST';
+    
+    const scheduleState = getCurrentScheduleState(now);
+    
+    const statusEl = document.getElementById('timetable-live-status');
+    if (statusEl) {
+        statusEl.textContent = scheduleState.status === 'weekend' ? 'WEEKEND' : scheduleState.status === 'lunch_break' ? 'BREAK' : scheduleState.status === 'before_school' ? 'MORNING' : scheduleState.status === 'after_school' ? 'OFFLINE' : 'LIVE CLASS';
+    }
+    
+    const titleEl = document.getElementById('timetable-live-title');
+    if (titleEl && titleEl.textContent !== scheduleState.currentTitle) {
+        titleEl.textContent = scheduleState.currentTitle;
+    }
+    
+    const subtitleEl = document.getElementById('timetable-live-subtitle');
+    if (subtitleEl && subtitleEl.textContent !== scheduleState.currentSubtitle) {
+        subtitleEl.textContent = scheduleState.currentSubtitle;
+    }
+    
+    const roomEl = document.getElementById('timetable-live-room');
+    if (roomEl) {
+        if (scheduleState.currentRoom && scheduleState.currentRoom !== 'Closed') {
+            roomEl.style.display = '';
+            roomEl.textContent = scheduleState.currentRoom;
+        } else {
+            roomEl.style.display = 'none';
+        }
+    }
+    
+    const timerLabelEl = document.getElementById('timetable-live-timer-label');
+    if (timerLabelEl && timerLabelEl.textContent !== scheduleState.timerLabel) {
+        timerLabelEl.textContent = scheduleState.timerLabel;
+    }
+    
+    const timerValueEl = document.getElementById('timetable-live-timer-value');
+    if (timerValueEl) {
+        timerValueEl.textContent = formatTimeRemaining(scheduleState.remainingSecs);
+    }
+    
+    const progressEl = document.getElementById('timetable-live-progress');
+    if (progressEl) {
+        progressEl.style.width = `${scheduleState.progressPct}%`;
+    }
+
+    const nextEl = document.getElementById('timetable-live-next');
+    if (nextEl) {
+        const nextText = scheduleState.nextTitle ? `${scheduleState.nextTitle} · ${(scheduleState.nextSubtitle||'').split(' • ')[0]}` : '';
+        if (nextEl.textContent !== nextText) nextEl.textContent = nextText;
+    }
+
+    if (window._lastPeriodStatus !== scheduleState.status) {
+        window._lastPeriodStatus = scheduleState.status;
+        renderClassTimetable();
+    }
+};
+
+window.toggleTimetableDayDropdown = function() {
+    appState.openTimetableDayDropdown = !appState.openTimetableDayDropdown;
+    renderClassTimetable();
+};
+
+window.selectClassDayFromDropdown = function(dayName) {
+    appState.openTimetableDayDropdown = false;
+    window.selectClassDay(dayName);
 };
 
 window.renderClassTimetable = function() {
@@ -2737,9 +3130,12 @@ window.renderClassTimetable = function() {
 
     const info = getStudentInfo();
     const dept = currentClassDept.toUpperCase();
+    const { todayName, nextSchoolDayName, dayOfWeek } = getDayNames();
+    const isWeekend = [0, 6].includes(dayOfWeek);
     const day = currentClassDay;
+    const now = new Date();
 
-    // Retrieve actual subjects from synced ePortal Attendance
+    // Gather synced attendance subjects
     const actualSubjects = [];
     const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
     if (adminNo) {
@@ -2748,244 +3144,226 @@ window.renderClassTimetable = function() {
             try {
                 const parsed = JSON.parse(cached);
                 const rows = parsed?.data?.payload?.sections?.[0]?.rows || parsed?.data?.sections?.[0]?.rows || [];
-                rows.forEach(item => {
-                    if (item.subjectName) {
-                        actualSubjects.push({
-                            subjectName: item.subjectName,
-                            percentage: item.percentage,
-                            presentHours: item.presentHours,
-                            totalHours: item.totalHours
-                        });
-                    }
-                });
+                rows.forEach(item => { if (item.subjectName) actualSubjects.push(item); });
             } catch(e) {}
         }
     }
 
-    if (actualSubjects.length > 0) {
-        // Distribute actual subjects across Monday-Friday periods
-        const dayIndex = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].indexOf(day);
-        const periods = [];
-        const times = ['09:30 AM - 10:30 AM', '10:30 AM - 11:30 AM', '11:30 AM - 12:30 PM', '01:30 PM - 02:30 PM', '02:30 PM - 03:30 PM'];
-        
-        for (let i = 0; i < 5; i++) {
-            const subjectIdx = (dayIndex * 5 + i) % actualSubjects.length;
-            const subjectData = actualSubjects[subjectIdx];
-            periods.push({
-                period: i + 1,
-                time: times[i],
-                title: subjectData.subjectName,
-                code: `MG2CCR${dept.toUpperCase()}${101 + subjectIdx}`,
-                percentage: subjectData.percentage,
-                presentHours: subjectData.presentHours,
-                totalHours: subjectData.totalHours
-            });
-        }
-
-        container.innerHTML = periods.map(period => {
-            const pct = parseFloat(period.percentage) || 0;
-            const present = parseInt(period.presentHours) || 0;
-            const total = parseInt(period.totalHours) || 0;
-            
-            // Color coding
-            let progressColor = 'bg-emerald-500';
-            if (pct < 75) {
-                progressColor = 'bg-red-500';
-            } else if (pct < 80) {
-                progressColor = 'bg-amber-500';
-            }
-
-            // Bunk calculations
-            let bunkBadge = '';
-            if (total > 0) {
-                if (pct >= 75) {
-                    const maxTotal = Math.floor(present / 0.75);
-                    const safeBunks = Math.max(0, maxTotal - total);
-                    if (safeBunks > 0) {
-                        bunkBadge = `<span class="bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">⚡ Bunk: ${safeBunks} Safe</span>`;
-                    } else {
-                        bunkBadge = `<span class="bg-amber-500/10 text-amber-500 dark:bg-amber-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">⚠️ Limit Reached</span>`;
-                    }
-                } else {
-                    const required = Math.ceil((0.75 * total - present) / 0.25);
-                    if (required > 0) {
-                        bunkBadge = `<span class="bg-red-500/10 text-red-500 dark:bg-red-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">🚨 Attend Next ${required}</span>`;
-                    }
-                }
-            }
-
-            return `
-                <div class="glass-panel p-5 rounded-[2rem] border border-white/10 dark:border-white/5 relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:shadow-md flex flex-col gap-3">
-                    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--mac-blue)]"></div>
-                    
-                    <div class="flex items-center justify-between gap-4 w-full pl-2">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] dark:text-blue-400 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                    Period ${period.period}
-                                </span>
-                                <span class="text-[#86868b] dark:text-[#86868b]/75 text-[10px] font-bold">
-                                    ${period.time}
-                                </span>
-                            </div>
-                            <h4 class="text-base font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight truncate">
-                                ${period.title}
-                            </h4>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="inline-block bg-black/5 dark:bg-white/5 text-[#1d1d1f] dark:text-[#f5f5f7] text-[10px] font-bold px-3 py-1 rounded-xl border border-white/5">
-                                📍 Lab/Room ${201 + (period.period % 3)}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="pl-2 w-full">
-                        <div class="flex flex-col gap-1.5 w-full">
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <span class="text-[10px] font-bold text-[#86868b] uppercase tracking-wider">${period.code}</span>
-                                    <span class="text-[9px] text-[#86868b]">•</span>
-                                    <span class="text-[10px] font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${present}/${total} Hours</span>
-                                    ${bunkBadge}
-                                </div>
-                                <span class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${Math.round(pct)}%</span>
-                            </div>
-                            <!-- Micro progress bar -->
-                            <div class="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden border border-white/5">
-                                <div class="${progressColor} h-full rounded-full transition-all duration-500" style="width: ${Math.min(100, pct)}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        return;
-    }
-
     const timetableKey = `CLASS_TIMETABLE_${dept}`;
-    const timetableData = window[timetableKey] ? window[timetableKey][day] : null;
+    const dayPeriods = window[timetableKey]?.[day] || [];
 
-    if (!timetableData || !timetableData.length) {
+    if (dayPeriods.length === 0) {
         container.innerHTML = `
-            <div class="text-center p-8 text-[#86868b]">
-                <p class="text-3xl mb-2">💤</p>
-                <p class="text-sm font-bold">No lectures scheduled for ${day}</p>
-            </div>
-        `;
+            <div style="padding:2rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:1.75rem; margin:0.5rem 0;">
+                <div style="font-size:2rem; margin-bottom:0.75rem;">📅</div>
+                <h4 style="font-size:14px; font-weight:800; color:#f5f5f7; margin-bottom:6px;">No Schedule for ${day}</h4>
+                <p style="font-size:11px; color:#86868b;">No timetable uploaded for ${dept} yet.</p>
+            </div>`;
         return;
     }
 
-    container.innerHTML = timetableData.map(period => {
-        const subjectsKey = `CLASS_SUBJECTS_${dept}`;
-        const subjectDetail = window[subjectsKey]?.find(s => s.code === period.code) || {};
-        const teacherName = subjectDetail.teacher?.name || "Faculty Assigned";
+    const scheduleState = getCurrentScheduleState(now);
+    const formattedTimer = formatTimeRemaining(scheduleState.remainingSecs);
+    const statusLabel = scheduleState.status === 'weekend' ? 'WEEKEND'
+        : scheduleState.status === 'lunch_break' ? 'LUNCH BREAK'
+        : scheduleState.status === 'before_school' ? 'MORNING'
+        : scheduleState.status === 'after_school' ? 'SCHOOL OVER'
+        : 'LIVE CLASS';
 
-        // Try to find matching attendance data from synced cache
-        let attData = null;
-        if (adminNo) {
-            const cached = getPortalCache('Attendance', adminNo);
-            if (cached) {
-                try {
-                    const parsed = JSON.parse(cached);
-                    const rows = parsed?.data?.payload?.sections?.[0]?.rows || parsed?.data?.sections?.[0]?.rows || [];
-                    attData = rows.find(r => r.subjectName && (
-                        r.subjectName.toLowerCase().includes(period.title.toLowerCase()) ||
-                        period.title.toLowerCase().includes(r.subjectName.toLowerCase())
-                    ));
-                } catch(e) {}
-            }
-        }
-
-        let attendanceHtml = '';
-        if (attData) {
-            const pct = parseFloat(attData.percentage) || 0;
-            const present = parseInt(attData.presentHours) || 0;
-            const total = parseInt(attData.totalHours) || 0;
-            
-            let progressColor = 'bg-emerald-500';
-            if (pct < 75) {
-                progressColor = 'bg-red-500';
-            } else if (pct < 80) {
-                progressColor = 'bg-amber-500';
-            }
-
-            let bunkBadge = '';
-            if (total > 0) {
-                if (pct >= 75) {
-                    const maxTotal = Math.floor(present / 0.75);
-                    const safeBunks = Math.max(0, maxTotal - total);
-                    if (safeBunks > 0) {
-                        bunkBadge = `<span class="bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">⚡ Bunk: ${safeBunks} Safe</span>`;
-                    } else {
-                        bunkBadge = `<span class="bg-amber-500/10 text-amber-500 dark:bg-amber-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">⚠️ Limit Reached</span>`;
-                    }
-                } else {
-                    const required = Math.ceil((0.75 * total - present) / 0.25);
-                    if (required > 0) {
-                        bunkBadge = `<span class="bg-red-500/10 text-red-500 dark:bg-red-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">🚨 Attend Next ${required}</span>`;
-                    }
-                }
-            }
-
-            attendanceHtml = `
-                <div class="flex flex-col gap-1.5 w-full mt-2">
-                    <div class="flex items-center justify-between gap-2">
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="text-[10px] font-bold text-[#86868b] uppercase tracking-wider">${period.code}</span>
-                            <span class="text-[9px] text-[#86868b]">•</span>
-                            <span class="text-[10px] font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${present}/${total} Hours</span>
-                            ${bunkBadge}
-                        </div>
-                        <span class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${Math.round(pct)}%</span>
-                    </div>
-                    <!-- Micro progress bar -->
-                    <div class="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden border border-white/5">
-                        <div class="${progressColor} h-full rounded-full transition-all duration-500" style="width: ${Math.min(100, pct)}%"></div>
-                    </div>
-                </div>
-            `;
-        } else {
-            attendanceHtml = `
-                <div class="flex items-center gap-2 mt-2">
-                    <span class="text-[10px] font-bold text-[#86868b] uppercase tracking-wider">${period.code}</span>
-                    <span class="text-[9px] text-[#86868b]">•</span>
-                    <span class="text-[10px] text-[#86868b] font-bold">${teacherName}</span>
-                </div>
-            `;
-        }
-
-        return `
-            <div class="glass-panel p-5 rounded-[2rem] border border-white/10 dark:border-white/5 relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:shadow-md flex flex-col gap-2">
-                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--mac-blue)]"></div>
-                
-                <div class="flex items-center justify-between gap-4 w-full pl-2">
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] dark:text-blue-400 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                Period ${period.period}
-                            </span>
-                            <span class="text-[#86868b] dark:text-[#86868b] text-[10px] font-bold">
-                                ${period.time}
-                            </span>
-                        </div>
-                        <h4 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight truncate">
-                            ${period.title}
-                        </h4>
-                    </div>
-                    
-                    <div class="text-right flex-shrink-0">
-                        <span class="inline-block bg-black/5 dark:bg-white/5 text-[#1d1d1f] dark:text-[#f5f5f7] text-[10px] font-bold px-3 py-1 rounded-xl border border-white/5">
-                            📍 ${period.room}
+    // ── 1. Live Status Island ────────────────────────────────────────────
+    const liveStatusHtml = `
+        <div style="position:relative; border-radius:1.75rem; overflow:hidden; background:linear-gradient(150deg,#181818 0%,#0c0c0c 100%); border:1px solid rgba(255,255,255,0.08); margin-bottom:16px;">
+            <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 80% 110%, rgba(0,113,227,0.2) 0%, transparent 55%);"></div>
+            <div style="position:relative;z-index:1;padding:18px 20px;display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="position:relative;display:inline-flex;width:8px;height:8px;flex-shrink:0;">
+                            <span class="live-pulse-dot" style="position:absolute;inset:0;border-radius:50%;background:#34d399;opacity:0.7;"></span>
+                            <span style="position:relative;width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;"></span>
                         </span>
+                        <span id="timetable-live-status" style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:0.16em;color:#86868b;">${statusLabel}</span>
+                    </div>
+                    <span id="timetable-live-clock" style="font-size:9px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;">${now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true})} IST</span>
+                </div>
+                <div>
+                    <h3 id="timetable-live-title" style="font-size:17px;font-weight:700;color:#f5f5f7;line-height:1.3;margin:0 0 4px 0;">${scheduleState.currentTitle}</h3>
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                        <span id="timetable-live-subtitle" style="font-size:11px;font-weight:600;color:#86868b;">${scheduleState.currentSubtitle}</span>
+                        ${scheduleState.currentRoom && scheduleState.currentRoom !== 'Closed' ? `
+                            <span style="color:#86868b;font-size:9px;">•</span>
+                            <span id="timetable-live-room" style="font-size:9px;font-weight:800;color:#f5f5f7;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:8px;">${scheduleState.currentRoom}</span>
+                        ` : `<span id="timetable-live-room" style="display:none;"></span>`}
                     </div>
                 </div>
-                
-                <div class="pl-2 w-full">
-                    ${attendanceHtml}
+                <div id="timetable-live-progress-container" style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <span id="timetable-live-timer-label" style="font-size:9px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.12em;">${scheduleState.timerLabel}</span>
+                        <span id="timetable-live-timer-value" style="font-size:11px;font-weight:900;color:#f5f5f7;">${formattedTimer}</span>
+                    </div>
+                    <div style="width:100%;height:3px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;">
+                        <div id="timetable-live-progress" style="height:100%;border-radius:99px;background:#0071e3;width:${scheduleState.progressPct}%;transition:width 0.5s ease;"></div>
+                    </div>
+                </div>
+                ${scheduleState.nextTitle ? `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">
+                        <span style="font-size:9px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.12em;white-space:nowrap;">UP NEXT</span>
+                        <span id="timetable-live-next" style="font-size:11px;font-weight:700;color:#f5f5f7;text-align:right;overflow-wrap:break-word;max-width:65%;">${scheduleState.nextTitle} · ${(scheduleState.nextSubtitle||'').split(' • ')[0]}</span>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+
+    // ── 2. Today / Next Day Toggle ───────────────────────────────────────
+    const todayToggleLabel = `Today (${isWeekend ? 'Mon' : todayName.slice(0,3)})`;
+    const nextToggleLabel = `Next (${nextSchoolDayName.slice(0,3)})`;
+    const toggleHtml = `
+        <div style="display:flex;padding:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:1rem;gap:4px;margin-bottom:14px;">
+            <button type="button" onclick="window.setTimetableDisplayMode('today')" id="tt-toggle-today" style="flex:1;padding:9px 4px;font-size:12px;font-weight:700;border-radius:12px;outline:none;border:none;cursor:pointer;transition:all 0.25s ease;${timetableDisplayMode === 'today' ? 'background:#ffffff;color:#1d1d1f;box-shadow:0 2px 8px rgba(0,0,0,0.15);' : 'background:transparent;color:#86868b;'}">${todayToggleLabel}</button>
+            <button type="button" onclick="window.setTimetableDisplayMode('next')" id="tt-toggle-next" style="flex:1;padding:9px 4px;font-size:12px;font-weight:700;border-radius:12px;outline:none;border:none;cursor:pointer;transition:all 0.25s ease;${timetableDisplayMode === 'next' ? 'background:#ffffff;color:#1d1d1f;box-shadow:0 2px 8px rgba(0,0,0,0.15);' : 'background:transparent;color:#86868b;'}">${nextToggleLabel}</button>
+        </div>
+    `;
+
+    // ── 3. Day Selector Dropdown (seat-dropdown style) ───────────────────
+    const weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+    const isDayOpen = appState.openTimetableDayDropdown === true;
+    const daySelectorHtml = `
+        <div style="margin-bottom:16px;">
+            <div class="seat-dropdown ${isDayOpen ? 'is-open' : ''}">
+                <button type="button" onclick="window.toggleTimetableDayDropdown()" class="seat-dropdown__trigger">
+                    <div class="seat-dropdown__meta">
+                        <span class="seat-dropdown__label">Viewing Day</span>
+                        <span class="seat-dropdown__value">📅 ${day}</span>
+                    </div>
+                    <span class="seat-dropdown__icon">⌄</span>
+                </button>
+                <div class="seat-dropdown__menu">
+                    ${weekdays.map(wd => {
+                        const isToday = wd === (isWeekend ? 'Monday' : todayName);
+                        const isTomorrow = wd === nextSchoolDayName && !isToday;
+                        return `
+                            <button type="button" onclick="window.selectClassDayFromDropdown('${wd}')" class="seat-dropdown__option ${wd === day ? 'is-active' : ''}">
+                                <span class="seat-dropdown__option-title">${wd}</span>
+                                ${isToday ? '<span class="seat-dropdown__option-meta">— Today</span>' : isTomorrow ? '<span class="seat-dropdown__option-meta">— Tomorrow</span>' : ''}
+                            </button>`;
+                    }).join('')}
                 </div>
             </div>
-        `;
-    }).join('');
+        </div>
+    `;
+
+    // ── 4. Sync Banner ───────────────────────────────────────────────────
+    const syncAlertHtml = actualSubjects.length === 0 ? `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;margin-bottom:14px;border-radius:1rem;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);">
+            <p style="font-size:11px;font-weight:600;color:rgba(251,191,36,0.9);flex:1;margin:0;">💡 Sync your portal to see live attendance per subject</p>
+            <button onclick="window.openPortalDrawer()" style="flex-shrink:0;padding:6px 12px;background:#f5a623;color:#000;font-size:10px;font-weight:900;border-radius:10px;border:none;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;">Sync</button>
+        </div>
+    ` : '';
+
+    // ── 5. Period Cards ──────────────────────────────────────────────────
+    const isDayToday = (day === (isWeekend ? 'Monday' : todayName));
+    const ACCENT_COLORS = ['#0071e3','#7c3aed','#059669','#d97706','#e11d48'];
+    let cardsHtml = '<div style="display:flex;flex-direction:column;gap:10px;">';
+
+    dayPeriods.forEach((period, idx) => {
+        const periodNum = parseInt(period.period);
+        const isLive = isDayToday && scheduleState.periodIndex === idx;
+        const isPast = isDayToday && scheduleState.periodIndex > idx;
+        const accent = ACCENT_COLORS[idx % ACCENT_COLORS.length];
+
+        // Attendance row
+        let attHtml = '';
+        const attMatch = actualSubjects.find(s =>
+            s.subjectName && (
+                s.subjectName.toLowerCase().includes(period.title.toLowerCase()) ||
+                period.title.toLowerCase().includes(s.subjectName.toLowerCase())
+            )
+        );
+        if (attMatch) {
+            const pct = parseFloat(attMatch.percentage) || 0;
+            const present = parseInt(attMatch.presentHours) || 0;
+            const total = parseInt(attMatch.totalHours) || 0;
+            const barClr = pct < 75 ? '#ef4444' : pct < 80 ? '#f59e0b' : '#10b981';
+            let badge = '';
+            if (total > 0) {
+                if (pct >= 75) {
+                    const safe = Math.max(0, Math.floor(present / 0.75) - total);
+                    badge = safe > 0
+                        ? `<span style="background:rgba(16,185,129,0.12);color:#10b981;font-size:9px;font-weight:900;padding:2px 8px;border-radius:99px;white-space:nowrap;">⚡ ${safe} safe bunks</span>`
+                        : `<span style="background:rgba(245,158,11,0.12);color:#f59e0b;font-size:9px;font-weight:900;padding:2px 8px;border-radius:99px;white-space:nowrap;">⚠️ At limit</span>`;
+                } else {
+                    const need = Math.ceil((0.75 * total - present) / 0.25);
+                    badge = `<span style="background:rgba(239,68,68,0.12);color:#ef4444;font-size:9px;font-weight:900;padding:2px 8px;border-radius:99px;white-space:nowrap;">🚨 Need ${need} more</span>`;
+                }
+            }
+            attHtml = `
+                <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;">
+                            <span style="font-size:9px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;">Attendance</span>
+                            <span style="font-size:10px;font-weight:700;color:#f5f5f7;">${present}/${total}</span>
+                            ${badge}
+                        </div>
+                        <span style="font-size:12px;font-weight:900;color:#f5f5f7;flex-shrink:0;">${Math.round(pct)}%</span>
+                    </div>
+                    <div style="width:100%;height:3px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;">
+                        <div style="height:100%;border-radius:99px;background:${barClr};width:${Math.min(100,pct)}%;"></div>
+                    </div>
+                </div>`;
+        }
+
+        cardsHtml += `
+            <div style="position:relative;border-radius:1.5rem;border:1px solid ${isLive ? 'rgba(0,113,227,0.35)' : 'rgba(255,255,255,0.07)'};background:${isLive ? 'rgba(0,113,227,0.06)' : 'rgba(255,255,255,0.025)'};overflow:hidden;opacity:${isPast ? 0.52 : 1};transition:opacity 0.3s;">
+                <div style="position:absolute;left:14px;top:14px;bottom:14px;width:3px;border-radius:99px;background:${accent};opacity:${isPast ? 0.3 : isLive ? 1 : 0.65};"></div>
+                <div style="padding:14px 16px 14px 28px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+                        <div style="display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;">
+                            <span style="font-size:9px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap;">P${periodNum}</span>
+                            <span style="color:#86868b;font-size:9px;">·</span>
+                            <span style="font-size:9px;font-weight:700;color:#86868b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${period.time}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+                            ${isLive ? `<span class="live-pulse-dot" style="font-size:9px;font-weight:900;color:#0071e3;background:rgba(0,113,227,0.12);padding:2px 8px;border-radius:99px;text-transform:uppercase;">● LIVE</span>` : ''}
+                            ${isPast ? `<span style="font-size:9px;font-weight:900;color:#10b981;background:rgba(16,185,129,0.1);padding:2px 8px;border-radius:99px;">✓ Done</span>` : ''}
+                        </div>
+                    </div>
+                    <div style="font-size:14px;font-weight:700;color:#f5f5f7;line-height:1.35;margin-bottom:5px;overflow-wrap:break-word;">${period.title}</div>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span style="font-size:9px;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;">${period.code}</span>
+                        <span style="color:#86868b;font-size:9px;">·</span>
+                        <span style="font-size:9px;font-weight:700;color:#86868b;">📍 ${period.room}</span>
+                    </div>
+                    ${attHtml}
+                </div>
+            </div>`;
+
+        // Lunch break after period 3
+        if (idx === 2) {
+            const isLunchLive = isDayToday && scheduleState.status === 'lunch_break';
+            const isLunchPast = isDayToday && ['period4','period5','after_school'].includes(scheduleState.status);
+            cardsHtml += `
+                <div style="position:relative;border-radius:1.5rem;border:${isLunchLive ? '1px solid rgba(245,158,11,0.35)' : '1px dashed rgba(255,255,255,0.1)'};background:${isLunchLive ? 'rgba(245,158,11,0.06)' : 'transparent'};overflow:hidden;opacity:${isLunchPast ? 0.52 : 1};transition:opacity 0.3s;">
+                    <div style="position:absolute;left:14px;top:12px;bottom:12px;width:3px;border-radius:99px;background:#f59e0b;opacity:${isLunchLive ? 1 : 0.4};"></div>
+                    <div style="padding:12px 16px 12px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                        <div>
+                            <div style="font-size:9px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Lunch Break</div>
+                            <div style="font-size:13px;font-weight:700;color:#f5f5f7;">12:30 PM – 1:30 PM</div>
+                        </div>
+                        <span style="font-size:9px;font-weight:800;color:#86868b;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);padding:4px 10px;border-radius:10px;flex-shrink:0;">🍴 Canteen</span>
+                    </div>
+                </div>`;
+        }
+    });
+
+    cardsHtml += '</div>';
+
+    container.innerHTML = `
+        ${liveStatusHtml}
+        ${toggleHtml}
+        ${daySelectorHtml}
+        ${syncAlertHtml}
+        ${cardsHtml}
+    `;
 };
 
 window.renderClassSubjects = function() {
@@ -3029,7 +3407,7 @@ window.renderClassSubjects = function() {
             }
         }
 
-        container.innerHTML = actualSubjects.map((subject, idx) => {
+        container.innerHTML = window.getFreshnessIndicatorHtml('Assessment') + actualSubjects.map((subject, idx) => {
             const uniqueId = `subject-card-${idx}`;
             
             // Find corresponding assessment section for this subject
@@ -3101,81 +3479,18 @@ window.renderClassSubjects = function() {
         return;
     }
 
-    const dept = currentClassDept.toUpperCase();
-    const subjectsKey = `CLASS_SUBJECTS_${dept}`;
-    const subjectsData = window[subjectsKey] || [];
-
-    if (!subjectsData.length) {
-        container.innerHTML = `
-            <div class="text-center p-8 text-[#86868b]">
-                <p class="text-3xl mb-2">📚</p>
-                <p class="text-sm font-bold">No subjects loaded</p>
+    container.innerHTML = window.getFreshnessIndicatorHtml('Assessment') + `
+        <div class="glass-panel p-8 text-center my-4 rounded-[2rem] border border-white/10 dark:border-white/5">
+            <div class="w-12 h-12 rounded-full bg-[var(--mac-blue)]/10 text-[var(--mac-blue)] flex items-center justify-center text-xl mx-auto mb-4 border border-[var(--mac-blue)]/20">
+                🔄
             </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = subjectsData.map((subject, idx) => {
-        const uniqueId = `subject-card-${idx}`;
-        const modulesHtml = subject.syllabus.map(mod => {
-            const parts = mod.split(':');
-            const title = parts[0];
-            const desc = parts[1] || '';
-            return `
-                <div class="border-l border-white/10 dark:border-white/5 pl-3 py-1">
-                    <p class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${title}</p>
-                    <p class="text-[11px] text-[#86868b] mt-0.5">${desc}</p>
-                </div>
-            `;
-        }).join('');
-
-        return `
-            <div id="${uniqueId}" class="class-subject-card glass-panel rounded-[2rem] border border-white/10 dark:border-white/5 overflow-hidden transition-all duration-300 relative">
-                <div onclick="toggleClassSubjectCard('${uniqueId}')" class="p-5 cursor-pointer flex items-center justify-between gap-4 select-none">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-1.5">
-                            <span class="bg-black/5 dark:bg-white/5 text-[#86868b] text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                                ${subject.type}
-                            </span>
-                            <span class="bg-blue-500/10 text-blue-500 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                ${subject.credits} Credits
-                            </span>
-                        </div>
-                        <h4 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight mb-1">
-                            ${subject.title}
-                        </h4>
-                        <p class="text-xs font-bold text-[#86868b]">
-                            Code: ${subject.code}
-                        </p>
-                    </div>
-                    <span class="card-chevron text-lg text-[#86868b] transition-transform duration-300">▼</span>
-                </div>
-
-                <div class="card-syllabus-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                    <div class="px-5 pb-5 pt-1 border-t border-black/5 dark:border-white/5 space-y-4">
-                        <div>
-                            <h5 class="text-[10px] font-black text-[#86868b] uppercase tracking-[0.15em] mb-2">Syllabus Breakdown</h5>
-                            <div class="space-y-3">
-                                ${modulesHtml}
-                            </div>
-                        </div>
-                        
-                        <div class="bg-black/5 dark:bg-white/5 rounded-2xl p-4 flex items-center justify-between gap-3 border border-white/5">
-                            <div class="flex-1">
-                                <p class="text-[8px] font-black text-[#86868b] uppercase tracking-wider mb-0.5">Assigned Faculty</p>
-                                <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${subject.teacher.name}</p>
-                                <p class="text-[10px] text-[#86868b]">${subject.teacher.designation}</p>
-                                <p class="text-[10px] text-[#86868b] mt-1">📍 ${subject.teacher.room}</p>
-                            </div>
-                            <a href="mailto:${subject.teacher.email}" class="w-10 h-10 bg-[var(--mac-blue)] rounded-full flex items-center justify-center spring hover:scale-105 active:scale-95 text-white text-base shadow-sm">
-                                ✉️
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
+            <h4 class="text-sm font-extrabold text-[#1d1d1f] dark:text-[#f5f5f7] mb-1">No Synced Data</h4>
+            <p class="text-xs text-[#86868b] max-w-xs mx-auto mb-4">Please sync your student portal to load your subjects.</p>
+            <button onclick="window.openPortalDrawer()" class="px-5 py-2.5 bg-[var(--mac-blue)] text-white text-xs font-bold rounded-xl spring active:scale-95">
+                Sync Portal Now
+            </button>
+        </div>
+    `;
 };
 
 window.toggleClassSubjectCard = function(cardId) {
@@ -3359,7 +3674,7 @@ window.renderClassAttendance = function() {
     }
 
     if (!subjects.length) {
-        container.innerHTML = semFilterHtml + `
+        container.innerHTML = window.getFreshnessIndicatorHtml('Attendance', selectedSem === 'all' ? '' : selectedSem) + semFilterHtml + `
             <div style="text-align:center;padding:3rem 1rem;">
                 <div style="font-size:3rem;margin-bottom:1rem;">📊</div>
                 <p style="font-size:0.9rem;font-weight:700;color:var(--mac-secondary,#86868b);">No attendance data for this semester</p>
@@ -3424,7 +3739,7 @@ window.renderClassAttendance = function() {
     const dash   = (dashVal / 100) * circum;
 
     // ── Overall hero card ──────────────────────────────────────────────────
-    const heroHtml = semFilterHtml + `
+    const heroHtml = window.getFreshnessIndicatorHtml('Attendance', selectedSem === 'all' ? '' : selectedSem) + semFilterHtml + `
         <div class="att-hero glass-panel" style="
             border-radius:2rem;
             padding:1.5rem 1.25rem;
@@ -3713,7 +4028,7 @@ window.renderExamResults = function () {
         // University Exam Results view
         const examRaw = getPortalCache('ExamResult', adminNo);
         if (!examRaw) {
-            container.innerHTML = headerHtml + `
+            container.innerHTML = window.getFreshnessIndicatorHtml('ExamResult') + headerHtml + `
                 <div class="glass-panel rounded-[2rem] p-8 text-center my-6 relative overflow-hidden border border-white/5">
                     <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">🏆</div>
                     <h3 class="text-base font-black text-white">Exam Results Not Synced</h3>
@@ -3837,7 +4152,7 @@ window.renderExamResults = function () {
                 </div>`;
         }
 
-        container.innerHTML = headerHtml + semFilterHtml + resultsHtml;
+        container.innerHTML = window.getFreshnessIndicatorHtml('ExamResult', selectedSem === 'all' ? '' : selectedSem) + headerHtml + semFilterHtml + resultsHtml;
 
     } else {
         // College Results / Internal Marks subtab
@@ -4099,7 +4414,7 @@ window.renderExamResults = function () {
                 </div>`;
         }
 
-        container.innerHTML = headerHtml + filterHtml + contentHtml;
+        container.innerHTML = window.getFreshnessIndicatorHtml('InternalMark', activeSem) + headerHtml + filterHtml + contentHtml;
     }
 }
 
@@ -4119,7 +4434,56 @@ window.initExamHubApp = () => {
     renderClassSubjects();
     renderClassAttendance();
 
-    switchView('view-home');
+    const storedClassSubTab = localStorage.getItem('machub_class_sub_tab');
+    if (storedClassSubTab && typeof window.switchClassTab === 'function') {
+        window.switchClassTab(storedClassSubTab);
+    } else if (typeof window.switchClassTab === 'function') {
+        window.switchClassTab('timetable');
+    }
+
+    // Restore persisted view or default to view-home
+    const persistedView = localStorage.getItem('machub_current_view');
+    let targetView = 'view-home';
+    if (persistedView) {
+        if (['view-timetable', 'view-seats', 'view-results'].includes(persistedView)) {
+            targetView = persistedView;
+        } else {
+            const panel = document.getElementById(persistedView);
+            if (panel && panel.classList.contains('view-panel')) {
+                targetView = persistedView;
+            }
+        }
+    }
+
+    if (targetView === 'view-ai' && typeof window.openMacAI === 'function') {
+        window.openMacAI();
+    } else if (targetView === 'view-profile-edit' && typeof window.openEditProfile === 'function') {
+        window.openEditProfile();
+    } else if (targetView.startsWith('view-settings')) {
+        if (typeof window.openSettingsTray === 'function') {
+            window.openSettingsTray();
+        }
+        if (targetView !== 'view-settings') {
+            switchView(targetView);
+            if (targetView === 'view-settings-synced-data' && typeof window.updateSyncedDataSizes === 'function') {
+                window.updateSyncedDataSizes();
+            } else if (targetView === 'view-settings-allotment-memo' && typeof window.loadAllotmentMemoData === 'function') {
+                window.loadAllotmentMemoData();
+            } else if (targetView === 'view-settings-hall-ticket' && typeof window.loadHallTicketData === 'function') {
+                window.loadHallTicketData();
+            } else if (targetView === 'view-settings-fee-payment' && typeof window.loadFeePaymentData === 'function') {
+                window.loadFeePaymentData();
+            } else if (targetView === 'view-settings-grievance' && typeof window.loadGrievancePortalData === 'function') {
+                window.loadGrievancePortalData();
+            } else if (targetView === 'view-settings-concession' && typeof window.loadConcessionPortalData === 'function') {
+                window.loadConcessionPortalData();
+            } else if (targetView === 'view-settings-feedback' && typeof window.loadFeedbackData === 'function') {
+                window.loadFeedbackData();
+            }
+        }
+    } else {
+        switchView(targetView);
+    }
     startTimers();
     setupSwipeGestures();
     setupScrollHide();
@@ -4155,3 +4519,222 @@ document.addEventListener('click', (event) => {
         }
     }
 });
+
+// ── Freshness Indicators & Celebration Overlay ────────────────────────────────
+
+window.getFreshnessIndicatorHtml = function(section, semester = '') {
+    const adminNo = window.ExamHubProfile?.get()?.adminNo || window.getStudentInfo?.()?.adminNo || localStorage.getItem('machub_student_id') || '';
+    if (!adminNo) return '';
+
+    const semSuffix = semester ? `_sem${semester}` : '';
+    const cacheKey = `machub_portal_${section}${semSuffix}_${adminNo}`;
+    const raw = localStorage.getItem(cacheKey);
+
+    let indicatorColor = 'bg-slate-500';
+    let indicatorText = 'Not yet available';
+    let isFrozen = false;
+    let savedAt = 0;
+
+    if (raw) {
+        try {
+            const parsed = JSON.parse(raw);
+            savedAt = parsed.savedAt || 0;
+            const data = parsed.data || {};
+            if (section === 'ExamResult' && data) {
+                isFrozen = true;
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    if (savedAt) {
+        const diffMs = Date.now() - savedAt;
+        const diffMin = Math.floor(diffMs / 60000);
+        const diffHrs = Math.floor(diffMin / 60);
+
+        if (diffMin < 5) {
+            indicatorColor = 'bg-green-500';
+            indicatorText = 'Live';
+        } else if (diffMin < 60) {
+            indicatorColor = 'bg-yellow-500 animate-pulse';
+            indicatorText = `${diffMin} min ago`;
+        } else if (diffHrs < 24) {
+            indicatorColor = 'bg-yellow-500';
+            indicatorText = `${diffHrs} hr${diffHrs > 1 ? 's' : ''} ago`;
+        } else {
+            const dateStr = new Date(savedAt).toLocaleDateString();
+            indicatorColor = 'bg-slate-500';
+            indicatorText = `Cached ${dateStr}`;
+        }
+    }
+
+    if (isFrozen) {
+        indicatorColor = 'bg-indigo-500';
+        indicatorText = '🔒 Verified record';
+    }
+
+    return `
+        <div class="freshness-indicator-pill flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-extrabold bg-white/5 border border-white/5 text-[#86868b] transition-all duration-300 w-fit mb-3"
+             data-section="${section}" data-semester="${semester || ''}" data-saved-at="${savedAt}">
+            <span class="w-1.5 h-1.5 rounded-full ${indicatorColor}"></span>
+            <span>${indicatorText}</span>
+        </div>
+    `;
+};
+
+window.showExamResultCelebration = function(resultsData) {
+    const student = window.getStudentInfo?.();
+    const semester = resultsData?.semester || student?.semester || 'Active Semester';
+    const semKey = String(semester).replace(/\s+/g, '_');
+    
+    // Prevent duplicate display
+    if (localStorage.getItem(`machub_exam_result_celebration_shown_${semKey}`) === 'true') {
+        return;
+    }
+
+    const overlay = document.getElementById('examResultCelebrationOverlay');
+    const card = document.getElementById('examResultCelebrationCard');
+    
+    // Populate details
+    const nameEl = document.getElementById('celebStudentName');
+    if (nameEl) nameEl.textContent = student?.name || student?.studentName || 'Student';
+
+    const semEl = document.getElementById('celebSemester');
+    if (semEl) semEl.textContent = semester;
+
+    let status = 'PASS';
+    let sgpa = '--';
+
+    try {
+        const subjects = resultsData?.subjects || resultsData?.rows || [];
+        let hasFail = false;
+        
+        subjects.forEach(sub => {
+            const grade = sub.grade || sub.Grade || sub.col_5 || '';
+            if (grade.toUpperCase() === 'F' || grade.toUpperCase() === 'FAIL' || grade.toUpperCase() === 'AB') {
+                hasFail = true;
+            }
+        });
+
+        if (hasFail) {
+            status = 'FAIL';
+            const statusEl = document.getElementById('celebStatus');
+            if (statusEl) {
+                statusEl.textContent = 'FAIL';
+                statusEl.className = 'text-xl font-black text-red-500 mt-1';
+            }
+        } else {
+            status = 'PASS';
+            const statusEl = document.getElementById('celebStatus');
+            if (statusEl) {
+                statusEl.textContent = 'PASS';
+                statusEl.className = 'text-xl font-black text-green-400 mt-1';
+            }
+        }
+
+        sgpa = resultsData?.sgpa || resultsData?.SGPA || resultsData?.creditPoint || '--';
+        const sgpaEl = document.getElementById('celebSgpa');
+        if (sgpaEl) sgpaEl.textContent = sgpa;
+    } catch (e) {
+        console.error('Failed to parse exam results for celebration:', e);
+    }
+
+    if (overlay && card) {
+        overlay.classList.remove('hidden');
+        overlay.classList.add('flex');
+        setTimeout(() => {
+            card.classList.remove('scale-90', 'opacity-0');
+            card.classList.add('scale-100', 'opacity-1');
+        }, 50);
+    }
+};
+
+window.dismissCelebrationOverlay = function(action) {
+    const overlay = document.getElementById('examResultCelebrationOverlay');
+    const card = document.getElementById('examResultCelebrationCard');
+    const semester = document.getElementById('celebSemester')?.textContent || 'UNKNOWN';
+    const semKey = semester.replace(/\s+/g, '_');
+    
+    // Mark as shown locally immediately
+    localStorage.setItem(`machub_exam_result_celebration_shown_${semKey}`, 'true');
+
+    if (overlay && card) {
+        card.classList.remove('scale-100', 'opacity-1');
+        card.classList.add('scale-90', 'opacity-0');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }, 300);
+    }
+    
+    // Save to Firestore to prevent showing again on other devices
+    const student = window.getStudentInfo?.();
+    const adminNo = student?.adminNo || student?.admissionNo || localStorage.getItem('machub_student_id') || '';
+    if (window.firebaseFirestore && window.firestoreDoc && window.firestoreSetDoc && adminNo) {
+        const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', adminNo);
+        window.firestoreSetDoc(docRef, {
+            notifications: {
+                [`examResultShown_${semKey}`]: {
+                    shown: true,
+                    shownAt: new Date().toISOString()
+                }
+            }
+        }, { merge: true }).catch(err => {
+            console.warn('Failed to save notification state to Firestore:', err);
+        });
+    }
+
+    if (action === 'view') {
+        if (typeof window.switchView === 'function') {
+            window.switchView('view-results');
+        }
+    }
+};
+
+// Start refresh timer for freshness indicator pills
+setInterval(() => {
+    document.querySelectorAll('.freshness-indicator-pill').forEach(el => {
+        const section = el.getAttribute('data-section');
+        const semester = el.getAttribute('data-semester');
+        const savedAt = parseInt(el.getAttribute('data-saved-at') || '0', 10);
+        if (!savedAt) return;
+
+        const isFrozen = (section === 'ExamResult');
+
+        const diffMs = Date.now() - savedAt;
+        const diffMin = Math.floor(diffMs / 60000);
+        const diffHrs = Math.floor(diffMin / 60);
+
+        let indicatorColor = 'bg-slate-500';
+        let indicatorText = 'Not yet available';
+
+        if (diffMin < 5) {
+            indicatorColor = 'bg-green-500';
+            indicatorText = 'Live';
+        } else if (diffMin < 60) {
+            indicatorColor = 'bg-yellow-500 animate-pulse';
+            indicatorText = `${diffMin} min ago`;
+        } else if (diffHrs < 24) {
+            indicatorColor = 'bg-yellow-500';
+            indicatorText = `${diffHrs} hr${diffHrs > 1 ? 's' : ''} ago`;
+        } else {
+            const dateStr = new Date(savedAt).toLocaleDateString();
+            indicatorColor = 'bg-slate-500';
+            indicatorText = `Cached ${dateStr}`;
+        }
+
+        if (isFrozen) {
+            indicatorColor = 'bg-indigo-500';
+            indicatorText = '🔒 Verified record';
+        }
+
+        const dot = el.querySelector('span:first-child');
+        const txt = el.querySelector('span:last-child');
+        if (dot && txt) {
+            dot.className = `w-1.5 h-1.5 rounded-full ${indicatorColor}`;
+            txt.textContent = indicatorText;
+        }
+    });
+}, 60000);
+

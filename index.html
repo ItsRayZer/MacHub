@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- MacHub Version 2.0.1 - June 2026 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MacHub</title>
     <link rel="icon" type="image/png" href="assets/img/ChatGPT Image May 18, 2026, 10_33_49 PM.png">
@@ -14,6 +15,7 @@
     <link rel="stylesheet" href="styles/components.css">
     <link rel="stylesheet" href="styles/mobile-optimized.css">
     <link rel="stylesheet" href="styles/mac_ai_chat.css">
+    <link rel="stylesheet" href="styles/desktop.css">
 </head>
 <body class="pb-32 app-shell-ready">
 
@@ -63,30 +65,15 @@
                 </div>
 
                 <div class="space-y-4">
-                    <div class="relative">
-                        <input type="text" id="ob-name" placeholder="Full Name *"
-                            class="w-full bg-black/5 dark:bg-white/5 border-none rounded-2xl py-4 px-5 text-base font-bold outline-none focus:ring-2 focus:ring-[var(--mac-blue)]/50 transition-all placeholder:text-[#86868b]/50"
-                            oninput="validateObStep2()">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="ob-reg" placeholder="Reg No"
+                    <div class="grid grid-cols-1 gap-4">
+                        <input type="text" id="ob-adminNo" placeholder="Admission Number"
                             class="bg-black/5 dark:bg-white/5 border-none rounded-2xl py-4 px-5 text-base font-bold outline-none focus:ring-2 focus:ring-[var(--mac-blue)]/50 transition-all placeholder:text-[#86868b]/50"
                             oninput="validateObStep2()">
-                        <input type="text" id="ob-adminNo" placeholder="Admin No"
-                            class="bg-black/5 dark:bg-white/5 border-none rounded-2xl py-4 px-5 text-base font-bold outline-none focus:ring-2 focus:ring-[var(--mac-blue)]/50 transition-all placeholder:text-[#86868b]/50"
-                            oninput="validateObStep2()">
-                    </div>
-
-                    <div class="flex gap-2 p-1 bg-black/5 dark:bg-white/5 rounded-2xl">
-                        <button id="btn-BCA" onclick="selectObDept('BCA')" class="flex-1 py-3 rounded-xl text-xs font-black tracking-widest transition-all opacity-60">BCA</button>
-                        <button id="btn-BBA" onclick="selectObDept('BBA')" class="flex-1 py-3 rounded-xl text-xs font-black tracking-widest transition-all opacity-60">BBA</button>
-                        <button id="btn-BSW" onclick="selectObDept('BSW')" class="flex-1 py-3 rounded-xl text-xs font-black tracking-widest transition-all opacity-60">BSW</button>
                     </div>
                 </div>
 
                 <div class="space-y-4">
-                    <button onclick="nextObStep(3)" id="ob-final-btn"
+                    <button onclick="fetchAndFinishOnboarding()" id="ob-final-btn"
                         class="w-full bg-[#1d1d1f] dark:bg-[#f5f5f7] text-white dark:text-[#1d1d1f] py-5 rounded-[1.5rem] font-bold text-lg shadow-xl opacity-30 pointer-events-none transition-all flex items-center justify-center gap-2">
                         Continue <span class="opacity-30">></span>
                     </button>
@@ -120,11 +107,37 @@
     <div id="guideHighlight" class="highlight-box"></div>
 
     <!-- Header: shown only on home view -->
-    <header id="appHeader" class="max-w-md mx-auto mt-4 mb-6 px-6 text-center">
-        <div class="logo-container">
-            <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="logo" id="userGreeting">
+    <header id="appHeader" class="max-w-md mx-auto mt-4 mb-4 px-6 relative flex flex-col items-center">
+        <div class="w-full flex items-center justify-between">
+            <!-- Left: Side Menu Hamburger Button -->
+            <button onclick="window.openPortalDrawer()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);" aria-label="Open Portal Menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+
+            <!-- Center: mac hub logo -->
+            <div class="logo-container">
+                <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="logo" id="userGreeting" style="margin: 0;">
+            </div>
+
+            <!-- Right: Insta-like pulsing announcement bell button -->
+            <button onclick="openAnnouncements()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30 relative" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);" aria-label="Open Announcements">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <!-- Pulsing Blue Dot -->
+                <span class="absolute top-1.5 right-1.5 flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0071e3] opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-[#0071e3]"></span>
+                </span>
+            </button>
         </div>
-        <p id="liveClock" class="text-[var(--mac-blue)] text-[10px] font-black tracking-[0.3em] mt-2 uppercase">00:00:00 AM</p>
+        <!-- Time/Clock -->
+        <p id="liveClock" class="text-[var(--mac-blue)] text-[10px] font-black tracking-[0.2em] mt-3 uppercase">00:00:00 AM IST</p>
     </header>
 
     <div id="view-seats" class="view-panel">
@@ -139,7 +152,7 @@
 
         <div class="max-w-md mx-auto px-4 mt-3 mb-3">
             <div class="seat-toolbar">
-                <div id="departmentFilters" class="seat-dropdown"></div>
+                <div id="departmentFilters" class="seat-dropdown hidden"></div>
                 <div id="daySelector" class="seat-dropdown"></div>
             </div>
         </div>
@@ -217,81 +230,189 @@
     </div> <!-- end view-seats -->
 
     <div id="view-home" class="view-panel is-active max-w-md mx-auto p-6 relative">
-        <!-- Insta-like pulsing announcement bell button -->
-        <button onclick="openAnnouncements()" class="absolute top-8 right-8 w-11 h-11 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-xl z-30" style="background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.5);" aria-label="Open Announcements">
-            🔔
-            <!-- Pulsing Red Dot -->
-            <span class="absolute top-2 right-2.5 flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-            </span>
-        </button>
-        <div class="glass-panel p-8 rounded-[3rem] text-center mb-8 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-[var(--mac-blue)] opacity-10 rounded-full -mr-16 -mt-16"></div>
-            <div class="glass-panel w-20 h-20 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 shadow-xl floating">🏠</div>
-            <h2 id="homeGreeting" class="text-3xl font-bold mb-2">Hello!</h2>
-            <p class="text-[#86868b] text-[10px] font-bold uppercase tracking-widest pl-2 mb-8">Mac Ramapuram • 2026</p>
+        <!-- Apple Premium Glass Greeting Card -->
+        <div class="glass-panel p-6 rounded-[2rem] mb-6 flex items-center justify-between gap-4 relative overflow-hidden cursor-pointer group active:scale-[0.98] transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/10" 
+             style="background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.01) 100%); backdrop-filter: blur(20px);"
+             onclick="switchView('view-profile')">
+             
+            <!-- Decorative animated glows -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-[var(--mac-blue)] rounded-full mix-blend-screen filter blur-[40px] opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-[#00d4aa] rounded-full mix-blend-screen filter blur-[40px] opacity-10 group-hover:opacity-30 transition-opacity duration-500"></div>
 
-            <div class="bg-black/5 dark:bg-white/5 rounded-3xl p-6 mb-6">
-                <p class="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-4">Time Remaining</p>
-                <div class="flex items-center justify-center gap-3">
-                    <div class="flex flex-col items-center w-14">
-                        <span id="daysLeft" class="text-3xl font-black tracking-tighter text-[var(--mac-blue)]">00</span>
-                        <span class="text-[7px] font-bold text-[#86868b] uppercase">Days</span>
-                    </div>
-                    <span class="text-xl font-black text-[var(--mac-blue)] opacity-20">:</span>
-                    <div class="flex flex-col items-center w-14">
-                        <span id="hoursLeft" class="text-3xl font-black tracking-tighter text-[var(--mac-blue)]">00</span>
-                        <span class="text-[7px] font-bold text-[#86868b] uppercase">Hours</span>
-                    </div>
-                    <span class="text-xl font-black text-[var(--mac-blue)] opacity-20">:</span>
-                    <div class="flex flex-col items-center w-14">
-                        <span id="minsLeft" class="text-3xl font-black tracking-tighter text-[var(--mac-blue)]">00</span>
-                        <span class="text-[7px] font-bold text-[#86868b] uppercase">Mins</span>
-                    </div>
-                    <span class="text-xl font-black text-[var(--mac-blue)] opacity-20">:</span>
-                    <div class="flex flex-col items-center w-14 text-red-500">
-                        <span id="secsLeft" class="text-3xl font-black tracking-tighter">00</span>
-                        <span class="text-[7px] font-bold opacity-50 uppercase">Secs</span>
+            <div class="flex items-center gap-4 relative z-10">
+                <!-- Premium Avatar -->
+                <div class="relative w-14 h-14 rounded-[1.25rem] bg-gradient-to-br from-[var(--mac-blue)] to-[#00d4aa] p-[1px] shadow-lg group-hover:scale-105 transition-transform duration-300">
+                    <div class="absolute inset-0 bg-white/20 rounded-[1.25rem] blur-sm mix-blend-overlay"></div>
+                    <div class="w-full h-full rounded-[1.25rem] bg-[#1d1d1f]/80 backdrop-blur-md flex items-center justify-center relative overflow-hidden">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-br from-white to-white/70 font-black text-lg" id="homeProfileInitials">MAC</span>
                     </div>
                 </div>
-
-                <div class="mt-6 pt-6 border-t border-black/5 dark:border-white/5">
-                    <h3 id="nextExamTitle" class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Searching...</h3>
-                    <p id="nextExamDate" class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-1">Calculating Schedule</p>
+                
+                <!-- Welcome Text -->
+                <div class="flex flex-col justify-center">
+                    <p class="text-white/60 text-[10px] font-bold uppercase tracking-[0.2em] mb-0.5 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[var(--mac-blue)] animate-pulse"></span>
+                        <span id="homeProfileSub">Welcome Back</span>
+                    </p>
+                    <h2 id="homeGreeting" class="text-2xl font-black text-white leading-tight tracking-tight drop-shadow-sm">Hello!</h2>
                 </div>
             </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="switchExamView('view-timetable')" class="liquid-button py-4 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-full font-bold spring">Exam Hub</button>
-                <button onclick="switchView('view-resources')" class="liquid-button py-4 text-[#1d1d1f] dark:text-[#f5f5f7] rounded-full font-bold spring">Resources</button>
-            </div>
-            <div class="grid grid-cols-2 gap-3 mt-3">
-                <button onclick="openAcademicSheet()" class="bg-[var(--mac-blue)]/10 border border-[var(--mac-blue)]/20 py-4 text-[var(--mac-blue)] rounded-[1.5rem] font-bold spring flex items-center justify-center gap-2">
-                    <span>📊</span>
-                    <span class="text-sm">Attendance & Marks</span>
-                </button>
-                <button onclick="openExternalApp('https://eportal.maraugusthinosecollege.org/Login.aspx', 'Student Portal')" class="bg-[var(--mac-blue)]/10 border border-[var(--mac-blue)]/20 py-4 text-[var(--mac-blue)] rounded-[1.5rem] font-bold spring flex items-center justify-center gap-2">
-                    <span>🌐</span>
-                    <span class="text-sm">Student Portal</span>
-                </button>
+            
+            <!-- Right Side Course Badge -->
+            <div class="relative z-10 flex flex-col items-end justify-center">
+                <div class="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col items-end shadow-inner group-hover:bg-white/10 transition-colors duration-300">
+                    <span class="text-[10px] font-black text-white tracking-widest drop-shadow-md" id="homeUserDept">COURSE</span>
+                    <span class="text-[8px] font-extrabold text-[var(--mac-blue)] uppercase tracking-widest mt-0.5" id="homeUserSem">SEM -</span>
+                </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <div class="glass-panel p-6 rounded-[2.5rem]">
-                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">My Dept</p>
-                <p id="homeUserDept" class="text-2xl font-bold text-[var(--mac-blue)]">---</p>
-            </div>
-            <div class="glass-panel p-6 rounded-[2.5rem]">
-                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">Hall</p>
-                <p id="homeUserHall" class="text-2xl font-bold text-[var(--mac-blue)]">---</p>
-            </div>
-            <div class="glass-panel p-6 rounded-[2.5rem] col-span-2">
-                <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-2">Location</p>
-                <p id="homeUserSeat" class="text-xl font-bold text-[var(--mac-blue)]">---</p>
+        <script>
+            window.syncBottomNavAvatar = function() {
+                try {
+                    const info = typeof getStudentInfo === 'function' ? getStudentInfo() : null;
+                    if (info) {
+                        const initials = info.name ? info.name.substring(0, 2).toUpperCase() : 'MAC';
+                        const navInitials = document.getElementById('navProfileInitialsText');
+                        if (navInitials) navInitials.textContent = initials.substring(0, 1);
+                        
+                        const navAvatarImg = document.getElementById('navProfileAvatarImg');
+                        const initialsDiv = document.getElementById('navProfileAvatarInitials');
+                        if (navAvatarImg && initialsDiv) {
+                            const avatarSrc = info.avatarSrc || (info.photoUrl || '');
+                            if (avatarSrc && (avatarSrc.startsWith('assets/') || avatarSrc.startsWith('data:') || avatarSrc.startsWith('http'))) {
+                                navAvatarImg.src = avatarSrc;
+                                navAvatarImg.classList.remove('hidden');
+                                initialsDiv.classList.add('hidden');
+                            } else {
+                                navAvatarImg.classList.add('hidden');
+                                initialsDiv.classList.remove('hidden');
+                            }
+                        }
+                    }
+                } catch(e) {}
+            };
+
+            // Inject mini profile data
+            setTimeout(() => {
+                try {
+                    const info = typeof getStudentInfo === 'function' ? getStudentInfo() : null;
+                    if (info) {
+                        const firstName = info.name ? info.name.split(' ')[0] : 'Hello!';
+                        document.getElementById('homeGreeting').textContent = firstName;
+                        const initials = info.name ? info.name.substring(0, 2).toUpperCase() : 'MAC';
+                        document.getElementById('homeProfileInitials').textContent = initials;
+                        document.getElementById('homeUserDept').textContent = info.dept || 'COURSE';
+                        document.getElementById('homeUserSem').textContent = `SEM ${info.semester || '-'}`;
+                        document.getElementById('homeProfileSub').textContent = info.adminNo || 'VIEW PROFILE';
+                        
+                        // Sync bottom navigation avatar
+                        window.syncBottomNavAvatar();
+                    }
+                } catch(e) {}
+            }, 500);
+        </script>
+
+
+        <!-- Course Details & Shortcuts -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between mb-3 pl-1">
+                <h4 class="text-[10px] font-black text-[#86868b] uppercase tracking-widest flex items-center gap-1.5">
+                    <span class="text-xl">⚡</span> QUICK SHORTCUTS
+                </h4>
             </div>
 
+            <script>
+                window.syncAndOpenNative = async function(sectionName, mainView, subTab) {
+                    // Instantly open the tab so UI feels fast
+                    if (typeof switchExamView === 'function') switchExamView(mainView);
+                    if (subTab && typeof switchClassTab === 'function') {
+                        setTimeout(() => switchClassTab(subTab), 50);
+                    }
+                    
+                    // Forcefully sync data in background and re-render
+                    if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
+                        try {
+                            // Pass current semester if they have a filter active
+                            let sem = '';
+                            if (sectionName === 'Attendance' && typeof appState !== 'undefined' && appState.selectedAttendanceSem && appState.selectedAttendanceSem !== 'all') {
+                                sem = appState.selectedAttendanceSem;
+                            }
+                            
+                            const data = await window.MacHubPortal.fetchSection(sectionName, true, sem); // true = force sync
+                            
+                            // After sync, re-render the view
+                            if (sectionName === 'Attendance' && typeof renderClassAttendance === 'function') renderClassAttendance();
+                            if (sectionName === 'Assignment' && typeof renderClassAssignment === 'function') renderClassAssignment();
+                            if (sectionName === 'Seminar' && typeof renderClassSeminar === 'function') renderClassSeminar();
+                            if (sectionName === 'ExamResult' && typeof renderExamResults === 'function') renderExamResults();
+                        } catch(e) {
+                            console.error("Sync failed for", sectionName, e);
+                        }
+                    }
+                };
+            </script>
+
+            <div class="grid grid-cols-2 gap-3" id="homeShortcutsGrid">
+
+                <!-- Attendance -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.syncAndOpenNative('Attendance', 'view-class', 'attendance')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(0, 212, 170, 0.15); color: #00d4aa; border: 1px solid rgba(0, 212, 170, 0.3);">
+                        📅
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Attendance</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track daily class hours & percentage</p>
+                    </div>
+                </div>
+
+                <!-- Exam Results -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.syncAndOpenNative('ExamResult', 'view-results', null)"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(255, 179, 71, 0.15); color: #ffb347; border: 1px solid rgba(255, 179, 71, 0.3);">
+                        🎓
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Exam Results</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Check university semester grades</p>
+                    </div>
+                </div>
+
+                <!-- Assignment -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.syncAndOpenNative('Assignment', 'view-class', 'assignment')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(45, 152, 218, 0.15); color: #2d98da; border: 1px solid rgba(45, 152, 218, 0.3);">
+                        📂
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Assignment</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track pending submissions & deadlines</p>
+                    </div>
+                </div>
+
+                <!-- Seminar -->
+                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
+                     onclick="window.syncAndOpenNative('Seminar', 'view-class', 'seminar')"
+                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                         style="background: rgba(252, 92, 101, 0.15); color: #fc5c65; border: 1px solid rgba(252, 92, 101, 0.3);">
+                        🎙️
+                    </div>
+                    <div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Seminar</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track seminar presentations & scores</p>
+                    </div>
+                </div>
+
+
+            </div>
         </div>
 
         <div id="externalAppShell" class="external-app-shell hidden" aria-live="polite">
@@ -315,7 +436,7 @@
     </div> <!-- Close view-home -->
 
     <!-- Announcements Panel -->
-    <div id="view-announcements" class="view-panel max-w-md mx-auto p-6 hidden relative">
+    <div id="view-announcements" class="view-panel max-w-md mx-auto p-6 relative">
         <!-- Fixed back button with no text (same as student portal back button) -->
         <button type="button" class="external-app-back absolute top-6 left-6" onclick="closeAnnouncements()" aria-label="Back to home">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -340,7 +461,7 @@
         <!-- Class Portal Top Dropdowns -->
         <div class="max-w-md mx-auto mt-3 mb-4">
             <div class="seat-toolbar">
-                <div id="classDepartmentFilters" class="seat-dropdown"></div>
+                <div id="classDepartmentFilters" class="seat-dropdown hidden"></div>
                 <div id="classDaySelector" class="seat-dropdown"></div>
             </div>
         </div>
@@ -351,7 +472,7 @@
             <div class="exam-subnav subnav-3col mb-4 mt-2" aria-label="Inner Class Menu">
                 <button type="button" id="tab-class-timetable" onclick="switchClassTab('timetable')" class="exam-subnav-item is-active" data-class-target="view-class-timetable">Timetable</button>
                 <button type="button" id="tab-class-subjects" onclick="switchClassTab('subjects')" class="exam-subnav-item" data-class-target="view-class-subjects">Subjects</button>
-                <button type="button" id="tab-class-teachers" onclick="switchClassTab('teachers')" class="exam-subnav-item" data-class-target="view-class-teachers">Teachers</button>
+                <button type="button" id="tab-class-attendance" onclick="switchClassTab('attendance')" class="exam-subnav-item" data-class-target="view-class-attendance">Attendance</button>
             </div>
 
             <!-- Class Sub-views -->
@@ -363,8 +484,8 @@
                 <div id="classSubjectsContent" class="grid gap-4"></div>
             </div>
 
-            <div id="sub-view-class-teachers" class="hidden w-full">
-                <div id="classTeachersContent" class="space-y-4"></div>
+            <div id="sub-view-class-attendance" class="hidden w-full">
+                <div id="classAttendanceContent" class="space-y-4"></div>
             </div>
         </div>
     </div>
@@ -454,19 +575,63 @@
             <div id="navIndicator" class="nav-indicator"></div>
 
             <button onclick="switchView('view-home')" id="tab-view-home" class="nav-item active" c-option="1">
-                <span class="nav-icon">🏠</span>
+                <span class="nav-icon">
+                    <!-- Home Outline (Official Instagram Web Path) -->
+                    <svg class="icon-outline" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+                        <path d="M22 23h-6.001a1 1 0 0 1-1-1v-5.645a2.002 2.002 0 0 0-2.001-2.001 2.002 2.002 0 0 0-2.001 2.001v5.645a1.001 1.001 0 0 1-1 1H2a1 1 0 0 1-1-1V11.058a1.001 1.001 0 0 1 .326-.743L11.326 1.7a1 1 0 0 1 1.348 0L22.675 10.3a1.001 1.001 0 0 1 .325.758V22a1 1 0 0 1-1 1z"></path>
+                    </svg>
+                    <!-- Home Filled (Official Instagram Web Path) -->
+                    <svg class="icon-filled" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22 23h-6.001a1 1 0 0 1-1-1v-5.645a2.002 2.002 0 0 0-2.001-2.001 2.002 2.002 0 0 0-2.001 2.001v5.645a1.001 1.001 0 0 1-1 1H2a1 1 0 0 1-1-1V11.058a1.001 1.001 0 0 1 .326-.743L11.326 1.7a1 1 0 0 1 1.348 0L22.675 10.3a1.001 1.001 0 0 1 .325.758V22a1 1 0 0 1-1 1z"></path>
+                    </svg>
+                </span>
                 <span class="nav-label">Home</span>
             </button>
             <button onclick="switchExamView()" id="tab-view-exam" class="nav-item" c-option="2">
-                <span class="nav-icon nav-icon-text">S</span>
+                <span class="nav-icon">
+                    <!-- Schedule Outline (Instagram inspired grid calendar) -->
+                    <svg class="icon-outline" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                        <rect x="7" y="13" width="2" height="2"></rect>
+                        <rect x="11" y="13" width="2" height="2"></rect>
+                        <rect x="15" y="13" width="2" height="2"></rect>
+                        <rect x="7" y="17" width="2" height="2"></rect>
+                        <rect x="11" y="17" width="2" height="2"></rect>
+                        <rect x="15" y="17" width="2" height="2"></rect>
+                    </svg>
+                    <!-- Schedule Filled -->
+                    <svg class="icon-filled" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM7 12h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm-4 0h2v2H7v-2zm8 0h2v2h-2v-2z"/>
+                    </svg>
+                </span>
                 <span class="nav-label">Schedule</span>
             </button>
             <button onclick="switchView('view-resources')" id="tab-view-resources" class="nav-item" c-option="3">
-                <span class="nav-icon nav-icon-text">R</span>
+                <span class="nav-icon">
+                    <!-- Resources Outline (Instagram inspired Bookmark) -->
+                    <svg class="icon-outline" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <!-- Resources Filled -->
+                    <svg class="icon-filled" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17 3H7a2 2 0 0 0-2 2v16l7-5 7 5V5a2 2 0 0 0-2-2z"/>
+                    </svg>
+                </span>
                 <span class="nav-label">Resources</span>
             </button>
             <button onclick="switchView('view-profile')" id="tab-view-profile" class="nav-item" c-option="4">
-                <span class="nav-icon nav-icon-text">P</span>
+                <span class="nav-icon">
+                    <!-- Profile Tab (Instagram circular avatar style) -->
+                    <div class="nav-profile-avatar">
+                        <img id="navProfileAvatarImg" src="" alt="Profile" class="nav-profile-img hidden">
+                        <div id="navProfileAvatarInitials" class="nav-profile-avatar-inner">
+                            <span id="navProfileInitialsText">P</span>
+                        </div>
+                    </div>
+                </span>
                 <span class="nav-label">Profile</span>
             </button>
         </div>
@@ -500,7 +665,7 @@
                 <div id="drawerDeptIcon" class="w-14 h-14 bg-[#0071e3] rounded-[1.25rem] flex items-center justify-center text-white text-2xl font-bold shadow-lg">B</div>
                 <div>
                     <h3 id="drawerDeptName" class="text-xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-none">BCA</h3>
-                    <p class="text-[#86868b] text-[9px] font-bold mt-1 tracking-wider uppercase">Mac Ramapuram</p>
+                    <p id="drawerDeptNameSub" class="text-[#86868b] text-[9px] font-bold mt-1 tracking-wider uppercase">Mac Ramapuram</p>
                 </div>
             </div>
 
@@ -678,126 +843,1315 @@
     </div>
 
 
-    <!-- Profile View Panel -->
-    <div id="view-profile" class="view-panel max-w-md mx-auto p-6 hidden relative min-h-screen flex flex-col" style="padding-bottom: 90px;">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- PROFILE VIEW — ZIP Design (New)                        -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="view-profile" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+
+        <!-- ── Header ── -->
+        <div class="flex justify-between items-center px-4 pt-5 pb-3">
             <div>
-                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-1">Academic Identity</p>
-                <h2 class="text-2xl font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">My Profile</h2>
+                <h2 class="text-2xl font-black tracking-tight" style="color:#f5f5f7;">Profile</h2>
             </div>
-            <button onclick="toggleTheme()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-lg spring hover:scale-105 active:scale-95" aria-label="Toggle theme">
-                <span id="themeIcon">🌓</span>
+            <div class="flex items-center gap-2">
+                <!-- Sync status pill -->
+                <div id="profileSyncStatusBadge" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-extrabold bg-white/5 border border-white/5 text-[#86868b] transition-all duration-300">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-500 transition-all duration-300" id="profileSyncStatusDot"></span>
+                    <span id="profileSyncStatusText">Checking Sync...</span>
+                </div>
+                <button onclick="window.openSettingsTray()"
+                    class="w-10 h-10 rounded-full flex items-center justify-center spring active:scale-90 bg-white/5 border border-white/10 text-white"
+                    aria-label="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- ── Avatar + Stats Row ── -->
+        <div class="flex items-center justify-between px-4 mb-4 gap-4">
+            <!-- Avatar with picker -->
+            <div class="relative" style="flex-shrink:0;">
+                <div class="new-profile-avatar-ring" onclick="window.openAvatarPicker()">
+                    <div class="new-profile-avatar-ring-inner">
+                        <img id="profileAvatarImage"
+                            src="assets/img/ChatGPT%20Image%20May%2018,%202026,%2010_33_49%20PM.png"
+                            alt="Avatar" style="width:100%;height:100%;object-fit:cover;">
+                        <div id="avatarUploadProgress"
+                            class="absolute inset-0 rounded-full flex items-center justify-center"
+                            style="background:rgba(0,0,0,0.6);opacity:0;pointer-events:none;transition:opacity 0.3s;">
+                            <div class="flex flex-col items-center">
+                                <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span id="avatarProgressText" style="font-size:8px;color:#fff;font-weight:800;margin-top:2px;">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 🎭 picker badge -->
+                <button onclick="window.openAvatarPicker()"
+                    class="absolute spring active:scale-90"
+                    style="bottom:0;right:0;width:24px;height:24px;border-radius:50%;background:#3897f0;border:2px solid #000;font-size:11px;display:flex;align-items:center;justify-content:center;">
+                    🎭
+                </button>
+                <input type="file" id="avatarFileInput" class="hidden" accept="image/jpeg,image/png,image/webp">
+            </div>
+
+            <!-- Stats -->
+            <div class="flex-1 flex justify-around text-center">
+                <div class="profile-stat-item cursor-pointer" onclick="openRankingsSheet()">
+                    <p id="profileStatRank" class="text-base font-black tracking-tight" style="color:#f5f5f7;">#--</p>
+                    <p id="profileStatRankLabel" class="text-[9px] font-bold uppercase tracking-wider mt-0.5" style="color:#86868b;">Rank</p>
+                </div>
+                <div class="profile-stat-item">
+                    <p id="profileStatBunks" class="text-base font-black tracking-tight" style="color:#f5f5f7;">---</p>
+                    <p class="text-[9px] font-bold uppercase tracking-wider mt-0.5" style="color:#86868b;">Safe Bunks</p>
+                </div>
+                <div class="profile-stat-item">
+                    <p id="profileStatClasses" class="text-base font-black tracking-tight" style="color:#f5f5f7;">---</p>
+                    <p class="text-[9px] font-bold uppercase tracking-wider mt-0.5" style="color:#86868b;">Required</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Bio ── -->
+        <div class="px-4 mb-3">
+            <h3 id="profileBioName" class="text-sm font-extrabold" style="color:#f5f5f7;">---</h3>
+            <p id="profileBioDept" class="text-[10px] font-bold mt-0.5" style="color:#86868b;">---</p>
+            <p id="profileBioCustom" class="text-xs mt-2 font-medium leading-relaxed italic" style="color:#d1d1d6;">No bio written yet.</p>
+        </div>
+
+        <!-- ── Action Buttons ── -->
+        <div class="px-4 mb-4">
+            <button onclick="window.shareStudentProfile()"
+                class="w-full py-3 rounded-xl text-xs font-black spring active:scale-95 flex items-center justify-center gap-1"
+                style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:#f5f5f7;">
+                🔗 Share
             </button>
         </div>
 
-        <!-- 3D Card Holographic Container -->
-        <div id="profile-card-container" class="w-full mb-6">
-            <!-- Dynamic 3D interactive ticket will be injected here by JS -->
+        <!-- ── Accreditation Badges ── -->
+        <div class="flex gap-3 px-4 overflow-x-auto pb-3 mb-2 no-scrollbar select-none">
+            <div class="accreditation-badge">
+                <div class="accreditation-circle">🔰</div>
+                <span class="text-[9px] font-extrabold text-center truncate w-full" style="color:#86868b;">Verified</span>
+            </div>
+            <div class="accreditation-badge">
+                <div class="accreditation-circle">🔥</div>
+                <span class="text-[9px] font-extrabold text-center truncate w-full" style="color:#86868b;">Pro User</span>
+            </div>
+            <div class="accreditation-badge">
+                <div class="accreditation-circle">🎖️</div>
+                <span class="text-[9px] font-extrabold text-center truncate w-full" style="color:#86868b;">Attendance</span>
+            </div>
+            <div class="accreditation-badge">
+                <div class="accreditation-circle">⚡</div>
+                <span class="text-[9px] font-extrabold text-center truncate w-full" style="color:#86868b;">Academic</span>
+            </div>
         </div>
 
-        <!-- Attendance Badge section -->
-        <div class="glass-panel p-4 rounded-[2rem] mb-4 flex items-center justify-between">
+        <!-- ── NEW 4-Tab Bar ── -->
+        <div class="new-profile-tab-bar">
+            <button class="new-profile-tab-btn active" id="newTabBtn-0" onclick="selectNewProfileTab(0)">📊 Attendance</button>
+            <button class="new-profile-tab-btn" id="newTabBtn-1" onclick="selectNewProfileTab(1)">📝 Marks</button>
+            <button class="new-profile-tab-btn" id="newTabBtn-2" onclick="selectNewProfileTab(2)">📚 Subjects</button>
+            <button class="new-profile-tab-btn" id="newTabBtn-3" onclick="selectNewProfileTab(3)">🪪 Info</button>
+        </div>
+
+        <!-- ── Tab 0: Attendance ── -->
+        <div id="newTabPanel-0" class="px-4 space-y-3 animate-new-fade">
+            <!-- Aggregate card -->
+            <div class="liquid-glass rounded-2xl p-4 flex justify-between items-center">
+                <div>
+                    <span class="block text-[10px] font-bold uppercase tracking-wider" style="color:#8d99ae;">Aggregate Track</span>
+                    <span id="profileAttendancePct" class="text-2xl font-black" style="color:#00F5D4;">--%</span>
+                </div>
+                <span id="profileAttendanceBadge"
+                    class="att-badge"
+                    style="background:rgba(0,245,212,0.12);color:#00F5D4;border:1px solid rgba(0,245,212,0.25);">
+                    ---
+                </span>
+            </div>
+            <!-- Subject grid -->
+            <div id="newAttendanceGrid" class="grid grid-cols-2 gap-2">
+                <!-- Populated by JS -->
+            </div>
+            <!-- old attendance label kept for backward compat (hidden) -->
+            <p id="profileAttendanceLabel" class="hidden"></p>
+            <div id="profileAttendanceBreakdownCard" class="hidden">
+                <div id="profileAttendanceBreakdownList"></div>
+            </div>
+        </div>
+
+        <!-- ── Tab 1: Marks ── -->
+        <div id="newTabPanel-1" class="px-4 space-y-2 animate-new-fade hidden">
+            <div id="newMarksGrid" class="space-y-2">
+                <p class="text-xs text-center py-6" style="color:#86868b;">Marks data loading...</p>
+            </div>
+        </div>
+
+        <!-- ── Tab 2: Subjects ── -->
+        <div id="newTabPanel-2" class="px-4 space-y-2 animate-new-fade hidden">
+            <div id="newSubjectsGrid" class="space-y-2">
+                <p class="text-xs text-center py-6" style="color:#86868b;">Subjects loading...</p>
+            </div>
+        </div>
+
+        <!-- ── Tab 3: Info (ID Card + Details) ── -->
+        <div id="newTabPanel-3" class="px-4 space-y-4 animate-new-fade hidden">
+            <!-- Academic info -->
+            <div class="liquid-glass rounded-2xl p-4">
+                <p class="settings-section-title">🎓 Academic</p>
+                <div class="info-grid-row"><span class="info-grid-label">Full Name</span><span id="profileGridName" class="info-grid-value">---</span></div>
+                <div class="info-grid-row"><span class="info-grid-label">Course</span><span id="profileGridDept" class="info-grid-value">---</span></div>
+                <div class="info-grid-row"><span class="info-grid-label">Reg No</span><span id="profileGridReg" class="info-grid-value">---</span></div>
+                <div class="info-grid-row"><span class="info-grid-label">Admission No</span><span id="profileGridAdmin" class="info-grid-value">---</span></div>
+                <div class="info-grid-row"><span class="info-grid-label">Regulation</span><span class="info-grid-value" style="color:#0a84ff;">MGU-UGP 2024</span></div>
+            </div>
+            <!-- Holographic ID Card (kept!) -->
+            <div>
+                <p class="settings-section-title px-1">🪪 Holographic ID Card</p>
+                <div id="profile-card-container" class="w-full">
+                    <!-- 3D card injected by JS -->
+                </div>
+            </div>
+            <!-- Personal details (hidden until data loads) -->
+            <div id="profileGridPersonalCard" class="liquid-glass rounded-2xl p-4 hidden">
+                <p class="settings-section-title">👤 Personal Details</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Date of Birth</p><p id="profilePersonalDob" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Gender</p><p id="profilePersonalGender" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Mobile</p><p id="profilePersonalPhone" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Email</p><p id="profilePersonalEmail" class="text-xs font-black mt-0.5 truncate" style="color:#f5f5f7;">---</p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Blood Group</p><p id="profilePersonalBlood" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Aadhaar</p><p id="profilePersonalAadhaar" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Religion & Caste</p><p id="profilePersonalReligion" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">ABC Student ID</p><p id="profilePersonalAbc" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                </div>
+                <div class="pt-3 mt-2" style="border-top:1px solid rgba(255,255,255,0.06);">
+                    <p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Permanent Address</p>
+                    <p id="profilePersonalAddress" class="text-xs font-black mt-0.5 leading-relaxed" style="color:#f5f5f7;">---</p>
+                </div>
+            </div>
+            <!-- Parent / Guardian -->
+            <div id="profileGridGuardianCard" class="liquid-glass rounded-2xl p-4 hidden">
+                <p class="settings-section-title">👨‍👩‍👦 Parent / Guardian</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Father Name</p><p id="profileGuardianName" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Father Phone</p><p id="profileGuardianPhone" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                </div>
+            </div>
+            <!-- Bank -->
+            <div id="profileGridBankCard" class="liquid-glass rounded-2xl p-4 hidden">
+                <p class="settings-section-title">💳 Bank Account</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Holder</p><p id="profileBankHolder" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Account No</p><p id="profileBankAcc" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Bank Name</p><p id="profileBankName" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">IFSC</p><p id="profileBankIfsc" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SETTINGS VIEW — Full-Page ZIP Design (New)              -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="view-settings" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-[var(--mac-blue)]/10 dark:bg-[var(--mac-blue)]/20 flex items-center justify-center text-lg">
-                    📊
-                </div>
-                <div>
-                    <h4 class="text-xs font-bold text-[#86868b]">Class Attendance</h4>
-                    <p id="profileAttendanceLabel" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">Loading...</p>
-                </div>
+                <button onclick="switchView('view-profile')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Settings</h3>
             </div>
-            <span id="profileAttendanceBadge" class="text-[10px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider">---</span>
-        </div>
-
-        <!-- Academic Info Grid -->
-        <div class="glass-panel p-5 rounded-[2.5rem] mb-6 space-y-4">
-            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
-                <span class="text-xs font-bold text-[#86868b]">Full Name</span>
-                <span id="profileGridName" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
-            </div>
-            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
-                <span class="text-xs font-bold text-[#86868b]">Course</span>
-                <span id="profileGridDept" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
-            </div>
-            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
-                <span class="text-xs font-bold text-[#86868b]">Reg No</span>
-                <span id="profileGridReg" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
-            </div>
-            <div class="flex justify-between items-center border-b border-[#86868b]/10 pb-3">
-                <span class="text-xs font-bold text-[#86868b]">Admission No</span>
-                <span id="profileGridAdmin" class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">---</span>
-            </div>
-            <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-[#86868b]">Academic Regulation</span>
-                <span class="text-sm font-black text-[var(--mac-blue)]">MGU-UGP 2024</span>
-            </div>
-        </div>
-
-        <!-- Advanced Customization & Settings Section -->
-        <div class="glass-panel p-5 rounded-[2.5rem] mb-6">
-            <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-4">Identity & Visual Settings</p>
             
-            <div class="space-y-4">
-                <!-- Custom Skins Selection -->
-                <div>
-                    <label class="block text-xs font-bold text-[#86868b] mb-2">Holographic ID Skin Theme</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="setProfileHoloSkin('amethyst')" id="skin-btn-amethyst" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">🔮 Amethyst</button>
-                        <button onclick="setProfileHoloSkin('cyberpunk')" id="skin-btn-cyberpunk" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">🌌 Cyberpunk</button>
-                        <button onclick="setProfileHoloSkin('emerald')" id="skin-btn-emerald" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">💚 Emerald</button>
-                        <button onclick="setProfileHoloSkin('classic')" id="skin-btn-classic" class="py-2.5 px-3 border border-[#86868b]/30 rounded-xl text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-95">💿 Classic</button>
-                    </div>
-                </div>
-
-                <div class="h-px bg-[#86868b]/10 my-1"></div>
-
-                <!-- Toggle Display Details -->
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Show Reg No on Card</h4>
-                        <p class="text-[10px] text-[#86868b]">Display your university registration number</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="toggleShowReg" onchange="toggleCardField('showReg')" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-gray-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
-                    </label>
-                </div>
-
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Show Admission No on Card</h4>
-                        <p class="text-[10px] text-[#86868b]">Display college Admission Number</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="toggleShowAdmin" onchange="toggleCardField('showAdmin')" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-gray-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
-                    </label>
-                </div>
-
-                <div class="h-px bg-[#86868b]/10 my-1"></div>
-
-                <!-- High Fidelity / Performance Mode -->
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">High-Fidelity 3D Tilt</h4>
-                        <p class="text-[10px] text-[#86868b]">Fluid interactive tilting effects (Battery Saver if off)</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="togglePerformance" onchange="toggleCardField('highFidelity')" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-gray-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
-                    </label>
-                </div>
-            </div>
         </div>
 
-        <!-- Diagnostic & Editing Actions -->
-        <div class="space-y-3">
-            <button onclick="openEditProfile()" class="w-full py-4 bg-[var(--mac-blue)] text-white rounded-2xl font-bold spring active:scale-95">Edit Academic Info</button>
-            <button onclick="triggerResetProfile()" class="w-full py-4 bg-red-500/10 dark:bg-red-500/20 text-red-500 rounded-2xl font-bold spring active:scale-95">Reset Identity Profile</button>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <!-- Settings View Root -->
+            <div id="settingsView-root" class="space-y-4">
+                
+                <!-- Profile Summary Card (redirection to Edit Profile) -->
+                <div onclick="window.openEditProfile('view-settings')" class="liquid-glass rounded-3xl p-4 flex items-center justify-between gap-3 cursor-pointer border border-white/10 spring active:scale-[0.98]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl overflow-hidden bg-white/5 flex items-center justify-center p-[1px] border border-white/10">
+                            <img id="settingsProfileAvatarImg" src="assets/img/ChatGPT%20Image%20May%2018,%202026,%2010_33_49%20PM.png" alt="Avatar" class="w-full h-full object-cover rounded-2xl">
+                        </div>
+                        <div>
+                            <h4 id="settingsProfileName" class="text-sm font-black text-white">---</h4>
+                            <p id="settingsProfileDept" class="text-[10px] font-bold text-[#86868b]">Edit profile & overrides</p>
+                        </div>
+                    </div>
+                    <span class="text-slate-400 text-sm font-black mr-1">›</span>
+                </div>
+
+                <!-- INLINE INTERFACE TO CHANGE AVATAR -->
+                <div class="liquid-glass rounded-3xl p-4 space-y-3">
+                    <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-wider">🎭 Change Avatar</p>
+                    
+                    <!-- Avatar Categories -->
+                    <div class="flex gap-1.5 overflow-x-auto pb-1.5 no-scrollbar select-none" id="settingsAvCats">
+                        <button class="av-cat-btn active" onclick="filterSettingsAvatars('all', this)">✦ All</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('female', this)">♀ Female</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('male', this)">♂ Male</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('tech', this)">💻 Tech</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('kerala', this)">🌴 Kerala</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('football', this)">⚽ Football</button>
+                        <button class="av-cat-btn" onclick="window.openAvatarPicker();">📷 Library</button>
+                    </div>
+                    
+                    <!-- Avatar Grid -->
+                    <div class="grid grid-cols-4 gap-2 pt-1" id="settingsAvGrid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Synced Portal Documents -->
+                <div class="space-y-2">
+                    <p class="settings-section-title">📋 Synced Portal Documents</p>
+                    <div class="liquid-glass rounded-3xl p-1 divide-y divide-white/5">
+                        <div class="settings-nav-row" onclick="switchView('view-settings-synced-data'); if(window.updateSyncedDataSizes) window.updateSyncedDataSizes();">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(0,245,212,0.15);">📊</div>
+                                <div><div class="settings-nav-label">All Synced Data</div><div class="settings-nav-sub">Cached documents, timetable & marks</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account & Security -->
+                <div class="space-y-2">
+                    <p class="settings-section-title">🛡️ Account & Security</p>
+                    <div class="liquid-glass rounded-3xl p-1 divide-y divide-white/5">
+                        <div class="settings-nav-row" onclick="switchView('view-settings-change-password')">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(255,183,3,0.15);">🔑</div>
+                                <div><div class="settings-nav-label">Change Password</div><div class="settings-nav-sub">Update portal login credentials</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                        <div class="settings-nav-row" onclick="switchView('view-settings-active-devices')">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(10,132,255,0.15);">📱</div>
+                                <div><div class="settings-nav-label">Active Devices</div><div class="settings-nav-sub">Check active logged-in sessions</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                        <div class="settings-nav-row" onclick="switchView('view-settings-account-security')">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(0,245,212,0.15);">🛡️</div>
+                                <div><div class="settings-nav-label">Security Overview</div><div class="settings-nav-sub">Encryption, login alerts & auth</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                        <div class="settings-nav-row" onclick="switchView('view-settings-privacy')">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(16,185,129,0.15);">🔒</div>
+                                <div><div class="settings-nav-label">Privacy Settings</div><div class="settings-nav-sub">Profile search, data sharing & visibility</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Customization -->
+                <div class="space-y-2">
+                    <p class="settings-section-title">🪪 Card Customization</p>
+                    <div class="liquid-glass rounded-3xl p-1 divide-y divide-white/5">
+                        <div class="settings-nav-row" onclick="switchView('view-settings-card')">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(138,43,226,0.15);">🔮</div>
+                                <div><div class="settings-nav-label">Holographic ID Card</div><div class="settings-nav-sub">Skins, fields & 3D tilt</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences -->
+                <div class="space-y-2">
+                    <p class="settings-section-title">🔔 Preferences</p>
+                    <div class="liquid-glass rounded-3xl p-1 divide-y divide-white/5">
+                        <div class="settings-nav-row" onclick="switchView('view-settings-notifications')">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(255,183,3,0.15);">🔔</div>
+                                <div><div class="settings-nav-label">Notifications</div><div class="settings-nav-sub">Alerts & reminders</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                        <div class="settings-nav-row" onclick="switchView('view-settings-display')">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(10,132,255,0.15);">🎨</div>
+                                <div><div class="settings-nav-label">Display & Theme</div><div class="settings-nav-sub">Dark mode, animations</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Access / Academic Tools -->
+                <div class="space-y-2">
+                    <p class="settings-section-title">📋 Academic Quick Access</p>
+                    <div class="liquid-glass rounded-3xl p-1 divide-y divide-white/5">
+                        <div class="settings-nav-row" onclick="switchView('view-settings-allotment-memo'); if(window.loadAllotmentMemoData) window.loadAllotmentMemoData();">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(0,245,212,0.15);">📝</div>
+                                <div><div class="settings-nav-label">Allotment Memo</div><div class="settings-nav-sub">Admission confirmation memo</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                        <div class="settings-nav-row" onclick="switchView('view-settings-hall-ticket'); if(window.loadHallTicketData) window.loadHallTicketData();">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(138,43,226,0.15);">🎟️</div>
+                                <div><div class="settings-nav-label">Hall Ticket Matrix</div><div class="settings-nav-sub">View exam seats & schedules</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                        <div class="settings-nav-row" onclick="switchView('view-settings-fee-payment'); if(window.loadFeePaymentData) window.loadFeePaymentData();">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(255,183,3,0.15);">💳</div>
+                                <div><div class="settings-nav-label">Fee Payment Portals</div><div class="settings-nav-sub">Tuition fee & exam fee transactions</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                        <div class="settings-nav-row" onclick="switchView('view-settings-grievance'); if(window.loadGrievancePortalData) window.loadGrievancePortalData();">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(10,132,255,0.15);">📬</div>
+                                <div><div class="settings-nav-label">Grievance Form</div><div class="settings-nav-sub">Submit complaints & support issues</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                        <div class="settings-nav-row" onclick="switchView('view-settings-concession'); if(window.loadConcessionPortalData) window.loadConcessionPortalData();">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(0,245,212,0.15);">🚌</div>
+                                <div><div class="settings-nav-label">Bus Concession Pass</div><div class="settings-nav-sub">Student transport pass slip</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                        <div class="settings-nav-row" onclick="switchView('view-settings-feedback'); if(window.loadFeedbackData) window.loadFeedbackData();">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(255,183,3,0.15);">💬</div>
+                                <div><div class="settings-nav-label">Feedback Portal</div><div class="settings-nav-sub">View teacher & college feedback</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Tools Links -->
+                <div class="space-y-2">
+                    <p class="settings-section-title">🎓 External Portal Links</p>
+                    <div class="liquid-glass rounded-3xl p-1 divide-y divide-white/5">
+                        <div class="settings-nav-row" onclick="window.open('https://mgup.ac.in', '_blank')">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(0,245,212,0.15);">🌐</div>
+                                <div><div class="settings-nav-label">Official MGU Portal</div><div class="settings-nav-sub">Open MG University portal</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                        <div class="settings-nav-row" onclick="switchView('view-settings-about')">
+                            <div class="settings-nav-row-left">
+                                <div class="settings-nav-icon" style="background:rgba(255,255,255,0.08);">ℹ️</div>
+                                <div><div class="settings-nav-label">About MacHub</div><div class="settings-nav-sub">Version & credits</div></div>
+                            </div>
+                            <span class="settings-nav-arrow">›</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="space-y-2">
+                    <p class="settings-section-title">⚠️ Danger Zone</p>
+                    <div class="liquid-glass rounded-3xl p-1">
+                        <button onclick="triggerResetProfile()" class="w-full py-3.5 rounded-2xl font-bold text-xs spring active:scale-95" style="background:rgba(239,68,68,0.1);color:#ef4444; border:1px solid rgba(239,68,68,0.15);">
+                            Reset Identity Profile & Wipe Data
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- DEDICATED SETTINGS PAGE: CARD CUSTOMIZATION -->
+    <div id="view-settings-card" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Holographic ID Card</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">🔮 Holographic Skin</p>
+            <div class="liquid-glass rounded-3xl p-4">
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="setProfileHoloSkin('amethyst')" id="skin-btn-amethyst-fp" class="py-2.5 px-3 rounded-2xl text-xs font-bold spring active:scale-95" style="border:1px solid rgba(255,255,255,0.1);color:#f5f5f7;">🔮 Amethyst</button>
+                    <button onclick="setProfileHoloSkin('cyberpunk')" id="skin-btn-cyberpunk-fp" class="py-2.5 px-3 rounded-2xl text-xs font-bold spring active:scale-95" style="border:1px solid rgba(255,255,255,0.1);color:#f5f5f7;">🌌 Cyberpunk</button>
+                    <button onclick="setProfileHoloSkin('emerald')" id="skin-btn-emerald-fp" class="py-2.5 px-3 rounded-2xl text-xs font-bold spring active:scale-95" style="border:1px solid rgba(255,255,255,0.1);color:#f5f5f7;">💚 Emerald</button>
+                    <button onclick="setProfileHoloSkin('classic')" id="skin-btn-classic-fp" class="py-2.5 px-3 rounded-2xl text-xs font-bold spring active:scale-95" style="border:1px solid rgba(255,255,255,0.1);color:#f5f5f7;">💿 Classic</button>
+                </div>
+            </div>
+            <p class="settings-section-title">👁 Card Fields</p>
+            <div class="liquid-glass rounded-3xl p-4 space-y-4">
+                <div class="flex justify-between items-center">
+                    <div><div class="settings-nav-label">Show Reg No</div><div class="settings-nav-sub">University registration number</div></div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleShowReg-fp" onchange="toggleCardField('showReg')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div><div class="settings-nav-label">Show Admission No</div><div class="settings-nav-sub">College admission number</div></div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleShowAdmin-fp" onchange="toggleCardField('showAdmin')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div><div class="settings-nav-label">High-Fidelity 3D Tilt</div><div class="settings-nav-sub">Fluid interactive tilting</div></div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="togglePerformance-fp" onchange="toggleCardField('highFidelity')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: NOTIFICATIONS -->
+    <div id="view-settings-notifications" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Notifications</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">🔔 Alerts</p>
+            <div class="liquid-glass rounded-3xl p-4 space-y-4">
+                <div class="flex justify-between items-center">
+                    <div><div class="settings-nav-label">Attendance Alerts</div><div class="settings-nav-sub">Warn when below 75%</div></div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleNotifyAttendance" onchange="toggleNotificationSetting('attendance')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div><div class="settings-nav-label">Marks Notifications</div><div class="settings-nav-sub">Internal mark updates</div></div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleNotifyMarks" onchange="toggleNotificationSetting('marks')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div><div class="settings-nav-label">Fee Reminders</div><div class="settings-nav-sub">Due date alerts</div></div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleNotifyFees" onchange="toggleNotificationSetting('fees')" class="sr-only peer">
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: DISPLAY -->
+    <div id="view-settings-display" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Display & Theme</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">🎨 Appearance</p>
+            <div class="liquid-glass rounded-3xl p-4 space-y-4">
+                <div class="flex justify-between items-center">
+                    <div><div class="settings-nav-label">Full Black Mode</div><div class="settings-nav-sub">OLED-friendly pure black</div></div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleDisplayOled" onchange="toggleDisplaySetting('oled')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div><div class="settings-nav-label">Animations</div><div class="settings-nav-sub">Spring & fade effects</div></div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleDisplayAnimations" onchange="toggleDisplaySetting('animations')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: ABOUT -->
+    <div id="view-settings-about" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">About MacHub</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">ℹ️ About</p>
+            <div class="liquid-glass rounded-3xl p-5 space-y-3 text-center">
+                <div class="text-4xl">🎓</div>
+                <h3 class="text-base font-black" style="color:#f5f5f7;">MacHub</h3>
+                <p class="text-xs text-[#8d99ae]">MAC Augustines College Student Portal<br>Crafted with ♥ for MAC students</p>
+                <div class="h-px bg-white/10"></div>
+                <div class="info-grid-row"><span class="info-grid-label">Version</span><span class="info-grid-value">2.0.0</span></div>
+                <div class="info-grid-row"><span class="info-grid-label">Platform</span><span class="info-grid-value">Web PWA</span></div>
+                <div class="info-grid-row"><span class="info-grid-label">Data Source</span><span class="info-grid-value">MGU Portal</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: SYNCED DATA -->
+    <div id="view-settings-synced-data" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Synced Data</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">📊 Live Portal Scraper & Sync Hub</p>
+            
+            <div class="liquid-glass rounded-3xl p-4 space-y-3">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Attendance Data</span>
+                    <span id="syncSize-attendance" class="font-bold text-white">0.0 KB</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Internal Marks</span>
+                    <span id="syncSize-marks" class="font-bold text-white">0.0 KB</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Student Profile</span>
+                    <span id="syncSize-profile" class="font-bold text-white">0.0 KB</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Class Timetable</span>
+                    <span id="syncSize-timetable" class="font-bold text-white">0.0 KB</span>
+                </div>
+            </div>
+
+            <!-- Sync Progress Bar -->
+            <div id="sync-progress-card" class="liquid-glass rounded-3xl p-4 space-y-2 hidden">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-300 font-bold" id="sync-progress-status">Syncing Data...</span>
+                    <span id="sync-progress-pct" class="font-bold text-[var(--mac-blue)]">0%</span>
+                </div>
+                <div class="w-full bg-white/5 rounded-full h-2 overflow-hidden border border-white/5">
+                    <div id="sync-progress-bar" class="bg-[var(--mac-blue)] h-full w-0 transition-all duration-300 rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Scraper Items Checklist -->
+            <p class="settings-section-title">📋 Scraper Checklist</p>
+            <div class="liquid-glass rounded-3xl p-4 space-y-2.5" id="sync-checklist-container">
+                <div class="flex items-center justify-between text-xs" data-section="Profile">
+                    <div class="flex items-center gap-2">
+                        <span class="sync-check-icon text-slate-500">⚪</span>
+                        <span class="text-slate-300">Profile & Demographics</span>
+                    </div>
+                    <span class="sync-check-status text-[10px] text-slate-500 font-mono">Pending</span>
+                </div>
+                <div class="flex items-center justify-between text-xs" data-section="Dashboard">
+                    <div class="flex items-center gap-2">
+                        <span class="sync-check-icon text-slate-500">⚪</span>
+                        <span class="text-slate-300">Dashboard Counters</span>
+                    </div>
+                    <span class="sync-check-status text-[10px] text-slate-500 font-mono">Pending</span>
+                </div>
+                <div class="flex items-center justify-between text-xs" data-section="Attendance">
+                    <div class="flex items-center gap-2">
+                        <span class="sync-check-icon text-slate-500">⚪</span>
+                        <span class="text-slate-300">Class Attendance Log</span>
+                    </div>
+                    <span class="sync-check-status text-[10px] text-slate-500 font-mono">Pending</span>
+                </div>
+                <div class="flex items-center justify-between text-xs" data-section="Assessment">
+                    <div class="flex items-center gap-2">
+                        <span class="sync-check-icon text-slate-500">⚪</span>
+                        <span class="text-slate-300">Continuous Assessments</span>
+                    </div>
+                    <span class="sync-check-status text-[10px] text-slate-500 font-mono">Pending</span>
+                </div>
+                <div class="flex items-center justify-between text-xs" data-section="InternalMark">
+                    <div class="flex items-center gap-2">
+                        <span class="sync-check-icon text-slate-500">⚪</span>
+                        <span class="text-slate-300">Semester Internal Marks</span>
+                    </div>
+                    <span class="sync-check-status text-[10px] text-slate-500 font-mono">Pending</span>
+                </div>
+                <div class="flex items-center justify-between text-xs" data-section="ExamResult">
+                    <div class="flex items-center gap-2">
+                        <span class="sync-check-icon text-slate-500">⚪</span>
+                        <span class="text-slate-300">Official Exam Results</span>
+                    </div>
+                    <span class="sync-check-status text-[10px] text-slate-500 font-mono">Pending</span>
+                </div>
+                <div class="flex items-center justify-between text-xs" data-section="Assignment">
+                    <div class="flex items-center gap-2">
+                        <span class="sync-check-icon text-slate-500">⚪</span>
+                        <span class="text-slate-300">Assignments Portal</span>
+                    </div>
+                    <span class="sync-check-status text-[10px] text-slate-500 font-mono">Pending</span>
+                </div>
+                <div class="flex items-center justify-between text-xs" data-section="StudyMaterial">
+                    <div class="flex items-center gap-2">
+                        <span class="sync-check-icon text-slate-500">⚪</span>
+                        <span class="text-slate-300">Course Study Materials</span>
+                    </div>
+                    <span class="sync-check-status text-[10px] text-slate-500 font-mono">Pending</span>
+                </div>
+                <div class="flex items-center justify-between text-xs" data-section="Seminar">
+                    <div class="flex items-center gap-2">
+                        <span class="sync-check-icon text-slate-500">⚪</span>
+                        <span class="text-slate-300">Academic Seminar Logs</span>
+                    </div>
+                    <span class="sync-check-status text-[10px] text-slate-500 font-mono">Pending</span>
+                </div>
+                <div class="flex items-center justify-between text-xs" data-section="Concession">
+                    <div class="flex items-center gap-2">
+                        <span class="sync-check-icon text-slate-500">⚪</span>
+                        <span class="text-slate-300">Bus Concession Card</span>
+                    </div>
+                    <span class="sync-check-status text-[10px] text-slate-500 font-mono">Pending</span>
+                </div>
+                <div class="flex items-center justify-between text-xs" data-section="Grievance">
+                    <div class="flex items-center gap-2">
+                        <span class="sync-check-icon text-slate-500">⚪</span>
+                        <span class="text-slate-300">Grievance Cell Options</span>
+                    </div>
+                    <span class="sync-check-status text-[10px] text-slate-500 font-mono">Pending</span>
+                </div>
+            </div>
+
+            <!-- Live Console Output Log Box -->
+            <p class="settings-section-title">📟 Live Scraper Log Stream</p>
+            <div id="sync-console-logs" class="w-full h-40 bg-[#07070a]/90 border border-white/5 rounded-3xl p-4 text-[10px] font-mono text-emerald-400 overflow-y-auto space-y-1 scroll-smooth select-all">
+                <div class="text-slate-500">// Console ready. Press button to start full real-time scrape.</div>
+            </div>
+
+            <button id="btn-trigger-full-sync" onclick="triggerFullScraperSync()" class="w-full py-4 bg-[var(--mac-blue)] hover:bg-[var(--mac-blue)]/80 text-white rounded-2xl font-bold text-xs spring active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-[var(--mac-blue)]/20">
+                🚀 Start Full Portal Scrape & Database Sync
+            </button>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: CHANGE PASSWORD -->
+    <div id="view-settings-change-password" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Change Password</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">🔑 Change Password</p>
+            <div class="liquid-glass rounded-3xl p-4 space-y-3">
+                <div>
+                    <label class="text-[9px] font-bold text-[#86868b] uppercase">Current Password</label>
+                    <input type="password" id="pwd_old" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" placeholder="••••••••" />
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-[#86868b] uppercase">New Password</label>
+                    <input type="password" id="pwd_new" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" placeholder="••••••••" />
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-[#86868b] uppercase">Confirm New Password</label>
+                    <input type="password" id="pwd_confirm" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" placeholder="••••••••" />
+                </div>
+                <button onclick="window.submitPortalPasswordChange()" class="w-full py-3.5 bg-[#00F5D4] text-black rounded-2xl font-bold text-xs spring active:scale-95 mt-2">
+                    Save Password
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: ACTIVE DEVICES -->
+    <div id="view-settings-active-devices" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Active Devices</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">📱 Logged-In Sessions</p>
+            <div class="space-y-3">
+                <div class="liquid-glass rounded-3xl p-4 border border-white/5 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">💻</span>
+                        <div>
+                            <h5 class="text-xs font-bold text-white">Chrome on Windows (Current)</h5>
+                            <p class="text-[9px] text-[#86868b]">Kochi, India · IP 157.44.12.8</p>
+                        </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Active</span>
+                </div>
+                <div class="liquid-glass rounded-3xl p-4 border border-white/5 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">📱</span>
+                        <div>
+                            <h5 class="text-xs font-bold text-white">Safari on iPhone 15 Pro</h5>
+                            <p class="text-[9px] text-[#86868b]">Kottayam, India · IP 103.88.24.11</p>
+                        </div>
+                    </div>
+                    <button onclick="triggerTerminateSession('iphone')" class="text-[8px] font-black text-red-400 px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20 spring active:scale-95">Revoke</button>
+                </div>
+                <button onclick="triggerTerminateAllSessions()" class="w-full py-3.5 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl font-bold text-xs spring active:scale-95">
+                    Terminate All Other Sessions
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: SECURITY OVERVIEW -->
+    <div id="view-settings-account-security" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Security Overview</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">🛡️ Security Overview</p>
+            <div class="p-4 rounded-xl flex items-center gap-3" style="background:rgba(0, 245, 212, 0.08); border:1px solid rgba(0, 245, 212, 0.2);">
+                <span class="text-lg text-[#00F5D4]">🛡️</span>
+                <div>
+                    <p class="text-[11px] font-black text-[#00F5D4]">Account Secure</p>
+                    <p class="text-[9px] text-[#86868b] leading-tight">Your portal account is protected with standard MD5 authentication.</p>
+                </div>
+            </div>
+            <div class="liquid-glass rounded-3xl p-4 space-y-3">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="settings-nav-label">Login Notifications</div>
+                        <div class="settings-nav-sub">Send email alert on login</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Authentication Method</span>
+                    <span class="font-bold text-[#00F5D4]">Password</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Encryption Level</span>
+                    <span class="font-bold text-white">SSL/TLS 1.3</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: ALLOTMENT MEMO -->
+    <div id="view-settings-allotment-memo" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Allotment Memo</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">📋 Admission Allotment Memo</p>
+            <div class="liquid-glass rounded-3xl p-5 space-y-4">
+                <div class="text-center pb-3 border-b border-white/5">
+                    <h4 class="text-xs font-black text-white">MGU UG ADMISSION 2024</h4>
+                    <p class="text-[9px] text-emerald-400 font-extrabold uppercase mt-0.5">Seat Confirmed · Round 1</p>
+                </div>
+                <div class="space-y-2 text-[10px]">
+                    <div class="flex justify-between"><span class="text-slate-400">Student Name</span><span id="allotment-student" class="font-bold text-white">---</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Admission No</span><span id="allotment-admin" class="font-bold text-white">---</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Allotted Course</span><span id="allotment-course" class="font-bold text-white">---</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Allotted College</span><span class="font-bold text-white">Mar Augusthinose College, Ramapuram</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Quota Type</span><span class="font-bold text-white">Merit General</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Option Number</span><span class="font-bold text-white">1</span></div>
+                </div>
+                <div class="h-px bg-white/5 my-1"></div>
+                <button onclick="showToast('Downloading allotment memo PDF...', 'success')" class="w-full py-3 bg-emerald-500 text-black rounded-2xl font-bold text-xs spring active:scale-95">
+                    💾 Download Official Memo PDF
+                </button>
+            </div>
+            <div id="allotmentPortalDataContainer" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: HALL TICKET MATRIX -->
+    <div id="view-settings-hall-ticket" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Hall Ticket Matrix</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">🎟️ University Exam Hall Ticket</p>
+            <div class="liquid-glass rounded-3xl p-5 space-y-4">
+                <div class="text-center pb-3 border-b border-white/5">
+                    <h4 class="text-xs font-black text-white">MGU SEMESTER 2 EXAMINATIONS</h4>
+                    <p class="text-[9px] text-[#00F5D4] font-extrabold uppercase mt-0.5">Hall Ticket Generated</p>
+                </div>
+                <div class="space-y-2.5">
+                    <div class="flex justify-between items-center text-xs">
+                        <div>
+                            <h5 class="text-[10px] font-bold text-white">Data Structures (MG2CCRBCA101)</h5>
+                            <p class="text-[8px] text-[#86868b]">Seat No: BCA-42 · Date: 16-04-2026</p>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[7px] font-black uppercase bg-emerald-500/10 text-emerald-500">Approved</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <div>
+                            <h5 class="text-[10px] font-bold text-white">Web Technologies (MG2SECBCA100)</h5>
+                            <p class="text-[8px] text-[#86868b]">Seat No: BCA-19 · Date: 17-04-2026</p>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[7px] font-black uppercase bg-emerald-500/10 text-emerald-500">Approved</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <div>
+                            <h5 class="text-[10px] font-bold text-white">Mathematics II (MG2CCRBCA100)</h5>
+                            <p class="text-[8px] text-[#86868b]">Seat No: BCA-03 · Date: 18-04-2026</p>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[7px] font-black uppercase bg-emerald-500/10 text-emerald-500">Approved</span>
+                    </div>
+                </div>
+                <div class="h-px bg-white/5 my-1"></div>
+                <button onclick="showToast('Downloading hall ticket PDF...', 'success')" class="w-full py-3 bg-[var(--mac-blue)] text-white rounded-2xl font-bold text-xs spring active:scale-95">
+                    💾 Download Official Slip
+                </button>
+            </div>
+            <div id="hallTicketPortalDataContainer" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: FEE PAYMENT -->
+    <div id="view-settings-fee-payment" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Fee Payment Portals</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">💳 Tuition & Exam Fees</p>
+            <div class="space-y-3">
+                <div class="liquid-glass rounded-3xl p-4 border border-white/5 flex justify-between items-center">
+                    <div>
+                        <h5 class="text-xs font-bold text-white">Semester 2 College Tuition Fee</h5>
+                        <p class="text-[9px] text-red-400">Due Date: 30-06-2026 · ₹18,500 pending</p>
+                    </div>
+                    <button onclick="triggerPayFee('tuition')" class="px-3.5 py-1.5 rounded-xl bg-emerald-500 text-black text-[9px] font-black spring active:scale-95 shadow-[0_4px_12px_rgba(16,185,129,0.2)]">Pay</button>
+                </div>
+                <div class="liquid-glass rounded-3xl p-4 border border-white/5 flex justify-between items-center">
+                    <div>
+                        <h5 class="text-xs font-bold text-white">Semester 2 University Exam Fee</h5>
+                        <p class="text-[9px] text-[#86868b]">Due Date: 15-05-2026 · ₹1,850</p>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded-full text-[7px] font-black uppercase bg-white/5 border border-white/10 text-slate-400">Paid</span>
+                </div>
+            </div>
+            <div id="feePaymentPortalDataContainer" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: GRIEVANCE FORM -->
+    <div id="view-settings-grievance" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Grievance Form</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">📬 Grievance & Redressal</p>
+            <div class="liquid-glass rounded-3xl p-4 space-y-3">
+                <div>
+                    <label class="text-[9px] font-bold text-[#86868b] uppercase">Submit To (ePortal Sync)</label>
+                    <select id="grievance_to" class="w-full mt-1 p-3 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-white outline-none focus:border-[var(--mac-blue)]">
+                        <option value="">Fetching officers...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-[#86868b] uppercase">Subject</label>
+                    <input type="text" id="grievance_subject" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" placeholder="Brief subject..." />
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-[#86868b] uppercase">Details</label>
+                    <textarea id="grievance_message" rows="3" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none resize-none" placeholder="Describe the issue in detail..."></textarea>
+                </div>
+                <button onclick="window.submitPortalGrievance()" class="w-full py-3.5 bg-[#00F5D4] text-black rounded-2xl font-bold text-xs spring active:scale-95">
+                    Submit Grievance to Official Portal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: BUS CONCESSION PASS -->
+    <div id="view-settings-concession" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Bus Concession Pass</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">🚌 Bus Concession Pass</p>
+            <div id="concessionPortalDataContainer" class="space-y-4">
+                <div class="liquid-glass rounded-3xl p-5 space-y-4">
+                    <div class="flex items-center gap-3 pb-2 border-b border-white/5">
+                        <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-lg">🚌</div>
+                        <div>
+                            <h4 class="text-xs font-black text-white">Student Concession Pass</h4>
+                            <p class="text-[8px] text-[#86868b] font-extrabold uppercase">Loading ePortal routes...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: FEEDBACK -->
+    <div id="view-settings-feedback" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10" style="view-transition-name: settings-header;">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Feedback portal</h3>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">💬 ePortal Feedback Data</p>
+            <div id="feedbackPortalDataContainer" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- DEDICATED SETTINGS PAGE: PRIVACY SETTINGS -->
+    <div id="view-settings-privacy" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Privacy Settings</h3>
+            </div>
+            
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
+            <p class="settings-section-title">🔒 Profile Visibility</p>
+            <div class="liquid-glass rounded-3xl p-4 space-y-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="settings-nav-label">Private Profile</div>
+                        <div class="settings-nav-sub">Hide profile from classmates & search</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="privacyGoPrivate" onchange="togglePrivacySetting('goPrivate')" class="sr-only peer">
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="settings-nav-label">Hide Grades & GPA</div>
+                        <div class="settings-nav-sub">Blur grades in public card views</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="privacyHideGrades" onchange="togglePrivacySetting('hideGrades')" class="sr-only peer">
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="settings-nav-label">Anonymize Rank</div>
+                        <div class="settings-nav-sub">Show as 'Anonymous' in leaderboards</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="privacyAnonymizeRank" onchange="togglePrivacySetting('anonymizeRank')" class="sr-only peer">
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+            </div>
+
+            <p class="settings-section-title">🛡️ Data Protection</p>
+            <div class="liquid-glass rounded-3xl p-4 space-y-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="settings-nav-label">Local Snapshots Cache</div>
+                        <div class="settings-nav-sub">Cache portal data locally for offline usage</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="privacyLocalCache" onchange="togglePrivacySetting('localCache')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="settings-nav-label">Auto-Wipe on Exit</div>
+                        <div class="settings-nav-sub">Delete local database on tab close</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="privacyAutoWipe" onchange="togglePrivacySetting('autoWipe')" class="sr-only peer">
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="settings-nav-label">Usage Telemetry</div>
+                        <div class="settings-nav-sub">Send anonymous performance diagnostics</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="privacyAnalytics" onchange="togglePrivacySetting('analytics')" class="sr-only peer">
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- PROFILE EDITING VIEW — Full-Page ZIP Design (New)       -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="view-profile-edit" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="window.closeEditProfile()" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Edit Profile</h3>
+            </div>
+        </div>
+
+        <!-- Scrollable Inputs -->
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-5 no-scrollbar">
+            
+            <!-- Profile Photo Editor -->
+            <div class="flex flex-col items-center py-2">
+                <div class="relative cursor-pointer group" onclick="openPhotoSourceMenu()">
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-[var(--mac-blue)] to-[#6228d7] p-[2px] shadow-lg transition-transform duration-300 active:scale-95">
+                        <div class="w-full h-full rounded-full bg-[#1c1c1e] overflow-hidden flex items-center justify-center relative">
+                            <img id="editProfileAvatarImage" src="" alt="Avatar" class="w-full h-full object-cover hidden" />
+                            <div id="editProfileAvatarInitials" class="text-2xl font-black text-white">MAC</div>
+                        </div>
+                    </div>
+                    <!-- Small camera overlay badge -->
+                    <div class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[var(--mac-blue)] border-2 border-[#121212] flex items-center justify-center text-xs shadow-md">
+                        📷
+                    </div>
+                </div>
+                <button type="button" onclick="openPhotoSourceMenu()" class="text-xs font-extrabold text-[var(--mac-blue)] mt-3 spring active:scale-95 hover:underline">
+                    Edit Picture
+                </button>
+            </div>
+
+            <!-- Section: Official Records (Non-Editable) -->
+            <div class="space-y-3">
+                <p class="text-[10px] font-black text-[#86868b] uppercase tracking-wider flex items-center gap-1">
+                    🔒 Official Records (Non-Editable)
+                </p>
+                <div class="liquid-glass rounded-2xl p-4 space-y-3 bg-white/[0.01] border border-white/5 opacity-80">
+                    <div>
+                        <label class="text-[9px] font-bold text-[#86868b] uppercase">Full Name</label>
+                        <input type="text" id="editName" readonly class="w-full mt-1 p-3 bg-white/[0.03] border border-white/5 rounded-xl text-xs font-bold text-[#a1a1a6] outline-none cursor-not-allowed" />
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-[#86868b] uppercase">Username</label>
+                        <input type="text" id="editUsername" readonly class="w-full mt-1 p-3 bg-white/[0.03] border border-white/5 rounded-xl text-xs font-bold text-[#a1a1a6] outline-none cursor-not-allowed" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Date of Birth</label>
+                            <input type="text" id="editDob" readonly class="w-full mt-1 p-3 bg-white/[0.03] border border-white/5 rounded-xl text-xs font-bold text-[#a1a1a6] outline-none cursor-not-allowed" />
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Aadhaar Card</label>
+                            <input type="text" id="editAadhaar" readonly class="w-full mt-1 p-3 bg-white/[0.03] border border-white/5 rounded-xl text-xs font-bold text-[#a1a1a6] outline-none cursor-not-allowed" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="text-[9px] font-bold text-[#86868b] uppercase">Admission Number</label>
+                          <input type="text" id="editAdminNo" readonly class="w-full mt-1 p-3 bg-white/[0.03] border border-white/5 rounded-xl text-xs font-bold text-[#a1a1a6] outline-none cursor-not-allowed" />
+                        </div>
+                        <div>
+                          <label class="text-[9px] font-bold text-[#86868b] uppercase">Registration Number</label>
+                          <input type="text" id="editReg" readonly class="w-full mt-1 p-3 bg-white/[0.03] border border-white/5 rounded-xl text-xs font-bold text-[#a1a1a6] outline-none cursor-not-allowed" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-[#86868b] uppercase">Department / Course Group</label>
+                        <input type="text" id="editDeptDisplay" readonly class="w-full mt-1 p-3 bg-white/[0.03] border border-white/5 rounded-xl text-xs font-bold text-[#a1a1a6] outline-none cursor-not-allowed" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Personal Info Overrides -->
+            <div class="space-y-3">
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-wider">👤 Profile Info Overrides</p>
+                <div class="liquid-glass rounded-2xl p-4 space-y-3">
+                    <div>
+                        <label class="text-[9px] font-bold text-[#86868b] uppercase">Custom Bio</label>
+                        <input type="text" id="editCustomBio" max-length="150" placeholder="A short bio about yourself..." class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Phone Number</label>
+                            <input type="text" id="editPhone" placeholder="Mobile" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" />
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Email ID</label>
+                            <input type="email" id="editEmail" placeholder="Email Address" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-[#86868b] uppercase">Permanent Address</label>
+                        <textarea id="editAddress" rows="2" placeholder="Address..." class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none resize-none"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Bank Account Details -->
+            <div class="space-y-3">
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-wider">💳 Bank Account Details</p>
+                <div class="liquid-glass rounded-2xl p-4 space-y-3">
+                    <div>
+                        <label class="text-[9px] font-bold text-[#86868b] uppercase">Account Holder Name</label>
+                        <input type="text" id="editBankHolder" placeholder="Account Holder Name" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Bank Name</label>
+                            <input type="text" id="editBankName" placeholder="e.g. Federal Bank" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" />
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Account Number</label>
+                            <input type="text" id="editBankAccNo" placeholder="Account Number" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">IFSC Code</label>
+                            <input type="text" id="editBankIfsc" placeholder="IFSC Code" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" />
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-[#86868b] uppercase">Branch Name</label>
+                            <input type="text" id="editBankBranch" placeholder="Branch Name" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3 pt-2">
+                <button onclick="switchView('view-profile')" class="flex-1 py-3.5 bg-white/5 border border-white/10 text-slate-300 rounded-xl font-bold text-xs spring active:scale-95">Cancel</button>
+                <button onclick="saveEditProfile()" class="flex-1 py-3.5 bg-[var(--mac-blue)] text-white rounded-xl font-bold text-xs spring active:scale-95">Save Changes</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════
          MacAI — DareToWin UI (Nothing OS × Apple Liquid Glass Edition)
@@ -805,7 +2159,7 @@
     ═══════════════════════════════════════════════════════════════════ -->
     <div id="view-ai" class="view-panel" style="
         position:fixed; inset:0; z-index:100;
-        background:#000; display:none; flex-direction:column;
+        display:none; flex-direction:column;
         font-family:'Space Grotesk',system-ui,sans-serif;
         overflow:hidden;">
 
@@ -1164,20 +2518,363 @@
     <script defer src="data/common/class_info.js"></script>
     <script defer src="data/common/announcements.js"></script>
     <script defer src="data/common/mac_ai_database.js"></script>
-    <script defer src="js/api.js"></script>
+    <script defer src="src/utils/dataManager.js"></script>
+    <script defer src="js/api.js?v=2.0.4"></script>
     <script defer src="js/mac_ai.js"></script>
     <script defer src="js/smart_finder.js"></script>
     <script defer src="js/state.js"></script>
     <script defer src="js/ui.js"></script>
-    <script defer src="js/profile.js"></script>
+    <script defer src="js/profile.js?v=2.0.4"></script>
     <script defer src="js/home.js"></script>
     <script defer src="js/timetable.js"></script>
     <script defer src="js/seats.js"></script>
     <script defer src="js/resources.js"></script>
-    <script defer src="js/app.js"></script>
+    <script defer src="js/app.js?v=2.0.4"></script>
     <script defer src="js/onboarding.js"></script>
     <script defer src="js/bootstrap.js"></script>
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- PORTAL NAV DRAWER — slides up from bottom when 🎓 is tapped    -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- Backdrop -->
+    <div id="portalNavBackdrop"
+         class="fixed inset-0 z-[200] bg-black/40 backdrop-blur-[3px] hidden"
+         style="z-index:200;"
+         onclick="window.closePortalDrawer()"
+         aria-hidden="true">
+    </div>
+
+    <!-- Drawer Panel -->
+    <div id="portalNavDrawer"
+         class="fixed inset-x-0 bottom-0 z-[210] max-w-md mx-auto pointer-events-none"
+         style="z-index:210; pointer-events:none; transform:translateY(100%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);">
+
+        <!-- Inner card -->
+        <div class="bg-[var(--bg-1,#f5f5f7)] dark:bg-[#1c1c1e] rounded-t-[2.5rem] shadow-2xl border-t border-white/10 pointer-events-auto"
+             style="max-height:92svh; overflow-y:auto; pointer-events:auto;">
+
+            <!-- Drag Handle -->
+            <div class="pt-3 pb-1 flex justify-center" onclick="window.closePortalDrawer()" style="cursor:pointer">
+                <div class="w-10 h-1 bg-black/15 dark:bg-white/20 rounded-full"></div>
+            </div>
+
+            <!-- Header -->
+            <div class="flex flex-col px-6 pt-4 pb-4 border-b border-black/5 dark:border-white/5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[var(--mac-blue)]/10 flex items-center justify-center text-[var(--mac-blue)] text-lg border border-[var(--mac-blue)]/20 shadow-sm font-black">
+                            👤
+                        </div>
+                        <div>
+                            <h3 id="portalDrawerStudentName" class="text-base font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">ABEN SOJAN</h3>
+                            <p class="text-[9px] font-bold text-[#86868b] tracking-wider uppercase">Student Portal</p>
+                        </div>
+                    </div>
+                    <button onclick="window.closePortalDrawer()"
+                            class="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-xs font-black spring active:scale-90"
+                            aria-label="Close portal menu">✕</button>
+                </div>
+            </div>
+
+            <!-- Admission number quick-entry (shows when no admin no saved) -->
+            <div id="portalAdminEntry" class="px-6 mt-4 mb-2 hidden">
+                <div class="glass-panel rounded-2xl p-4 flex items-center gap-3 border border-[#0071e3]/20">
+                    <span class="text-xl">🔑</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1">Admission Number</p>
+                        <div class="flex gap-2">
+                            <input id="portalAdminInput" type="text" inputmode="numeric" placeholder="e.g. 12965"
+                                   class="flex-1 bg-black/5 dark:bg-white/10 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-[#0071e3]/40"
+                                   onkeydown="if(event.key==='Enter') window._savePortalAdmin()">
+                            <button onclick="window._savePortalAdmin()"
+                                    class="px-4 py-2 bg-[#0071e3] text-white rounded-xl text-xs font-black spring">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Navigation Header -->
+            <div class="px-6 pt-4 pb-2">
+                <p class="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em]">Main Navigation</p>
+            </div>
+
+            <!-- Section List -->
+            <div class="px-5 pb-6 space-y-2">
+                <!-- Dashboard -->
+                <button onclick="window.closePortalDrawer(); switchView('view-home')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">🏠</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Dashboard</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Profile -->
+                <button onclick="window.loadPortalSection('Profile', 'Profile')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">👤</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Profile</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Allotment Memo -->
+                <button onclick="window.loadPortalSection('AllotmentMemo', 'Allotment Memo')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">📄</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Allotment Memo</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- HallTicket -->
+                <button onclick="window.loadPortalSection('HallTicket', 'Hall Ticket')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">🎫</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">HallTicket</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Academic -->
+                <button onclick="window.closePortalDrawer(); window.syncAndOpenNative('Assessment', 'view-class', 'subjects')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">📚</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Academic</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Fee Payment -->
+                <button onclick="window.loadPortalSection('FeePay', 'Fee Payment')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">💳</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Fee Payment</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Feed Back -->
+                <button onclick="window.loadPortalSection('FeedBack', 'Feed Back')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">💬</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Feed Back</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Attendance -->
+                <button onclick="window.closePortalDrawer(); window.syncAndOpenNative('Attendance', 'view-class', 'attendance')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">📅</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Attendance</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Grievance Form -->
+                <button onclick="window.loadPortalSection('Grievance', 'Grievance Form')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">📬</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Grievance Form</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Student Concession Card -->
+                <button onclick="window.loadPortalSection('Concession', 'Student Concession Card')"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">🪪</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Student Concession Card</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Settings -->
+                <button onclick="window.closePortalDrawer(); if(window.openSettingsTray) window.openSettingsTray(); else switchView('view-settings');"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center">⚙️</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Settings</p>
+                    </div>
+                    <span class="text-[#86868b] text-xs">›</span>
+                </button>
+
+                <!-- Logout -->
+                <button onclick="window.closePortalDrawer(); window.portalLogout()"
+                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-red-500/10 dark:bg-red-500/5 active:scale-[0.97] spring text-left">
+                    <span class="text-xl w-8 text-center text-red-500">🚪</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-red-500 dark:text-red-400">Logout</p>
+                    </div>
+                    <span class="text-red-500 text-xs">›</span>
+                </button>
+
+
+                <!-- Spacer for bottom nav -->
+                <div class="h-4"></div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- PHOTO SOURCE MENU / SHEET                               -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="photoSourceModal">
+        <div id="photoSourceBackdrop" onclick="closePhotoSourceMenu()"></div>
+        <div id="photoSourceSheet">
+            <div class="av-pill"><div class="av-pill-bar"></div></div>
+            <div class="p-5 text-center">
+                <h3 class="text-sm font-extrabold tracking-tight text-white">Change Profile Photo</h3>
+                <p class="text-[10px] font-bold text-[#86868b] mt-1">Upload a custom image or pick a themed avatar</p>
+            </div>
+            <div class="px-5 pb-6 space-y-3">
+                <button onclick="handlePhotoMenuUpload()" class="w-full py-3.5 bg-white/5 border border-white/10 text-white rounded-2xl font-bold text-xs spring active:scale-[0.98] flex items-center justify-center gap-2">
+                    📷 Upload Custom Image
+                </button>
+                <button onclick="handlePhotoMenuAvatar()" class="w-full py-3.5 bg-[var(--mac-blue)] text-white rounded-2xl font-bold text-xs spring active:scale-[0.98] flex items-center justify-center gap-2">
+                    🎭 Choose Built-in Avatar
+                </button>
+                <button onclick="closePhotoSourceMenu()" class="w-full py-3.5 bg-white/5 text-slate-300 rounded-2xl font-bold text-xs spring active:scale-[0.98]">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- AVATAR PICKER MODAL                                     -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="avatarPickerModal">
+        <div id="avatarPickerBackdrop" onclick="closeAvatarPicker()"></div>
+        <div id="avatarPickerSheet">
+            <div class="av-pill"><div class="av-pill-bar"></div></div>
+            <div class="av-header">
+                <div>
+                    <h3>Choose Avatar</h3>
+                    <p>18 avatars · tap to select</p>
+                </div>
+                <button class="av-close-btn" onclick="closeAvatarPicker()">✕</button>
+            </div>
+            <div class="av-cats" id="avCats">
+                <button class="av-cat-btn active" onclick="filterAvatars('all', this)">✦ All</button>
+                <button class="av-cat-btn" onclick="filterAvatars('female', this)">♀ Female</button>
+                <button class="av-cat-btn" onclick="filterAvatars('male', this)">♂ Male</button>
+                <button class="av-cat-btn" onclick="filterAvatars('tech', this)">💻 Tech</button>
+                <button class="av-cat-btn" onclick="filterAvatars('kerala', this)">🌴 Kerala</button>
+                <button class="av-cat-btn" onclick="filterAvatars('football', this)">⚽ Football</button>
+                <button class="av-cat-btn" onclick="filterAvatars('upload', this)">📷 Upload</button>
+            </div>
+            <div class="av-grid" id="avGrid"><!-- populated by JS --></div>
+        </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- INSTAGRAM-STYLE FULL PAGE RANKINGS VIEW                         -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div id="rankingsFullPage" class="fixed inset-0 z-[300] hidden bg-white dark:bg-[#121212] flex flex-col transition-all duration-300 transform translate-x-full" style="font-family: 'Outfit', sans-serif;">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-3.5 border-b border-black/5 dark:border-white/5 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <button onclick="closeRankingsFullPage()" class="w-8 h-8 flex items-center justify-start text-2xl text-[#1d1d1f] dark:text-[#f5f5f7] spring active:scale-90" aria-label="Back">
+                ‹
+            </button>
+            <h3 class="text-base font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7] text-center flex-1 pr-8">Rankings</h3>
+        </div>
+
+        <!-- Search Bar Container -->
+        <div class="px-4 py-3 bg-white dark:bg-[#121212] border-b border-black/5 dark:border-white/5">
+            <div class="relative flex items-center bg-black/5 dark:bg-white/10 rounded-xl px-3 py-2">
+                <span class="text-slate-400 dark:text-slate-500 mr-2 text-sm">🔍</span>
+                <input type="text" id="rankingsSearchInput" oninput="filterRankingsList()" placeholder="Search by name or class number..." class="w-full bg-transparent border-none outline-none text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] placeholder-slate-400 dark:placeholder-slate-500">
+            </div>
+        </div>
+
+        <!-- Sub-tabs / Stats Header -->
+        <div class="px-4 py-2 bg-black/5 dark:bg-white/5 flex justify-between items-center text-[10px] font-black text-[#86868b] uppercase tracking-wider">
+            <span id="rankingsCountText">0 Students</span>
+            <span id="rankingsUpdatedTextFP">Updated: --</span>
+        </div>
+
+        <!-- Scrollable List of Students -->
+        <div class="flex-1 overflow-y-auto px-4 py-2 divide-y divide-black/5 dark:divide-white/5" id="rankingsListContainerFP">
+            <!-- Classmates list will be rendered dynamically -->
+        </div>
+    </div>
+
+    <!-- Exam Result Celebration Overlay -->
+    <div id="examResultCelebrationOverlay" class="fixed inset-0 z-[1000] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-6 text-center" style="font-family: 'Outfit', sans-serif;">
+        <div id="examResultCelebrationCard" class="bg-[#1c1c1e]/90 border border-white/10 rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl relative transform scale-90 opacity-0 transition-all duration-500 spring flex flex-col items-center">
+            <div class="text-6xl mb-4 animate-bounce">🎓</div>
+            <h2 class="text-2xl font-black text-white tracking-tight">Results Published!</h2>
+            <p class="text-xs text-[#86868b] mt-2">Your MGU university exam results are now available.</p>
+            
+            <div class="my-6 w-full py-4 px-6 bg-white/5 rounded-2xl border border-white/5 flex flex-col gap-2">
+                <div id="celebStudentName" class="text-sm font-extrabold text-white">Student Name</div>
+                <div id="celebSemester" class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-wider">Semester</div>
+                <div class="h-px bg-white/5 my-1"></div>
+                <div class="flex justify-around items-center">
+                    <div>
+                        <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-wider">Result</p>
+                        <p id="celebStatus" class="text-xl font-black text-green-400 mt-1">PASS</p>
+                    </div>
+                    <div class="w-px h-8 bg-white/10"></div>
+                    <div>
+                        <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-wider">SGPA</p>
+                        <p id="celebSgpa" class="text-xl font-black text-[#a78bfa] mt-1">--</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-3 w-full">
+                <button onclick="window.dismissCelebrationOverlay('view')" class="w-full py-4 bg-white text-black font-black text-sm rounded-2xl active:scale-[0.98] transition-all spring">
+                    View Full Result
+                </button>
+                <button onclick="window.dismissCelebrationOverlay('close')" class="w-full py-3 bg-white/5 text-[#86868b] font-bold text-xs rounded-2xl active:scale-[0.98] transition-all spring">
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Notification Container -->
+    <div id="macToastContainer" class="mac-toast-container"></div>
+
+    <!-- Script: save admin number from drawer input -->
+    <script>
+        window._savePortalAdmin = function() {
+            const input = document.getElementById('portalAdminInput');
+            const val = (input?.value || '').trim();
+            if (!val) return;
+            localStorage.setItem('machub_student_id', val);
+            if (window.MacHubPortal) window.MacHubPortal.saveAdminNo(val);
+            const entry = document.getElementById('portalAdminEntry');
+            if (entry) entry.classList.add('hidden');
+            alert('Admission number saved! Tap any section to load data.');
+        };
+
+        // Show admin entry bar if no admission number found
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const saved = localStorage.getItem('machub_student_id');
+                const entry = document.getElementById('portalAdminEntry');
+                if (!saved && entry) entry.classList.remove('hidden');
+            }, 500);
+        });
+    </script>
 </body>
 </html>
 
