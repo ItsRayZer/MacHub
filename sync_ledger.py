@@ -829,6 +829,30 @@ def _write_to_firestore(
         return False
 
 
+def _delete_from_firestore(admission_no: str) -> None:
+    """
+    Delete passed-out student documents and subcollections from Firestore:
+      - students/{admission_no}
+      - marks/{admission_no}
+      - marks/{admission_no}/semesters/*
+    """
+    fs = _init_firestore()
+    if fs is None:
+        return
+    try:
+        # 1. Delete semesters subcollection documents
+        semesters_ref = fs.collection(FS_MARKS_COLLECTION).document(str(admission_no)).collection(FS_SEMESTERS_SUBCOL)
+        for doc in semesters_ref.stream():
+            doc.reference.delete()
+        # 2. Delete parent marks doc
+        fs.collection(FS_MARKS_COLLECTION).document(str(admission_no)).delete()
+        # 3. Delete student doc
+        fs.collection(FS_STUDENTS_COLLECTION).document(str(admission_no)).delete()
+        log.info("    DELETED passed-out student %s records from Firestore", admission_no)
+    except Exception as exc:
+        log.error("    Firestore delete failed [%s]: %s", admission_no, exc)
+
+
 # ==============================================================================
 #  SINGLE STUDENT PROCESSING PIPELINE
 # ==============================================================================
@@ -871,6 +895,7 @@ def _process_student(admission_no: Any) -> bool:
             current_year = datetime.now().year
             if end_year < current_year:
                 log.info("    SKIP passed-out student '%s' [%s] (Batch end year %d < %d)", profile.get("name", adm), adm, end_year, current_year)
+                _delete_from_firestore(adm)
                 session.close()
                 del session
                 gc.collect()
