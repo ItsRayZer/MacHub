@@ -444,7 +444,7 @@ def _scrape_profile(
             profile["name"] = m.group(1).strip()
     
     if not profile["course"]:
-        m = re.search(r"View Student Profile[^]+?\d+\s*([A-Z\s()&,-]+?)\s*\(\s*\d{4}", body_text, re.I)
+        m = re.search(r"View Student Profile[\s\S]+?\d+\s*([A-Z\s()&,-]+?)\s*\(\s*\d{4}", body_text, re.I)
         if m:
             profile["course"] = m.group(1).strip()
 
@@ -490,12 +490,12 @@ def _scrape_profile(
         profile["income"] = _extract_field(r"Annual Income[^\d]*([0-9\s]*?)\s*(?:Permanent Address|Communication Address|Other Details)")
 
     if not profile["address"]:
-        m = re.search(r"Permanent Address\s*([^]+?)\s*Communication Address", body_text, re.I)
+        m = re.search(r"Permanent Address\s*([\s\S]+?)\s*Communication Address", body_text, re.I)
         if m:
             profile["address"] = m.group(1).strip().rstrip("-").strip()
 
     if not profile["comm_address"]:
-        m = re.search(r"Communication Address\s*([^]+?)\s*(Father Info|Mother Info|Guardian Info)", body_text, re.I)
+        m = re.search(r"Communication Address\s*([\s\S]+?)\s*(Father Info|Mother Info|Guardian Info)", body_text, re.I)
         if m:
             profile["comm_address"] = m.group(1).strip().rstrip("-").strip()
             profile["commAddress"] = profile["comm_address"]
@@ -513,10 +513,10 @@ def _scrape_profile(
         profile["guardianName"] = profile["guardian_name"]
             
     if not profile["guardian_phone"]:
-        m_m = re.search(r"Father Info[^]+?Phone\s*(\d{10})", body_text, re.I)
-        m_m2 = re.search(r"Mother Info[^]+?Phone\s*(\d{10})", body_text, re.I)
-        g_m = re.search(r"Guardian Info[^]+?Phone\s*(\d{10})", body_text, re.I)
-        g_m2 = re.search(r"Guardian Info[^]+?Mobile\s*(\d{10})", body_text, re.I)
+        m_m = re.search(r"Father Info[\s\S]+?Phone\s*(\d{10})", body_text, re.I)
+        m_m2 = re.search(r"Mother Info[\s\S]+?Phone\s*(\d{10})", body_text, re.I)
+        g_m = re.search(r"Guardian Info[\s\S]+?Phone\s*(\d{10})", body_text, re.I)
+        g_m2 = re.search(r"Guardian Info[\s\S]+?Mobile\s*(\d{10})", body_text, re.I)
         if m_m:
             profile["guardian_phone"] = m_m.group(1).strip()
         elif m_m2:
@@ -528,9 +528,9 @@ def _scrape_profile(
         profile["guardianPhone"] = profile["guardian_phone"]
 
     if not profile["guardian_email"]:
-        m_m = re.search(r"Father Info[^]+?Email\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})", body_text, re.I)
-        m_m2 = re.search(r"Mother Info[^]+?Email\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})", body_text, re.I)
-        g_m = re.search(r"Guardian Info[^]+?Email\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})", body_text, re.I)
+        m_m = re.search(r"Father Info[\s\S]+?Email\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})", body_text, re.I)
+        m_m2 = re.search(r"Mother Info[\s\S]+?Email\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})", body_text, re.I)
+        g_m = re.search(r"Guardian Info[\s\S]+?Email\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})", body_text, re.I)
         if m_m:
             profile["guardian_email"] = m_m.group(1).strip()
         elif m_m2:
