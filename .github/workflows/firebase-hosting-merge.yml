@@ -6,7 +6,7 @@ name: Deploy to Firebase Hosting on merge
 
 permissions:
   checks: write
-  contents: read
+  contents: write
   deployments: write
   pull-requests: write
 jobs:
