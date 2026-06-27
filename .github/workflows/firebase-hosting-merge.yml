@@ -20,5 +20,13 @@ jobs:
         run: |
           echo "$FIREBASE_SERVICE_ACCOUNT" > service-account-temp.json
           export GOOGLE_APPLICATION_CREDENTIALS=service-account-temp.json
-          npx firebase-tools deploy --only hosting --project machub-6af39
+          if ! npx firebase-tools deploy --only hosting --project machub-6af39 > deploy_log.txt 2>&1; then
+            echo "Deployment failed! Committing logs to repository..."
+            git config --global user.name "GitHub Action"
+            git config --global user.email "action@github.com"
+            git add deploy_log.txt
+            git commit -m "chore: record deploy failure logs [skip ci]"
+            git push
+            exit 1
+          fi
           rm service-account-temp.json
