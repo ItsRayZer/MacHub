@@ -14,10 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy to Firebase
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MACHUB_6AF39 }}'
-          channelId: live
-          projectId: machub-6af39
+      - name: Deploy to Firebase Hosting
+        env:
+          FIREBASE_SERVICE_ACCOUNT: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MACHUB_6AF39 }}'
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > service-account-temp.json
+          export GOOGLE_APPLICATION_CREDENTIALS=service-account-temp.json
+          npx firebase-tools deploy --only hosting --project machub-6af39
+          rm service-account-temp.json
