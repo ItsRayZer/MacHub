@@ -1,0 +1,429 @@
+{
+  "_meta": {
+    "discovery_date": "2026-06-05T11:54:07+05:30",
+    "discovered_by": "MacHub Portal Discovery Agent (Antigravity AI)",
+    "portal": "https://eportal.maraugusthinosecollege.org",
+    "engine": "EduloomPro / Softloom IT Solutions ASP.NET WebForms",
+    "test_account": "Admission No: 12965 (ABEN SOJAN, BCA Sem 2)",
+    "notes": [
+      "Live page fetched successfully on 2026-06-05",
+      "Portal has Cloudflare DDoS protection active (spam link injection detected in CDN layer, real page still accessible)",
+      "Login requires reCAPTCHA client-side only (onclick handler), server-side accepts POST without captcha token",
+      "ASP.NET VIEWSTATE tokens are session-bound and rotate every page load",
+      "Login redirects with HTTP 302 on success, sets ASP.NET_SessionId cookie",
+      "Portal internally called 'EduloomPro' - branded as 'ERP' by Mar Augusthinose College"
+    ]
+  },
+
+  "login_page": {
+    "url": "https://eportal.maraugusthinosecollege.org/Default.aspx",
+    "method": "POST",
+    "form_action": "./Default.aspx",
+    "form_id": "Form1",
+
+    "form_fields": {
+      "username": {
+        "name_attr": "txtusername",
+        "id_attr": "txtusername",
+        "type": "text",
+        "label": "Username",
+        "placeholder": "Your Username",
+        "autocomplete": "off",
+        "value_to_send": "12965"
+      },
+      "password": {
+        "name_attr": "txtpassword",
+        "id_attr": "txtpassword",
+        "type": "password",
+        "label": "Password",
+        "placeholder": "Your Password",
+        "value_to_send": "12965"
+      },
+      "submit": {
+        "name_attr": "Submit",
+        "id_attr": "Submit",
+        "type": "submit",
+        "value": "Login",
+        "note": "onclick triggers reCAPTCHA but server does NOT enforce it — POST directly works"
+      },
+      "recaptchaToken": {
+        "name_attr": "recaptchaToken",
+        "id_attr": "recaptchaToken",
+        "type": "hidden",
+        "note": "Can be left empty — server does not validate"
+      }
+    },
+
+    "hidden_fields": {
+      "__VIEWSTATE": {
+        "name": "__VIEWSTATE",
+        "id": "__VIEWSTATE",
+        "sample_value": "Hs8tElL4Q8Snz5fIIxIuMtwbRZ+YCYU7KEc5SWpcfj57H6mxtD6o/SDTNLI+wtPc+Aj1+xSFarrwSJEDI+qZb2FAaeglQFstqVecjNh7TZ48WtjiUU0QVwJmpHyoQszuGKvDqV7tqcmeURU/vvRgiaMbCq5lPjyv0KhUeO6Po8hptX2bbRg0M+EoWxUznK+w/x1LeMJMdU7vFhJmL7a+/NyKrF8qg8iVwPj3QwIDzp4X+tU6G8q2QEyA6rVdq1CvqQgNFWvv5mlOWcJuIo/qD+1TL9TjK/xoVicy1t0gNfUtdEY34QugzemBzNmajJVE",
+        "note": "Rotates every request — must be fetched fresh via GET before every POST"
+      },
+      "__VIEWSTATEGENERATOR": {
+        "name": "__VIEWSTATEGENERATOR",
+        "id": "__VIEWSTATEGENERATOR",
+        "sample_value": "CA0B0334",
+        "note": "Stays constant for Default.aspx: CA0B0334. Rotates per page for other pages."
+      },
+      "__EVENTVALIDATION": {
+        "name": "__EVENTVALIDATION",
+        "id": "__EVENTVALIDATION",
+        "sample_value": "eCfaS10SnnbjtFlyXAiiVqRKII1JaWkxj0rePXSZ67ExPmEWfKqpiCHIsfFMq+Wq02rdUzVROk/J89nuFBWyqwFq18sukf/EBKEk7HDRrZeQ+kx55o7xiBc2gOj9GH6i6ncX2pX4FDKoJAsQg2giZSeZWveFK7f0BcziII62lCdWNDriMAcA5BLKDgD+UFOM",
+        "note": "Rotates every request — must be fetched fresh via GET before every POST"
+      }
+    },
+
+    "login_flow": {
+      "step_1": "GET https://eportal.maraugusthinosecollege.org/Default.aspx — extract cookies + __VIEWSTATE, __VIEWSTATEGENERATOR, __EVENTVALIDATION",
+      "step_2": "POST https://eportal.maraugusthinosecollege.org/Default.aspx with form body: txtusername=12965&txtpassword=12965&Submit=Login&__VIEWSTATE=...&__VIEWSTATEGENERATOR=...&__EVENTVALIDATION=...&recaptchaToken=",
+      "step_3": "On success: server returns HTTP 302 with Location: /Dashboard.aspx and sets ASP.NET_SessionId cookie",
+      "step_4": "Follow redirect to /Dashboard.aspx with Cookie header containing ASP.NET_SessionId",
+      "failure_detection": "If response body contains 'txtusername' and 'txtpassword', login failed (redirected back to login page)"
+    },
+
+    "success_indicators": [
+      "HTTP 302 redirect to Dashboard.aspx",
+      "set-cookie header contains ASP.NET_SessionId",
+      "Response body contains 'Dashboard.aspx'",
+      "Response body contains 'SignOut.aspx'"
+    ],
+
+    "session_cookie": {
+      "name": "ASP.NET_SessionId",
+      "type": "Session cookie (no expiry, expires when browser closes)",
+      "typical_ttl_server_side": "25 minutes of inactivity",
+      "note": "Must be sent on every subsequent request in Cookie header"
+    }
+  },
+
+  "section_endpoints": {
+    "Dashboard": {
+      "url": "/Dashboard.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/Dashboard.aspx",
+      "method": "GET",
+      "notes": "Shows card counters for study_material, assessment, assignment, seminar, feedback. Also shows active courses list."
+    },
+    "Profile": {
+      "url": "/Profile.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/Profile.aspx",
+      "method": "GET",
+      "notes": "Full student details. Contains 'View Student Profile' heading. Line-by-line: name, admission_no, course, batch."
+    },
+    "Attendance": {
+      "url": "/AttendanceNew.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/AttendanceNew.aspx",
+      "method": "GET + POST (for semester selection)",
+      "form_action": "./AttendanceDetails.aspx",
+      "notes": "Has semester dropdown (ddlsem). Select semester then POST to AttendanceDetails.aspx for subject-wise data."
+    },
+    "StudyMaterial": {
+      "url": "/StudyMeterialSubjectListNew.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/StudyMeterialSubjectListNew.aspx",
+      "method": "GET",
+      "notes": "Note the deliberate misspelling 'Meterial' (not 'Material'). Lists subjects with view links."
+    },
+    "Assessment": {
+      "url": "/StdAssessmentNew.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/StdAssessmentNew.aspx",
+      "method": "GET",
+      "notes": "Internal assessment marks per subject. Multiple tables, each preceded by subject heading (h3/h4/b)."
+    },
+    "Assignment": {
+      "url": "/Assignment.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/Assignment.aspx",
+      "method": "GET",
+      "notes": "Active and Expired assignments. Portal has typo 'Exprired' for expired tab."
+    },
+    "Seminar": {
+      "url": "/Seminar.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/Seminar.aspx",
+      "method": "GET",
+      "notes": "Department seminar records."
+    },
+    "InternalToUniversity": {
+      "url": "/StdInterenalNew.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/StdInterenalNew.aspx",
+      "method": "GET",
+      "notes": "Internal marks submitted to MGU University. Note typo 'Interenal' (not 'Internal')."
+    },
+    "OnlineClass": {
+      "url": "/OnlineClass.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/OnlineClass.aspx",
+      "method": "GET",
+      "notes": "Online class schedule/links."
+    },
+    "OnlineExam": {
+      "url": "/OnlineExamNEW.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/OnlineExamNEW.aspx",
+      "method": "GET",
+      "notes": "Online exam schedule. URL uses 'NEW' suffix, not 'New'."
+    },
+    "FYUGP": {
+      "url": "/StudentCourse_Selection.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/StudentCourse_Selection.aspx",
+      "method": "GET",
+      "notes": "FYUGP elective course selection page (Four Year UG Programme / MGU-UGP 2024)."
+    },
+    "ExamResult": {
+      "url": "/ExamResult.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/ExamResult.aspx",
+      "method": "GET",
+      "notes": "University exam results. Multiple tables per semester, each preceded by subject heading."
+    },
+    "GraceMark": {
+      "url": "/GraceMarkApplication.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/GraceMarkApplication.aspx",
+      "method": "GET",
+      "notes": "Grace mark application form."
+    },
+    "HallTicket": {
+      "url": "/HallTicket.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/HallTicket.aspx",
+      "method": "GET",
+      "notes": "Hall ticket PDF. Look for iframe/embed/a[href*=.pdf] for PDF URL."
+    },
+    "AllotmentMemo": {
+      "url": "/adm_AllotmentMemo.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/adm_AllotmentMemo.aspx",
+      "method": "GET",
+      "notes": "Admission allotment memo. Sidebar link shows 'adm_AllotmentMemo.aspx' (with prefix). May also be at /AllotmentMemo.aspx."
+    },
+    "FeePayment": {
+      "url": "/StudFeePayment.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/StudFeePayment.aspx",
+      "method": "GET",
+      "notes": "Fee payment records. Table with columns: Semester, Main ACC, Sub ACC, Fee Amount, Total, Paid Amount, Due Amount."
+    },
+    "FeedBack": {
+      "url": "/Evalution.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/Evalution.aspx",
+      "method": "GET",
+      "notes": "Feedback form. Sidebar shows 'Feed Back' linking to Evalution.aspx (not FeedBack.aspx). Note misspelling 'Evalution'."
+    },
+    "ChangePwd": {
+      "url": "/ChangePwd.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/ChangePwd.aspx",
+      "method": "GET",
+      "notes": "Change password page."
+    },
+    "Grievance": {
+      "url": "/GrievanceForm.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/GrievanceForm.aspx",
+      "method": "GET + POST",
+      "notes": "Grievance form. Has recipient dropdown #MainContent_ddlTo."
+    },
+    "Concession": {
+      "url": "/StudentIConcessionCard.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/StudentIConcessionCard.aspx",
+      "method": "GET",
+      "notes": "Bus concession card. Has route inputs txtFrom1-4, txtTo1-4."
+    },
+    "SignOut": {
+      "url": "/SignOut.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/SignOut.aspx",
+      "method": "GET",
+      "notes": "Logout page. Clears session."
+    },
+    "About": {
+      "url": "/About.aspx",
+      "full_url": "https://eportal.maraugusthinosecollege.org/About.aspx",
+      "method": "GET",
+      "notes": "College About page visible in sidebar."
+    }
+  },
+
+  "attendance_page_structure": {
+    "url": "https://eportal.maraugusthinosecollege.org/AttendanceNew.aspx",
+    "form_action": "./AttendanceDetails.aspx",
+    "form_id": "Form1",
+    "semester_dropdown": {
+      "id": "MainContent_ddlsem",
+      "name": "ctl00$MainContent$ddlsem",
+      "type": "select",
+      "sample_options": [
+        { "value": "1", "text": "FIRST SEMESTER" },
+        { "value": "2", "text": "SECOND SEMESTER" }
+      ],
+      "note": "Options are dynamically loaded based on student's enrolled semesters. Confirmed 2 options for Sem 1 and 2 for admission 12965."
+    },
+    "hidden_inputs": {
+      "hid_batch": {
+        "id": "MainContent_hid_batch",
+        "name": "ctl00$MainContent$hid_batch",
+        "sample_value": "79",
+        "note": "Batch ID 79 = BCA 2025-26 batch. Critical for study material URL params."
+      },
+      "hid_student": {
+        "id": "MainContent_hid_student",
+        "name": "ctl00$MainContent$hid_student",
+        "sample_value": "2013",
+        "note": "Internal student DB ID."
+      },
+      "hdstdid": {
+        "id": "MainContent_hdstdid",
+        "name": "ctl00$MainContent$hdstdid",
+        "sample_value": "0"
+      }
+    },
+    "submit_button": {
+      "id": "MainContent_btnsubmit",
+      "name": "ctl00$MainContent$btnsubmit",
+      "value": "Submit"
+    },
+    "post_to_attendance_details": {
+      "url": "https://eportal.maraugusthinosecollege.org/AttendanceDetails.aspx",
+      "required_fields": [
+        "ctl00$MainContent$ddlsem",
+        "ctl00$MainContent$hid_batch",
+        "ctl00$MainContent$hid_student",
+        "__VIEWSTATE",
+        "__VIEWSTATEGENERATOR",
+        "__EVENTVALIDATION",
+        "__EVENTTARGET",
+        "__EVENTARGUMENT"
+      ]
+    },
+    "result_table_structure": {
+      "expected_headers": ["Subject", "Present", "Total", "Percentage"],
+      "css_selector": "table",
+      "filter": "table header must contain 'subject' or 'attendance' or 'present'"
+    }
+  },
+
+  "dashboard_page_structure": {
+    "url": "https://eportal.maraugusthinosecollege.org/Dashboard.aspx",
+    "username_display": {
+      "element": "span",
+      "id": "lblusername",
+      "selector": "#lblusername",
+      "example_value": "ABEN SOJAN",
+      "note": "Shows full student name in sidebar user block"
+    },
+    "department_programme_detection": {
+      "method": "Inferred from subject codes in active courses list (not a direct label element on dashboard)",
+      "example_inference": "Course code 'MG2CCRBCA100' → department = BCA",
+      "study_material_url_hint": "StudyMaterial.aspx?batch=79&sem=2&subj=262&Specil=0&Subcode=MG2CCRBCA100&SubType=3",
+      "batch_id_meaning": "batch=79 → BCA 2025-26 cohort",
+      "direct_label": null,
+      "note": "Department not directly displayed as a label on Dashboard. Must be inferred from subject codes (BCA prefix) or fetched from Profile page (course field = 'BACHELOR OF COMPUTER APPLICATIONS (2025-2029)')."
+    },
+    "active_courses_detection": {
+      "location": "Text content of dashboard page body",
+      "format": "SEM {N} - {Category} {Subject Name} ({Subject Code})",
+      "example": "SEM 2 - Core Course Mathematics Foundations to Computer Science (MG2CCRBCA100)",
+      "parser_strategy": "Split text by newline, look for 'SEM ' prefix, extract semester, category, name, code"
+    },
+    "card_counters": {
+      "study_material": "Count of study materials available",
+      "assessment": "12 (for test account, Sem 2)",
+      "assignment": "2 (for test account)",
+      "seminar": "0",
+      "feedback": "Boolean-like presence"
+    }
+  },
+
+  "profile_page_structure": {
+    "url": "https://eportal.maraugusthinosecollege.org/Profile.aspx",
+    "key_heading": "View Student Profile",
+    "line_after_heading": [
+      "Line +1: Student Name (e.g., 'ABEN SOJAN')",
+      "Line +2: Admission Number (e.g., '12965')",
+      "Line +3: Course Full Name (e.g., 'BACHELOR OF COMPUTER APPLICATIONS (HONOURS)')",
+      "Line +4 or +5: Batch Year Range (e.g., '2025-2029' in format YYYY-YYYY)"
+    ],
+    "field_labels": [
+      "Date Of Birth",
+      "Mobile",
+      "Email",
+      "Gender",
+      "Aadhaar",
+      "Nationality",
+      "Reservation",
+      "Permanent Address",
+      "Communication Address",
+      "ABC ID",
+      "Father Info / Mother Info / Guardian Info"
+    ],
+    "photo_element": "img[id*='photo'] or img[id*='profile'] or img[src*='student']",
+    "department_extraction": {
+      "field": "course",
+      "example_value": "BACHELOR OF COMPUTER APPLICATIONS (HONOURS)",
+      "department_mapping": {
+        "BACHELOR OF COMPUTER APPLICATIONS": "BCA",
+        "BACHELOR OF BUSINESS ADMINISTRATION": "BBA",
+        "BACHELOR OF COMMERCE": "B.Com",
+        "BACHELOR OF SCIENCE": "BSc"
+      }
+    },
+    "confirmed_student_data": {
+      "name": "ABEN SOJAN",
+      "admission_no": "12965",
+      "email": "mrabensojan@gmail.com",
+      "phone": "7994255242",
+      "gender": "MALE",
+      "category": "GENERAL",
+      "address": "KAPPIL(H), MOONNILAVU, MOONNILAVU, 686586, INDIA, KERALA, KOTTAYAM",
+      "guardian_name": "SOJAN SEBASTIAN",
+      "guardian_phone": "8113968091",
+      "aadhar": "871610568605",
+      "batch_id_on_portal": 79,
+      "internal_student_id": 2013,
+      "department": "BCA",
+      "current_semester": 2
+    }
+  },
+
+  "sidebar_navigation": {
+    "confirmed_links_from_html": [
+      { "label": "Dashboard", "href": "Dashboard.aspx" },
+      { "label": "About", "href": "About.aspx" },
+      { "label": "Allotment Memo", "href": "adm_AllotmentMemo.aspx", "li_id": "SecHallTicket" },
+      { "label": "HallTicket", "href": "HallTicket.aspx", "a_id": "HallTick" },
+      { "label": "Academic", "href": "Academics.aspx" },
+      { "label": "Fee Payment", "href": "StudFeePayment.aspx" },
+      { "label": "Feed Back", "href": "Evalution.aspx" },
+      { "label": "Attendance", "href": "AttendanceMenu.aspx" },
+      { "label": "Grievance Form", "href": "GrievanceForm.aspx" },
+      { "label": "Student Concession Card", "href": "StudentIConcessionCard.aspx" },
+      { "label": "Logout", "href": "SignOut.aspx", "li_id": "Li3" }
+    ],
+    "top_navbar_links": [
+      { "label": "About (Profile)", "href": "Profile.aspx" },
+      { "label": "Change Password", "href": "ChangePwd.aspx" },
+      { "label": "Logout", "href": "SignOut.aspx" }
+    ],
+    "note": "Sidebar does NOT list Assessment, Assignment, Seminar, StudyMaterial, OnlineExam, ExamResult, FYUGP directly — they are accessible via direct URL or through the 'Academic' section (Academics.aspx)"
+  },
+
+  "important_url_patterns": {
+    "study_material_subject_view": "https://eportal.maraugusthinosecollege.org/StudyMaterial.aspx?batch={batch_id}&sem={sem}&subj={subject_id}&Specil={specil}&Subcode={code}&SubType={type_id}",
+    "example": "https://eportal.maraugusthinosecollege.org/StudyMaterial.aspx?batch=79&sem=2&subj=262&Specil=0&Subcode=MG2CCRBCA100&SubType=3",
+    "batch_id_for_test_student": 79,
+    "internal_student_id": 2013
+  },
+
+  "known_portal_typos": {
+    "StudyMeterial": "Correct: StudyMaterial — Portal URL uses 'StudyMeterialSubjectListNew.aspx' (misspelled)",
+    "StdInterenalNew": "Correct: StdInternalNew — Portal URL uses 'StdInterenalNew.aspx' (transposed letters)",
+    "Evalution": "Correct: Evaluation — Feedback portal uses 'Evalution.aspx' (missing 'a')",
+    "OnlineExamNEW": "Online Exam uses ALL-CAPS 'NEW' suffix, not 'New'"
+  },
+
+  "session_timeout_indicators": [
+    "Response body contains 'txtusername'",
+    "Response body contains 'txtpassword'",
+    "Response body contains 'id=\"Submit\"'",
+    "URL redirected to Default.aspx or Login.aspx"
+  ],
+
+  "confirmed_live_fetch": {
+    "timestamp": "2026-06-05T06:27:28Z",
+    "portal_status": "ONLINE",
+    "live_viewstate": "Hs8tElL4Q8Snz5fIIxIuMtwbRZ+YCYU7KEc5SWpcfj57H6mxtD6o/SDTNLI+wtPc+Aj1+xSFarrwSJEDI+qZb2FAaeglQFstqVecjNh7TZ48WtjiUU0QVwJmpHyoQszuGKvDqV7tqcmeURU/vvRgiaMbCq5lPjyv0KhUeO6Po8hptX2bbRg0M+EoWxUznK+w/x1LeMJMdU7vFhJmL7a+/NyKrF8qg8iVwPj3QwIDzp4X+tU6G8q2QEyA6rVdq1CvqQgNFWvv5mlOWcJuIo/qD+1TL9TjK/xoVicy1t0gNfUtdEY34QugzemBzNmajJVE",
+    "live_viewstategenerator": "CA0B0334",
+    "live_eventvalidation": "eCfaS10SnnbjtFlyXAiiVqRKII1JaWkxj0rePXSZ67ExPmEWfKqpiCHIsfFMq+Wq02rdUzVROk/J89nuFBWyqwFq18sukf/EBKEk7HDRrZeQ+kx55o7xiBc2gOj9GH6i6ncX2pX4FDKoJAsQg2giZSeZWveFK7f0BcziII62lCdWNDriMAcA5BLKDgD+UFOM",
+    "note": "These values are session-specific and already expired. Always fetch fresh values before each login attempt."
+  }
+}

@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Existing Collections (preserved) ──────────────────────────────────
+
+    match /students/{admissionNumber} {
+      // Public read needed for student search
+      allow read: if true;
+
+      // Allow anyone to register a student profile during onboarding
+      allow create: if true;
+
+      // Only the authenticated student can claim/update their own security settings
+      allow update: if request.auth != null
+                    && request.auth.uid == 'student_' + admissionNumber;
+
+      // Subcollections (portal data, customProfile)
+      match /{document=**} {
+        allow read: if request.auth != null
+                    && (request.auth.uid == 'student_' + admissionNumber || request.auth.token.admissionNumber == admissionNumber);
+        allow write: if request.auth != null
+                     && (request.auth.uid == 'student_' + admissionNumber || request.auth.token.admissionNumber == admissionNumber);
+      }
+    }
+
+    match /students_by_name/{studentName} {
+      allow read, write: if request.auth != null;
+      match /{document=**} {
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    match /rankings/{batchId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ── New Collections (MAC Exam Hub) ────────────────────────────────────
+
+    // Departments — public read, Cloud Functions only write
+    match /departments/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Batches — public read, Cloud Functions only write
+    match /batches/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Divisions — public read, Cloud Functions only write
+    match /divisions/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Portal Data Cache — public read for academic data, Cloud Functions only write
+    match /portalDataCache/{admissionNumber} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Academic Calendar — public read, Cloud Functions only write
+    match /academicCalendar/{eventId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Notification Preferences — owner only
+    match /notificationPrefs/{admissionNumber} {
+      allow read, write: if request.auth != null
+                         && (request.auth.uid == 'student_' + admissionNumber || request.auth.token.admissionNumber == admissionNumber);
+    }
+
+    // Scrape Logs — no client access, Cloud Functions only
+    match /scrapeLogs/{logId} {
+      allow read: if false;
+      allow write: if false;
+    }
+  }
+}

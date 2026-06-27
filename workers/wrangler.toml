@@ -1,0 +1,12 @@
+name = "machub-proxy"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+workers_dev = true
+node_compat = true
+
+[vars]
+PORTAL_BASE = "https://eportal.maraugusthinosecollege.org"
+ENCRYPTION_KEY = "9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e"
+
+[build]
+command = "npm install"

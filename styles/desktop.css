@@ -1,0 +1,50 @@
+/* Styling for laptop/desktop screen sizes (>= 768px) to keep the mobile-first layout centered and beautiful */
+@media (min-width: 768px) {
+    /* 1. HTML background: beautiful dark gradient with radial highlight to look premium */
+    html {
+        background: radial-gradient(circle at 50% 50%, #1a1a1e 0%, #08080a 100%) !important;
+        background-attachment: fixed !important;
+        min-height: 100vh;
+    }
+
+    /* 2. Body container: center horizontally, set max-width matching the max-w-md class, add subtle borders and shadows */
+    body {
+        max-width: 448px;
+        margin: 0 auto !important;
+        min-height: 100vh;
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.85);
+        border-left: 1px solid rgba(255, 255, 255, 0.08);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        position: relative;
+    }
+
+    /* 3. Constrain the fixed-position full-screen view-ai panel to match the centered body */
+    #view-ai {
+        position: absolute !important;
+        inset: 0 !important;
+        max-width: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+        transform: none !important;
+        border: none !important;
+    }
+
+    /* 4. Constrain and center the full-page rankings view */
+    #rankingsFullPage {
+        max-width: 448px;
+        left: 50% !important;
+        right: auto !important;
+        margin-left: -224px !important; /* Half of 448px to center perfectly */
+        border-left: 1px solid rgba(255, 255, 255, 0.08);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    #rankingsFullPage.is-open {
+        transform: translateX(0) !important;
+    }
+
+    /* 5. Align the back button toolbar of the external web portal view */
+    .external-app-toolbar {
+        left: 50% !important;
+        margin-left: -210px !important; /* Position it close to the left boundary of our 448px app frame */
+    }
+}

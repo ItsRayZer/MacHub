@@ -2464,3 +2464,504 @@
     to   { opacity:1; transform:translateY(0); }
 }
 .animate-new-fade { animation: newFadeIn 0.25s ease forwards; }
+
+/* ── Apple-style Liquid Glass AI Menu Animation ── */
+
+.nav-pill {
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    max-width: 500px;
+    width: auto;
+}
+
+.nav-pill > * {
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Styling for liquid glass input container */
+.nav-ai-input-container {
+    display: flex;
+    align-items: center;
+    width: 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(40px) saturate(210%);
+    -webkit-backdrop-filter: blur(40px) saturate(210%);
+    border: 0px solid rgba(255, 255, 255, 0.5);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.1),
+        inset 0 1px 1px rgba(255,255,255,0.7);
+    margin-right: 0;
+}
+
+.dark .nav-ai-input-container {
+    background: rgba(20, 20, 22, 0.5);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+#navAiInput {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    color: #1d1d1f;
+    font-size: 14.5px;
+    font-weight: 600;
+    padding: 8px 4px;
+}
+
+.dark #navAiInput {
+    color: #f5f5f7;
+}
+
+#navAiInput::placeholder {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+.dark #navAiInput::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* Active State layout changes */
+#bottomNav {
+    transition: gap 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease !important;
+}
+
+#bottomNav.ai-active {
+    gap: 0px !important;
+}
+
+#bottomNav.ai-active #navPill {
+    width: 0 !important;
+    max-width: 0 !important;
+    opacity: 0 !important;
+    transform: translateX(120px) scale(0.6) !important;
+    pointer-events: none !important;
+    padding: 0 !important;
+    border-width: 0 !important;
+    margin-right: -4px !important; /* Offset the flex gap completely */
+}
+
+#bottomNav.ai-active #navPill > * {
+    opacity: 0 !important;
+    transform: scale(0.5) !important;
+    pointer-events: none !important;
+}
+
+#bottomNav.ai-active .nav-ai-input-container {
+    width: 270px;
+    opacity: 1;
+    pointer-events: auto;
+    padding: 5px 16px;
+    border-width: 1px;
+    margin-right: 8px; /* Safe Apple spacing */
+}
+
+#bottomNav.ai-active .nav-ai-pill {
+    width: 42px !important;
+    height: 42px !important;
+}
+
+/* Smooth Icon Switching */
+.ai-btn-icon-gemini, .ai-btn-icon-send {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.nav-ai-pill.send-mode {
+    background: #0071e3 !important;
+    border-color: rgba(0, 113, 227, 0.6) !important;
+}
+
+.nav-ai-pill.send-mode .ai-btn-icon-gemini {
+    opacity: 0 !important;
+    transform: scale(0.5) !important;
+    pointer-events: none !important;
+}
+
+.nav-ai-pill.send-mode .ai-btn-icon-send {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    pointer-events: auto !important;
+}
+
+/* Chatbot page send wrapper button states */
+.chat-btn-icon-gemini, .chat-btn-icon-send {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+#macaiSendBtn.send-mode {
+    background: #fff !important;
+    border-color: #fff !important;
+}
+
+#macaiSendBtn.send-mode .chat-btn-icon-gemini {
+    opacity: 0 !important;
+    transform: scale(0.5) !important;
+    pointer-events: none !important;
+}
+
+#macaiSendBtn.send-mode .chat-btn-icon-send {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    pointer-events: auto !important;
+}
+
+/* Chat page top glow animations */
+.macai-top-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 140px;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+    opacity: 0.85;
+}
+
+.macai-glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(65px);
+    mix-blend-mode: screen;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+    animation-direction: alternate;
+}
+
+.macai-glow-1 {
+    width: 320px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(0, 113, 227, 0.45) 0%, transparent 80%);
+    top: -110px;
+    left: -60px;
+    animation: macai-glow-move-1 8s infinite alternate;
+}
+
+.macai-glow-2 {
+    width: 290px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.4) 0%, transparent 80%);
+    top: -100px;
+    right: -40px;
+    animation: macai-glow-move-2 10s infinite alternate;
+}
+
+.macai-glow-3 {
+    width: 340px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.3) 0%, transparent 80%);
+    top: -130px;
+    left: 25%;
+    animation: macai-glow-move-3 12s infinite alternate;
+}
+
+@keyframes macai-glow-move-1 {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(90px, 35px) scale(1.2); }
+}
+
+@keyframes macai-glow-move-2 {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(-70px, 45px) scale(1.1); }
+}
+
+@keyframes macai-glow-move-3 {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(50px, -25px) scale(1.25); }
+}
+
+/* Scrolled Down State: hide menu tabs & text container completely, only show AI floating button */
+#bottomNav.nav-scrolled-down #navPill {
+    width: 0 !important;
+    max-width: 0 !important;
+    opacity: 0 !important;
+    transform: translateX(120px) scale(0.6) !important;
+    pointer-events: none !important;
+    padding: 0 !important;
+    border-width: 0 !important;
+    margin-right: -4px !important; /* Offset the flex gap completely */
+}
+
+#bottomNav.nav-scrolled-down #navPill > * {
+    opacity: 0 !important;
+    transform: scale(0.5) !important;
+    pointer-events: none !important;
+}
+
+#bottomNav.nav-scrolled-down .nav-ai-input-container {
+    width: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    padding: 0 !important;
+    border-width: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Hide liquid glass indicator when no option is selected (e.g. c-current="0" in view-ai) */
+.nav-pill[c-current="0"] .nav-indicator,
+.nav-pill:not([c-current]) .nav-indicator {
+    opacity: 0 !important;
+    transform: scale(0.5) !important;
+    pointer-events: none !important;
+}
+
+/* Discovery Card glass styles (from DareToWin) */
+.glass-card {
+  position: relative;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 12px;
+  backdrop-filter: blur(40px) saturate(1.6);
+  -webkit-backdrop-filter: blur(40px) saturate(1.6);
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.06) inset,
+    0 -1px 0 rgba(0,0,0,0.4) inset,
+    0 8px 32px rgba(0,0,0,0.5),
+    0 1px 3px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+}
+.glass-card.indigo { border-color: rgba(108,99,255,0.25); box-shadow: 0 8px 32px rgba(108,99,255,0.15), 0 2px 0 rgba(255,255,255,0.06) inset, 0 -1px 0 rgba(0,0,0,0.4) inset; }
+.glass-card.gold   { border-color: rgba(0,122,255,0.2);   box-shadow: 0 8px 32px rgba(0,122,255,0.12),  0 2px 0 rgba(255,255,255,0.06) inset, 0 -1px 0 rgba(0,0,0,0.4) inset; }
+.glass-card.red    { border-color: rgba(255,59,48,0.25); box-shadow: 0 8px 32px rgba(255,59,48,0.15),   0 2px 0 rgba(255,255,255,0.06) inset, 0 -1px 0 rgba(0,0,0,0.4) inset; }
+.glass-card.green  { border-color: rgba(48,209,88,0.25); box-shadow: 0 8px 32px rgba(48,209,88,0.15),   0 2px 0 rgba(255,255,255,0.06) inset, 0 -1px 0 rgba(0,0,0,0.4) inset; }
+
+/* Starting Cards 3D selection styles (from DareToWin) */
+.glass-selection-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 2000px;
+  width: 100%;
+  margin: 30px auto 40px;
+  padding: 20px 10px;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-selection-perspective {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  transform-style: preserve-3d;
+  width: 100%;
+}
+.glass-selection-card {
+  position: relative;
+  width: 120px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(40px) saturate(1.8);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-style: preserve-3d;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.glass-card-shine {
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 100%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 40%, rgba(255,255,255,0.03) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+.glass-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 2;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.glass-card-border {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  opacity: 0.5;
+  transition: opacity 0.6s;
+}
+.glass-selection-card.left {
+  transform: rotateY(20deg) translateZ(-10px) scale(0.95);
+  opacity: 0.85;
+}
+.glass-selection-card.center {
+  transform: rotateY(0deg) translateZ(30px) scale(1.05);
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+.glass-selection-card.right {
+  transform: rotateY(-20deg) translateZ(-10px) scale(0.95);
+  opacity: 0.85;
+}
+.glass-selection-card:hover {
+  transform: rotateY(0deg) translateZ(80px) scale(1.1) !important;
+  opacity: 1 !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6) !important;
+}
+.glass-selection-card:hover .glass-card-content {
+  transform: translateZ(15px);
+}
+.glass-selection-card:hover .glass-card-border {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.glass-card-text {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+.glass-card-icon {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Spring animation classes (from DareToWin) */
+.elastic-active {
+  animation: apple-elastic 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+@keyframes apple-elastic {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.1, 0.9); }
+  50% { transform: scale(0.9, 1.1) translateY(-2px); }
+  70% { transform: scale(1.05, 0.95); }
+  100% { transform: scale(1); }
+}
+
+/* Discovery Cards & Interactive Options (from DareToWin) */
+.ai-question-card {
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(40px) saturate(1.8);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.ai-question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 16px 10px;
+}
+.ai-question-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #fff;
+  flex: 1;
+}
+.ai-options-list {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ai-option-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%;
+}
+.ai-option-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.ai-option-index {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+}
+.ai-option-text {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.boss-streak-card {
+  padding: 24px 16px;
+  text-align: center;
+}
+.boss-task-card {
+  padding: 4px;
+}
+.boss-progress-card {
+  padding: 24px 16px;
+  text-align: center;
+}
+.boss-insight-card {
+  padding: 18px;
+  background: linear-gradient(135deg, rgba(108,99,255,0.1), rgba(0,122,255,0.1));
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  gap: 12px;
+}
+.boss-recommendation-card {
+  padding: 18px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
+
+
+

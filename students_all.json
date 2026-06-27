@@ -1,0 +1,662 @@
+[
+  {
+    "admission_no": "12727",
+    "password": "12727",
+    "name": "AAVANY SUNIL",
+    "regNo": "MG25103A2838",
+    "classNo": "3201",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12965",
+    "password": "12965",
+    "name": "ABEN SOJAN",
+    "regNo": "MG25103A2839",
+    "classNo": "3202",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12728",
+    "password": "12728",
+    "name": "ABHIJITH SHIJU",
+    "regNo": "MG25103A2840",
+    "classNo": "3203",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12966",
+    "password": "12966",
+    "name": "ABHINAV KRISHNA S",
+    "regNo": "MG25103A2841",
+    "classNo": "3204",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12886",
+    "password": "12886",
+    "name": "ABHINAV MATHEW",
+    "regNo": "MG25103A2842",
+    "classNo": "3205",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12790",
+    "password": "12790",
+    "name": "ABHIRAM V NAIR",
+    "regNo": "MG25103A2843",
+    "classNo": "3206",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12791",
+    "password": "12791",
+    "name": "ABHISHEK G NAIR",
+    "regNo": "MG25103A2844",
+    "classNo": "3207",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12887",
+    "password": "12887",
+    "name": "ABHISHEK RAJENDRAN",
+    "regNo": "MG25103A2845",
+    "classNo": "3208",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12967",
+    "password": "12967",
+    "name": "ABHISHEKH A K",
+    "regNo": "MG25103A2846",
+    "classNo": "3209",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12888",
+    "password": "12888",
+    "name": "ABIJIN K S",
+    "regNo": "",
+    "classNo": "3210",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12792",
+    "password": "12792",
+    "name": "ABY BIJO",
+    "regNo": "MG25103A2848",
+    "classNo": "3211",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "13006",
+    "password": "13006",
+    "name": "ACHSAH BABU",
+    "regNo": "MG25103A2849",
+    "classNo": "3212",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12808",
+    "password": "12808",
+    "name": "ADARSH R NAIR",
+    "regNo": "MG25103A2850",
+    "classNo": "3213",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12889",
+    "password": "12889",
+    "name": "ADHIL KABEER",
+    "regNo": "MG25103A2851",
+    "classNo": "3214",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12890",
+    "password": "12890",
+    "name": "ADITHYAN P J",
+    "regNo": "MG25103A2852",
+    "classNo": "3215",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12968",
+    "password": "12968",
+    "name": "AISWARYA RAJESH",
+    "regNo": "MG25103A2853",
+    "classNo": "3216",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12822",
+    "password": "12822",
+    "name": "AKARSH DEEPU",
+    "regNo": "",
+    "classNo": "3217",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12969",
+    "password": "12969",
+    "name": "AKASHKRISHNA K P",
+    "regNo": "MG25103A2855",
+    "classNo": "3218",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12892",
+    "password": "12892",
+    "name": "AKSHAY K JOJO",
+    "regNo": "MG25103A2856",
+    "classNo": "3219",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12891",
+    "password": "12891",
+    "name": "AKSHAYA P SARAN",
+    "regNo": "MG25103A2857",
+    "classNo": "3220",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12793",
+    "password": "12793",
+    "name": "ALAN CYRIL",
+    "regNo": "MG25103A2858",
+    "classNo": "3221",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12893",
+    "password": "12893",
+    "name": "ALAN LAL",
+    "regNo": "MG25103A2859",
+    "classNo": "3222",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12823",
+    "password": "12823",
+    "name": "ALAN SOJAN",
+    "regNo": "MG25103A2860",
+    "classNo": "3223",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12970",
+    "password": "12970",
+    "name": "ALBIN BIJU",
+    "regNo": "MG25103A2861",
+    "classNo": "3224",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12894",
+    "password": "12894",
+    "name": "ALBIN SUNNY",
+    "regNo": "MG25103A2862",
+    "classNo": "3225",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12895",
+    "password": "12895",
+    "name": "ALDRIN MATHEWS",
+    "regNo": "MG25103A2863",
+    "classNo": "3226",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12896",
+    "password": "12896",
+    "name": "ALEENA MANOJ",
+    "regNo": "MG25103A2864",
+    "classNo": "3227",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12794",
+    "password": "12794",
+    "name": "ALEN CHACKO",
+    "regNo": "MG25103A2865",
+    "classNo": "3228",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12759",
+    "password": "12759",
+    "name": "ALMINA P ABEES",
+    "regNo": "MG25103A2866",
+    "classNo": "3229",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12760",
+    "password": "12760",
+    "name": "ALVIN FRANCIS",
+    "regNo": "MG25103A2867",
+    "classNo": "3230",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12971",
+    "password": "12971",
+    "name": "AMRUTHA BIJU",
+    "regNo": "MG25103A2868",
+    "classNo": "3231",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12729",
+    "password": "12729",
+    "name": "AMRUTHA C A",
+    "regNo": "MG25103A2869",
+    "classNo": "3232",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12972",
+    "password": "12972",
+    "name": "ANAMIKA ABHILASH",
+    "regNo": "MG25103A2870",
+    "classNo": "3233",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12694",
+    "password": "12694",
+    "name": "ANANDU P RAJESH",
+    "regNo": "MG25103A2871",
+    "classNo": "3234",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12730",
+    "password": "12730",
+    "name": "ANANDU S",
+    "regNo": "MG25103A2872",
+    "classNo": "3235",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12731",
+    "password": "12731",
+    "name": "ANANYA ANIL",
+    "regNo": "MG25103A2873",
+    "classNo": "3236",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12732",
+    "password": "12732",
+    "name": "ANASOOYA SILJU",
+    "regNo": "MG25103A2874",
+    "classNo": "3237",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12897",
+    "password": "12897",
+    "name": "ANEEV VINU",
+    "regNo": "MG25103A2875",
+    "classNo": "3238",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12824",
+    "password": "12824",
+    "name": "ANN MARIA SUNIL",
+    "regNo": "MG25103A2876",
+    "classNo": "3239",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12751",
+    "password": "12751",
+    "name": "ANUSHMA SURESH",
+    "regNo": "MG25103A2877",
+    "classNo": "3240",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12973",
+    "password": "12973",
+    "name": "ARAVIND RAJESH",
+    "regNo": "MG25103A2878",
+    "classNo": "3241",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12752",
+    "password": "12752",
+    "name": "ARJUN BINU",
+    "regNo": "MG25103A2879",
+    "classNo": "3242",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12898",
+    "password": "12898",
+    "name": "ARJUN K S",
+    "regNo": "MG25103A2880",
+    "classNo": "3243",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12778",
+    "password": "12778",
+    "name": "ARJUN P KRISHNA",
+    "regNo": "MG25103A2881",
+    "classNo": "3244",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12800",
+    "password": "12800",
+    "name": "ARYA SHIBU",
+    "regNo": "MG25103A2882",
+    "classNo": "3245",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12899",
+    "password": "12899",
+    "name": "ASHIKA SHAJI",
+    "regNo": "MG25103A2883",
+    "classNo": "3246",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12900",
+    "password": "12900",
+    "name": "ASHIN RAJ",
+    "regNo": "MG25103A2884",
+    "classNo": "3247",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12901",
+    "password": "12901",
+    "name": "ASWAJITH V",
+    "regNo": "MG25103A2885",
+    "classNo": "3248",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12995",
+    "password": "12995",
+    "name": "ASWAN HARIKUMAR",
+    "regNo": "MG25103A2886",
+    "classNo": "3249",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12902",
+    "password": "12902",
+    "name": "ASWIN PRAMOD",
+    "regNo": "MG25103A2887",
+    "classNo": "3250",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12903",
+    "password": "12903",
+    "name": "ASWIN SHIBU",
+    "regNo": "MG25103A2888",
+    "classNo": "3251",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12761",
+    "password": "12761",
+    "name": "ATHUL PRAKASH",
+    "regNo": "MG25103A2889",
+    "classNo": "3252",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12809",
+    "password": "12809",
+    "name": "ATHULYA ANIL",
+    "regNo": "MG25103A2890",
+    "classNo": "3253",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12904",
+    "password": "12904",
+    "name": "AUSTINE GEORGE",
+    "regNo": "MG25103A2891",
+    "classNo": "3254",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12905",
+    "password": "12905",
+    "name": "AYUSH MON B",
+    "regNo": "MG25103A2892",
+    "classNo": "3255",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12795",
+    "password": "12795",
+    "name": "BAISAL BINU GEORGE",
+    "regNo": "MG25103A2893",
+    "classNo": "3256",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12810",
+    "password": "12810",
+    "name": "BENNET PAUL BENOY",
+    "regNo": "MG25103A2894",
+    "classNo": "3257",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12906",
+    "password": "12906",
+    "name": "BERNNA MATHEW",
+    "regNo": "MG25103A2895",
+    "classNo": "3258",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12733",
+    "password": "12733",
+    "name": "BIJESH BIJU",
+    "regNo": "MG25103A2896",
+    "classNo": "3259",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12907",
+    "password": "12907",
+    "name": "BINEESH BIJU",
+    "regNo": "MG25103A2897",
+    "classNo": "3260",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12908",
+    "password": "12908",
+    "name": "BLESSAL M REJI",
+    "regNo": "MG25103A2898",
+    "classNo": "3261",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "12909",
+    "password": "12909",
+    "name": "CHAITHRA SINU",
+    "regNo": "MG25103A2899",
+    "classNo": "3262",
+    "classGroup": "BCA A",
+    "department": "BCA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "14001",
+    "password": "14001",
+    "name": "RAHUL KRISHNA",
+    "regNo": "MG25103A5001",
+    "classNo": "5001",
+    "classGroup": "BBA A",
+    "department": "BBA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "14002",
+    "password": "14002",
+    "name": "SNEHA MARIAM",
+    "regNo": "MG25103A5002",
+    "classNo": "5002",
+    "classGroup": "BBA A",
+    "department": "BBA",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "15001",
+    "password": "15001",
+    "name": "ARJUN DEV",
+    "regNo": "MG25103A6001",
+    "classNo": "6001",
+    "classGroup": "BSW A",
+    "department": "BSW",
+    "semester": "Sem 2"
+  },
+  {
+    "admission_no": "15002",
+    "password": "15002",
+    "name": "MEERA NAIR",
+    "regNo": "MG25103A6002",
+    "classNo": "6002",
+    "classGroup": "BSW A",
+    "department": "BSW",
+    "semester": "Sem 2"
+  }
+]

@@ -1,6 +1,7 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "hosting": {
     "site": "machub",
@@ -12,6 +13,7 @@
       "machub-app/**",
       "machin_backend/**",
       "workers/**",
+      "functions/**",
       "docs/**",
       "option_b/**",
       "scratch/**",
@@ -31,6 +33,7 @@
       "sync_test.json",
       "portal_specs.json",
       "browser_discovery.json",
+      "firestore.indexes.json",
       "*.py",
       "*.log",
       "*.html.bak"
@@ -42,8 +45,17 @@
       }
     ]
   },
-  "functions": {
-    "source": "machin_backend",
-    "runtime": "python310"
-  }
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "machub-functions",
+      "runtime": "nodejs18",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ]
 }

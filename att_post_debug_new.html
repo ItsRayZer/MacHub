@@ -1,0 +1,1180 @@
+
+
+<!DOCTYPE html>
+
+<html lang="en">
+<!-- Mirrored from themicon.co/theme/angle/v3.3.1/backend-jquery/app/template.html by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 07 Jun 2016 10:17:17 GMT -->
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-65HS14FQ8R"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-65HS14FQ8R');
+    </script>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" /><meta name="description" content="Bootstrap Admin App + jQuery" /><meta name="keywords" content="app, responsive, jquery, bootstrap, dashboard, admin" />
+
+
+
+
+    <!-- =============== VENDOR STYLES ===============-->
+    <!-- FONT AWESOME-->
+    <link rel="stylesheet" href="vendor/fontawesome/css/font-awesome.min.css" />
+    <!-- SIMPLE LINE ICONS-->
+    <link rel="stylesheet" href="vendor/simple-line-icons/css/simple-line-icons.css" />
+    <!-- ANIMATE.CSS-->
+    <link rel="stylesheet" href="vendor/animate.css/animate.min.css" />
+    <!-- WHIRL (spinners)-->
+    <link rel="stylesheet" href="vendor/whirl/dist/whirl.css" />
+    <!-- =============== PAGE VENDOR STYLES ===============-->
+    <!-- =============== BOOTSTRAP STYLES ===============-->
+    <link id="bscss" rel="stylesheet" href="css/bootstrap.css" />
+    <!-- =============== APP STYLES ===============-->
+    <link id="maincss" rel="stylesheet" href="css/app.css" />
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-114198687-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-114198687-1');
+    </script>
+
+
+
+<meta name="description" content="Dashboard 2025 College ERP Software, powered by Softloom IT Solutions. Simplify your institution's management, from Admissions to Accreditation." /><meta name="College" content="ERP, Software" /><title>
+	Dashboard |2025 | Powered by Softloom IT Solutions
+</title></head>
+
+
+
+
+
+<body>
+    <div class="wrapper">
+        <!-- top navbar-->
+        <header class="topnavbar-wrapper">
+            <!-- START Top Navbar-->
+            <nav role="navigation" class="navbar1 topnavbar">
+                <!-- START navbar header-->
+                <div class="navbar-header">
+                    <a href="Dashboard.aspx" class="navbar-brand">
+                        <div class="brand-logo">
+                            <h4 style="margin-top: 6px; text-align: left;">
+                                <span id="lbl_shothead" style="color:White;font-size: 30px;">EduloomPro</span></h4>
+                        </div>
+                        
+                    </a>
+                </div>
+                <!-- END navbar header-->
+                <!-- START Nav wrapper-->
+                <div class="nav-wrapper">
+                    <!-- START Left navbar-->
+                    <ul class="nav navbar-nav">
+                        <li>
+                            <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
+                            <a href="#" data-trigger-resize="" data-toggle-state="aside-collapsed" class="hidden-xs">
+                                <em class="fa fa-navicon"></em>
+                            </a>
+                            <!-- Button to show/hide the sidebar on mobile. Visible on mobile only.-->
+                            <a href="#" data-toggle-state="aside-toggled" data-no-persist="true" class="visible-xs sidebar-toggle">
+                                <em class="fa fa-navicon"></em>
+                            </a>
+                        </li>
+                        <!-- START User avatar toggle-->
+                        <li class="hidden-xs">
+                            <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
+                            <a id="user-block-toggle" href="#user-block" data-toggle="collapse">
+                                <em class="icon-user"></em>
+                            </a>
+                        </li>
+                        <!-- END User avatar toggle-->
+
+                    </ul>
+                    <!-- END Left navbar-->
+                    <!-- START Right Navbar-->
+                    <ul class="nav navbar-nav navbar-right hidden-xs">
+                        <!-- Search icon-->
+                        <li>
+                            <a href="#" data-search-open="">
+                                <em class="icon-magnifier"></em>
+                            </a>
+                        </li>
+                        <!-- Fullscreen (only desktops)-->
+                        <li class="visible-lg">
+                            <a href="#" data-toggle-fullscreen="">
+                                <em class="fa fa-expand"></em>
+                            </a>
+                        </li>
+                        <!-- START Alert menu-->
+                        <li class="dropdown dropdown-list">
+                            <a href="#" data-toggle="dropdown">
+                                <em class="icon-power"></em>
+
+                            </a>
+                            <!-- START Dropdown menu-->
+                            <ul class="dropdown-menu animated flipInX">
+                                <li>
+                                    <!-- START list group-->
+                                    <div class="list-group">
+                                        <!-- list item-->
+                                        <a href="Profile.aspx" class="list-group-item">
+                                            <div class="media-box">
+                                                <div class="pull-left">
+                                                    <em class="fa fa-user fa-2x text-info"></em>
+                                                </div>
+                                                <div class="media-box-body clearfix">
+                                                    <p class="m0">About</p>
+                                                </div>
+                                            </div>
+                                        </a>
+
+
+                                        <!-- list item-->
+                                        <a href="ChangePwd.aspx" class="list-group-item">
+                                            <div class="media-box">
+                                                <div class="pull-left">
+                                                    <em class="fa fa-wrench fa-2x text-warning"></em>
+                                                </div>
+                                                <div class="media-box-body clearfix">
+                                                    <p class="m0">Change Password</p>
+
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <!-- list item-->
+                                        <a href="SignOut.aspx" class="list-group-item">
+                                            <div class="media-box">
+                                                <div class="pull-left">
+                                                    <em class="fa fa-power-off fa-2x text-danger"></em>
+                                                </div>
+                                                <div class="media-box-body clearfix">
+                                                    <p class="m0">Logout</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <!-- END list group-->
+                                </li>
+                            </ul>
+                            <!-- END Dropdown menu-->
+                        </li>
+                        <!-- END Alert menu-->
+                        <!-- START Offsidebar button-->
+                        
+                        <!-- END Offsidebar menu-->
+                    </ul>
+                    <!-- END Right Navbar-->
+                </div>
+                <!-- END Nav wrapper-->
+                <!-- START Search form-->
+                <form role="search" action="#" class="navbar-form">
+                    <div class="form-group has-feedback">
+                        <input type="text" placeholder="Type and hit enter ..." class="form-control">
+                        <div data-search-dismiss="" class="fa fa-times form-control-feedback"></div>
+                    </div>
+                    <button type="submit" class="hidden btn btn-default">Submit</button>
+                </form>
+                <!-- END Search form-->
+            </nav>
+            <!-- END Top Navbar-->
+        </header>
+
+        <!-- sidebar-->
+        <aside class="aside">
+            <!-- START Sidebar (left)-->
+            <style>
+                .nav-scroll {
+                    max-height: 100%; /* Set the max height */
+                    overflow-y: auto; /* Enable vertical scroll */
+                }
+            </style>
+            <div class="aside-inner">
+                <nav data-sidebar-anyclick-close="" class="sidebar">
+                    <!-- START sidebar nav-->
+                    <ul class="nav">
+                        <!-- START user info-->
+                        <li class="has-user-block">
+                            <div id="user-block" class="collapse in">
+                                <div class="item user-block">
+                                    <!-- User picture-->
+                                    <div class="user-block-picture">
+                                        <div class="user-block-status">
+                                            <img id="profimg" class="img-thumbnail img-circle" src="img/default-user-image.png" style="height:60px;width:60px;" />
+                                            <div class="circle circle-success circle-lg"></div>
+                                        </div>
+                                    </div>
+                                    <!-- Name and Job-->
+                                    <div class="user-block-info">
+                                        <span class="user-block-name" style="text-transform: capitalize !important;">
+                                            <span id="lblusername">ABEN SOJAN</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <!-- END user info-->
+                        <!-- Iterates over all sidebar items-->
+                        <li class="nav-heading ">
+                            <span data-localize="sidebar.heading.HEADER">Main Navigation</span>
+                        </li>
+                            
+                        <li class="">
+                            <a href="Dashboard.aspx">
+                                <em class="icon-speedometer"></em>
+                                <span data-localize="sidebar.nav.DASHBOARD">Dashboard</span>
+                            </a>
+
+                        </li>
+                        
+
+                        <li class="">
+                            <a href="About.aspx">
+                                <em class="icon-layers"></em>
+                                <span data-localize="sidebar.nav.DASHBOARD">About</span>
+                            </a>
+                        </li>
+
+                        <li id="SecHallTicket" class="">
+                            <a href="adm_AllotmentMemo.aspx">
+                                <em class="icon-graduation"></em>
+                                <span data-localize="sidebar.nav.DASHBOARD">Allotment Memo</span>
+                            </a>
+                        </li>
+
+                        <li class="">
+                            <a href="HallTicket.aspx" id="HallTick">                              
+                                <em class="icon-layers"></em>
+                                <span data-localize="sidebar.nav.DASHBOARD">HallTicket</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="Academics.aspx">
+                                <em class="icon-layers"></em>
+                                <span data-localize="sidebar.nav.DASHBOARD">Academic</span>
+                            </a>
+                        </li>
+                        
+                        <li class="">
+                            <a href="StudFeePayment.aspx">
+                                
+                                <em class="icon-layers"></em>
+                                <span data-localize="sidebar.nav.DASHBOARD">Fee Payment</span>
+                            </a>
+
+                        </li>
+                        <li class="">
+                            <a href="Evalution.aspx">
+                                
+                                <em class="icon-layers"></em>
+                                <span data-localize="sidebar.nav.DASHBOARD">Feed Back</span>
+                            </a>
+                        </li>
+                        
+                        
+                        <li class="">
+                            <a href="AttendanceMenu.aspx">
+                                <em class="icon-layers"></em>
+                                <span data-localize="sidebar.nav.DASHBOARD">Attendance</span>
+                            </a>
+                        </li>
+
+
+
+                        
+                        
+
+                        
+                        
+                        
+                        
+                        
+
+
+
+                        
+                        
+                        
+                        
+                        <li class="">
+                            <a href="GrievanceForm.aspx">
+                                
+                                <em class="icon-layers"></em>
+                                <span data-localize="sidebar.nav.DASHBOARD">Grievance Form</span>
+                            </a>
+
+                        </li>
+
+                        
+                        
+                        
+
+                        
+
+
+
+                        
+                        
+                        
+                        
+                        
+
+ 
+
+
+                        <li class="">
+                            <a href="StudentIConcessionCard.aspx">
+                                
+                                <em class="icon-layers"></em>
+                                <span data-localize="sidebar.nav.DASHBOARD">Student Concession Card</span>
+                            </a>
+
+                        </li>
+
+                        <li id="Li3" class="">
+                            <a href="SignOut.aspx">
+                                <em class="icon-logout"></em>
+                                <span data-localize="sidebar.nav.DASHBOARD">Logout</span>
+                            </a>
+
+                        </li>
+
+
+                    </ul>
+                    <!-- END sidebar nav-->
+                </nav>
+            </div>
+            <!-- END Sidebar (left)-->
+        </aside>
+
+
+
+        <!-- offsidebar-->
+        <aside class="offsidebar hide">
+            <!-- START Off Sidebar (right)-->
+            <nav>
+                <div role="tabpanel">
+                    <!-- Nav tabs-->
+                    <ul role="tablist" class="nav nav-tabs nav-justified">
+                        <li role="presentation" class="active">
+                            <a href="#app-settings" aria-controls="app-settings" role="tab" data-toggle="tab">
+                                <em class="icon-equalizer fa-lg"></em>
+                            </a>
+                        </li>
+                        <li role="presentation">
+                            <a href="#app-chat" aria-controls="app-chat" role="tab" data-toggle="tab">
+                                <em class="icon-user fa-lg"></em>
+                            </a>
+                        </li>
+                    </ul>
+                    <!-- Tab panes-->
+                    <div class="tab-content">
+                        <div id="app-settings" role="tabpanel" class="tab-pane fade in active">
+                            <div class="p">
+                                <h4 class="text-muted text-thin">Main Navigation</h4>
+                                <div>
+                                    <!-- START list group item Dashboard -->
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-primary"></em>
+                                                <em class="fa fa-dashboard fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="default.aspx" class="text-primary m0">Dashboard</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END list group item-->
+
+                                    <!-- START list group item About -->
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-success"></em>
+                                                <em class="fa fa-user fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="../about/default.aspx" class="text-success m0">About</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END list group item-->
+
+                                    <!-- START list group item admin -->
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-info"></em>
+                                                <em class="fa fa-lock fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="../admin/default.aspx" class="text-info m0">Admin</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END list group item-->
+
+                                    <!-- START list group item Admission -->
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-warning"></em>
+                                                <em class="fa fa-bell fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="../admission/default.aspx" class="text-warning m0">Admission</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END list group item-->
+
+                                    <!-- START list group item Library -->
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-danger"></em>
+                                                <em class="fa fa-book fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="../library/default.aspx" class="text-danger m0">Library</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END list group item-->
+
+                                    <!-- START list group item Finance -->
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-success"></em>
+                                                <em class="fa fa-rupee fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="../finance/default.aspx" class="text-success m0">Finance</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END list group item-->
+
+                                    <!-- START list group item HR -->
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-info"></em>
+                                                <em class="fa fa-users fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="../hr/default.aspx" class="text-info m0">HR</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END list group item-->
+
+                                    <!-- START list group item Academic -->
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-purple"></em>
+                                                <em class="fa fa-bell fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="../academic/default.aspx" class="text-purple m0">Academic</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END list group item-->
+
+                                    <!-- START list group item Search -->
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-warning"></em>
+                                                <em class="fa fa-search fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="../Search/default.aspx" class="text-warning m0">Search</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END list group item-->
+
+                                    <!-- START list group item Utility -->
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-primary"></em>
+                                                <em class="fa fa-star fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="../Utility/default.aspx" class="text-primary m0">Utility</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END list group item-->
+
+                                    <!-- START list group item Survey -->
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-purple"></em>
+                                                <em class="fa fa-question fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="../Survey/default.aspx" class="text-purple m0">Survey</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END list group item-->
+
+                                    <div class="media-box">
+                                        <div class="pull-left">
+                                            <span class="fa-stack">
+                                                <em class="fa fa-circle fa-stack-2x text-danger"></em>
+                                                <em class="fa fa-question fa-stack-1x fa-inverse text-white"></em>
+                                            </span>
+                                        </div>
+                                        <div class="media-box-body clearfix">
+                                            <div class="media-box-heading">
+                                                <a href="../exam/default.aspx" class="text-danger m0">Exam Cell</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p">
+                                <h4 class="text-muted text-thin">Themes</h4>
+                                <div class="table-grid mb">
+                                    <div class="col mb">
+                                        <div class="setting-color">
+                                            <label data-load-css="css/theme-a.css">
+                                                <input type="radio" name="setting-theme" checked="checked">
+                                                <span class="icon-check"></span>
+                                                <span class="split">
+                                                    <span class="color bg-info"></span>
+                                                    <span class="color bg-info-light"></span>
+                                                </span>
+                                                <span class="color bg-white"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col mb">
+                                        <div class="setting-color">
+                                            <label data-load-css="css/theme-b.css">
+                                                <input type="radio" name="setting-theme">
+                                                <span class="icon-check"></span>
+                                                <span class="split">
+                                                    <span class="color bg-green"></span>
+                                                    <span class="color bg-green-light"></span>
+                                                </span>
+                                                <span class="color bg-white"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col mb">
+                                        <div class="setting-color">
+                                            <label data-load-css="css/theme-c.css">
+                                                <input type="radio" name="setting-theme">
+                                                <span class="icon-check"></span>
+                                                <span class="split">
+                                                    <span class="color bg-purple"></span>
+                                                    <span class="color bg-purple-light"></span>
+                                                </span>
+                                                <span class="color bg-white"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col mb">
+                                        <div class="setting-color">
+                                            <label data-load-css="../css/theme-d.css">
+                                                <input type="radio" name="setting-theme">
+                                                <span class="icon-check"></span>
+                                                <span class="split">
+                                                    <span class="color bg-danger"></span>
+                                                    <span class="color bg-danger-light"></span>
+                                                </span>
+                                                <span class="color bg-white"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-grid mb">
+                                    <div class="col mb">
+                                        <div class="setting-color">
+                                            <label data-load-css="../css/theme-e.css">
+                                                <input type="radio" name="setting-theme">
+                                                <span class="icon-check"></span>
+                                                <span class="split">
+                                                    <span class="color bg-info-dark"></span>
+                                                    <span class="color bg-info"></span>
+                                                </span>
+                                                <span class="color bg-gray-dark"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col mb">
+                                        <div class="setting-color">
+                                            <label data-load-css="../css/theme-f.css">
+                                                <input type="radio" name="setting-theme">
+                                                <span class="icon-check"></span>
+                                                <span class="split">
+                                                    <span class="color bg-green-dark"></span>
+                                                    <span class="color bg-green"></span>
+                                                </span>
+                                                <span class="color bg-gray-dark"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col mb">
+                                        <div class="setting-color">
+                                            <label data-load-css="../css/theme-g.css">
+                                                <input type="radio" name="setting-theme">
+                                                <span class="icon-check"></span>
+                                                <span class="split">
+                                                    <span class="color bg-purple-dark"></span>
+                                                    <span class="color bg-purple"></span>
+                                                </span>
+                                                <span class="color bg-gray-dark"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col mb">
+                                        <div class="setting-color">
+                                            <label data-load-css="../css/theme-h.css">
+                                                <input type="radio" name="setting-theme">
+                                                <span class="icon-check"></span>
+                                                <span class="split">
+                                                    <span class="color bg-danger-dark"></span>
+                                                    <span class="color bg-danger"></span>
+                                                </span>
+                                                <span class="color bg-gray-dark"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p">
+                                <h4 class="text-muted text-thin">Layout</h4>
+                                <div class="clearfix">
+                                    <p class="pull-left">Fixed</p>
+                                    <div class="pull-right">
+                                        <label class="switch">
+                                            <input id="chk-fixed" type="checkbox" data-toggle-state="layout-fixed">
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="clearfix">
+                                    <p class="pull-left">Boxed</p>
+                                    <div class="pull-right">
+                                        <label class="switch">
+                                            <input id="chk-boxed" type="checkbox" data-toggle-state="layout-boxed">
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="clearfix">
+                                    <p class="pull-left">RTL</p>
+                                    <div class="pull-right">
+                                        <label class="switch">
+                                            <input id="chk-rtl" type="checkbox">
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p">
+                                <h4 class="text-muted text-thin">Aside</h4>
+                                <div class="clearfix">
+                                    <p class="pull-left">Collapsed</p>
+                                    <div class="pull-right">
+                                        <label class="switch">
+                                            <input id="chk-collapsed" type="checkbox" data-toggle-state="aside-collapsed">
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="clearfix">
+                                    <p class="pull-left">Float</p>
+                                    <div class="pull-right">
+                                        <label class="switch">
+                                            <input id="chk-float" type="checkbox" data-toggle-state="aside-float">
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="clearfix">
+                                    <p class="pull-left">Hover</p>
+                                    <div class="pull-right">
+                                        <label class="switch">
+                                            <input id="chk-hover" type="checkbox" data-toggle-state="aside-hover">
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="clearfix">
+                                    <p class="pull-left">Show Scrollbar</p>
+                                    <div class="pull-right">
+                                        <label class="switch">
+                                            <input id="Checkbox1" type="checkbox" data-toggle-state="show-scrollbar" data-target=".sidebar">
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="app-chat" role="tabpanel" class="tab-pane fade">
+                            <h3 class="text-center text-thin">Connections</h3>
+                            <ul class="nav">
+                                <!-- START list title-->
+                                <li class="p">
+                                    <small class="text-muted">ONLINE</small>
+                                </li>
+                                <!-- END list title-->
+                                <li>
+                                    <!-- START User status-->
+                                    <a href="#" class="media-box p mt0">
+                                        <span class="pull-right">
+                                            <span class="circle circle-success circle-lg"></span>
+                                        </span>
+                                        <span class="pull-left">
+                                            <!-- Contact avatar-->
+                                            <img src="img/user/05.jpg" alt="Image" class="media-box-object img-circle thumb48">
+                                        </span>
+                                        <!-- Contact info-->
+                                        <span class="media-box-body">
+                                            <span class="media-box-heading">
+                                                <strong>Juan Sims</strong>
+                                                <br>
+                                                <small class="text-muted">Designeer</small>
+                                            </span>
+                                        </span>
+                                    </a>
+                                    <!-- END User status-->
+                                    <!-- START User status-->
+                                    <a href="#" class="media-box p mt0">
+                                        <span class="pull-right">
+                                            <span class="circle circle-success circle-lg"></span>
+                                        </span>
+                                        <span class="pull-left">
+                                            <!-- Contact avatar-->
+                                            <img src="img/user/06.jpg" alt="Image" class="media-box-object img-circle thumb48">
+                                        </span>
+                                        <!-- Contact info-->
+                                        <span class="media-box-body">
+                                            <span class="media-box-heading">
+                                                <strong>Maureen Jenkins</strong>
+                                                <br>
+                                                <small class="text-muted">Designeer</small>
+                                            </span>
+                                        </span>
+                                    </a>
+                                    <!-- END User status-->
+                                    <!-- START User status-->
+                                    <a href="#" class="media-box p mt0">
+                                        <span class="pull-right">
+                                            <span class="circle circle-danger circle-lg"></span>
+                                        </span>
+                                        <span class="pull-left">
+                                            <!-- Contact avatar-->
+                                            <img src="img/user/07.jpg" alt="Image" class="media-box-object img-circle thumb48">
+                                        </span>
+                                        <!-- Contact info-->
+                                        <span class="media-box-body">
+                                            <span class="media-box-heading">
+                                                <strong>Billie Dunn</strong>
+                                                <br>
+                                                <small class="text-muted">Designeer</small>
+                                            </span>
+                                        </span>
+                                    </a>
+                                    <!-- END User status-->
+                                    <!-- START User status-->
+                                    <a href="#" class="media-box p mt0">
+                                        <span class="pull-right">
+                                            <span class="circle circle-warning circle-lg"></span>
+                                        </span>
+                                        <span class="pull-left">
+                                            <!-- Contact avatar-->
+                                            <img src="img/user/08.jpg" alt="Image" class="media-box-object img-circle thumb48">
+                                        </span>
+                                        <!-- Contact info-->
+                                        <span class="media-box-body">
+                                            <span class="media-box-heading">
+                                                <strong>Tomothy Roberts</strong>
+                                                <br>
+                                                <small class="text-muted">Designer</small>
+                                            </span>
+                                        </span>
+                                    </a>
+                                    <!-- END User status-->
+                                </li>
+                                <!-- START list title-->
+                                <li class="p">
+                                    <small class="text-muted">OFFLINE</small>
+                                </li>
+                                <!-- END list title-->
+                                <li>
+                                    <!-- START User status-->
+                                    <a href="#" class="media-box p mt0">
+                                        <span class="pull-right">
+                                            <span class="circle circle-lg"></span>
+                                        </span>
+                                        <span class="pull-left">
+                                            <!-- Contact avatar-->
+                                            <img src="img/user/09.jpg" alt="Image" class="media-box-object img-circle thumb48">
+                                        </span>
+                                        <!-- Contact info-->
+                                        <span class="media-box-body">
+                                            <span class="media-box-heading">
+                                                <strong>Lawrence Robinson</strong>
+                                                <br>
+                                                <small class="text-muted">Developer</small>
+                                            </span>
+                                        </span>
+                                    </a>
+                                    <!-- END User status-->
+                                    <!-- START User status-->
+                                    <a href="#" class="media-box p mt0">
+                                        <span class="pull-right">
+                                            <span class="circle circle-lg"></span>
+                                        </span>
+                                        <span class="pull-left">
+                                            <!-- Contact avatar-->
+                                            <img src="img/user/10.jpg" alt="Image" class="media-box-object img-circle thumb48">
+                                        </span>
+                                        <!-- Contact info-->
+                                        <span class="media-box-body">
+                                            <span class="media-box-heading">
+                                                <strong>Tyrone Owens</strong>
+                                                <br>
+                                                <small class="text-muted">Designer</small>
+                                            </span>
+                                        </span>
+                                    </a>
+                                    <!-- END User status-->
+                                </li>
+                                <li>
+                                    <div class="p-lg text-center">
+                                        <!-- Optional link to list more users-->
+                                        <a href="#" title="See more contacts" class="btn btn-purple btn-sm">
+                                            <strong>Load more..</strong>
+                                        </a>
+                                    </div>
+                                </li>
+                            </ul>
+                            <!-- Extra items-->
+                            <div class="p">
+                                <p>
+                                    <small class="text-muted">Tasks completion</small>
+                                </p>
+                                <div class="progress progress-xs m0">
+                                    <div role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" class="progress-bar progress-bar-success progress-80">
+                                        <span class="sr-only">80% Complete</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p">
+                                <p>
+                                    <small class="text-muted">Upload quota</small>
+                                </p>
+                                <div class="progress progress-xs m0">
+                                    <div role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" class="progress-bar progress-bar-warning progress-40">
+                                        <span class="sr-only">40% Complete</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            <!-- END Off Sidebar (right)-->
+        </aside>
+        <!-- Main section-->
+        <section>
+            <!-- Page content-->
+
+            <form method="post" action="./AttendanceDetails_New.aspx" onsubmit="javascript:return WebForm_OnSubmit();" id="Form1">
+<div class="aspNetHidden">
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="y+KQC8AJq+P49yOIWMBOoCLZLBgHGdwHn8xRaJltlMJacrQKd5LjcigphbjBIXkFlgKHUxPSzISxo6zY72aQJ4TBAVsC5UQbxu+YGM3b9mzgSPP5Ms9zWS8ZBHqDES8dRQsHPftJ88U2aV0a+g6fdaQ3e6dwyC3u5XvfvTAWT5xDOzFRteJQKml1irdBsQU/vag61ITM6qWFkrsdo0SyTgwNh3I9Lam+Cu3czlM6ou5GE2oVGnI4tYv0QA/gXasn4njdEea1jnBvZc0AVnXMfHpZwHDdrw1H6hBYkKhoDBQUONd1T+Y8kT+0He4G1engfIeqMmjMvPiKCTriz2xv6MkQEHbIXKMFsub8pEdkW2pE20xwcyg14k0psIbaEJxeflnxO6Qn6eLJXXnsR/j6dDWikhiV6Toxt+i6PVHJQGAxayyLfWAQxeS4FiWl+GK04AvyT1Qm5tHFw+KKF6zkcQS1fq1Bmz9BK0vhYCUnVAC6M+RPHebIUTiaiMTZTS/GwizAhjtotv6nleqvPByEjLMVkRIP2VhEbpvMjBAOKguxCg5ENbMUem0KbMmdeRHXjR112KIfMsc6PzU8+OzoEWaxZbkkGBdC9VOz0lPl2evYwSfToBEvbfhpapAO+38RIMZq5VGiKIGLalAh1YCaf90mAxgGuIA5r9RoGC+9S86U9GKPTfi0AvMXTqSozkhB" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['Form1'];
+if (!theForm) {
+    theForm = document.Form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/WebResource.axd?d=pynGkmcFUV13He1Qd6_TZFsatDlXT9aTUXGcu6oBNrm6oakGHW1D8kLiZx9IYfIm9PmR5Zu4EzPAXa4a9_ZfOQ2&amp;t=638901734248157332" type="text/javascript"></script>
+
+
+<script src="/ScriptResource.axd?d=nv7asgRUU0tRmHNR2D6t1B8WeDAseLTNqBMUFsUyaMa_pP5TpF8hayYTuI1wMUalmk_YSfCzrjfJV2u-SOBTnSERS8jN8If_CsgBhzesw2Hzc2-HuMq2TvecdAVPJems0ORu6TXu2-QWPBgDKMpNRg2&amp;t=ffffffff93d1c106" type="text/javascript"></script>
+<script src="Scripts/WebForms/MsAjax/MicrosoftAjax.js" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<script src="Scripts/WebForms/MsAjax/MicrosoftAjaxWebForms.js" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+function WebForm_OnSubmit() {
+if (typeof(ValidatorOnSubmit) == "function" && ValidatorOnSubmit() == false) return false;
+return true;
+}
+//]]>
+</script>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="F0447037" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="sg+q/eP1ktLJfp4viU6ZLeaAvV7JPkyOkpfk/V9GXFJ8jy5B0L97d7FwwwRqu0RGTkX/c9waVkPl7mVOORZcvlQcLLNVcQb8eo6wJogMQhQdZcr3UrQoWRT3rSLMMkvvrmc8yfeSHodW6ag8A4MD2Hg0RmHNbfZa5XJLmH5TmvOp5GVHv1dVVETLaUnzQ5aF9wArILkshTqo5EDSkBY2Vamg9XjYqZnxHnyf6JnbTqg=" />
+</div>
+                <div class="my-forms">
+                    <div id="UpdatePanel3">
+	
+                            <div id="UpdateProgress1" style="display:none;">
+		
+                                    <img src="Asset/Imgs/busy.gif" alt="" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; margin: auto; width: 80px; height: 80px; z-index: 999" />
+                                
+	</div>
+                            <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$ScriptManager1', 'Form1', ['tctl00$UpdatePanel3','UpdatePanel3','tctl00$MainContent$stspupdate','MainContent_stspupdate'], [], [], 90, 'ctl00');
+	//]]>
+</script>
+
+                            
+    <div class="content-wrapper">
+                              <div class="content-heading">
+     Subjectwise Attendance
+    <ol class="breadcrumb">
+        <li><a href="../Dashboard.aspx">Home</a>
+        </li>
+          <li><a href="../AttendanceMenu.aspx">Attendance</a>
+</li>
+        <li class="active">Subjectwise Attendance</li>
+    </ol>
+</div>
+        <div id="MainContent_stspupdate">
+		
+                <div id="MainContent_pnldicoman">
+			
+                    <div class="panel panel-default">
+                        
+                        <div class="panel-body" style="min-height: 330px">
+                            <div class="row">
+                                <input type="hidden" name="ctl00$MainContent$hid_batch" id="MainContent_hid_batch" />
+                                <input type="hidden" name="ctl00$MainContent$hid_student" id="MainContent_hid_student" />
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label>Semester</label>
+                                        <select name="ctl00$MainContent$ddlsem" id="MainContent_ddlsem" class="form-control input-sm">
+				<option selected="selected" value="2">SECOND SEMESTER</option>
+				<option value="1">FIRST SEMESTER </option>
+
+			</select>
+                                        <label id="MainContent_Label2" style="color: red">
+                                        </label>
+                                        <span id="MainContent_RequiredFieldValidator6" style="color:Red;font-size:Smaller;display:none;">Select Semester</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group" style="margin-top: 23px;">
+                                        <input type="submit" name="ctl00$MainContent$btnsubmit" value="Submit" id="MainContent_btnsubmit" class="btn btn-square btn-success" />
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="table-responsive">
+                                        <input type="hidden" name="ctl00$MainContent$hdstdid" id="MainContent_hdstdid" value="0" />
+                                        
+                                        <div>
+
+			</div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            
+                        </div>
+                    </div>
+                
+		</div>
+            
+	</div>
+    </div>
+
+                        
+</div>
+                    
+
+
+                </div>
+
+            
+<script type="text/javascript">
+//<![CDATA[
+var Page_Validators =  new Array(document.getElementById("MainContent_RequiredFieldValidator6"));
+//]]>
+</script>
+
+<script type="text/javascript">
+//<![CDATA[
+var MainContent_RequiredFieldValidator6 = document.all ? document.all["MainContent_RequiredFieldValidator6"] : document.getElementById("MainContent_RequiredFieldValidator6");
+MainContent_RequiredFieldValidator6.controltovalidate = "MainContent_ddlsem";
+MainContent_RequiredFieldValidator6.errormessage = "Select Semester";
+MainContent_RequiredFieldValidator6.display = "Dynamic";
+MainContent_RequiredFieldValidator6.validationGroup = "save";
+MainContent_RequiredFieldValidator6.evaluationfunction = "RequiredFieldValidatorEvaluateIsValid";
+MainContent_RequiredFieldValidator6.initialvalue = "";
+//]]>
+</script>
+
+
+<script type="text/javascript">
+//<![CDATA[
+
+var Page_ValidationActive = false;
+if (typeof(ValidatorOnLoad) == "function") {
+    ValidatorOnLoad();
+}
+
+function ValidatorOnSubmit() {
+    if (Page_ValidationActive) {
+        return ValidatorCommonOnSubmit();
+    }
+    else {
+        return true;
+    }
+}
+        Sys.Application.add_init(function() {
+    $create(Sys.UI._UpdateProgress, {"associatedUpdatePanelId":null,"displayAfter":500,"dynamicLayout":true}, null, null, $get("UpdateProgress1"));
+});
+
+document.getElementById('MainContent_RequiredFieldValidator6').dispose = function() {
+    Array.remove(Page_Validators, document.getElementById('MainContent_RequiredFieldValidator6'));
+}
+//]]>
+</script>
+</form>
+
+        </section>
+        <!-- Page footer-->
+        <footer>
+
+            <span class="hidden-xs">Copyright 2022
+                <span id="lbl_footer">Mar Augusthinose College, Ramapuram</span>| All Rights Reserved | Powered by <a href="https://softloom.com">SOFTLOOM IT SOLUTIONS</a></span>
+            <span class="col-xs-12 hidden-lg" style="text-align: center;">Powered by Softloom It Solutions</a></span>
+        </footer>
+    </div>
+    <!-- =============== VENDOR SCRIPTS ===============-->
+    <!-- MODERNIZR-->
+    <!-- MODERNIZR-->
+    <script src="vendor/modernizr/modernizr.custom.js"></script>
+    <!-- MATCHMEDIA POLYFILL-->
+    <script src="vendor/matchMedia/matchMedia.js"></script>
+    <!-- JQUERY-->
+    <script src="vendor/jquery/dist/jquery.js"></script>
+    <!-- BOOTSTRAP-->
+    <script src="vendor/bootstrap/dist/js/bootstrap.js"></script>
+    <!-- STORAGE API-->
+    <script src="vendor/jQuery-Storage-API/jquery.storageapi.js"></script>
+    <!-- JQUERY EASING-->
+    <script src="vendor/jquery.easing/js/jquery.easing.js"></script>
+    <!-- ANIMO-->
+    <script src="vendor/animo.js/animo.js"></script>
+    <!-- SLIMSCROLL-->
+    <script src="vendor/slimScroll/jquery.slimscroll.min.js"></script>
+    <!-- SCREENFULL-->
+    <script src="vendor/screenfull/dist/screenfull.js"></script>
+    <!-- LOCALIZE-->
+    <script src="vendor/jquery-localize-i18n/dist/jquery.localize.js"></script>
+    <!-- RTL demo-->
+    <script src="vendor/js/demo/demo-rtl.js"></script>
+    <!-- =============== PAGE VENDOR SCRIPTS ===============-->
+    <!-- =============== APP SCRIPTS ===============-->
+
+    <script src="vendor/js/app.js"></script>
+
+
+    <script src="scripts/jquery.bootstrap.newsbox.min.js"></script>
+    <link href="vendor/skins/line/blue.css" rel="stylesheet" />
+    
+    <script src="vendor/skins/icheck.min.js"></script>
+
+    
+    <script>
+
+        function setradio(a) {
+            var self = $(a),
+                label = self.next(),
+                label_text = label.text();
+
+            label.remove();
+            self.iCheck({
+                checkboxClass: 'icheckbox_line-blue',
+                radioClass: ' iradio_line-blue mb-sm btn left-blue',
+                insert: '<div class="icheck_line-icon"></div>' + label_text
+            });
+        }
+    </script>
+
+    <style>
+        #Main_List_table {
+            counter-reset: rowNumber;
+        }
+
+            #Main_List_table tr td:first-child h3::before {
+                counter-increment: rowNumber;
+                content: counter(rowNumber);
+            }
+    </style>
+    
+
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"208c0dce9f624359993ad9c5f925a2e5","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

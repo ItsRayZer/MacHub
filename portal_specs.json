@@ -1,0 +1,83 @@
+{
+  "_comment": "MacHub Portal Specs — Mar Augusthinose College Ramapuram ePortal (ASP.NET/EduloomPro)",
+  "_verified": "2026-06-05 by live browser discovery with admission 12965",
+  "_note": "All URL typos are INTENTIONAL — the portal itself has these misspellings",
+
+  "baseUrl": "https://eportal.maraugusthinosecollege.org",
+  "loginPage": "/Default.aspx",
+
+  "formFields": {
+    "username": "txtusername",
+    "password": "txtpassword",
+    "submitButton": "Submit",
+    "submitValue": "Login",
+    "recaptchaToken": "recaptchaToken"
+  },
+
+  "hiddenTokens": {
+    "__VIEWSTATE": "__VIEWSTATE",
+    "__VIEWSTATEGENERATOR": "__VIEWSTATEGENERATOR",
+    "__EVENTVALIDATION": "__EVENTVALIDATION"
+  },
+
+  "sectionEndpoints": {
+    "Dashboard":            "/Dashboard.aspx",
+    "Profile":              "/Profile.aspx",
+    "Attendance":           "/AttendanceNew.aspx",
+    "AttendanceDetails":    "/AttendanceDetails.aspx",
+    "StudyMaterial":        "/StudyMeterialSubjectListNew.aspx",
+    "Assessment":           "/StdAssessmentNew.aspx",
+    "Assignment":           "/Assignment.aspx",
+    "Seminar":              "/Seminar.aspx",
+    "InternalMark":         "/StdInterenalNew.aspx",
+    "InternalToUniversity": "/StdInterenalNew.aspx",
+    "OnlineClass":          "/OnlineClass.aspx",
+    "OnlineExam":           "/OnlineExamNEW.aspx",
+    "FYUGP":                "/StudentCourse_Selection.aspx",
+    "ExamResult":           "/ExamResult.aspx",
+    "GraceMark":            "/GraceMarkApplication.aspx",
+    "HallTicket":           "/HallTicket.aspx",
+    "AllotmentMemo":        "/adm_AllotmentMemo.aspx",
+    "FeePay":               "/StudFeePayment.aspx",
+    "FeedBack":             "/Evalution.aspx",
+    "Grievance":            "/GrievanceForm.aspx",
+    "Concession":           "/StudentIConcessionCard.aspx",
+    "SignOut":              "/SignOut.aspx"
+  },
+
+  "attendanceHiddenFields": {
+    "semesterDropdown": "ctl00$MainContent$ddlsem",
+    "submitButton":     "ctl00$MainContent$btnsubmit",
+    "hidBatch":         "MainContent_hid_batch",
+    "hidStudent":       "MainContent_hid_student"
+  },
+
+  "departmentDetection": {
+    "method": "profile_course_field",
+    "sampleFor12965": "BACHELOR OF COMPUTER APPLICATIONS (HONOURS)",
+    "sampleDept": "BCA"
+  },
+
+  "loginSuccessIndicators": [
+    "Dashboard.aspx",
+    "SignOut",
+    "Logout",
+    "Welcome"
+  ],
+
+  "sessionTimeoutIndicators": [
+    "txtusername",
+    "txtpassword",
+    "id=\"Submit\""
+  ],
+
+  "browserHeaders": {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Cache-Control": "no-cache"
+  }
+}

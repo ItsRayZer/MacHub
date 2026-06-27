@@ -43,5 +43,12 @@
         }
 
         initFirebaseDeferred();
+
+        // Register PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then((reg) => console.log('[MacHub PWA] Service worker registered successfully', reg.scope))
+                .catch((err) => console.warn('[MacHub PWA] Service worker registration failed', err));
+        }
     });
 })();
