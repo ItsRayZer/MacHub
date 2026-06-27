@@ -13,6 +13,18 @@
             isOpen: false,
             url: '',
             title: ''
+        },
+        // Security Slice
+        security: {
+            isProfileClaimed: false,
+            pinLength: 4,
+            isUnlocked: false,
+            deviceToken: null,
+            verificationQuestions: [],
+            currentAdmissionNumber: null,
+            credentialStatus: 'valid', // 'valid' | 'invalid'
+            loading: false,
+            error: null
         }
     };
 

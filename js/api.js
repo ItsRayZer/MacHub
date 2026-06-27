@@ -138,7 +138,26 @@
     }
   }
 
+  async function updateFirestoreDocSecurely(adminNo, fields) {
+    const deviceToken = localStorage.getItem('machub_device_token') || '';
+    const res = await fetch(`${CF_WORKER_URL}/api/auth/update-student`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        admissionNumber: adminNo,
+        deviceToken: deviceToken,
+        fields: fields
+      })
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.error || `HTTP ${res.status}`);
+    }
+    return json;
+  }
+
   window.authenticateFirebase = authenticateFirebase;
+  window.updateFirestoreDocSecurely = updateFirestoreDocSecurely;
 
   // Helper to mask profile details before saving to Firestore or local storage cache
   function maskSensitiveFields(profileData) {
@@ -1616,6 +1635,8 @@
     }
     localStorage.removeItem('machub_student_id');
     localStorage.removeItem('mac_student_info');
+    localStorage.removeItem('machub_current_view');
+    localStorage.removeItem('machub_claimed_admission');
     alert('Logged out from ePortal successfully!');
     window.location.reload();
   };
@@ -1636,12 +1657,137 @@
   // Legacy compatibility — old code called window.renderAcademicData
   window.renderAcademicData = renderAcademicSheet;
 
+  async function checkCredentialStatus(adminNo) {
+    if (!adminNo || !window.firebaseFirestore || !window.firestoreDoc || !window.firestoreGetDoc) return;
+    try {
+      const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', adminNo);
+      const docSnap = await window.firestoreGetDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const status = data.credentialStatus || 'valid';
+        
+        const alertBanner = document.getElementById('homeCredentialsAlert');
+        if (alertBanner) {
+          if (status === 'invalid') {
+            alertBanner.classList.remove('hidden');
+          } else {
+            alertBanner.classList.add('hidden');
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[MacHub API] Failed to check credential status:', err.message);
+    }
+  }
+
+  window.triggerUpdatePortalPassword = async function () {
+    const adminNo = getAdminNo();
+    if (!adminNo) return;
+
+    const newPass = prompt('Enter your updated Mar Augusthinose College portal password:');
+    if (!newPass) return;
+
+    try {
+      let verified = false;
+      let portalPasswordEncrypted = null;
+
+      // 1. Try Worker login endpoint first to verify credentials directly (always works, fast, bypasses function deployment)
+      try {
+        const loginRes = await fetch(`${CF_WORKER_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ admissionNumber: adminNo, password: newPass })
+        });
+        const loginData = await loginRes.json();
+        if (loginRes.ok && loginData.success) {
+          verified = true;
+        }
+      } catch (loginErr) {
+        console.warn('Worker login check failed, falling back to Cloud Function:', loginErr.message);
+      }
+
+      if (verified) {
+        // Encrypt and update Firestore directly (client-side update)
+        try {
+          const encRes = await fetch(`${CF_WORKER_URL}/api/auth/encrypt-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: newPass })
+          });
+          const encData = await encRes.json();
+          if (encData.success) {
+            portalPasswordEncrypted = encData.encrypted;
+          }
+        } catch (encErr) {
+          console.warn('Worker encrypt failed:', encErr.message);
+        }
+
+        const db = window.firebaseFirestore;
+        const docFn = window.firestoreDoc;
+        const updateFn = window.firestoreUpdateDoc;
+        
+        if (db && docFn && updateFn) {
+          const studentRef = docFn(db, 'students', adminNo);
+          await updateFn(studentRef, {
+            'security.portalPasswordEncrypted': portalPasswordEncrypted,
+            'credentialStatus': 'valid'
+          });
+        }
+        
+        alert('Password verified and background sync resumed successfully!');
+        const alertBanner = document.getElementById('homeCredentialsAlert');
+        if (alertBanner) alertBanner.classList.add('hidden');
+        
+        localStorage.removeItem(`machub_portal_Profile_${adminNo}`);
+        if (window.syncHomePortalDashboard) window.syncHomePortalDashboard();
+        return;
+      }
+
+      // 2. Cloud Function Fallback (in case worker direct login fails or isn't accessible)
+      let responseData;
+      if (window.firebaseFunctions) {
+        const onDemandScrapeFunc = window.firebaseFunctions.httpsCallable('onDemandScrape');
+        const result = await onDemandScrapeFunc({
+          admissionNumber: adminNo,
+          target: 'profile',
+          customPassword: newPass
+        });
+        responseData = result.data;
+      } else {
+        const res = await fetch(`https://asia-south1-machub-6af39.cloudfunctions.net/onDemandScrape`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: { admissionNumber: adminNo, target: 'profile', customPassword: newPass } })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error?.message || 'Server error');
+        responseData = json.result;
+      }
+
+      if (responseData && responseData.success) {
+        alert('Password verified and background sync resumed successfully!');
+        const alertBanner = document.getElementById('homeCredentialsAlert');
+        if (alertBanner) alertBanner.classList.add('hidden');
+        
+        localStorage.removeItem(`machub_portal_Profile_${adminNo}`);
+        if (window.syncHomePortalDashboard) window.syncHomePortalDashboard();
+      } else {
+        alert('Verification failed. Incorrect password or portal issue.');
+      }
+    } catch (e) {
+      alert('Error updating password: ' + e.message);
+    }
+  };
+
   // Auto-save admission number and sync dashboard on startup
   document.addEventListener('DOMContentLoaded', () => {
     const adminNo = getAdminNo();
     if (adminNo) {
       saveAdminNo(adminNo);
       authenticateFirebase(adminNo);
+      setTimeout(() => {
+        checkCredentialStatus(adminNo);
+      }, 2000);
     }
     setTimeout(() => {
       if (window.syncHomePortalDashboard) window.syncHomePortalDashboard();

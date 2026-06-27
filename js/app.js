@@ -269,6 +269,7 @@ let HALL_DATA = {};
 let HALL_KEYS = [];
 
 function getMainNavView(viewId) {
+    if (viewId === 'view-ai') return 'view-ai';
     if (['view-timetable', 'view-seats', 'view-exam-resources', 'view-class'].includes(viewId)) return 'view-exam';
     if (viewId === 'view-resources') return 'view-resources';
     if (viewId === 'view-profile' || viewId === 'view-profile-edit' || viewId === 'view-settings' || (viewId && viewId.startsWith('view-settings-'))) return 'view-profile';
@@ -488,11 +489,17 @@ function switchView(viewId) {
         const activeMainView = (viewId === 'view-seats' || viewId === 'view-results' || viewId === 'view-exam-resources') ? 'view-exam' : getMainNavView(viewId);
         const nextIndex = tabs.indexOf(activeMainView);
 
-        if (navPill && nextIndex !== -1) {
-            const currentOption = navPill.getAttribute('c-current') || '1';
-            const nextOption = String(nextIndex + 1);
-            navPill.setAttribute('c-previous', currentOption);
-            navPill.setAttribute('c-current', nextOption);
+        if (navPill) {
+            if (nextIndex !== -1) {
+                const currentOption = navPill.getAttribute('c-current') || '1';
+                const nextOption = String(nextIndex + 1);
+                navPill.setAttribute('c-previous', currentOption);
+                navPill.setAttribute('c-current', nextOption);
+            } else {
+                const currentOption = navPill.getAttribute('c-current') || '1';
+                navPill.setAttribute('c-previous', currentOption);
+                navPill.setAttribute('c-current', '0');
+            }
         }
 
         tabs.forEach((tab, index) => {
@@ -511,12 +518,33 @@ function switchView(viewId) {
         }
 
         // Automatically manage bottom nav bar visibility - always show by default
-        if (typeof showBottomNav === 'function') showBottomNav();
+        const bottomNav = document.getElementById('bottomNav');
+        const input = document.getElementById('navAiInput');
+        const btn = document.getElementById('macAiFloatingBtn');
+        if (bottomNav) {
+            bottomNav.classList.remove('nav-scrolled-down');
+            const isAiPage = (viewId === 'view-ai');
+            if (isAiPage) {
+                if (!bottomNav.classList.contains('ai-active')) {
+                    bottomNav.classList.add('ai-active');
+                }
+            } else {
+                if (bottomNav.classList.contains('ai-active')) {
+                    bottomNav.classList.remove('ai-active');
+                    if (input) input.value = '';
+                    if (btn) btn.classList.remove('send-mode');
+                }
+            }
+        }
     };
 
     // If either panel is missing or it's a tab switch (depth 0 to 0), switch instantly with a quick fade
     if (!fromPanel || !toPanel || (currentDepth === 0 && targetDepth === 0)) {
-        performUpdate();
+        try {
+            performUpdate();
+        } catch (e) {
+            console.error('[switchView] Error during instant view update:', e);
+        }
         if (toPanel) {
             toPanel.classList.add('page-fade-in');
         }
@@ -546,8 +574,13 @@ function switchView(viewId) {
 
     // Wait for transition to complete (320ms matches animation-duration in CSS)
     setTimeout(() => {
-        performUpdate();
-        document.body.style.pointerEvents = '';
+        try {
+            performUpdate();
+        } catch (e) {
+            console.error('[switchView] Error during sliding view update:', e);
+        } finally {
+            document.body.style.pointerEvents = '';
+        }
     }, 320);
 }
 
@@ -2152,37 +2185,204 @@ async function fetchAndFinishOnboarding() {
     
     const btn = document.getElementById('ob-final-btn');
     const originalText = btn.innerHTML;
-    btn.innerHTML = `Loading...`;
+    btn.innerHTML = `Scraping Portal...`;
     btn.classList.add('opacity-50', 'pointer-events-none');
+
+    const CF_WORKER_URL = 'https://machub-proxy.mrabensojan.workers.dev';
     
     try {
-        const docRef = window.db ? window.db.collection('students').doc(adminNo) : null;
-        if (!docRef) {
-            throw new Error("Database not initialized");
+        let profilePayload = null;
+        let scrapeSuccessful = false;
+
+        // Try Worker profile scrape directly using adminNo as password
+        try {
+            const scrapeRes = await fetch(`${CF_WORKER_URL}/api/scrape/profile`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    admissionNumber: adminNo,
+                    password: adminNo
+                })
+            });
+            const scrapeData = await scrapeRes.json();
+            if (scrapeRes.ok && scrapeData.success) {
+                profilePayload = scrapeData.data?.payload || scrapeData.data || scrapeData;
+                scrapeSuccessful = true;
+            }
+        } catch (scrapeErr) {
+            console.warn('Direct worker scrape failed, trying Cloud Function:', scrapeErr.message);
         }
-        
-        const docSnap = await docRef.get();
-        if (docSnap.exists) {
-            const data = docSnap.data();
-            obData.name = data.name || data.profile?.data?.name || "Student";
-            
-            let dept = data.department || data.profile?.data?.department || "BCA";
-            if (dept === '(' || !dept || dept.length < 2) dept = "BCA";
-            obData.dept = dept;
-            
-            obData.reg = data.regNo || data.prn || data.profile?.data?.prn || "";
-            obData.adminNo = adminNo;
-            window.obData = obData;
-            
-            // Proceed to next step internally, then finish
-            nextObStep(3);
-            finishOnboarding();
-        } else {
-            alert("Student profile not found! Please check the Admission Number.");
+
+        // If direct scrape failed, try Cloud Function
+        if (!scrapeSuccessful) {
+            try {
+                let responseData;
+                if (window.firebaseFunctions) {
+                    const onDemandScrapeFunc = window.firebaseFunctions.httpsCallable('onDemandScrape');
+                    const result = await onDemandScrapeFunc({
+                        admissionNumber: adminNo,
+                        target: 'profile',
+                        customPassword: adminNo
+                    });
+                    responseData = result.data;
+                } else {
+                    const res = await fetch(`https://asia-south1-machub-6af39.cloudfunctions.net/onDemandScrape`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: { admissionNumber: adminNo, target: 'profile', customPassword: adminNo } })
+                    });
+                    const json = await res.json();
+                    if (res.ok) responseData = json.result;
+                }
+
+                if (responseData && responseData.success) {
+                    profilePayload = responseData.data?.payload || responseData.data || responseData;
+                    scrapeSuccessful = true;
+                }
+            } catch (fnErr) {
+                console.error('Cloud Function scrape failed:', fnErr.message);
+            }
         }
+
+        if (!scrapeSuccessful || !profilePayload) {
+            throw new Error("Failed to verify portal credentials. Please check your Admission Number.");
+        }
+
+        // Extract student details from scraped profile payload
+        const name = profilePayload.name || profilePayload.studentName || "Student";
+        let rawDept = profilePayload.course || profilePayload.department || "BCA";
+        if (rawDept === '(' || !rawDept || rawDept.length < 2) rawDept = "BCA";
+        const reg = profilePayload.regNo || profilePayload.prn || profilePayload.registerNo || "";
+
+        // Helper to normalize department name to standard BBA/BCA/BSW/etc.
+        const normalizeDept = (course) => {
+            const c = String(course || '').toUpperCase();
+            if (c.includes('COMPUTER APPLICATIONS') || c.includes('BCA')) return 'BCA';
+            if (c.includes('BUSINESS ADMINISTRATION') || c.includes('BBA')) return 'BBA';
+            if (c.includes('COMMERCE') || c.includes('B.COM')) return 'B.Com';
+            if (c.includes('SOCIAL WORK') || c.includes('BSW')) return 'BSW';
+            if (c.includes('ENGLISH') || c.includes('BA ENGLISH')) return 'BA English';
+            return course || 'BCA';
+        };
+
+        // Helper to calculate semester and batch year dynamically from start year (e.g. 2024)
+        const calculateSemesterFromBatch = (batchStr) => {
+            const match = String(batchStr || '').match(/(\d{4})/);
+            const startYear = match ? parseInt(match[1], 10) : 2024;
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth() + 1; // 1-indexed
+
+            let elapsedYears = currentYear - startYear;
+            if (currentMonth < 6) {
+                elapsedYears -= 1;
+            }
+            if (elapsedYears < 0) elapsedYears = 0;
+
+            let semesterNum = 1;
+            if (elapsedYears === 0) {
+                semesterNum = (currentMonth >= 6 && currentMonth < 11) ? 1 : 2;
+            } else if (elapsedYears === 1) {
+                semesterNum = (currentMonth >= 6 && currentMonth < 11) ? 3 : 4;
+            } else if (elapsedYears === 2) {
+                semesterNum = (currentMonth >= 6 && currentMonth < 11) ? 5 : 6;
+            } else {
+                semesterNum = 6;
+            }
+
+            const yearNum = Math.ceil(semesterNum / 2);
+            return {
+                semester: `Sem ${semesterNum}`,
+                year: yearNum,
+                startYear
+            };
+        };
+
+        const dept = normalizeDept(rawDept);
+        const batchInfo = calculateSemesterFromBatch(profilePayload.batch);
+
+        obData.name = name;
+        obData.dept = dept;
+        obData.reg = reg;
+        obData.adminNo = adminNo;
+        window.obData = obData;
+
+        // Authenticate with Firebase first to grant Firestore write permission
+        if (window.authenticateFirebase) {
+            await window.authenticateFirebase(adminNo);
+        }
+
+        // Auto-create/update student doc in Firestore via the secure Cloudflare Worker endpoint
+        try {
+            const newStudent = {
+                name: name.toUpperCase(),
+                regNo: reg.toUpperCase(),
+                adminNo: adminNo,
+                classNo: '',
+                department: dept,
+                classGroup: dept,
+                semester: batchInfo.semester,
+                batch: profilePayload.batch || `${batchInfo.startYear} - ${batchInfo.startYear + 3}`,
+                batchYear: batchInfo.year,
+                status: 'active',
+                credentialStatus: 'valid',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                security: {
+                    isProfileClaimed: false,
+                    deviceTokens: []
+                }
+            };
+
+            await fetch(`${CF_WORKER_URL}/api/auth/update-student`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    admissionNumber: adminNo,
+                    fields: newStudent
+                })
+            });
+
+            // Expose to smart finder preloaded DB search
+            if (window.STUDENTS_DB) {
+                window.STUDENTS_DB.push({
+                    name: name.toUpperCase(),
+                    regNo: reg.toUpperCase(),
+                    adminNo: adminNo,
+                    classNo: '',
+                    department: dept,
+                    classGroup: dept,
+                    semester: batchInfo.semester
+                });
+            }
+        } catch (dbErr) {
+            console.warn('Failed to auto-create student in Firestore via Worker:', dbErr.message);
+        }
+
+        // Save scraped profile cache locally so it loads instantly
+        const cacheKey = `machub_portal_Profile_${adminNo}`;
+        localStorage.setItem(cacheKey, JSON.stringify({
+            data: { success: true, payload: profilePayload },
+            savedAt: Date.now()
+        }));
+
+        // Proceed to confirm steps
+        window._selectedStudentFromDB = {
+            name: name.toUpperCase(),
+            regNo: reg.toUpperCase(),
+            adminNo: adminNo,
+            classNo: '',
+            department: dept,
+            classGroup: dept,
+            semester: batchInfo.semester
+        };
+
+        nextObStep(3);
+        finishOnboarding();
+
     } catch (err) {
-        console.error("Error fetching student profile:", err);
-        alert("Failed to fetch student profile. Please try again.");
+        console.error("Onboarding setup failed:", err);
+        alert(err.message || "Failed to setup profile. Please try again.");
     } finally {
         btn.innerHTML = originalText;
         btn.classList.remove('opacity-50', 'pointer-events-none');
@@ -2259,6 +2459,8 @@ function finishOnboarding() {
     }
     applyUserProfile();
     autoSelectNextExamDay();
+    localStorage.setItem('machub_current_view', 'view-home');
+    switchView('view-home');
 }
 
 window.nextObStep = nextObStep;
@@ -2269,56 +2471,66 @@ window.applyUserProfile = applyUserProfile;
 
 async function applyUserProfile() {
     const info = getStudentInfo();
-    const deptEl = document.getElementById('homeUserDept');
+    if (!info) return;
+
     const greetingEl = document.getElementById('homeGreeting');
-    const regEl = document.getElementById('homeUserReg');
+    const initialsEl = document.getElementById('homeProfileInitials');
+    const deptEl = document.getElementById('homeUserDept');
+    const semEl = document.getElementById('homeUserSem');
+    const subEl = document.getElementById('homeProfileSub');
 
-    if (info) {
-        if (deptEl) deptEl.textContent = info.dept || 'General';
+    if (greetingEl) {
+        const firstName = info.name && info.name !== 'Guest' ? info.name.split(' ')[0] : 'Hello!';
+        greetingEl.textContent = firstName;
+    }
+    if (initialsEl) {
+        const initials = info.name && info.name !== 'Guest' ? info.name.substring(0, 2).toUpperCase() : 'MAC';
+        initialsEl.textContent = initials;
+    }
+    if (deptEl) {
+        deptEl.textContent = info.dept || 'COURSE';
+    }
+    if (semEl) {
+        const rawSem = info.semester || '';
+        const semNum = rawSem.match(/\d+/) ? rawSem.match(/\d+/)[0] : '';
+        semEl.textContent = semNum ? `SEM ${semNum}` : `SEM -`;
+    }
+    if (subEl) {
+        subEl.textContent = info.adminNo || 'VIEW PROFILE';
+    }
+
+    if (info.dept) {
+        setFilter(info.dept);
+        currentClassDept = info.dept.toUpperCase();
+        if (typeof renderClassFilters === 'function') {
+            renderClassFilters();
+            renderClassDaySelector();
+            renderClassTimetable();
+            renderClassSubjects();
+            renderClassAttendance();
+        }
+    }
+    updateCountdown();
+
+    if (window.syncBottomNavAvatar) {
+        window.syncBottomNavAvatar();
+    }
+
+    if (info.adminNo && window.startBackgroundSync) {
+        window.startBackgroundSync();
+    }
+
+    if (info.reg) {
+        app.s = info.reg.toLowerCase();
+        const searchInput = document.getElementById('globalSearch');
+        if (searchInput) searchInput.value = info.reg;
         
-        if (regEl) {
-            regEl.textContent = info.reg || 'Not set';
-            regEl.classList.toggle('opacity-30', !info.reg);
-        }
-
-        if (greetingEl) {
-            const displayName = info.name && info.name !== 'Guest' ? info.name.split(' ')[0] : 'Guest';
-            greetingEl.textContent = `Hi, ${displayName}!`;
-        }
-
-        if (info.dept) {
-            setFilter(info.dept);
-            currentClassDept = info.dept.toUpperCase();
-            if (typeof renderClassFilters === 'function') {
-                renderClassFilters();
-                renderClassDaySelector();
-                renderClassTimetable();
-                renderClassSubjects();
-                renderClassAttendance();
+        if (window.ALL_DEPARTMENTS) {
+            const match = ALL_DEPARTMENTS.find(d => d[0].toLowerCase().includes(app.s));
+            if (match) {
+                if (match[1] !== app.h) changeHall(match[1]);
             }
         }
-        updateCountdown();
-
-        if (info.adminNo && window.startBackgroundSync) {
-            window.startBackgroundSync();
-        }
-
-        if (info.reg) {
-            app.s = info.reg.toLowerCase();
-            const searchInput = document.getElementById('globalSearch');
-            if (searchInput) searchInput.value = info.reg;
-            
-            if (window.ALL_DEPARTMENTS) {
-                const match = ALL_DEPARTMENTS.find(d => d[0].toLowerCase().includes(app.s));
-                if (match) {
-                    if (match[1] !== app.h) changeHall(match[1]);
-                }
-            }
-        }
-    } else {
-        if (greetingEl) greetingEl.textContent = 'Hello!';
-        if (deptEl) deptEl.textContent = '---';
-        if (regEl) regEl.textContent = '---';
     }
 }
 
@@ -2591,31 +2803,35 @@ if (typeof snapSheetClosed !== 'undefined') window.snapSheetClosed = snapSheetCl
 if (typeof initDraggableSheet !== 'undefined') window.initDraggableSheet = initDraggableSheet;
 
 function setupScrollHide() {
-    return;
-    window.addEventListener('scroll', () => {
-        if (_navLockedHidden) return; // don't fight with the drawer
-        if (_scrollTicking) return;
-        _scrollTicking = true;
-        requestAnimationFrame(() => {
-            const currentY = window.scrollY;
-            const delta = currentY - _lastScrollY;
+    let _lastScrollY = window.scrollY || 0;
+    let _scrollTicking = false;
 
-            if (delta > 6 && !_navHidden) {
-                // Scrolling DOWN — hide nav
-                const nav = document.getElementById('bottomNav');
-                if (nav) nav.classList.add('nav-hidden');
-                _navHidden = true;
-            } else if (delta < -6 && _navHidden) {
-                // Scrolling UP — show nav
-                const nav = document.getElementById('bottomNav');
-                if (nav) nav.classList.remove('nav-hidden');
-                _navHidden = false;
-            }
+    if (typeof window.addEventListener === 'function') {
+        window.addEventListener('scroll', () => {
+            if (_scrollTicking) return;
+            _scrollTicking = true;
+            requestAnimationFrame(() => {
+                const currentY = window.scrollY || 0;
+                const isAiPage = document.getElementById('view-ai')?.classList.contains('is-active');
+                
+                if (!isAiPage) {
+                    const delta = currentY - _lastScrollY;
+                    const bottomNav = document.getElementById('bottomNav');
+                    
+                    if (bottomNav) {
+                        if (delta > 8 && currentY > 50) {
+                            bottomNav.classList.add('nav-scrolled-down');
+                        } else if (delta < -8 || currentY <= 20) {
+                            bottomNav.classList.remove('nav-scrolled-down');
+                        }
+                    }
+                }
 
-            _lastScrollY = currentY <= 0 ? 0 : currentY;
-            _scrollTicking = false;
-        });
-    }, { passive: true });
+                _lastScrollY = currentY <= 0 ? 0 : currentY;
+                _scrollTicking = false;
+            });
+        }, { passive: true });
+    }
 }
 
 // ==================== ANNOUNCEMENTS PORTAL ====================
@@ -2906,7 +3122,7 @@ window.getCurrentScheduleState = function(now = new Date()) {
         state.remainingSecs = secsToMidnight + ((daysToMonday - 1) * 24 * 3600) + P1_START;
         
         const firstPeriod = nextTimetable[0];
-        state.nextTitle = firstPeriod ? firstPeriod.title : 'Classes';
+        state.nextTitle = firstPeriod ? firstPeriod.title : 'No Class';
         state.nextSubtitle = firstPeriod ? `Period 1 • ${firstPeriod.time}` : '09:30 AM';
         return state;
     }
@@ -2920,15 +3136,15 @@ window.getCurrentScheduleState = function(now = new Date()) {
         state.timerLabel = 'FIRST BELL RINGS IN';
         
         const firstPeriod = todayTimetable[0];
-        state.nextTitle = firstPeriod ? firstPeriod.title : 'Classes';
+        state.nextTitle = firstPeriod ? firstPeriod.title : 'No Class';
         state.nextSubtitle = firstPeriod ? `Period 1 • ${firstPeriod.time}` : '09:30 AM';
     } else if (totalSecsToday >= P1_START && totalSecsToday < P1_END) {
         state.status = 'period1';
         state.periodIndex = 0;
         const p = todayTimetable[0];
-        state.currentTitle = p ? p.title : 'Software Engineering';
+        state.currentTitle = p ? p.title : 'Free Period';
         state.currentSubtitle = 'Period 1 • 09:30 AM - 10:30 AM';
-        state.currentRoom = p ? p.room : 'Room 201';
+        state.currentRoom = p ? p.room : '---';
         state.currentCode = p ? p.code : '';
         state.remainingSecs = P1_END - totalSecsToday;
         state.elapsedSecs = totalSecsToday - P1_START;
@@ -2936,15 +3152,15 @@ window.getCurrentScheduleState = function(now = new Date()) {
         state.timerLabel = 'BELL RINGS IN';
         
         const nextP = todayTimetable[1];
-        state.nextTitle = nextP ? nextP.title : 'Feature Engineering';
+        state.nextTitle = nextP ? nextP.title : 'Free Period';
         state.nextSubtitle = nextP ? `Period 2 • ${nextP.time}` : '10:30 AM';
     } else if (totalSecsToday >= P1_END && totalSecsToday < P2_END) {
         state.status = 'period2';
         state.periodIndex = 1;
         const p = todayTimetable[1];
-        state.currentTitle = p ? p.title : 'Feature Engineering';
+        state.currentTitle = p ? p.title : 'Free Period';
         state.currentSubtitle = 'Period 2 • 10:30 AM - 11:30 AM';
-        state.currentRoom = p ? p.room : 'Room 201';
+        state.currentRoom = p ? p.room : '---';
         state.currentCode = p ? p.code : '';
         state.remainingSecs = P2_END - totalSecsToday;
         state.elapsedSecs = totalSecsToday - P1_END;
@@ -2952,15 +3168,15 @@ window.getCurrentScheduleState = function(now = new Date()) {
         state.timerLabel = 'BELL RINGS IN';
         
         const nextP = todayTimetable[2];
-        state.nextTitle = nextP ? nextP.title : 'Feature Engineering Lab';
+        state.nextTitle = nextP ? nextP.title : 'Free Period';
         state.nextSubtitle = nextP ? `Period 3 • ${nextP.time}` : '11:30 AM';
     } else if (totalSecsToday >= P2_END && totalSecsToday < P3_END) {
         state.status = 'period3';
         state.periodIndex = 2;
         const p = todayTimetable[2];
-        state.currentTitle = p ? p.title : 'Feature Engineering Lab';
+        state.currentTitle = p ? p.title : 'Free Period';
         state.currentSubtitle = 'Period 3 • 11:30 AM - 12:30 PM';
-        state.currentRoom = p ? p.room : 'Lab 2';
+        state.currentRoom = p ? p.room : '---';
         state.currentCode = p ? p.code : '';
         state.remainingSecs = P3_END - totalSecsToday;
         state.elapsedSecs = totalSecsToday - P2_END;
@@ -2980,15 +3196,15 @@ window.getCurrentScheduleState = function(now = new Date()) {
         state.timerLabel = 'INTERVAL ENDS IN';
         
         const nextP = todayTimetable[3];
-        state.nextTitle = nextP ? nextP.title : 'Database Management Systems';
+        state.nextTitle = nextP ? nextP.title : 'Free Period';
         state.nextSubtitle = nextP ? `Period 4 • ${nextP.time}` : '01:30 PM';
     } else if (totalSecsToday >= LUNCH_END && totalSecsToday < P4_END) {
         state.status = 'period4';
         state.periodIndex = 3;
         const p = todayTimetable[3];
-        state.currentTitle = p ? p.title : 'Database Management Systems';
+        state.currentTitle = p ? p.title : 'Free Period';
         state.currentSubtitle = 'Period 4 • 01:30 PM - 02:30 PM';
-        state.currentRoom = p ? p.room : 'Room 201';
+        state.currentRoom = p ? p.room : '---';
         state.currentCode = p ? p.code : '';
         state.remainingSecs = P4_END - totalSecsToday;
         state.elapsedSecs = totalSecsToday - LUNCH_END;
@@ -2996,15 +3212,15 @@ window.getCurrentScheduleState = function(now = new Date()) {
         state.timerLabel = 'BELL RINGS IN';
         
         const nextP = todayTimetable[4];
-        state.nextTitle = nextP ? nextP.title : 'Quantitative Techniques';
+        state.nextTitle = nextP ? nextP.title : 'Free Period';
         state.nextSubtitle = nextP ? `Period 5 • ${nextP.time}` : '02:30 PM';
     } else if (totalSecsToday >= P4_END && totalSecsToday < P5_END) {
         state.status = 'period5';
         state.periodIndex = 4;
         const p = todayTimetable[4];
-        state.currentTitle = p ? p.title : 'Quantitative Techniques';
+        state.currentTitle = p ? p.title : 'Free Period';
         state.currentSubtitle = 'Period 5 • 02:30 PM - 03:30 PM';
-        state.currentRoom = p ? p.room : 'Room 201';
+        state.currentRoom = p ? p.room : '---';
         state.currentCode = p ? p.code : '';
         state.remainingSecs = P5_END - totalSecsToday;
         state.elapsedSecs = totalSecsToday - P4_END;
@@ -3025,7 +3241,7 @@ window.getCurrentScheduleState = function(now = new Date()) {
         state.remainingSecs = secsToMidnight + ((daysToNext - 1) * 24 * 3600) + P1_START;
         
         const firstPeriod = nextTimetable[0];
-        state.nextTitle = firstPeriod ? firstPeriod.title : 'Classes';
+        state.nextTitle = firstPeriod ? firstPeriod.title : 'No Class';
         state.nextSubtitle = firstPeriod ? `Period 1 • ${firstPeriod.time}` : '09:30 AM';
     }
     

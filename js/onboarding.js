@@ -3,8 +3,7 @@
  * Handles the new smart search flow in onboarding
  */
 
-// Holds the student record chosen during onboarding
-let _selectedStudentFromDB = null;
+window._selectedStudentFromDB = window._selectedStudentFromDB || null;
 let _profileTiltBound = false;
 
 function escapeHtml(value) {
@@ -25,16 +24,16 @@ function profileAccent(student) {
 }
 
 function syncSelectedProfileToObData() {
-    if (!_selectedStudentFromDB) return null;
+    if (!window._selectedStudentFromDB) return null;
     if (!window.obData) window.obData = { name: '', dept: '', reg: '', adminNo: '' };
 
-    window.obData.name = _selectedStudentFromDB.name || '';
-    window.obData.reg = _selectedStudentFromDB.regNo || '';
-    window.obData.adminNo = _selectedStudentFromDB.adminNo || '';
-    window.obData.dept = _selectedStudentFromDB.department || '';
-    window.obData.classGroup = _selectedStudentFromDB.classGroup || '';
-    window.obData.classNo = _selectedStudentFromDB.classNo || '';
-    window.obData.semester = _selectedStudentFromDB.semester || '';
+    window.obData.name = window._selectedStudentFromDB.name || '';
+    window.obData.reg = window._selectedStudentFromDB.regNo || '';
+    window.obData.adminNo = window._selectedStudentFromDB.adminNo || '';
+    window.obData.dept = window._selectedStudentFromDB.department || '';
+    window.obData.classGroup = window._selectedStudentFromDB.classGroup || '';
+    window.obData.classNo = window._selectedStudentFromDB.classNo || '';
+    window.obData.semester = window._selectedStudentFromDB.semester || '';
     return window.obData;
 }
 
@@ -98,7 +97,7 @@ async function finishSmartOnboarding(event) {
 
     if (!profile.name || !profile.dept) {
         alert('Please choose your profile or complete the manual setup.');
-        window.nextObStep(_selectedStudentFromDB ? 3 : 2.5);
+        window.nextObStep(window._selectedStudentFromDB ? 3 : 2.5);
         return false;
     }
 
@@ -310,7 +309,7 @@ window.nextObStep = function(step) {
         document.getElementById('dot-2')?.classList.add('active');
     } else if (step === 3) {
         // From manual entry (step-2b) - build student from form
-        if (!_selectedStudentFromDB) {
+        if (!window._selectedStudentFromDB) {
             const name = (document.getElementById('ob-name')?.value || '').trim();
             const reg = (document.getElementById('ob-reg')?.value || '').trim();
             const adminNo = (document.getElementById('ob-adminNo')?.value || '').trim();
@@ -319,7 +318,7 @@ window.nextObStep = function(step) {
                 window.nextObStep(2.5);
                 return;
             }
-            _selectedStudentFromDB = {
+            window._selectedStudentFromDB = {
                 name: name.toUpperCase(), 
                 regNo: reg.toUpperCase(), 
                 adminNo, 
@@ -332,8 +331,8 @@ window.nextObStep = function(step) {
 
         // Populate confirm card
         const card = document.getElementById('ob-confirm-card');
-        if (card && _selectedStudentFromDB) {
-            const s = _selectedStudentFromDB;
+        if (card && window._selectedStudentFromDB) {
+            const s = window._selectedStudentFromDB;
             const color = profileAccent(s);
             const initials = (s.name || 'ME').split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
             // 3D Holographic ID Card markup
@@ -392,7 +391,7 @@ window.handleSmartSearch = function(query) {
     const q = (query || '').trim();
     if (!q) { resultsEl.innerHTML = ''; return; }
 
-    // Direct admin number entry → instantly select that student
+    // Direct admin number entry → select student or show "Next & Scrape" if unlisted
     if (/^\d{4,6}$/.test(q)) {
         const direct = window.STUDENTS_DB?.find(x => x.adminNo === q);
         if (direct) {
@@ -406,6 +405,16 @@ window.handleSmartSearch = function(query) {
                     <span class="ob-result-arrow" aria-hidden="true"></span>
                 </button>`;
             return;
+        } else {
+            // Not listed! Show a "Next" button to scrape and auto-create the profile
+            resultsEl.innerHTML = `
+                <div class="p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col gap-3">
+                    <p class="text-xs font-bold text-slate-300">Admission number "${escapeHtml(q)}" is not in our database yet. Would you like to check the portal and create it?</p>
+                    <button onclick="startDirectAdminOnboarding('${escapeHtml(q)}')" class="w-full bg-[var(--mac-blue)] text-white py-3.5 rounded-xl font-bold text-sm spring flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-[0.98]">
+                        Next & Scrape Profile ➔
+                    </button>
+                </div>`;
+            return;
         }
     }
 
@@ -413,10 +422,10 @@ window.handleSmartSearch = function(query) {
 
     if (matches.length === 0) {
         resultsEl.innerHTML = `
-            <div class="ob-empty-result">
-                <p>No profile found. Try your name, admission number, register number, or class roll.</p>
-                <button onclick="showManualEntry()">
-                    Set up manually
+            <div class="ob-empty-result text-center p-4">
+                <p class="text-xs font-bold text-[#86868b] mb-3">No profile found for "${escapeHtml(q)}". Would you like to create a new profile?</p>
+                <button onclick="showManualEntry()" class="w-full bg-[var(--mac-blue)] text-white py-3 rounded-xl font-bold text-xs spring hover:scale-[1.02] active:scale-[0.98]">
+                    Create new profile
                 </button>
             </div>`;
         return;
@@ -434,17 +443,31 @@ window.handleSmartSearch = function(query) {
     `).join('');
 };
 
+window.startDirectAdminOnboarding = function(adminNo) {
+    const input = document.getElementById('ob-adminNo');
+    if (input) {
+        input.value = adminNo;
+    }
+    window.nextObStep(2.5);
+    if (typeof window.validateObStep2 === 'function') {
+        window.validateObStep2();
+    }
+    // Automatically trigger scraping
+    if (typeof window.fetchAndFinishOnboarding === 'function') {
+        window.fetchAndFinishOnboarding();
+    }
+};
+
 window.selectStudentFromDB = function(adminNo) {
     const s = window.STUDENTS_DB?.find(x => x.adminNo === adminNo);
     if (!s) return;
-    _selectedStudentFromDB = s;
+    window._selectedStudentFromDB = s;
     syncSelectedProfileToObData();
-    // Store adminNo persistently so portal sync works immediately after login
     localStorage.setItem('machub_student_id', adminNo);
     window.nextObStep(3);
 };
 window.showManualEntry = function() {
-    _selectedStudentFromDB = null;
+    window._selectedStudentFromDB = null;
     window.nextObStep(2.5);
 };
 
@@ -468,53 +491,32 @@ window.selectObDept = function(dept) {
 window.validateObStep2 = function() {
     if (!window.obData) window.obData = { name: '', dept: '', reg: '', adminNo: '' };
     
-    const nameInput = document.getElementById('ob-name');
-    const regInput = document.getElementById('ob-reg');
     const adminInput = document.getElementById('ob-adminNo');
-
-    const nameVal = (nameInput?.value || "").trim();
-    const regVal = (regInput?.value || "").trim();
     const adminNoVal = (adminInput?.value || "").trim();
     
-    // Auto-lookup if admin number matches or name matches exactly in the DB
-    let matchedStudent = null;
-    if (/^\d{4,6}$/.test(adminNoVal)) {
-        matchedStudent = window.STUDENTS_DB?.find(x => x.adminNo === adminNoVal);
-    } else if (nameVal.length > 2) {
-        const nameUpper = nameVal.toUpperCase();
-        const matches = window.STUDENTS_DB?.filter(x => x.name.toUpperCase() === nameUpper);
-        if (matches && matches.length === 1) {
-            matchedStudent = matches[0];
-        }
-    }
+    const isValid = /^\d{4,6}$/.test(adminNoVal);
 
-    if (matchedStudent) {
-        _selectedStudentFromDB = matchedStudent;
-        syncSelectedProfileToObData();
+    if (isValid) {
+        window.obData.adminNo = adminNoVal;
         
-        // Populate input fields if they are empty or different
-        if (nameInput && nameInput.value.toUpperCase() !== matchedStudent.name.toUpperCase()) {
-            nameInput.value = matchedStudent.name;
-        }
-        if (regInput && regInput.value.toUpperCase() !== matchedStudent.regNo.toUpperCase()) {
-            regInput.value = matchedStudent.regNo;
-        }
-        if (adminInput && adminInput.value !== matchedStudent.adminNo) {
-            adminInput.value = matchedStudent.adminNo;
-        }
-        if (matchedStudent.department) {
-            window.selectObDept(matchedStudent.department.toUpperCase());
+        // Auto-lookup if admin number matches exactly in preloaded DB
+        const matchedStudent = window.STUDENTS_DB?.find(x => x.adminNo === adminNoVal);
+        if (matchedStudent) {
+            window._selectedStudentFromDB = matchedStudent;
+            syncSelectedProfileToObData();
+        } else {
+            window._selectedStudentFromDB = null;
+            window.obData.name = '';
+            window.obData.dept = '';
+            window.obData.reg = '';
         }
     } else {
-        // If they cleared the input or changed it to something else, clear DB link
-        _selectedStudentFromDB = null;
-        window.obData.name = nameVal;
-        window.obData.reg = regVal;
-        window.obData.adminNo = adminNoVal;
+        window._selectedStudentFromDB = null;
+        window.obData.adminNo = '';
     }
 
     const btn = document.getElementById('ob-final-btn');
-    if (window.obData.name && window.obData.dept) {
+    if (isValid) {
         if (btn) {
             btn.classList.remove('opacity-30', 'pointer-events-none');
             btn.classList.add('spring');

@@ -354,7 +354,249 @@
         if (allotStudent) allotStudent.textContent = p.name || '---';
         if (allotAdmin) allotAdmin.textContent = adminNo || '---';
         if (allotCourse) allotCourse.textContent = p.dept || p.classGroup || '---';
+
+        // Update Security settings overview fields
+        const claimStatusText = document.getElementById('sec-claim-status-text');
+        const claimBtn = document.getElementById('sec-btn-claim-profile');
+        const labelPinAction = document.getElementById('sec-label-pin-action');
+        const btnLen4 = document.getElementById('sec-btn-len-4');
+        const btnLen6 = document.getElementById('sec-btn-len-6');
+
+        if (claimStatusText) {
+            claimStatusText.textContent = localClaimed ? 'Profile claimed and secured' : 'Profile unclaimed (public access only)';
+        }
+
+        if (claimBtn) {
+            if (!localClaimed) {
+                claimBtn.classList.remove('hidden');
+            } else {
+                claimBtn.classList.add('hidden');
+            }
+        }
+
+        if (labelPinAction) {
+            labelPinAction.textContent = localClaimed ? 'Change Profile PIN' : 'Set Profile PIN';
+        }
+
+        const pinLen = parseInt(localStorage.getItem('machub_pin_length_' + adminNo) || '4', 10);
+        if (btnLen4 && btnLen6) {
+            if (pinLen === 4) {
+                btnLen4.className = 'px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wide bg-zinc-800 text-white spring';
+                btnLen6.className = 'px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wide text-zinc-400 spring';
+            } else {
+                btnLen4.className = 'px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wide text-zinc-400 spring';
+                btnLen6.className = 'px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wide bg-zinc-800 text-white spring';
+            }
+        }
     }
+
+    // --- SETTINGS SECURITY ACTIONS ---
+
+    window.triggerSettingsClaim = function () {
+        const info = getStudentInfo();
+        if (info && info.adminNo) {
+            if (window.ExamHubClaim) {
+                window.ExamHubClaim.init(info.adminNo);
+            }
+        }
+    };
+
+    window.triggerSettingsChangePin = async function () {
+        const info = getStudentInfo();
+        if (!info || !info.adminNo) return;
+        const adminNo = info.adminNo;
+        const localClaimed = localStorage.getItem('machub_claimed_admission') === adminNo;
+
+        if (!localClaimed) {
+            if (window.ExamHubClaim) window.ExamHubClaim.init(adminNo);
+            return;
+        }
+
+        const currentPin = prompt('Enter your current PIN:');
+        if (!currentPin) return;
+
+        const db = window.firebaseFirestore;
+        if (!db) {
+            alert('Database not initialized.');
+            return;
+        }
+
+        try {
+            const studentRef = window.firestoreDoc(db, 'students', adminNo);
+            const studentSnap = await window.firestoreGetDoc(studentRef);
+            if (!studentSnap.exists()) return;
+
+            const security = studentSnap.data().security || {};
+            const pinHash = security.pinHash;
+
+            if (pinHash) {
+                if (typeof dcodeIO === 'undefined' && typeof bcrypt === 'undefined') {
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+                const bcryptLib = window.bcrypt || dcodeIO.bcrypt;
+                if (!bcryptLib.compareSync(currentPin, pinHash)) {
+                    alert('Incorrect current PIN.');
+                    return;
+                }
+            }
+
+            const newPin = prompt('Enter your new PIN:');
+            if (!newPin) return;
+            const confirmPin = prompt('Confirm your new PIN:');
+            if (newPin !== confirmPin) {
+                alert('PIN confirmation does not match.');
+                return;
+            }
+
+            const pinLen = newPin.length;
+            if (pinLen !== 4 && pinLen !== 6) {
+                alert('PIN must be either 4 or 6 digits.');
+                return;
+            }
+
+            const bcryptLib = window.bcrypt || dcodeIO.bcrypt;
+            const salt = bcryptLib.genSaltSync(10);
+            const newHash = bcryptLib.hashSync(newPin, salt);
+
+            await window.updateFirestoreDocSecurely(adminNo, {
+                'security.pinHash': newHash,
+                'security.pinLength': pinLen
+            });
+
+            localStorage.setItem('machub_pin_length_' + adminNo, pinLen);
+            alert('PIN updated successfully!');
+            renderSettingsProfileSummary();
+        } catch (e) {
+            alert('Error updating PIN: ' + e.message);
+        }
+    };
+
+    window.triggerSettingsPinLength = async function (length) {
+        const info = getStudentInfo();
+        if (!info || !info.adminNo) return;
+        const adminNo = info.adminNo;
+        const localClaimed = localStorage.getItem('machub_claimed_admission') === adminNo;
+
+        if (!localClaimed) {
+            alert('Claim your profile first to configure PIN options.');
+            return;
+        }
+
+        const currentPin = prompt(`Enter current PIN to change length to ${length} digits:`);
+        if (!currentPin) return;
+
+        const db = window.firebaseFirestore;
+        if (!db) return;
+
+        try {
+            const studentRef = window.firestoreDoc(db, 'students', adminNo);
+            const studentSnap = await window.firestoreGetDoc(studentRef);
+            if (!studentSnap.exists()) return;
+
+            const security = studentSnap.data().security || {};
+            const pinHash = security.pinHash;
+
+            if (pinHash) {
+                if (typeof dcodeIO === 'undefined' && typeof bcrypt === 'undefined') {
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+                const bcryptLib = window.bcrypt || dcodeIO.bcrypt;
+                if (!bcryptLib.compareSync(currentPin, pinHash)) {
+                    alert('Incorrect PIN.');
+                    return;
+                }
+            }
+
+            const newPin = prompt(`Enter new ${length}-digit PIN:`);
+            if (!newPin || newPin.length !== length) {
+                alert(`PIN must be exactly ${length} digits.`);
+                return;
+            }
+            const confirmPin = prompt(`Confirm new ${length}-digit PIN:`);
+            if (newPin !== confirmPin) {
+                alert('PIN confirmation does not match.');
+                return;
+            }
+
+            const bcryptLib = window.bcrypt || dcodeIO.bcrypt;
+            const salt = bcryptLib.genSaltSync(10);
+            const newHash = bcryptLib.hashSync(newPin, salt);
+
+            await window.updateFirestoreDocSecurely(adminNo, {
+                'security.pinHash': newHash,
+                'security.pinLength': length
+            });
+
+            localStorage.setItem('machub_pin_length_' + adminNo, length);
+            alert(`PIN length changed to ${length} digits and new PIN set successfully!`);
+            renderSettingsProfileSummary();
+        } catch (e) {
+            alert('Error configuring PIN length: ' + e.message);
+        }
+    };
+
+    window.triggerDeleteStoredPassword = async function () {
+        if (!confirm('Are you sure you want to delete your stored portal password from Firebase? Next background sync attempts will pause until you re-enter your password.')) {
+            return;
+        }
+
+        const info = getStudentInfo();
+        if (!info || !info.adminNo) return;
+        const adminNo = info.adminNo;
+
+        const db = window.firebaseFirestore;
+        if (!db) return;
+
+        try {
+            const studentRef = window.firestoreDoc(db, 'students', adminNo);
+            await window.updateFirestoreDocSecurely(adminNo, {
+                'security.portalPasswordEncrypted': null
+            });
+            alert('Stored portal password deleted successfully.');
+        } catch (e) {
+            alert('Error deleting password: ' + e.message);
+        }
+    };
+
+    window.triggerLogoutAllDevices = async function () {
+        if (!confirm('Are you sure you want to logout from all devices? All other devices will be forced to re-claim/unlock.')) {
+            return;
+        }
+
+        const info = getStudentInfo();
+        if (!info || !info.adminNo) return;
+        const adminNo = info.adminNo;
+
+        const db = window.firebaseFirestore;
+        if (!db) return;
+
+        try {
+            const studentRef = window.firestoreDoc(db, 'students', adminNo);
+            await window.updateFirestoreDocSecurely(adminNo, {
+                'security.deviceTokens': []
+            });
+
+            localStorage.removeItem('machub_device_token');
+            localStorage.removeItem('mac_student_info');
+            localStorage.removeItem('machub_current_view');
+            localStorage.removeItem('machub_claimed_admission');
+            window.location.reload();
+        } catch (e) {
+            alert('Error logging out: ' + e.message);
+        }
+    };
 
     // Instagram-style Full Page Rankings View Control
     let cachedRankings = null;
@@ -989,6 +1231,29 @@
         const settings = readSettings();
         const adminNo = info.adminNo || '';
 
+        // Security Gate check
+        const localClaimed = localStorage.getItem('machub_claimed_admission') === adminNo;
+        
+        // If claimed but not unlocked on this device, redirect to pin lock screen
+        const pinConfigured = localStorage.getItem('machub_pin_configured_' + adminNo) !== 'false';
+        if (localClaimed && pinConfigured && !window.ExamHubState.security.isUnlocked) {
+            const pinLen = parseInt(localStorage.getItem('machub_pin_length_' + adminNo) || '4', 10);
+            if (window.ExamHubLock) {
+                window.ExamHubLock.show(adminNo, pinLen);
+                return;
+            }
+        }
+
+        // Show/hide claim banner
+        const claimBanner = document.getElementById('profileClaimBanner');
+        if (claimBanner) {
+            if (!localClaimed) {
+                claimBanner.classList.remove('hidden');
+            } else {
+                claimBanner.classList.add('hidden');
+            }
+        }
+
         // 1. Populate details grid
         const nameEl = document.getElementById('profileGridName');
         const deptEl = document.getElementById('profileGridDept');
@@ -1327,7 +1592,15 @@
                             <img class="logo" src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub">
                         </header>
                     </section>
-                </div>`;
+                </div>
+                ${localClaimed ? `
+                <div class="px-4 mb-2">
+                    <button onclick="window.ExamHubQr.show('${adminNo}')" class="w-full py-3.5 bg-white/5 border border-white/10 rounded-2xl font-bold text-xs spring active:scale-95 flex items-center justify-center gap-2">
+                        🪪 View Secure Digital ID
+                    </button>
+                </div>
+                ` : ''}
+            `;
             
             // 7. Bind interactive 3D Mouse/Gyro Tilting mechanics
             if (window.bindCardTilt) {
@@ -1400,8 +1673,8 @@
     window.shareStudentProfile = shareStudentProfile;
     window.openSettingsTray = openSettingsTray;
     window.closeSettingsTray = closeSettingsTray;
-    window.openRankingsSheet = openRankingsSheet;
-    window.closeRankingsSheet = closeRankingsSheet;
+    window.openRankingsSheet = openRankingsFullPage;
+    window.closeRankingsSheet = closeRankingsFullPage;
     window.togglePrivacySetting = togglePrivacySetting;
     window.toggleNotificationSetting = toggleNotificationSetting;
     window.toggleDisplaySetting = toggleDisplaySetting;
@@ -2318,6 +2591,18 @@
             if (ring) ring.style.background = `linear-gradient(135deg,${accent},#6228d7)`;
         }
     })();
+
+    // Profile Claim Handler
+    window.triggerProfileClaim = function () {
+        const info = getStudentInfo();
+        if (info && info.adminNo) {
+            if (window.ExamHubClaim) {
+                window.ExamHubClaim.init(info.adminNo);
+            }
+        } else {
+            alert('Please select or search your profile first.');
+        }
+    };
 
 })();
 

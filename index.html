@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="styles/mobile-optimized.css">
     <link rel="stylesheet" href="styles/mac_ai_chat.css">
     <link rel="stylesheet" href="styles/desktop.css">
+    <link rel="stylesheet" href="styles/claim_profile.css">
 </head>
 <body class="pb-32 app-shell-ready">
 
@@ -48,7 +49,7 @@
                     <div id="ob-results" class="ob-results-list"></div>
                 </div>
                 <div class="flex flex-col gap-3">
-                    <button onclick="showManualEntry()" class="intro-manual spring">Set up manually</button>
+                    <button onclick="showManualEntry()" class="intro-manual spring">Create new profile</button>
                     <button onclick="skipOnboarding()" class="text-[#86868b] text-[10px] font-black uppercase tracking-widest py-2 spring">Skip for now</button>
                 </div>
             </div>
@@ -230,6 +231,20 @@
     </div> <!-- end view-seats -->
 
     <div id="view-home" class="view-panel is-active max-w-md mx-auto p-6 relative">
+        <!-- Password Reset Handshake Alert Banner -->
+        <div id="homeCredentialsAlert" class="mb-5 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-between hidden">
+            <div class="flex items-center gap-3">
+                <span class="text-lg">⚠️</span>
+                <div>
+                    <h5 class="text-xs font-black text-red-400">Sync Paused</h5>
+                    <p class="text-[9px] text-zinc-400 leading-tight">Enter your updated portal password to resume background sync.</p>
+                </div>
+            </div>
+            <button onclick="window.triggerUpdatePortalPassword()" class="px-3.5 py-2 bg-red-500 text-white font-black text-[9px] uppercase tracking-wider rounded-xl spring active:scale-95">
+                Update
+            </button>
+        </div>
+
         <!-- Apple Premium Glass Greeting Card -->
         <div class="glass-panel p-6 rounded-[2rem] mb-6 flex items-center justify-between gap-4 relative overflow-hidden cursor-pointer group active:scale-[0.98] transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/10" 
              style="background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.01) 100%); backdrop-filter: blur(20px);"
@@ -636,15 +651,27 @@
             </button>
         </div>
         
+        <!-- Typing Box -->
+        <div id="navAiInputContainer" class="nav-ai-input-container">
+            <input type="text" id="navAiInput" placeholder="Ask MacAI..." autocomplete="off" />
+        </div>
+
         <!-- Separate but same to same MacAI Circle Button -->
-        <button onclick="openMacAI()" id="macAiFloatingBtn" class="nav-ai-pill" aria-label="Open MacAI" style="position: relative;">
-            <div id="geminianimation">
-                <div></div>
+        <button onclick="handleMacAiBtnClick(event)" id="macAiFloatingBtn" class="nav-ai-pill" aria-label="Open MacAI" style="position: relative;">
+            <div class="ai-btn-icon-gemini flex items-center justify-center w-full h-full transition-all duration-300">
+                <div id="geminianimation">
+                    <div></div>
+                </div>
+                <div class="gemini-star-overlay">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L14.83 8.17L21 11L14.83 13.83L12 20L9.17 13.83L3 11L9.17 8.17L12 2Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
+                        <path d="M19 3L20.06 5.28L22.5 6L20.06 6.72L19 9L17.94 6.72L15.5 6L17.94 5.28L19 3Z" fill="white"/>
+                    </svg>
+                </div>
             </div>
-            <div class="gemini-star-overlay">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L14.83 8.17L21 11L14.83 13.83L12 20L9.17 13.83L3 11L9.17 8.17L12 2Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
-                    <path d="M19 3L20.06 5.28L22.5 6L20.06 6.72L19 9L17.94 6.72L15.5 6L17.94 5.28L19 3Z" fill="white"/>
+            <div class="ai-btn-icon-send absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none scale-50 transition-all duration-300">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white">
+                    <path d="M12 19V5M5 12l7-7 7 7"></path>
                 </svg>
             </div>
         </button>
@@ -869,6 +896,20 @@
                     </svg>
                 </button>
             </div>
+        </div>
+
+        <!-- Claim Profile Banner (shown if unclaimed) -->
+        <div id="profileClaimBanner" class="mx-4 mb-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between hidden">
+            <div class="flex items-center gap-3">
+                <span class="text-lg">🛡️</span>
+                <div>
+                    <h5 class="text-xs font-black text-amber-400">Claim Profile</h5>
+                    <p class="text-[9px] text-zinc-400 leading-tight">Secure your identity & set a login lock PIN.</p>
+                </div>
+            </div>
+            <button onclick="window.triggerProfileClaim()" class="px-3.5 py-2 bg-amber-500 text-black font-black text-[10px] uppercase tracking-wider rounded-xl spring active:scale-95">
+                Claim
+            </button>
         </div>
 
         <!-- ── Avatar + Stats Row ── -->
@@ -1673,37 +1714,71 @@
                         <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
                 </button>
-                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Security Overview</h3>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Account Security</h3>
             </div>
-            
         </div>
         <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
-            <p class="settings-section-title">🛡️ Security Overview</p>
-            <div class="p-4 rounded-xl flex items-center gap-3" style="background:rgba(0, 245, 212, 0.08); border:1px solid rgba(0, 245, 212, 0.2);">
-                <span class="text-lg text-[#00F5D4]">🛡️</span>
-                <div>
-                    <p class="text-[11px] font-black text-[#00F5D4]">Account Secure</p>
-                    <p class="text-[9px] text-[#86868b] leading-tight">Your portal account is protected with standard MD5 authentication.</p>
+            <!-- CLAIM STATUS CARD -->
+            <p class="settings-section-title">🛡️ Security Status</p>
+            <div class="p-4 rounded-xl flex items-center justify-between border border-white/5 bg-white/[0.01]">
+                <div class="flex items-center gap-3">
+                    <span class="text-lg">🛡️</span>
+                    <div>
+                        <p class="text-[11px] font-black text-white">Profile Security Status</p>
+                        <p id="sec-claim-status-text" class="text-[9px] text-[#86868b] leading-tight">Checking status...</p>
+                    </div>
                 </div>
+                <button id="sec-btn-claim-profile" onclick="window.triggerSettingsClaim()" class="hidden px-3.5 py-2 bg-amber-500 text-black font-black text-[9px] uppercase tracking-wider rounded-xl spring">
+                    Claim
+                </button>
             </div>
-            <div class="liquid-glass rounded-3xl p-4 space-y-3">
+
+            <!-- PIN MANAGEMENT -->
+            <p class="settings-section-title">🔑 PIN Settings</p>
+            <div class="liquid-glass rounded-3xl p-4 space-y-4">
                 <div class="flex justify-between items-center">
                     <div>
-                        <div class="settings-nav-label">Login Notifications</div>
-                        <div class="settings-nav-sub">Send email alert on login</div>
+                        <div class="settings-nav-label" id="sec-label-pin-action">Set Profile PIN</div>
+                        <div class="settings-nav-sub">Instantly lock profile details</div>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
-                    </label>
+                    <button onclick="window.triggerSettingsChangePin()" class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl font-bold text-xs spring active:scale-95 text-white">
+                        Configure
+                    </button>
                 </div>
-                <div class="flex justify-between items-center text-xs">
-                    <span class="text-slate-400">Authentication Method</span>
-                    <span class="font-bold text-[#00F5D4]">Password</span>
+                <div class="h-px bg-white/5"></div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="settings-nav-label">PIN Length</div>
+                        <div class="settings-nav-sub">Configure 4 or 6 digit unlock lock</div>
+                    </div>
+                    <div class="flex gap-1.5 bg-black/30 p-1 rounded-xl border border-white/5">
+                        <button onclick="window.triggerSettingsPinLength(4)" id="sec-btn-len-4" class="px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wide bg-zinc-800 text-white spring">4</button>
+                        <button onclick="window.triggerSettingsPinLength(6)" id="sec-btn-len-6" class="px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wide text-zinc-400 spring">6</button>
+                    </div>
                 </div>
-                <div class="flex justify-between items-center text-xs">
-                    <span class="text-slate-400">Encryption Level</span>
-                    <span class="font-bold text-white">SSL/TLS 1.3</span>
+            </div>
+
+            <!-- DEVICES & PASSWORD -->
+            <p class="settings-section-title">📱 Portal Credentials & Devices</p>
+            <div class="liquid-glass rounded-3xl p-4 space-y-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="settings-nav-label">Delete Saved Portal Password</div>
+                        <div class="settings-nav-sub">Wipes password from Firebase. Next sync will ask you.</div>
+                    </div>
+                    <button onclick="window.triggerDeleteStoredPassword()" class="px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl font-bold text-xs spring active:scale-95 text-red-400">
+                        Delete
+                    </button>
+                </div>
+                <div class="h-px bg-white/5"></div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="settings-nav-label">Logout All Other Devices</div>
+                        <div class="settings-nav-sub">Revoke all other device tokens</div>
+                    </div>
+                    <button onclick="window.triggerLogoutAllDevices()" class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl font-bold text-xs spring active:scale-95 text-slate-300">
+                        Logout All
+                    </button>
                 </div>
             </div>
         </div>
@@ -2008,6 +2083,50 @@
         </div>
     </div>
 
+    <!-- DEDICATED VIEW: CLAIM PROFILE -->
+    <div id="view-claim-profile" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('view-home')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Claim Student Profile</h3>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-6" id="claim-flow-container">
+            <!-- Populated dynamically by claim_profile.js -->
+        </div>
+    </div>
+
+    <!-- DEDICATED VIEW: PIN LOCK SCREEN -->
+    <div id="view-pin-lock" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7; background:#000;">
+        <div class="flex-1 overflow-y-auto px-4 py-8" id="pin-lock-container">
+            <!-- Populated dynamically by pin_lock.js -->
+        </div>
+    </div>
+
+    <!-- DEDICATED VIEW: DIGITAL ID CARD (QR) -->
+    <div id="view-qr-id" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
+        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="window.teardownQrLoop(); switchView('view-profile');" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Digital ID Card</h3>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-8 flex items-center justify-center" id="qr-id-card-container">
+            <!-- Populated dynamically by qr_id.js -->
+        </div>
+    </div>
+
     <!-- ═══════════════════════════════════════════════════════ -->
     <!-- PROFILE EDITING VIEW — Full-Page ZIP Design (New)       -->
     <!-- ═══════════════════════════════════════════════════════ -->
@@ -2161,16 +2280,13 @@
         position:fixed; inset:0; z-index:100;
         display:none; flex-direction:column;
         font-family:'Space Grotesk',system-ui,sans-serif;
-        overflow:hidden;">
+        overflow:hidden; background:#000000;">
 
-        <!-- ── Ambient background orbs ── -->
-        <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;">
-            <div style="position:absolute;width:320px;height:320px;border-radius:50%;
-                background:radial-gradient(circle,rgba(108,99,255,.28) 0%,transparent 70%);
-                top:-80px;left:-60px;filter:blur(50px);animation:macai-orb1 8s ease-in-out infinite alternate;"></div>
-            <div style="position:absolute;width:280px;height:280px;border-radius:50%;
-                background:radial-gradient(circle,rgba(0,122,255,.22) 0%,transparent 70%);
-                bottom:-60px;right:-40px;filter:blur(60px);animation:macai-orb2 10s ease-in-out infinite alternate;"></div>
+        <!-- ── Ambient top glow colors ── -->
+        <div class="macai-top-glow">
+            <div class="macai-glow-orb macai-glow-1"></div>
+            <div class="macai-glow-orb macai-glow-2"></div>
+            <div class="macai-glow-orb macai-glow-3"></div>
         </div>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
@@ -2182,30 +2298,59 @@
 
             #view-ai.is-active{display:flex!important;}
             /* Tab Bar */
-            .macai-tabbar{display:flex;align-items:center;justify-content:center;gap:4px;
-                padding:10px 20px;background:rgba(0,0,0,.7);backdrop-filter:blur(20px);
-                border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;position:relative;z-index:10;}
-            .macai-tab{flex:1;max-width:110px;padding:8px 6px;border-radius:20px;
-                background:transparent;border:1px solid transparent;
-                color:rgba(255,255,255,.4);font-size:11px;font-weight:700;
-                cursor:pointer;transition:all .25s;text-align:center;letter-spacing:.02em;}
-            .macai-tab.active{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12);color:#fff;}
+            .macai-tabbar{display:none;}
             /* Header */
             .macai-header{display:flex;align-items:center;justify-content:space-between;
-                padding:14px 20px;background:rgba(0,0,0,.65);backdrop-filter:blur(24px);
-                border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;z-index:10;position:relative;}
-            .macai-back{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);
-                border:1px solid rgba(255,255,255,.1);color:#fff;display:grid;place-items:center;
-                cursor:pointer;transition:all .2s;}
+                padding:16px 16px 8px;background:transparent;flex-shrink:0;z-index:100;position:relative;}
+            .macai-back{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.03);
+                border:1.5px solid rgba(255,255,255,0.08);color:#fff;display:grid;place-items:center;
+                cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(0,0,0,0.1);
+                backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
             .macai-back:active{transform:scale(.9);}
+            /* 3 Isolated floating liquid glass buttons container */
+            .macai-header-tabs{display:flex;align-items:center;background:rgba(255,255,255,0.03);
+                backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);
+                border:1.5px solid rgba(255,255,255,0.08);padding:4px;border-radius:9999px;
+                box-shadow:0 8px 32px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.05);gap:2px;}
+            .macai-header-tab{background:transparent;border:none;outline:none;
+                color:rgba(255,255,255,0.45);font-size:10.5px;font-weight:800;letter-spacing:0.08em;
+                padding:8px 14px;border-radius:9999px;cursor:pointer;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);}
+            .macai-header-tab.active{background:rgba(255,255,255,0.12);color:#fff;
+                box-shadow:0 4px 12px rgba(0,0,0,0.15),inset 0 0.5px 0.5px rgba(255, 255, 255, 0.2);}
+            /* New chat button */
+            .macai-new-chat{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.03);
+                border:1.5px solid rgba(255,255,255,0.08);display:flex;color:rgba(255,255,255,0.85);
+                align-items:center;justify-content:center;cursor:pointer;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
+                box-shadow:0 4px 16px rgba(0,0,0,0.1);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
+            .macai-new-chat svg{transition:transform 0.3s ease;}
+            .macai-new-chat:hover{color:#fff;background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.25);}
             /* Scrollable body */
             .macai-scroll{flex:1;overflow-y:auto;padding:16px 16px 120px;position:relative;z-index:1;}
             .macai-scroll::-webkit-scrollbar{display:none;}
             /* Glass card */
-            .macai-glass{background:rgba(255,255,255,.03);
-                border:1px solid rgba(255,255,255,.09);border-radius:24px;
-                backdrop-filter:blur(30px);padding:16px;margin-bottom:12px;overflow:hidden;
-                box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);}
+            .macai-glass{
+                position: relative;
+                background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 24px;
+                padding: 16px;
+                margin-bottom: 12px;
+                backdrop-filter: blur(40px) saturate(1.6);
+                -webkit-backdrop-filter: blur(40px) saturate(1.6);
+                box-shadow:
+                  0 2px 0 rgba(255,255,255,0.06) inset,
+                  0 -1px 0 rgba(0,0,0,0.4) inset,
+                  0 8px 32px rgba(0,0,0,0.5),
+                  0 1px 3px rgba(0,0,0,0.3);
+                overflow: hidden;
+            }
+            .macai-glass::before {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; right: 0;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+            }
             /* Suggestion cards */
             .macai-suggest-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
             .macai-suggest-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
@@ -2287,25 +2432,27 @@
 
         <!-- ── TOP HEADER ── -->
         <div class="macai-header">
-            <div style="display:flex;align-items:center;gap:12px;">
-                <button class="macai-back" onclick="closeMacAI()" aria-label="Close MacAI">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </button>
-                <div>
-                    <div style="font-size:15px;font-weight:900;color:#fff;letter-spacing:-.02em;display:flex;align-items:center;gap:7px;">
-                        MacAI <span class="macai-dot"></span>
-                    </div>
-                    <div style="font-size:10px;color:rgba(255,255,255,.35);font-weight:700;letter-spacing:.04em;margin-top:1px;">DARETOWNIN EDITION</div>
-                </div>
+            <button class="macai-back" onclick="closeMacAI()" aria-label="Close MacAI">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <div class="macai-header-tabs">
+                <button class="macai-header-tab active" id="macai-tab-boss" onclick="macaiSwitchTab('boss')">MacAI</button>
+                <button class="macai-header-tab" id="macai-tab-mind" onclick="macaiSwitchTab('mind')">MIND</button>
+                <button class="macai-header-tab" id="macai-tab-profile" onclick="macaiSwitchTab('profile')">TRACK</button>
             </div>
-            <button onclick="macaiClearAllChats()" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);display:grid;place-items:center;cursor:pointer;font-size:15px;" title="Clear chat">🗑️</button>
+            <button class="macai-new-chat" onclick="handleNewChatClick(this)" title="New Chat">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+            </button>
         </div>
 
-        <!-- ── TAB BAR ── -->
-        <div class="macai-tabbar">
-            <button class="macai-tab active" id="macai-tab-boss" onclick="macaiSwitchTab('boss')">🤖 Boss AI</button>
-            <button class="macai-tab" id="macai-tab-mind" onclick="macaiSwitchTab('mind')">📚 Mind</button>
-            <button class="macai-tab" id="macai-tab-profile" onclick="macaiSwitchTab('profile')">👤 Profile</button>
+        <!-- ── TAB BAR (Hidden/Merged into Header) ── -->
+        <div class="macai-tabbar" style="display: none !important;">
+            <button class="macai-tab active" id="macai-tab-boss-hidden" onclick="macaiSwitchTab('boss')">🤖 Boss AI</button>
+            <button class="macai-tab" id="macai-tab-mind-hidden" onclick="macaiSwitchTab('mind')">📚 Mind</button>
+            <button class="macai-tab" id="macai-tab-profile-hidden" onclick="macaiSwitchTab('profile')">👤 Profile</button>
         </div>
 
         <!-- ══════════════════════════════════════
@@ -2317,33 +2464,38 @@
             <div class="macai-scroll" id="macaiBossScroll">
 
                 <!-- Welcome / hero (shown when chat is empty) -->
-                <div id="macaiHero" class="macai-hero">
+                <div id="macaiHero" class="macai-hero" style="padding-top: 24px; margin-bottom: -10px;">
                     <h2>What can I<br>help with?</h2>
-                    <p>Ask about timetables, syllabus, seats & more.</p>
                 </div>
 
-                <!-- Suggestion cards (shown when chat is empty) -->
-                <div id="macaiSuggestGrid" class="macai-suggest-grid">
-                    <button class="macai-suggest-card" onclick="macaiSendSuggested('Show me today\'s class timetable')">
-                        <div style="font-size:20px;margin-bottom:6px;">📅</div>
-                        <div style="font-size:12px;font-weight:700;">Timetable Today</div>
-                        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;">Periods & room numbers</div>
-                    </button>
-                    <button class="macai-suggest-card" onclick="macaiSendSuggested('What is the syllabus of Data Structures?')">
-                        <div style="font-size:20px;margin-bottom:6px;">📚</div>
-                        <div style="font-size:12px;font-weight:700;">Syllabus Modules</div>
-                        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;">Credits & topic lists</div>
-                    </button>
-                    <button class="macai-suggest-card" onclick="macaiSendSuggested('Who is my teacher for Data Structures?')">
-                        <div style="font-size:20px;margin-bottom:6px;">👔</div>
-                        <div style="font-size:12px;font-weight:700;">Faculty Cabin</div>
-                        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;">Emails & office hours</div>
-                    </button>
-                    <button class="macai-suggest-card" onclick="macaiSendSuggested('Find my exam seating arrangement')">
-                        <div style="font-size:20px;margin-bottom:6px;">🪑</div>
-                        <div style="font-size:12px;font-weight:700;">Exam Seat</div>
-                        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;">Locate exam halls</div>
-                    </button>
+                <!-- Glass Selection Cards (Starting Cards) -->
+                <div id="macaiSuggestGrid" class="glass-selection-container">
+                    <div class="glass-selection-perspective">
+                        <div class="glass-selection-card left" onclick="macaiSwitchTab('mind')">
+                            <div class="glass-card-shine"></div>
+                            <div class="glass-card-content">
+                                <div class="glass-card-icon" style="font-size: 38px; line-height: 1;">📚</div>
+                                <div class="glass-card-text">MIND</div>
+                            </div>
+                            <div class="glass-card-border"></div>
+                        </div>
+                        <div class="glass-selection-card center" onclick="macaiSwitchTab('boss')">
+                            <div class="glass-card-shine"></div>
+                            <div class="glass-card-content">
+                                <div class="glass-card-icon" style="font-size: 38px; line-height: 1;">🤖</div>
+                                <div class="glass-card-text">MacAI</div>
+                            </div>
+                            <div class="glass-card-border"></div>
+                        </div>
+                        <div class="glass-selection-card right" onclick="macaiSwitchTab('profile')">
+                            <div class="glass-card-shine"></div>
+                            <div class="glass-card-content">
+                                <div class="glass-card-icon" style="font-size: 38px; line-height: 1;">👤</div>
+                                <div class="glass-card-text">TRACK</div>
+                            </div>
+                            <div class="glass-card-border"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Chat messages container -->
@@ -2367,7 +2519,7 @@
             </div>
 
             <!-- Input dock -->
-            <div class="macai-input-dock">
+            <div class="macai-input-dock" style="display: none !important;">
                 <!-- Active tag row -->
                 <div class="macai-tag-row" id="macaiTagRow">
                     <div class="macai-active-tag">
@@ -2383,7 +2535,16 @@
                         placeholder="Ask MacAI…"
                         onkeydown="if(event.key==='Enter')macaiSend()">
                     <button class="macai-circle" onclick="macaiToggleThinking()" id="macaiThinkBtn" title="Deep Thinking" style="font-size:14px;">💡</button>
-                    <button class="macai-circle send" onclick="macaiSend()" title="Send" style="font-size:16px;">➔</button>
+                    <button id="macaiSendBtn" class="macai-circle send-wrapper" onclick="handleChatPageSendClick(event)" title="Send" style="position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">
+                        <div class="chat-btn-icon-gemini absolute inset-0 flex items-center justify-center transition-all duration-300">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L14.83 8.17L21 11L14.83 13.83L12 20L9.17 13.83L3 11L9.17 8.17L12 2Z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="chat-btn-icon-send absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none scale-50 transition-all duration-300">
+                            <span style="font-size: 14px; font-weight: bold; color: #000;">➔</span>
+                        </div>
+                    </button>
                 </div>
             </div>
         </div>
@@ -2531,6 +2692,9 @@
     <script defer src="js/resources.js"></script>
     <script defer src="js/app.js?v=2.0.4"></script>
     <script defer src="js/onboarding.js"></script>
+    <script defer src="js/claim_profile.js"></script>
+    <script defer src="js/pin_lock.js"></script>
+    <script defer src="js/qr_id.js"></script>
     <script defer src="js/bootstrap.js"></script>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
