@@ -344,32 +344,90 @@ window.nextObStep = function(step) {
             card.innerHTML = `
                 <div id="ob-ticket-container" class="mb-4 relative z-10 mx-auto">
                     <section class="ob-ticket" id="ob-ticketEl">
-                        <!-- FRONT FACE (visible to user) — all student data here -->
+                        <!-- FRONT FACE -->
                         <section class="ob-ticket-front">
                             <div class="ob-ticket-holo"></div>
-                            <img class="ob-ticket-logo-small" src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub">
-                            <div class="data">
-                                <h3>Name</h3>
-                                <p>${escapeHtml(s.name || '---')}</p>
-                                <h3>Department</h3>
-                                <p>${escapeHtml(s.classGroup || s.department || '---')}</p>
-                                ${s.regNo ? `<h3>Reg No</h3><p>${escapeHtml(s.regNo)}</p>` : ''}
-                                ${s.adminNo ? `<h3>Admission No</h3><p>${escapeHtml(s.adminNo)}</p>` : ''}
-                                ${s.classNo ? `<h3>Class Roll</h3><p>${escapeHtml(s.classNo)}</p>` : ''}
-                                ${s.semester ? `<h3>Semester</h3><p>${escapeHtml(s.semester)}</p>` : ''}
-                            </div>
-                            <aside class="divider">
-                                <div class="username">
-                                    <img class="profile-pic" src="assets/img/ChatGPT%20Image%20May%2018,%202026,%2010_33_49%20PM.png" alt="Profile">
-                                    <span>MacHub</span>
+                            <div class="notch notch-left"></div>
+                            <div class="notch notch-right"></div>
+                            
+                            <!-- Header -->
+                            <div class="ticket-header">
+                                <div class="ticket-brand">
+                                    <svg width="22" height="22" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M50 5L90 28.1V71.9L50 95L10 71.9V28.1L50 5Z" stroke="#d4af37" stroke-width="6" stroke-linejoin="round"/>
+                                        <path d="M50 25L75 39.4V60.6L50 75L25 60.6V39.4L50 25Z" fill="url(#goldGradOb)" opacity="0.8"/>
+                                        <defs>
+                                            <linearGradient id="goldGradOb" x1="25" y1="25" x2="75" y2="75" gradientUnits="userSpaceOnUse">
+                                                <stop offset="0%" stop-color="#ffe259" />
+                                                <stop offset="100%" stop-color="#ffa751" />
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                    <span class="brand-name">MacHub</span>
                                 </div>
-                                <span class="usernum">2026</span>
-                            </aside>
+                                <div class="ticket-type">GOLDEN TICKET</div>
+                            </div>
+
+                            <!-- Body (Details) -->
+                            <div class="ticket-body">
+                                <div class="ticket-label">Holder</div>
+                                <div class="ticket-name">${escapeHtml(s.name || '---')}</div>
+                                
+                                <div class="grid grid-cols-2 gap-4 mt-4">
+                                    <div>
+                                        <div class="ticket-label">Department</div>
+                                        <div class="ticket-value">${escapeHtml(s.classGroup || s.department || '---')}</div>
+                                    </div>
+                                    <div>
+                                        <div class="ticket-label">Semester</div>
+                                        <div class="ticket-value">${escapeHtml(s.semester || 'Sem 2')}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Divider -->
+                            <div class="ticket-divider"></div>
+
+                            <!-- Footer -->
+                            <div class="ticket-footer">
+                                <div class="ticket-footer-left">
+                                    <div class="ticket-label">Ticket Number</div>
+                                    <div class="ticket-serial">#${escapeHtml(s.adminNo || '00000')}</div>
+                                </div>
+                                <div class="ticket-footer-right">
+                                    <!-- Vector Mock QR -->
+                                    <svg width="45" height="45" viewBox="0 0 100 100" fill="none" stroke="#d4af37" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-80">
+                                        <rect x="5" y="5" width="25" height="25" stroke-width="4"/>
+                                        <rect x="12" y="12" width="11" height="11" fill="#d4af37"/>
+                                        <rect x="70" y="5" width="25" height="25" stroke-width="4"/>
+                                        <rect x="77" y="12" width="11" height="11" fill="#d4af37"/>
+                                        <rect x="5" y="70" width="25" height="25" stroke-width="4"/>
+                                        <rect x="12" y="77" width="11" height="11" fill="#d4af37"/>
+                                        <path d="M45 10h10v10H45zM45 45h10v10H45zM10 45h10v10H10zM70 45h10v10H70z" fill="#d4af37"/>
+                                        <path d="M45 70h10M70 70h10M80 80h10M70 90h20M45 85h10v10H45z" stroke-width="4"/>
+                                    </svg>
+                                </div>
+                            </div>
                         </section>
-                        <!-- BACK FACE (flipped away) — MacHub branding only -->
+                        <!-- BACK FACE -->
                         <header class="ob-ticket-back">
                             <div class="ob-ticket-holo"></div>
-                            <img class="logo" src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub">
+                            <div class="notch notch-left"></div>
+                            <div class="notch notch-right"></div>
+                            <div class="ticket-back-content">
+                                <svg width="70" height="70" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-4">
+                                    <path d="M50 5L90 28.1V71.9L50 95L10 71.9V28.1L50 5Z" stroke="#d4af37" stroke-width="6" stroke-linejoin="round"/>
+                                    <path d="M50 25L75 39.4V60.6L50 75L25 60.6V39.4L50 25Z" fill="url(#goldGradObBack)" opacity="0.8"/>
+                                    <defs>
+                                        <linearGradient id="goldGradObBack" x1="25" y1="25" x2="75" y2="75" gradientUnits="userSpaceOnUse">
+                                            <stop offset="0%" stop-color="#ffe259" />
+                                            <stop offset="100%" stop-color="#ffa751" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="brand-title">MacHub</div>
+                                <div class="brand-tag">LIGHT-SPEED CAMPUS HUB</div>
+                            </div>
                         </header>
                     </section>
                 </div>`;

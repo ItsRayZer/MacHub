@@ -918,9 +918,6 @@ body::after {
         height: 100dvh;
         min-height: 0;
         border-radius: 0;
-        border-left: 0;
-        border-right: 0;
-    }
 }
 
 /* ── Onboarding 3D Holographic ID Ticket ── */
@@ -934,8 +931,14 @@ body::after {
     --ry: 0; /* Rotation Y */
     display: grid;
     place-content: center;
-    padding: 10px 0;
+    padding: 16px 0;
     width: 100%;
+    transform: rotateZ(-3.2deg); /* Stylish slight tilt by default */
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+#ob-ticket-container:hover,
+#profile-ticket-container:hover {
+    transform: rotateZ(-1deg) scale(1.03); /* Straighten and scale on hover */
 }
 
 .ob-ticket {
@@ -946,50 +949,35 @@ body::after {
     display: grid;
     grid-area: 1/1;
     width: 100%;
-    max-width: 400px; /* Full-bleed premium card */
-    aspect-ratio: 5/8;
+    max-width: 320px; /* Elegant slim aspect ratio like Threads */
+    aspect-ratio: 4/7;
     transition: transform 0.1s ease-out;
 }
 
 .ob-ticket-front,
 .ob-ticket-back {
     grid-area: 1/1;
-    /* Deep black base with vivid purple-blue gradient */
-    background-color: #080808;
+    background-color: #0c0b0a;
     background-image:
         radial-gradient(
-            circle at var(--p) 40%,
-            rgba(120, 80, 255, 0.35) 0%,
-            rgba(0, 180, 255, 0.15) 40%,
-            transparent 70%
+            circle at var(--p) var(--h),
+            rgba(212, 175, 55, 0.18) 0%,
+            transparent 65%
         ),
-        radial-gradient(
-            circle at 80% 80%,
-            rgba(255, 50, 120, 0.2) 0%,
-            transparent 60%
-        ),
-        linear-gradient(135deg, #1a0a2e 0%, #0a0a14 50%, #0a1a2e 100%);
+        linear-gradient(135deg, #181510 0%, #080808 60%, #15110d 100%);
     background-size: 100% 100%;
     background-position: center;
     background-repeat: no-repeat;
-    border-radius: 20px;
+    border-radius: 24px;
+    border: 1px dashed rgba(212, 175, 55, 0.35); /* dashed gold coupon border */
     display: grid;
     backface-visibility: hidden;
     transform: translateZ(1px);
     transform-style: preserve-3d;
     box-shadow:
-        0 30px 80px rgba(0,0,0,0.8),
-        0 0 0 1px rgba(255,255,255,0.08),
-        inset 0 1px 0 rgba(255,255,255,0.15),
-        0 0 60px rgba(120, 80, 255, 0.15);
-}
-
-/* Override for light mode — always stay black */
-.ob-ticket-front,
-.ob-ticket-back,
-.dark .ob-ticket-front,
-.dark .ob-ticket-back {
-    background-color: #080808;
+        0 25px 60px rgba(0,0,0,0.85),
+        0 0 40px rgba(212, 175, 55, 0.05);
+    overflow: hidden;
 }
 
 .ob-ticket-front::after,
@@ -997,21 +985,20 @@ body::after {
     content: "";
     position: absolute;
     inset: 0;
-    border-radius: 20px;
-    /* Multi-colour rainbow shimmer always visible */
+    border-radius: 24px;
     background-image:
         linear-gradient(
             calc(-70deg + var(--ry, 0deg) * 2),
             transparent 20%,
-            rgba(0, 220, 255, 0.4) 35%,
-            rgba(180, 80, 255, 0.3) 45%,
-            rgba(255, 80, 120, 0.2) 55%,
+            rgba(212, 175, 55, 0.25) 35%,
+            rgba(255, 235, 170, 0.15) 45%,
+            rgba(180, 140, 80, 0.1) 55%,
             transparent 70%
         );
     background-size: 200% 200%;
     background-position: var(--p) var(--p);
     z-index: 5;
-    opacity: 0.7;
+    opacity: 0.8;
     pointer-events: none;
     mix-blend-mode: screen;
     transition: background-position 0.1s ease;
@@ -1025,182 +1012,151 @@ body::after {
     display: block;
     position: absolute;
     inset: 0;
-    border-radius: 20px;
-    --space: 5%;
-    --red: hsl(0, 100%, 60%);
-    --orange: hsl(30, 100%, 60%);
-    --yellow: hsl(60, 100%, 60%);
-    --green: hsl(120, 100%, 60%);
-    --cyan: hsl(180, 100%, 60%);
-    --blue: hsl(222, 100%, 65%);
-    --purple: hsl(258, 100%, 65%);
-    --magenta: hsl(300, 100%, 60%);
-    background-image: repeating-linear-gradient(
+    border-radius: 24px;
+    background-image: linear-gradient(
         calc(-45deg + var(--ry, 0) * 1deg),
-        var(--red) 0%,
-        var(--orange) calc(var(--space) * 1),
-        var(--yellow) calc(var(--space) * 2),
-        var(--green) calc(var(--space) * 3),
-        var(--cyan) calc(var(--space) * 4),
-        var(--blue) calc(var(--space) * 5),
-        var(--purple) calc(var(--space) * 6),
-        var(--magenta) calc(var(--space) * 7),
-        var(--red) calc(var(--space) * 8)
+        rgba(212, 175, 55, 0.05) 0%,
+        rgba(255, 220, 120, 0.08) 50%,
+        rgba(212, 175, 55, 0.05) 100%
     );
-    background-size: 200vw 200vh;
-    background-position: calc(var(--h)) calc(var(--h));
-    background-repeat: no-repeat;
-    mask-image: url('../Logo/file_00000000378c7207842a975d80367515.png');
-    -webkit-mask-image: url('../Logo/file_00000000378c7207842a975d80367515.png');
-    mask-size: 18% 18%;
-    -webkit-mask-size: 18% 18%;
-    mask-repeat: repeat;
-    -webkit-mask-repeat: repeat;
-    mix-blend-mode: screen; /* brighter on black backgrounds */
-    filter: brightness(1.4) contrast(1.5) saturate(3);
-    opacity: calc(var(--o) * 0.4 + 0.55); /* Always at least 55% visible */
+    mix-blend-mode: screen;
+    opacity: 0.6;
     pointer-events: none;
-    transition: opacity 0.3s ease;
 }
 
-.ob-ticket .logo,
-.ob-ticket .data {
-    position: relative;
-    z-index: 2;
-}
-
-/* Large centered logo on back face only */
-.ob-ticket-back .logo {
-    width: 45%;
-    place-self: center;
-    transform: translateY(-10%);
-    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
-    position: relative;
-    z-index: 2;
-}
-
-/* Small top-right logo on front face (data face) */
-.ob-ticket-logo-small {
+/* Edge notches */
+.ob-ticket .notch {
     position: absolute;
-    right: 8%;
-    top: 8%;
-    width: 22%;
-    z-index: 3;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)) brightness(0) invert(1);
-    opacity: 0.9;
+    top: 60%;
+    width: 20px;
+    height: 20px;
+    background: #000000; /* Blends with app background */
+    border: 1px dashed rgba(212, 175, 55, 0.35);
+    border-radius: 50%;
+    z-index: 10;
+}
+.ob-ticket .notch-left {
+    left: -11px;
+}
+.ob-ticket .notch-right {
+    right: -11px;
 }
 
-.ob-ticket .data {
-    margin: 8% 10%;
-    margin-top: 16%;
-    padding-bottom: 20%;
-    text-transform: uppercase;
-    text-align: left;
-    overflow: hidden;
+/* ── Ticket Content Layout ── */
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 22px 0;
+    z-index: 2;
 }
-
-.ob-ticket .data h3 {
-    font-size: 10px;
-    font-weight: 800;
-    line-height: 1;
-    margin: 0.5em 0 0.15em;
-    color: rgba(255,255,255,0.7);
-    letter-spacing: 0.15em;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+.ticket-brand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
-
-.ob-ticket .data p {
-    font-size: 15px;
+.brand-name {
+    font-size: 13px;
     font-weight: 900;
+    color: #e5c158;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.ticket-type {
+    font-size: 8px;
+    font-weight: 800;
+    color: rgba(212, 175, 55, 0.7);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    padding: 2.5px 7px;
+    border-radius: 12px;
+    letter-spacing: 0.08em;
+}
+
+.ticket-body {
+    padding: 22px;
+    text-align: left;
+    z-index: 2;
+    margin-top: 10px;
+}
+.ticket-label {
+    font-size: 8px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+}
+.ticket-name {
+    font-size: 22px;
+    font-weight: 900;
+    color: #ffffff;
     line-height: 1.15;
-    margin: 0 0 0.5em;
-    color: white;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
-    letter-spacing: 0.02em;
+    letter-spacing: -0.015em;
+    background: linear-gradient(to right, #ffffff 40%, #ffd275 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.ticket-value {
+    font-size: 13px;
+    font-weight: 800;
+    color: #f5f5f7;
+    text-transform: uppercase;
+}
 
-.ob-ticket .divider {
+.ticket-divider {
     position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    top: 60%;
+    left: 10px;
+    right: 10px;
+    height: 1px;
+    border-top: 1px dashed rgba(212, 175, 55, 0.25);
+    z-index: 2;
+}
+
+.ticket-footer {
+    position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 18%;
-    padding: 0 10%;
-    background-image: repeating-linear-gradient(
-            90deg,
-            #fff0 0px,
-            #fff0 8px,
-            #0005 8px,
-            #0005 16px
-        ),
-        radial-gradient(ellipse at center center, #fff0 10%, transparent 50%);
-    background-size: 100% 1.5px, 250% 1.5px;
-    background-repeat: no-repeat;
-    background-position: -4px top, var(--h) top;
-    background-blend-mode: overlay;
-    font-size: 14px;
-    font-weight: 400;
+    height: 40%;
+    padding: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
     z-index: 2;
-    color: white;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    border-bottom-left-radius: 20px;
-    border-bottom-right-radius: 20px;
+}
+.ticket-serial {
+    font-size: 18px;
+    font-weight: 900;
+    color: #ffd275;
+    letter-spacing: 0.05em;
+    font-family: monospace;
 }
 
-.ob-ticket .username {
-    display: flex;
-    align-items: center;
-    font-family: inherit;
+/* Back Face Content */
+.ticket-back-content {
+    place-self: center;
+    text-align: center;
+    z-index: 2;
+}
+.brand-title {
+    font-size: 24px;
+    font-weight: 900;
+    color: #ffd275;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.brand-tag {
+    font-size: 8px;
     font-weight: 800;
-    gap: 10px;
-}
-
-/* Monogram initials circle instead of broken profile image */
-.ob-monogram {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.18);
-    border: 1.5px solid rgba(255,255,255,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: 900;
-    color: white;
-    letter-spacing: 0.05em;
-    flex-shrink: 0;
-}
-
-/* First name — large and bold, the hero text */
-.ob-name-first {
-    font-size: 28px !important;
-    font-weight: 900 !important;
-    line-height: 1 !important;
-    margin: 0 0 0.15em !important;
-    letter-spacing: -0.02em !important;
-}
-
-/* Last name — slightly smaller */
-.ob-name-last {
-    font-size: 20px !important;
-    font-weight: 700 !important;
-    line-height: 1 !important;
-    margin: 0 0 0.8em !important;
-    opacity: 0.85;
-}
-
-.ob-ticket .usernum {
-    font-size: 13px;
-    font-weight: 900;
-    opacity: 0.8;
-    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.2em;
+    margin-top: 5px;
+    text-transform: uppercase;
 }
 
 /* ── Interactive Holographic ID Card Skins ── */
