@@ -89,6 +89,11 @@ function enterAppWithProfile(profile) {
 
     if (typeof window.autoSelectNextExamDay === 'function') window.autoSelectNextExamDay();
     if (profile.adminNo && typeof window.startBackgroundSync === 'function') window.startBackgroundSync();
+    
+    // Always navigate to home screen upon login/onboarding completion
+    if (typeof window.switchView === 'function') {
+        window.switchView('view-home');
+    }
 }
 
 async function finishSmartOnboarding(event) {
@@ -539,12 +544,12 @@ window.validateObStep2 = function() {
     const btn = document.getElementById('ob-final-btn');
     if (isValid) {
         if (btn) {
-            btn.classList.remove('opacity-30', 'pointer-events-none');
+            btn.classList.remove('opacity-30');
             btn.classList.add('spring');
         }
     } else {
         if (btn) {
-            btn.classList.add('opacity-30', 'pointer-events-none');
+            btn.classList.add('opacity-30');
             btn.classList.remove('spring');
         }
     }

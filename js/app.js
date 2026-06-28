@@ -2378,7 +2378,6 @@ async function fetchAndFinishOnboarding() {
         };
 
         nextObStep(3);
-        finishOnboarding();
 
     } catch (err) {
         console.error("Onboarding setup failed:", err);
