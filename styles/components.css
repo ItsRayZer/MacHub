@@ -949,93 +949,127 @@ body::after {
     display: grid;
     grid-area: 1/1;
     width: 100%;
-    max-width: 320px; /* Elegant slim aspect ratio like Threads */
-    aspect-ratio: 4/7;
+    max-width: 300px;
+    aspect-ratio: 20/30; /* Exact Threads ticket ratio */
     transition: transform 0.1s ease-out;
 }
 
+/* ── Card faces ── */
 .ob-ticket-front,
 .ob-ticket-back {
     grid-area: 1/1;
-    background-color: #0c0b0a;
+    /* Deep near-black with warm undertone — exactly like Threads card */
+    background-color: #0e0c09;
     background-image:
+        /* Moving light orb follows cursor */
         radial-gradient(
-            circle at var(--p) var(--h),
-            rgba(212, 175, 55, 0.18) 0%,
-            transparent 65%
+            ellipse 80% 60% at var(--p) var(--h),
+            rgba(212, 175, 55, 0.22) 0%,
+            rgba(180, 130, 40, 0.08) 45%,
+            transparent 70%
         ),
-        linear-gradient(135deg, #181510 0%, #080808 60%, #15110d 100%);
+        /* Static base gradient */
+        linear-gradient(160deg, #1c1610 0%, #080706 55%, #14100a 100%);
     background-size: 100% 100%;
     background-position: center;
     background-repeat: no-repeat;
-    border-radius: 24px;
-    border: 1px dashed rgba(212, 175, 55, 0.35); /* dashed gold coupon border */
+    border-radius: 22px;
+    /* Subtle dashed gold rim — Threads ticket signature */
+    border: 1.5px solid rgba(212, 175, 55, 0.28);
+    outline: 1px dashed rgba(212, 175, 55, 0.12);
+    outline-offset: -5px;
     display: grid;
     backface-visibility: hidden;
     transform: translateZ(1px);
     transform-style: preserve-3d;
     box-shadow:
-        0 25px 60px rgba(0,0,0,0.85),
-        0 0 40px rgba(212, 175, 55, 0.05);
+        0 30px 80px rgba(0, 0, 0, 0.9),
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 1px 0 rgba(255, 235, 170, 0.12) inset,
+        0 0 60px rgba(212, 175, 55, 0.08);
     overflow: hidden;
+    position: relative;
 }
 
+/* ── Gold foil light-sweep — moves with mouse ── */
 .ob-ticket-front::after,
 .ob-ticket-back::after {
     content: "";
     position: absolute;
     inset: 0;
-    border-radius: 24px;
+    border-radius: 22px;
     background-image:
+        /* Primary gold sweep */
         linear-gradient(
-            calc(-70deg + var(--ry, 0deg) * 2),
-            transparent 20%,
-            rgba(212, 175, 55, 0.25) 35%,
-            rgba(255, 235, 170, 0.15) 45%,
-            rgba(180, 140, 80, 0.1) 55%,
+            calc(-65deg + var(--ry, 0deg) * 3),
+            transparent 15%,
+            rgba(255, 240, 180, 0.04) 28%,
+            rgba(212, 175, 55, 0.30) 36%,
+            rgba(255, 248, 200, 0.20) 42%,
+            rgba(180, 140, 60, 0.12) 50%,
+            transparent 65%
+        ),
+        /* Secondary subtle iridescent layer */
+        linear-gradient(
+            calc(115deg + var(--rx, 0deg) * 2),
+            transparent 30%,
+            rgba(120, 200, 255, 0.04) 45%,
+            rgba(255, 160, 100, 0.05) 55%,
             transparent 70%
         );
     background-size: 200% 200%;
-    background-position: var(--p) var(--p);
+    background-position: calc(var(--p)) calc(var(--h));
     z-index: 5;
-    opacity: 0.8;
     pointer-events: none;
     mix-blend-mode: screen;
-    transition: background-position 0.1s ease;
+    opacity: calc(0.4 + var(--o) * 0.6);
+    transition: opacity 0.3s ease, background-position 0.05s ease;
 }
 
+/* ── Back face ── */
 .ob-ticket-back {
     transform: rotateY(180deg) translateZ(1px);
 }
 
+/* ── Rainbow holographic overlay (Threads-style sparkle grid) ── */
 .ob-ticket-holo {
     display: block;
     position: absolute;
     inset: 0;
-    border-radius: 24px;
-    background-image: linear-gradient(
+    border-radius: 22px;
+    /* Repeating diagonal rainbow strips — mirrors Threads golden ticket */
+    background-image: repeating-linear-gradient(
         calc(-45deg + var(--ry, 0) * 1deg),
-        rgba(212, 175, 55, 0.05) 0%,
-        rgba(255, 220, 120, 0.08) 50%,
-        rgba(212, 175, 55, 0.05) 100%
+        hsla(0,   100%, 60%, 0.06) 0%,
+        hsla(30,  100%, 60%, 0.06) 3%,
+        hsla(60,  100%, 60%, 0.06) 6%,
+        hsla(120, 100%, 60%, 0.06) 9%,
+        hsla(180, 100%, 60%, 0.06) 12%,
+        hsla(222, 100%, 65%, 0.06) 15%,
+        hsla(258, 100%, 65%, 0.06) 18%,
+        hsla(300, 100%, 60%, 0.06) 21%,
+        hsla(0,   100%, 60%, 0.06) 24%
     );
-    mix-blend-mode: screen;
-    opacity: 0.6;
+    background-size: 150% 150%;
+    background-position: calc(var(--p)) calc(var(--h));
+    mix-blend-mode: color-dodge;
+    filter: brightness(1.2) contrast(0.6) saturate(2.5);
+    opacity: calc(var(--o) * 0.85);
     pointer-events: none;
+    transition: opacity 0.3s ease;
 }
 
-/* Edge notches */
+/* ── Edge punch-out notches (ticket tear-line) ── */
 .ob-ticket .notch {
     position: absolute;
-    top: 60%;
-    width: 20px;
-    height: 20px;
-    background: #000000; /* Blends with app background */
-    border: 1px dashed rgba(212, 175, 55, 0.35);
+    top: 58%;
+    width: 22px;
+    height: 22px;
+    background: var(--mac-bg, #000);
+    border: 1.5px dashed rgba(212, 175, 55, 0.28);
     border-radius: 50%;
     z-index: 10;
 }
-.ob-ticket .notch-left {
     left: -11px;
 }
 .ob-ticket .notch-right {

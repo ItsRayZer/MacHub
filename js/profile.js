@@ -1544,94 +1544,104 @@
         if (cardContainer) {
             const colorSkin = settings.holoSkin || 'amethyst';
             
+            const profInitials = (p.displayName || info.name || 'ME').split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
+            const profDeptShort = (info.dept || info.classGroup || info.department || '')
+                .replace(/bachelor of/i, '')
+                .replace(/b\.?\s*c\.?\s*a\.?/i, 'BCA')
+                .replace(/b\.?\s*s\.?\s*c\.?/i, 'BSc')
+                .replace(/b\.?\s*c\.?\s*o\.?\s*m\.?/i, 'BCom')
+                .trim().substring(0, 8).toUpperCase() || 'DEPT';
+            const profSemLabel = (info.semester || 'Sem 2').replace(/semester/i, 'Sem');
+            const profYear = new Date().getFullYear();
+
             cardContainer.innerHTML = `
                 <div id="profile-ticket-container" class="mb-4 relative z-10 mx-auto">
                     <section class="ob-ticket holo-skin-${colorSkin}" id="profile-ticketEl">
-                        <!-- FRONT FACE -->
-                        <section class="ob-ticket-front">
+
+                        <!-- ── FRONT FACE ── -->
+                        <section class="ob-ticket-front" style="display:flex;flex-direction:column;">
                             <div class="ob-ticket-holo"></div>
                             <div class="notch notch-left"></div>
                             <div class="notch notch-right"></div>
-                            
-                            <!-- Header -->
+
+                            <!-- Top bar: logo mark + year -->
                             <div class="ticket-header">
                                 <div class="ticket-brand">
-                                    <svg width="22" height="22" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M50 5L90 28.1V71.9L50 95L10 71.9V28.1L50 5Z" stroke="#d4af37" stroke-width="6" stroke-linejoin="round"/>
-                                        <path d="M50 25L75 39.4V60.6L50 75L25 60.6V39.4L50 25Z" fill="url(#goldGradProf)" opacity="0.8"/>
+                                    <svg class="ticket-brand-mark" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M50 5L90 28.1V71.9L50 95L10 71.9V28.1L50 5Z" stroke="#d4af37" stroke-width="7" stroke-linejoin="round"/>
+                                        <path d="M50 25L75 39.4V60.6L50 75L25 60.6V39.4L50 25Z" fill="url(#gProf)" opacity="0.9"/>
                                         <defs>
-                                            <linearGradient id="goldGradProf" x1="25" y1="25" x2="75" y2="75" gradientUnits="userSpaceOnUse">
-                                                <stop offset="0%" stop-color="#ffe259" />
-                                                <stop offset="100%" stop-color="#ffa751" />
+                                            <linearGradient id="gProf" x1="25" y1="25" x2="75" y2="75" gradientUnits="userSpaceOnUse">
+                                                <stop offset="0%" stop-color="#ffe259"/>
+                                                <stop offset="100%" stop-color="#d4841a"/>
                                             </linearGradient>
                                         </defs>
                                     </svg>
                                     <span class="brand-name">MacHub</span>
                                 </div>
-                                <div class="ticket-type">GOLDEN TICKET</div>
+                                <span class="ticket-year-chip">${profYear}</span>
                             </div>
 
-                            <!-- Body (Details) -->
-                            <div class="ticket-body">
-                                <div class="ticket-label">Holder</div>
-                                <div class="ticket-name">${escapeHtml(p.displayName || info.name)}</div>
-                                
-                                <div class="grid grid-cols-2 gap-4 mt-4">
-                                    <div>
-                                        <div class="ticket-label">Department</div>
-                                        <div class="ticket-value">${escapeHtml(info.dept || info.classGroup || '---')}</div>
-                                    </div>
-                                    <div>
-                                        <div class="ticket-label">Semester</div>
-                                        <div class="ticket-value">${escapeHtml(info.semester || 'Sem 2')}</div>
-                                    </div>
+                            <!-- Avatar + Name block -->
+                            <div style="padding:18px 20px 0;display:flex;align-items:center;gap:14px;position:relative;z-index:2;">
+                                <div class="ticket-avatar">${profInitials}</div>
+                                <div style="min-width:0;flex:1;">
+                                    <div class="ticket-label">Student</div>
+                                    <div class="ticket-name">${escapeHtml(p.displayName || info.name || '---')}</div>
+                                    <div class="ticket-adm">${escapeHtml(info.adminNo || adminNo || '—')}</div>
                                 </div>
                             </div>
 
-                            <!-- Divider -->
+                            <!-- Dept + Sem badges -->
+                            <div class="ticket-body" style="margin-top:0;padding-top:14px;">
+                                <div class="ticket-sem-row">
+                                    <span class="ticket-dept-badge">${profDeptShort}</span>
+                                    <span class="ticket-sem-badge">${escapeHtml(profSemLabel)}</span>
+                                </div>
+                            </div>
+
+                            <!-- Tear line -->
                             <div class="ticket-divider"></div>
 
-                            <!-- Footer -->
+                            <!-- Footer: adm number + QR glyph -->
                             <div class="ticket-footer">
                                 <div class="ticket-footer-left">
-                                    <div class="ticket-label">Ticket Number</div>
-                                    <div class="ticket-serial">#${escapeHtml(info.adminNo || '00000')}</div>
+                                    <div class="ticket-label">Adm. No</div>
+                                    <div class="ticket-serial">${escapeHtml(info.adminNo || adminNo || '—')}</div>
                                 </div>
-                                <div class="ticket-footer-right">
-                                    <!-- Vector Mock QR -->
-                                    <svg width="45" height="45" viewBox="0 0 100 100" fill="none" stroke="#d4af37" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-80">
-                                        <rect x="5" y="5" width="25" height="25" stroke-width="4"/>
-                                        <rect x="12" y="12" width="11" height="11" fill="#d4af37"/>
-                                        <rect x="70" y="5" width="25" height="25" stroke-width="4"/>
-                                        <rect x="77" y="12" width="11" height="11" fill="#d4af37"/>
-                                        <rect x="5" y="70" width="25" height="25" stroke-width="4"/>
-                                        <rect x="12" y="77" width="11" height="11" fill="#d4af37"/>
-                                        <path d="M45 10h10v10H45zM45 45h10v10H45zM10 45h10v10H10zM70 45h10v10H70z" fill="#d4af37"/>
-                                        <path d="M45 70h10M70 70h10M80 80h10M70 90h20M45 85h10v10H45z" stroke-width="4"/>
-                                    </svg>
-                                </div>
+                                <svg width="44" height="44" viewBox="0 0 100 100" fill="none" stroke="#d4af37" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.65">
+                                    <rect x="5" y="5" width="28" height="28" stroke-width="4.5" rx="3"/>
+                                    <rect x="12" y="12" width="14" height="14" fill="#d4af37" rx="1"/>
+                                    <rect x="67" y="5" width="28" height="28" stroke-width="4.5" rx="3"/>
+                                    <rect x="74" y="12" width="14" height="14" fill="#d4af37" rx="1"/>
+                                    <rect x="5" y="67" width="28" height="28" stroke-width="4.5" rx="3"/>
+                                    <rect x="12" y="74" width="14" height="14" fill="#d4af37" rx="1"/>
+                                    <path d="M45 10h10M45 20h10M67 45h10M78 45v10M5 45h10M5 56v-11M45 45h10v10H45zM60 67h10v10H60zM78 67h10v10H78zM67 78h10M45 78h10v10H45z"/>
+                                </svg>
                             </div>
                         </section>
-                        <!-- BACK FACE -->
+
+                        <!-- ── BACK FACE ── -->
                         <header class="ob-ticket-back">
                             <div class="ob-ticket-holo"></div>
                             <div class="notch notch-left"></div>
                             <div class="notch notch-right"></div>
                             <div class="ticket-back-content">
-                                <svg width="70" height="70" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-4">
+                                <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="mx-auto">
                                     <path d="M50 5L90 28.1V71.9L50 95L10 71.9V28.1L50 5Z" stroke="#d4af37" stroke-width="6" stroke-linejoin="round"/>
-                                    <path d="M50 25L75 39.4V60.6L50 75L25 60.6V39.4L50 25Z" fill="url(#goldGradProfBack)" opacity="0.8"/>
+                                    <path d="M50 25L75 39.4V60.6L50 75L25 60.6V39.4L50 25Z" fill="url(#gProfB)" opacity="0.9"/>
                                     <defs>
-                                        <linearGradient id="goldGradProfBack" x1="25" y1="25" x2="75" y2="75" gradientUnits="userSpaceOnUse">
-                                            <stop offset="0%" stop-color="#ffe259" />
-                                            <stop offset="100%" stop-color="#ffa751" />
+                                        <linearGradient id="gProfB" x1="25" y1="25" x2="75" y2="75" gradientUnits="userSpaceOnUse">
+                                            <stop offset="0%" stop-color="#ffe259"/>
+                                            <stop offset="100%" stop-color="#d4841a"/>
                                         </linearGradient>
                                     </defs>
                                 </svg>
                                 <div class="brand-title">MacHub</div>
-                                <div class="brand-tag">LIGHT-SPEED CAMPUS HUB</div>
+                                <div class="brand-tag">Mar Augusthinose College</div>
                             </div>
                         </header>
+
                     </section>
                 </div>
                 ${localClaimed ? `
