@@ -94,6 +94,11 @@ function enterAppWithProfile(profile) {
     if (typeof window.switchView === 'function') {
         window.switchView('view-home');
     }
+    
+    // Explicitly show bottom navigation menu
+    if (typeof window.showBottomNav === 'function') {
+        window.showBottomNav();
+    }
 }
 
 async function finishSmartOnboarding(event) {

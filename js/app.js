@@ -2460,6 +2460,7 @@ function finishOnboarding() {
     autoSelectNextExamDay();
     localStorage.setItem('machub_current_view', 'view-home');
     switchView('view-home');
+    if (typeof showBottomNav === 'function') showBottomNav();
 }
 
 window.nextObStep = nextObStep;
@@ -2539,9 +2540,11 @@ function checkOnboarding() {
 
     if (!saved) {
         if (obScreen) obScreen.classList.remove('hidden');
+        if (typeof hideBottomNav === 'function') hideBottomNav();
     } else {
         if (obScreen) obScreen.classList.add('hidden', 'collapsed');
         applyUserProfile();
+        if (typeof showBottomNav === 'function') showBottomNav();
     }
 }
 
