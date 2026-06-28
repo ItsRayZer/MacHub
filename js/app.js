@@ -78,8 +78,11 @@ function getPortalCache(section, adminNo, semester = '') {
                 const sems = payload?.semesters || payload?.semesterOptions || [];
                 const selectedOpt = sems.find(s => s.selected);
                 if (selectedOpt) {
-                    const match = String(selectedOpt.value || '').match(/\d+/);
-                    if (match && String(match[0]) === String(semester)) {
+                    // Match by text-based number first (e.g. "Semester 4" → "4"), then raw value
+                    const textMatch = String(selectedOpt.text || '').match(/\d+/);
+                    const valMatch  = String(selectedOpt.value || '').match(/\d+/);
+                    const semNumFromCache = textMatch ? textMatch[0] : (valMatch ? valMatch[0] : null);
+                    if (semNumFromCache && semNumFromCache === String(semester)) {
                         return direct;
                     }
                 }

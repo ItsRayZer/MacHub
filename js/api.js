@@ -207,8 +207,11 @@
         const sems = payload?.semesters || payload?.semesterOptions || [];
         const selectedOpt = sems.find(s => s.selected);
         if (selectedOpt) {
-          const match = String(selectedOpt.value || '').match(/\d+/);
-          if (match) semester = match[0];
+          // Prefer text-based number (e.g. "Semester 4" → "4") over raw value which may be a portal internal ID
+          const textMatch = String(selectedOpt.text || '').match(/\d+/);
+          const valMatch  = String(selectedOpt.value || '').match(/\d+/);
+          if (textMatch) semester = textMatch[0];
+          else if (valMatch) semester = valMatch[0];
         }
       }
       

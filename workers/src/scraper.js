@@ -117,31 +117,60 @@ export async function scrapeSemesterDropdownPage(pageName, path, cookie, body) {
     return parseHtml(pageName, getHtml);
   }
 
+  let targetSemesterValue = null; // The actual option value to POST to the portal
   let targetSemester = body?.semester || null;
-  if (!targetSemester) {
+
+  if (targetSemester) {
+    // 1. Try exact value match first
+    let matchedOpt = semesterOptions.find(o => o.value == targetSemester);
+    // 2. Try numeric match in option text (e.g. body.semester=4 matches "Semester 4" or "SEM-4")
+    if (!matchedOpt) {
+      const semNum = String(targetSemester).match(/\d+/)?.[0];
+      if (semNum) {
+        matchedOpt = semesterOptions.find(o => {
+          const textNums = String(o.text).match(/\d+/);
+          return textNums && textNums[0] === semNum;
+        });
+      }
+    }
+    if (matchedOpt) {
+      targetSemesterValue = matchedOpt.value;
+    } else {
+      // Requested semester not in dropdown — return current page data with semesters attached
+      const fallback = parseHtml(pageName, getHtml);
+      fallback.semesters = semesterOptions;
+      fallback.semesterOptions = semesterOptions;
+      return fallback;
+    }
+  } else {
+    // No semester requested — pick the highest numbered option as default
     let maxVal = -1;
     let maxSemVal = "";
     semesterOptions.forEach(opt => {
       const numericVal = parseInt(opt.value, 10);
       if (!isNaN(numericVal) && numericVal > maxVal) { maxVal = numericVal; maxSemVal = opt.value; }
     });
-    targetSemester = maxSemVal || portalDefaultSem || semesterOptions[0]?.value || "2";
+    targetSemesterValue = maxSemVal || portalDefaultSem || semesterOptions[0]?.value || "";
   }
 
-  if (!semesterOptions.find(o => o.value == targetSemester)) {
-    return parseHtml(pageName, getHtml);
+  if (!targetSemesterValue) {
+    const fallback = parseHtml(pageName, getHtml);
+    fallback.semesters = semesterOptions;
+    fallback.semesterOptions = semesterOptions;
+    return fallback;
   }
 
-  semesterOptions.forEach(opt => opt.selected = (opt.value === targetSemester));
+  semesterOptions.forEach(opt => opt.selected = (opt.value === targetSemesterValue));
 
   const finalPayload = helperExtractFormFields($);
-  finalPayload[semesterFieldName] = targetSemester;
+  finalPayload[semesterFieldName] = targetSemesterValue;
   finalPayload["__EVENTTARGET"] = semesterFieldName;
   finalPayload["__EVENTARGUMENT"] = "";
   
   delete finalPayload["ctl00$MainContent$btnSubmit"];
   delete finalPayload["ctl00$MainContent$btn_Cancel"];
   delete finalPayload["ctl00$MainContent$btnsubmit"];
+
 
   const bodyParams = new URLSearchParams();
   for (const [k, v] of Object.entries(finalPayload)) bodyParams.append(k, v);
