@@ -58,6 +58,9 @@ function getStudentInfo() {
     }
 }
 
+// How long before cached data is considered stale and a background refresh is triggered (4 hours)
+const PORTAL_CACHE_STALE_MS = 4 * 60 * 60 * 1000;
+
 function getPortalCache(section, adminNo, semester = '') {
     if (!adminNo) return null;
     if (semester) {
@@ -95,6 +98,21 @@ function getPortalCache(section, adminNo, semester = '') {
         }
     }
     return null;
+}
+
+/**
+ * Returns true if the cached data for the given section is older than PORTAL_CACHE_STALE_MS.
+ * Also returns true when there is no cached data at all.
+ */
+function isPortalCacheStale(section, adminNo, semester = '') {
+    const raw = getPortalCache(section, adminNo, semester);
+    if (!raw) return true;
+    try {
+        const parsed = JSON.parse(raw);
+        const savedAt = parsed?.savedAt || 0;
+        if (!savedAt) return true;
+        return (Date.now() - savedAt) > PORTAL_CACHE_STALE_MS;
+    } catch (e) { return true; }
 }
 
 function saveStudentInfo(profile) {
@@ -3908,17 +3926,39 @@ window.renderClassAttendance = function() {
     }
 
     if (!subjects.length) {
+        // Show spinner + trigger auto fetch in background
         container.innerHTML = window.getFreshnessIndicatorHtml('Attendance', selectedSem === 'all' ? '' : selectedSem) + semFilterHtml + `
-            <div style="text-align:center;padding:3rem 1rem;">
-                <div style="font-size:3rem;margin-bottom:1rem;">📊</div>
-                <p style="font-size:0.9rem;font-weight:700;color:var(--mac-secondary,#86868b);">No attendance data for this semester</p>
-                <p style="font-size:0.75rem;color:var(--mac-secondary,#86868b);margin-top:0.4rem;">Please make sure to sync your portal data.</p>
-                <button id="sync-attendance-btn" onclick="window.switchAttendanceSemester('${selectedSem}')" class="mt-4 px-6 py-2.5 bg-[var(--mac-blue)] text-white rounded-full text-xs font-black spring active:scale-95">
-                    🔄 Sync Attendance
-                </button>
+            <div id="attendance-loading-state" style="text-align:center;padding:3rem 1rem;">
+                <div class="w-10 h-10 border-4 border-[var(--mac-blue)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p style="font-size:0.85rem;font-weight:700;color:var(--mac-secondary,#86868b);">Fetching attendance...</p>
             </div>
         `;
+        // Auto-fetch and re-render
+        if (adminNo && window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
+            const semToFetch = selectedSem !== 'all' ? selectedSem : '';
+            window.MacHubPortal.fetchSection('Attendance', true, semToFetch)
+                .then(() => { window.renderClassAttendance(); })
+                .catch(() => {
+                    const loadEl = document.getElementById('attendance-loading-state');
+                    if (loadEl) loadEl.innerHTML = `
+                        <div style="font-size:2rem;margin-bottom:0.75rem;">📊</div>
+                        <p style="font-size:0.9rem;font-weight:700;color:var(--mac-secondary,#86868b);">No attendance data for this semester</p>
+                        <button onclick="window.switchAttendanceSemester('${selectedSem}')" class="mt-4 px-6 py-2.5 bg-[var(--mac-blue)] text-white rounded-full text-xs font-black spring active:scale-95">🔄 Retry Sync</button>
+                    `;
+                });
+        }
         return;
+    }
+
+    // ── Stale-data background refresh ─────────────────────────────────────
+    // Data found but stale (>4h) → silently re-fetch and re-render
+    if (adminNo && isPortalCacheStale('Attendance', adminNo, selectedSem !== 'all' ? selectedSem : '')) {
+        if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
+            const semToFetch = selectedSem !== 'all' ? selectedSem : '';
+            window.MacHubPortal.fetchSection('Attendance', true, semToFetch)
+                .then(() => { window.renderClassAttendance(); })
+                .catch(() => {}); // silent — we already have data to show
+        }
     }
 
     // ── Compute overall stats ──────────────────────────────────────────────
@@ -4465,7 +4505,15 @@ window.renderExamResults = function () {
         }
         const fetchStatus = appState.internalFetchStatus[activeSem];
 
+        // Background stale-refresh: data exists but is >4h old
+        if ((internalRaw || assessRaw) && 
+            isPortalCacheStale('InternalMark', adminNo, activeSem) &&
+            fetchStatus !== 'fetching') {
+            window.autoFetchInternals(activeSem, true);
+        }
+
         // If not fetched yet and no cached data, show skeleton and trigger fetch
+
         if (!internalRaw && !assessRaw && fetchStatus !== 'success' && fetchStatus !== 'error') {
             container.innerHTML = headerHtml + `
                 <div class="flex justify-center mb-6 overflow-x-auto max-w-full no-scrollbar">

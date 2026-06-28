@@ -225,6 +225,110 @@ function parseAssessment(html) {
   return { page: 'Assessment', sections, semesters };
 }
 
+/**
+ * InternalMark page parser.
+ * The portal renders one of two layouts:
+ *   A) Multiple tables — one per subject, each preceded by a heading.
+ *   B) Single table  — all subjects as rows, with a "Subject Name" column.
+ * We detect and handle both.
+ */
+function parseInternalMark(html) {
+  const $        = cheerio.load(html);
+  const sections = [];
+
+  // Extract semesters list (same selectors as Assessment)
+  const semesters = [];
+  const semSelect = $('#MainContent_ddlsem, #MainContent_drpsem, #ContentPlaceHolder2_drpsemforma, #MainContent_drop_exam, #MainContent_drp_exam, select[name*="sem"], select[name*="exam"]');
+  if (semSelect.length) {
+    semSelect.find('option').each((_, opt) => {
+      semesters.push({
+        value: $(opt).attr('value'),
+        text:  $(opt).text().trim(),
+        selected: $(opt).attr('selected') === 'selected' || $(opt).prop('selected') || false
+      });
+    });
+  }
+
+  // Helper: does this table contain a "Subject Name" column? → single-table layout
+  function isSingleSubjectTable($tbl) {
+    let isIt = false;
+    $tbl.find('tr').first().find('th, td').each((_, el) => {
+      const t = $(el).text().trim().toLowerCase();
+      if (t.includes('subject') || t.includes('paper')) isIt = true;
+    });
+    return isIt;
+  }
+
+  const tables = $('table').toArray();
+
+  if (tables.length === 1 && isSingleSubjectTable($(tables[0]))) {
+    // ── Layout B: single big table with Subject Name column ──────────────────
+    const { headers, rows } = parseSingleTable($, tables[0]);
+    // Group rows by their Subject Name cell
+    const subjectMap = new Map();
+    rows.forEach(row => {
+      const subName = (
+        row['Subject Name'] ||
+        row['SubjectName']  ||
+        row['subject name'] ||
+        row['Subject']      ||
+        row['subject']      ||
+        row['Paper']        ||
+        row['col_0']        ||
+        row['col_1']        ||
+        'General'
+      ).replace(/\s*\([^)]+\)/g, '').trim();
+      if (!subjectMap.has(subName)) subjectMap.set(subName, []);
+      subjectMap.get(subName).push(row);
+    });
+    subjectMap.forEach((subRows, subName) => {
+      sections.push({ subject: subName, headers, rows: subRows });
+    });
+  } else {
+    // ── Layout A: one table per subject, with a heading before each ──────────
+    tables.forEach(table => {
+      let subjectName = '';
+
+      let current = $(table);
+      while (current.length && current.parent().length &&
+             !current.parent().is('.col-sm-12') && !current.parent().is('body')) {
+        current = current.parent();
+      }
+
+      // Look at preceding siblings for heading text
+      let prevH = current.prevAll('h3, h4, h5, b, strong, div[class*="head"], p[class*="head"]').first();
+      if (prevH.length) {
+        subjectName = prevH.text().replace(/\s*\([^)]+\)/g, '').trim();
+      }
+      if (!subjectName) {
+        let prevHInParent = $(table).parent().find('h3, h4, h5, b, strong').first();
+        if (prevHInParent.length) {
+          subjectName = prevHInParent.text().replace(/\s*\([^)]+\)/g, '').trim();
+        }
+      }
+      if (!subjectName) {
+        let el = $(table).parent();
+        while (el.length && !subjectName) {
+          const candidate = el.find('h3, h4, h5, b, strong').first();
+          const text = (candidate.length ? candidate : el).text().trim();
+          if (text && text.length > 3 && !/^\d+$/.test(text) && !text.toLowerCase().includes('semester') && !text.toLowerCase().includes('internal mark')) {
+            subjectName = text.replace(/\s*\([^)]+\)/, '').trim();
+          }
+          el = el.parent();
+        }
+      }
+      if (!subjectName) subjectName = 'General';
+
+      const { headers, rows } = parseSingleTable($, table);
+      if (rows.length > 0) {
+        sections.push({ subject: subjectName, headers, rows });
+      }
+    });
+  }
+
+  return { page: 'InternalMark', sections, semesters };
+}
+
 /** Assignment page parser — splits Active vs Expired tables */
 function parseAssignment(html) {
   const $       = cheerio.load(html);
@@ -823,6 +927,7 @@ export function parseHtml(pageName, html) {
     case 'AttendanceSubjectWise': return parseAttendanceSubjectWise(html);
     case 'SubjectWiseAttendance': return parseAttendanceSubjectWise(html);
     case 'Assessment': return parseAssessment(html);
+    case 'InternalMark': return parseInternalMark(html);
     case 'Assignment': return parseAssignment(html);
     case 'Seminar': return parseSeminar(html);
     case 'StudyMaterial': return parseStudyMaterial(html);
