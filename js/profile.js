@@ -1231,27 +1231,10 @@
         const settings = readSettings();
         const adminNo = info.adminNo || '';
 
-        // Security Gate check
-        const localClaimed = localStorage.getItem('machub_claimed_admission') === adminNo;
-        
-        // If claimed but not unlocked on this device, redirect to pin lock screen
-        const pinConfigured = localStorage.getItem('machub_pin_configured_' + adminNo) !== 'false';
-        if (localClaimed && pinConfigured && !window.ExamHubState.security.isUnlocked) {
-            const pinLen = parseInt(localStorage.getItem('machub_pin_length_' + adminNo) || '4', 10);
-            if (window.ExamHubLock) {
-                window.ExamHubLock.show(adminNo, pinLen);
-                return;
-            }
-        }
-
-        // Show/hide claim banner
+        // Security Gate check (PIN/Claim feature removed)
         const claimBanner = document.getElementById('profileClaimBanner');
         if (claimBanner) {
-            if (!localClaimed) {
-                claimBanner.classList.remove('hidden');
-            } else {
-                claimBanner.classList.add('hidden');
-            }
+            claimBanner.classList.add('hidden');
         }
 
         // 1. Populate details grid

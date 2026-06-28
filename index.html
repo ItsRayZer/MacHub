@@ -93,13 +93,8 @@
 
                 <div id="ob-confirm-card" class="text-left"></div>
 
-                <div class="space-y-3">
-                    <button type="button" onclick="if (window.finishOnboarding) return window.finishOnboarding(event)" class="w-full bg-[var(--mac-blue)] text-white py-5 rounded-[1.5rem] font-bold text-lg shadow-xl shadow-[var(--mac-blue)]/20 spring">
-                        Continue
-                    </button>
-                    <button onclick="nextObStep(1)" class="w-full text-[#86868b] text-[10px] font-black uppercase tracking-widest py-2 spring">
-                        Not you? Search again
-                    </button>
+                <div id="ob-step3-actions" class="flex flex-col gap-3.5 mt-6">
+                    <!-- Populated dynamically by onboarding.js -->
                 </div>
             </div>
         </div>
@@ -1192,13 +1187,6 @@
                             </div>
                             <span class="settings-nav-arrow">›</span>
                         </div>
-                        <div class="settings-nav-row" onclick="switchView('view-settings-account-security')">
-                            <div class="settings-nav-row-left">
-                                <div class="settings-nav-icon" style="background:rgba(0,245,212,0.15);">🛡️</div>
-                                <div><div class="settings-nav-label">Security Overview</div><div class="settings-nav-sub">Encryption, login alerts & auth</div></div>
-                            </div>
-                            <span class="settings-nav-arrow">›</span>
-                        </div>
                         <div class="settings-nav-row" onclick="switchView('view-settings-privacy')">
                             <div class="settings-nav-row-left">
                                 <div class="settings-nav-icon" style="background:rgba(16,185,129,0.15);">🔒</div>
@@ -1704,85 +1692,7 @@
         </div>
     </div>
 
-    <!-- DEDICATED SETTINGS PAGE: SECURITY OVERVIEW -->
-    <div id="view-settings-account-security" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
-        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
-        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
-            <div class="flex items-center gap-3">
-                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                </button>
-                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Account Security</h3>
-            </div>
-        </div>
-        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
-            <!-- CLAIM STATUS CARD -->
-            <p class="settings-section-title">🛡️ Security Status</p>
-            <div class="p-4 rounded-xl flex items-center justify-between border border-white/5 bg-white/[0.01]">
-                <div class="flex items-center gap-3">
-                    <span class="text-lg">🛡️</span>
-                    <div>
-                        <p class="text-[11px] font-black text-white">Profile Security Status</p>
-                        <p id="sec-claim-status-text" class="text-[9px] text-[#86868b] leading-tight">Checking status...</p>
-                    </div>
-                </div>
-                <button id="sec-btn-claim-profile" onclick="window.triggerSettingsClaim()" class="hidden px-3.5 py-2 bg-amber-500 text-black font-black text-[9px] uppercase tracking-wider rounded-xl spring">
-                    Claim
-                </button>
-            </div>
-
-            <!-- PIN MANAGEMENT -->
-            <p class="settings-section-title">🔑 PIN Settings</p>
-            <div class="liquid-glass rounded-3xl p-4 space-y-4">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <div class="settings-nav-label" id="sec-label-pin-action">Set Profile PIN</div>
-                        <div class="settings-nav-sub">Instantly lock profile details</div>
-                    </div>
-                    <button onclick="window.triggerSettingsChangePin()" class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl font-bold text-xs spring active:scale-95 text-white">
-                        Configure
-                    </button>
-                </div>
-                <div class="h-px bg-white/5"></div>
-                <div class="flex justify-between items-center">
-                    <div>
-                        <div class="settings-nav-label">PIN Length</div>
-                        <div class="settings-nav-sub">Configure 4 or 6 digit unlock lock</div>
-                    </div>
-                    <div class="flex gap-1.5 bg-black/30 p-1 rounded-xl border border-white/5">
-                        <button onclick="window.triggerSettingsPinLength(4)" id="sec-btn-len-4" class="px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wide bg-zinc-800 text-white spring">4</button>
-                        <button onclick="window.triggerSettingsPinLength(6)" id="sec-btn-len-6" class="px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wide text-zinc-400 spring">6</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- DEVICES & PASSWORD -->
-            <p class="settings-section-title">📱 Portal Credentials & Devices</p>
-            <div class="liquid-glass rounded-3xl p-4 space-y-4">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <div class="settings-nav-label">Delete Saved Portal Password</div>
-                        <div class="settings-nav-sub">Wipes password from Firebase. Next sync will ask you.</div>
-                    </div>
-                    <button onclick="window.triggerDeleteStoredPassword()" class="px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl font-bold text-xs spring active:scale-95 text-red-400">
-                        Delete
-                    </button>
-                </div>
-                <div class="h-px bg-white/5"></div>
-                <div class="flex justify-between items-center">
-                    <div>
-                        <div class="settings-nav-label">Logout All Other Devices</div>
-                        <div class="settings-nav-sub">Revoke all other device tokens</div>
-                    </div>
-                    <button onclick="window.triggerLogoutAllDevices()" class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl font-bold text-xs spring active:scale-95 text-slate-300">
-                        Logout All
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- DEDICATED SETTINGS PAGE: SECURITY OVERVIEW (DEPRECATED) -->
 
     <!-- DEDICATED SETTINGS PAGE: ALLOTMENT MEMO -->
     <div id="view-settings-allotment-memo" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
@@ -2667,6 +2577,78 @@
 
     
 
+    <!-- DEDICATED DIALOG MODAL: PORTAL PASSWORD REQUIRED/CHANGED -->
+    <div id="portalPasswordModal" class="machub-modal">
+        <div class="machub-modal-backdrop" onclick="window.closePortalPasswordModal()"></div>
+        <div class="machub-modal-content">
+            <div class="text-center space-y-4">
+                <div class="w-14 h-14 rounded-full bg-[var(--mac-blue)]/10 border border-[var(--mac-blue)]/20 flex items-center justify-center mx-auto text-xl">
+                    🔑
+                </div>
+                <h4 id="pwd-modal-title" class="text-lg font-black text-white/90">Portal Password Required</h4>
+                <p id="pwd-modal-desc" class="text-xs text-zinc-400 leading-relaxed px-2">
+                    Enter your official portal password to authorize syncing.
+                </p>
+                <div class="space-y-3 pt-2 text-left">
+                    <div>
+                        <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="portal-pwd-input">ePortal Password</label>
+                        <input type="password" id="portal-pwd-input" placeholder="••••••••" 
+                            class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-[var(--mac-blue)]" />
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="window.closePortalPasswordModal()" class="flex-1 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 font-bold text-xs rounded-xl transition-all">
+                        Cancel
+                    </button>
+                    <button onclick="window.submitPortalPasswordVerification()" class="flex-1 py-3.5 bg-[var(--mac-blue)] hover:bg-[var(--mac-blue)]/90 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-[var(--mac-blue)]/15">
+                        <span>Verify & Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEDICATED DIALOG MODAL: SECURE ACCOUNT (CHANGE DEFAULT PASSWORD) -->
+    <div id="secureAccountModal" class="machub-modal">
+        <div class="machub-modal-backdrop" onclick="window.closeSecureAccountModal()"></div>
+        <div class="machub-modal-content">
+            <div class="text-center space-y-4">
+                <div class="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-xl">
+                    🛡️
+                </div>
+                <h4 class="text-lg font-black text-white/90">Secure Your Account</h4>
+                <p class="text-xs text-zinc-400 leading-relaxed px-2">
+                    Change your default password (admission number) to a secure one on the portal.
+                </p>
+                <div class="space-y-3 pt-2 text-left">
+                    <div>
+                        <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-old-pwd">Old Password</label>
+                        <input type="password" id="sec-old-pwd" placeholder="••••••••" 
+                            class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-new-pwd">New Password</label>
+                        <input type="password" id="sec-new-pwd" placeholder="••••••••" 
+                            class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-confirm-pwd">Confirm New Password</label>
+                        <input type="password" id="sec-confirm-pwd" placeholder="••••••••" 
+                            class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="window.closeSecureAccountModal()" class="flex-1 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 font-bold text-xs rounded-xl transition-all">
+                        Cancel
+                    </button>
+                    <button onclick="window.submitSecureAccountPasswordChange()" id="btn-submit-secure-pwd" class="flex-1 py-3.5 bg-amber-500 hover:bg-amber-600 text-black font-black text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/15">
+                        <span>Change & Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="js/firebase-init.js"></script>
     <script defer src="data/common/timetable.js"></script>
     <script defer src="data/common/timetable_bca.js"></script>
@@ -2692,8 +2674,6 @@
     <script defer src="js/resources.js"></script>
     <script defer src="js/app.js?v=2.0.4"></script>
     <script defer src="js/onboarding.js"></script>
-    <script defer src="js/claim_profile.js"></script>
-    <script defer src="js/pin_lock.js"></script>
     <script defer src="js/qr_id.js"></script>
     <script defer src="js/bootstrap.js"></script>
 

@@ -372,6 +372,24 @@ window.nextObStep = function(step) {
             // Reset bind so it attaches to new element
             _profileTiltBound = false;
             bindProfileCardTilt();
+
+            // Populate the Apple-like liquid glass actions row
+            const actionsEl = document.getElementById('ob-step3-actions');
+            if (actionsEl) {
+                actionsEl.innerHTML = `
+                    <div class="grid grid-cols-2 gap-3.5">
+                        <button onclick="window.nextObStep(1)" class="btn-liquid-glass red flex-1 py-4 text-xs font-bold spring">
+                            Not Me
+                        </button>
+                        <button onclick="window.triggerSecureAccountModal('${escapeHtml(s.adminNo)}')" class="btn-liquid-glass gold flex-1 py-4 text-xs font-bold spring">
+                            Secure Account
+                        </button>
+                    </div>
+                    <button onclick="if (window.finishOnboarding) window.finishOnboarding(event)" class="btn-liquid-glass blue w-full py-4.5 text-sm font-bold spring mt-1">
+                        This is me
+                    </button>
+                `;
+            }
         }
 
         syncSelectedProfileToObData();
@@ -533,6 +551,104 @@ window.validateObStep2 = function() {
 };
 
 window.finishOnboarding = finishSmartOnboarding;
+
+let secureAccountAdmin = '';
+
+window.triggerSecureAccountModal = function(adminNo) {
+    secureAccountAdmin = adminNo;
+    const modal = document.getElementById('secureAccountModal');
+    if (!modal) return;
+
+    const oldPwdInput = document.getElementById('sec-old-pwd');
+    if (oldPwdInput) oldPwdInput.value = adminNo;
+
+    const newPwdInput = document.getElementById('sec-new-pwd');
+    if (newPwdInput) newPwdInput.value = '';
+
+    const confirmPwdInput = document.getElementById('sec-confirm-pwd');
+    if (confirmPwdInput) confirmPwdInput.value = '';
+
+    modal.classList.add('open');
+};
+
+window.closeSecureAccountModal = function() {
+    const modal = document.getElementById('secureAccountModal');
+    if (modal) modal.classList.remove('open');
+};
+
+window.submitSecureAccountPasswordChange = async function() {
+    const adminNo = secureAccountAdmin;
+    const oldPassword = document.getElementById('sec-old-pwd')?.value || '';
+    const newPassword = document.getElementById('sec-new-pwd')?.value || '';
+    const confirmPassword = document.getElementById('sec-confirm-pwd')?.value || '';
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+        alert('All fields are required.');
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        alert('New passwords do not match.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-submit-secure-pwd');
+    const originalText = btn ? btn.innerHTML : 'Change & Save';
+    if (btn) btn.innerHTML = '⏳ Processing...';
+
+    const CF_WORKER_URL = 'https://machub-proxy.mrabensojan.workers.dev';
+
+    try {
+        const res = await fetch(`${CF_WORKER_URL}/api/change-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                admissionNumber: adminNo,
+                oldPassword,
+                newPassword,
+                confirmPassword
+            })
+        });
+
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+            throw new Error(json.error || 'Password update failed');
+        }
+
+        localStorage.setItem(`machub_portal_Password_${adminNo}`, newPassword);
+
+        try {
+            const encRes = await fetch(`${CF_WORKER_URL}/api/auth/encrypt-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: newPassword })
+            });
+            const encJson = await encRes.json();
+            if (encRes.ok && encJson.success && encJson.encrypted) {
+                if (window.authenticateFirebase) {
+                    await window.authenticateFirebase(adminNo);
+                }
+                
+                if (window.updateFirestoreDocSecurely) {
+                    await window.updateFirestoreDocSecurely(adminNo, {
+                        'security.portalPasswordEncrypted': encJson.encrypted,
+                        'security.credentialStatus': 'valid'
+                    });
+                }
+            }
+        } catch (saveErr) {
+            console.warn('[Onboarding] Failed to sync updated password to database:', saveErr);
+        }
+
+        alert('Account secured! Portal password updated successfully.');
+        window.closeSecureAccountModal();
+
+    } catch (err) {
+        alert('Failed to secure account: ' + err.message);
+    } finally {
+        if (btn) btn.innerHTML = originalText;
+    }
+};
 
 window.skipOnboarding = function() {
     const guestProfile = {

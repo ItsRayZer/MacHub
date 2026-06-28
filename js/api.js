@@ -288,15 +288,25 @@
 
     try {
       let res, json;
+      const pwd = localStorage.getItem(`machub_portal_Password_${adminNo}`) || adminNo;
 
       if (USE_WORKER_API) {
         // ── Cloudflare Worker: POST /api/scrape/:section ──────────────────────
         res = await fetch(`${PROXY_BASE}/api/scrape/${encodeURIComponent(sectionName)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ admissionNumber: adminNo, semester: semester || undefined }),
+          body: JSON.stringify({ 
+            admissionNumber: adminNo, 
+            semester: semester || undefined,
+            password: pwd
+          }),
           signal: AbortSignal.timeout(20000)
         });
+        
+        if (res.status === 401) {
+          throw new Error('LOGIN_FAILED');
+        }
+
         json = await res.json();
         if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
         // Worker returns { success, data, section } — normalise to match local format
@@ -305,7 +315,13 @@
         // ── Local Node proxy: GET /api/sync-portal/:section ───────────────────
         let url = `${PROXY_BASE}/api/sync-portal/${encodeURIComponent(sectionName)}?admissionNumber=${encodeURIComponent(adminNo)}`;
         if (semester) url += `&semester=${encodeURIComponent(semester)}`;
+        url += `&password=${encodeURIComponent(pwd)}`;
         res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+        
+        if (res.status === 401) {
+          throw new Error('LOGIN_FAILED');
+        }
+
         json = await res.json();
         if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
       }
@@ -315,6 +331,21 @@
       return json;
 
     } catch (err) {
+      if (err.message === 'LOGIN_FAILED' || err.message.includes('LOGIN_FAILED') || err.message.includes('re-authenticate')) {
+        return new Promise((resolve, reject) => {
+          window.promptPortalPassword(adminNo, async (newPwd) => {
+            try {
+              const retryRes = await fetchSection(sectionName, force, semester);
+              resolve(retryRes);
+            } catch (retryErr) {
+              reject(retryErr);
+            }
+          }, () => {
+            reject(new Error('AUTHENTICATION_FAILED'));
+          });
+        });
+      }
+
       // Always fall back to cloud cache on any network error
       const cloudCached = await readCloudCache(sectionName, semester);
       if (cloudCached) {
@@ -1226,6 +1257,25 @@
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || 'Password update failed');
 
+      localStorage.setItem(`machub_portal_Password_${getAdminNo()}`, newPassword);
+
+      try {
+        const encRes = await fetch(`${CF_WORKER_URL}/api/auth/encrypt-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: newPassword })
+        });
+        const encJson = await encRes.json();
+        if (encRes.ok && encJson.success && encJson.encrypted) {
+          await updateFirestoreDocSecurely(getAdminNo(), {
+            'security.portalPasswordEncrypted': encJson.encrypted,
+            'security.credentialStatus': 'valid'
+          });
+        }
+      } catch (saveErr) {
+        console.warn('[MacHub API] Failed to sync changed password to database:', saveErr);
+      }
+
       if (button) {
         button.innerHTML = `<span>✅ Password Changed!</span>`;
         button.style.backgroundColor = '#30d158';
@@ -1776,6 +1826,93 @@
       }
     } catch (e) {
       alert('Error updating password: ' + e.message);
+    }
+  };
+
+  let activePasswordPrompt = null;
+
+  window.promptPortalPassword = function (admissionNumber, onSuccess, onCancel) {
+    const modal = document.getElementById('portalPasswordModal');
+    if (!modal) {
+      const pass = prompt('Enter your Mar Augusthinose College portal password:');
+      if (pass) onSuccess(pass);
+      else if (onCancel) onCancel();
+      return;
+    }
+
+    const input = document.getElementById('portal-pwd-input');
+    if (input) input.value = '';
+
+    modal.classList.add('open');
+    activePasswordPrompt = { admissionNumber, onSuccess, onCancel };
+  };
+
+  window.closePortalPasswordModal = function () {
+    const modal = document.getElementById('portalPasswordModal');
+    if (modal) modal.classList.remove('open');
+    if (activePasswordPrompt) {
+      if (activePasswordPrompt.onCancel) activePasswordPrompt.onCancel();
+      activePasswordPrompt = null;
+    }
+  };
+
+  window.submitPortalPasswordVerification = async function () {
+    const input = document.getElementById('portal-pwd-input');
+    const password = (input?.value || '').trim();
+    if (!password) {
+      alert('Password cannot be empty.');
+      return;
+    }
+
+    if (!activePasswordPrompt) return;
+    const { admissionNumber, onSuccess } = activePasswordPrompt;
+
+    const btn = document.querySelector('#portalPasswordModal button[onclick="window.submitPortalPasswordVerification()"]');
+    const originalText = btn ? btn.innerHTML : 'Verify & Save';
+    if (btn) btn.innerHTML = '⏳ Verifying...';
+
+    try {
+      const res = await fetch(`${CF_WORKER_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admissionNumber, password }),
+        signal: AbortSignal.timeout(10000)
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Incorrect portal password.');
+      }
+
+      localStorage.setItem(`machub_portal_Password_${admissionNumber}`, password);
+
+      try {
+        const encRes = await fetch(`${CF_WORKER_URL}/api/auth/encrypt-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const encJson = await encRes.json();
+        if (encRes.ok && encJson.success && encJson.encrypted) {
+          await updateFirestoreDocSecurely(admissionNumber, {
+            'security.portalPasswordEncrypted': encJson.encrypted,
+            'security.credentialStatus': 'valid'
+          });
+        }
+      } catch (saveErr) {
+        console.warn('[MacHub API] Failed to sync updated password to database:', saveErr);
+      }
+
+      if (btn) btn.innerHTML = originalText;
+      const modal = document.getElementById('portalPasswordModal');
+      if (modal) modal.classList.remove('open');
+
+      const cb = onSuccess;
+      activePasswordPrompt = null;
+      cb(password);
+
+    } catch (err) {
+      if (btn) btn.innerHTML = originalText;
+      alert('Verification failed: ' + err.message);
     }
   };
 

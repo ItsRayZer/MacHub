@@ -2961,6 +2961,103 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* ── Apple-Style Liquid Glass Buttons ── */
+.btn-liquid-glass {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    border-radius: 16px;
+    padding: 14px 20px;
+    font-size: 13px;
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+    cursor: pointer;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.btn-liquid-glass:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
+    transform: scale(1.02);
+    color: #ffffff;
+}
+.btn-liquid-glass:active {
+    transform: scale(0.98);
+    background: rgba(255, 255, 255, 0.02);
+}
+.btn-liquid-glass.blue {
+    background: rgba(0, 122, 255, 0.15);
+    border-color: rgba(0, 122, 255, 0.25);
+    color: #3897ff;
+}
+.btn-liquid-glass.blue:hover {
+    background: rgba(0, 122, 255, 0.22);
+    border-color: rgba(0, 122, 255, 0.35);
+    color: #4fb0ff;
+    box-shadow: 0 4px 30px rgba(0, 122, 255, 0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.btn-liquid-glass.red {
+    background: rgba(255, 59, 48, 0.15);
+    border-color: rgba(255, 59, 48, 0.25);
+    color: #ff5247;
+}
+.btn-liquid-glass.red:hover {
+    background: rgba(255, 59, 48, 0.22);
+    border-color: rgba(255, 59, 48, 0.35);
+    color: #ff6e64;
+    box-shadow: 0 4px 30px rgba(255, 59, 48, 0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.btn-liquid-glass.gold {
+    background: rgba(255, 159, 10, 0.15);
+    border-color: rgba(255, 159, 10, 0.25);
+    color: #ffb340;
+}
+.btn-liquid-glass.gold:hover {
+    background: rgba(255, 159, 10, 0.22);
+    border-color: rgba(255, 159, 10, 0.35);
+    color: #ffc266;
+    box-shadow: 0 4px 30px rgba(255, 159, 10, 0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+/* ── Custom Dialog Modal Overlay ── */
+.machub-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.machub-modal.open {
+    display: flex;
+}
+.machub-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.machub-modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    background: rgba(18, 18, 20, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    animation: springIn 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: #f5f5f7;
+}
+
+
 
 
 

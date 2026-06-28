@@ -554,6 +554,86 @@ export default {
         return corsResponse({ success: true, message: 'No admission number provided' });
       }
 
+      // ── POST /api/change-password ───────────────────────────────────────────
+      if (request.method === 'POST' && pathname === '/api/change-password') {
+        let body;
+        try { body = await request.json(); } catch { body = {}; }
+        const admissionNumber = String(body.admissionNumber || '').trim();
+        const oldPassword = String(body.oldPassword || '').trim();
+        const newPassword = String(body.newPassword || '').trim();
+        const confirmPassword = String(body.confirmPassword || '').trim();
+
+        if (!admissionNumber || !oldPassword || !newPassword || !confirmPassword) {
+          return errorResponse('Missing required parameters', 400);
+        }
+
+        try {
+          const cookie = await getSession(admissionNumber, oldPassword);
+          const endpointPath = SPECS.sectionEndpoints['ChangePwd'] || '/ChangePwd.aspx';
+
+          // 1. GET page to extract ASP.NET token fields
+          const getRes = await fetch(`${SPECS.baseUrl}${endpointPath}`, {
+            method: 'GET',
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Cookie': cookie,
+              'Host': 'eportal.maraugusthinosecollege.org'
+            }
+          });
+
+          const html = await getRes.text();
+          if (isLoginPage(html)) {
+            invalidateSession(admissionNumber);
+            return errorResponse('Session expired. Please try again.', 401);
+          }
+
+          const $ = cheerio.load(html);
+          const payload = new URLSearchParams({
+            '__VIEWSTATE': $('#__VIEWSTATE').val() || '',
+            '__VIEWSTATEGENERATOR': $('#__VIEWSTATEGENERATOR').val() || '',
+            '__EVENTVALIDATION': $('#__EVENTVALIDATION').val() || '',
+            'ctl00$MainContent$txtopwd': oldPassword,
+            'ctl00$MainContent$txtnpwd': newPassword,
+            'ctl00$MainContent$txtcpwd': confirmPassword,
+            'ctl00$MainContent$btnupdate': 'Submit'
+          });
+
+          // 2. POST the updates
+          const postRes = await fetch(`${SPECS.baseUrl}${endpointPath}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Cookie': cookie,
+              'Referer': `${SPECS.baseUrl}${endpointPath}`,
+              'Host': 'eportal.maraugusthinosecollege.org',
+              'Origin': SPECS.baseUrl
+            },
+            body: payload.toString(),
+            redirect: 'follow'
+          });
+
+          const postHtml = await postRes.text();
+          const $result = cheerio.load(postHtml);
+          const alertText = $result('script').text();
+
+          if (alertText.includes('Successfully') || postHtml.includes('Successfully') || alertText.includes('Changed')) {
+            console.log(`[ChangePwd] ✅ Password changed successfully for ${admissionNumber}`);
+            invalidateSession(admissionNumber);
+            return corsResponse({ success: true, message: 'Password updated successfully on the college portal!' });
+          } else {
+            const matches = alertText.match(/alert\(['"]([^'"]+)['"]\)/);
+            const errMsg = matches ? matches[1] : 'Portal rejected password change. Check old password.';
+            console.warn(`[ChangePwd] ❌ Password change failed for ${admissionNumber}: ${errMsg}`);
+            return errorResponse(errMsg, 400);
+          }
+
+        } catch (err) {
+          console.error(`[ChangePwd] Error: ${err.message}`);
+          return errorResponse(`Portal connection failed: ${err.message}`, 502);
+        }
+      }
+
       // ── POST /api/auth/encrypt-password ──────────────────────────────────────
       if (request.method === 'POST' && pathname === '/api/auth/encrypt-password') {
         let body;
