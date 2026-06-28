@@ -390,6 +390,7 @@ function switchExamView(viewId) {
     appState.examSubView = viewId || appState.examSubView || 'view-class';
     switchView(appState.examSubView);
 }
+window.switchExamView = switchExamView;
 
 window.switchExamTab = function(tab) {
     const timetableEl = document.getElementById('sub-view-timetable');
@@ -511,7 +512,6 @@ function switchView(viewId) {
 
         if (viewId === 'view-home') {
             updateCountdown();
-            if (typeof renderHomepageDashboard === 'function') renderHomepageDashboard();
         }
         if (viewId === 'view-profile' && typeof renderUserProfile === 'function') renderUserProfile();
         syncExternalAppView();
@@ -4933,195 +4933,19 @@ function getLiveClassTrackerHtml(dept, semNum) {
 }
 
 function getAttendanceSummaryHtml(adminNo) {
-    const cached = getPortalCache('Attendance', adminNo);
-    if (!cached) {
-        return `
-            <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden flex items-center justify-between cursor-pointer animate-pulse" onclick="window.syncAndOpenNative('Attendance', 'view-class', 'attendance')">
-                <div>
-                    <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider block mb-1">Attendance Tracker</span>
-                    <h4 class="text-sm font-bold text-white">Attendance Not Synced</h4>
-                    <p class="text-[9px] font-bold text-[#86868b] mt-0.5">Tap here to sync attendance data.</p>
-                </div>
-                <span class="text-xl text-[#86868b]">📅</span>
-            </div>
-        `;
-    }
-
-    let records = [];
-    try {
-        const parsed = JSON.parse(cached);
-        const payload = parsed?.data?.payload || parsed?.data || parsed?.payload || parsed;
-        records = payload?.sections?.[0]?.rows || payload?.rows || [];
-    } catch(e) {
-        return '';
-    }
-
-    if (records.length === 0) return '';
-
-    let totalConducted = 0;
-    let totalPresent = 0;
-
-    records.forEach(r => {
-        const cond = parseFloat(r.totalHours || r.conducted || r['No. of Sessions'] || r['col_3'] || "0");
-        const pres = parseFloat(r.presentHours || r.present || r['No. of Present'] || r['col_2'] || "0");
-        totalConducted += cond;
-        totalPresent += pres;
-    });
-
-    if (totalConducted === 0) return '';
-
-    const overallPct = (totalPresent / totalConducted) * 100;
-    const progressColor = overallPct >= 75 ? '[var(--mac-blue)]' : (overallPct >= 70 ? 'orange-500' : 'red-500');
-    
-    let bunkMessage = '';
-    if (overallPct >= 75) {
-        const maxBunks = Math.floor((totalPresent / 0.75) - totalConducted);
-        if (maxBunks > 0) {
-            bunkMessage = `Safe to bunk next <span class="text-[#00d4aa] font-black">${maxBunks} classes</span>! ☕`;
-        } else {
-            bunkMessage = `At critical threshold. Do not bunk any classes! ⚠️`;
-        }
-    } else {
-        const finalReq = Math.max(1, Math.ceil(3 * totalConducted - 4 * totalPresent));
-        bunkMessage = `Must attend next <span class="text-red-400 font-black">${finalReq} classes</span> consecutively! ⚠️`;
-    }
-
-    return `
-        <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden cursor-pointer" onclick="window.syncAndOpenNative('Attendance', 'view-class', 'attendance')">
-            <div class="flex justify-between items-center mb-3">
-                <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Attendance Tracker</span>
-                <span class="text-sm font-black text-white">${overallPct.toFixed(1)}%</span>
-            </div>
-
-            <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-3">
-                <div class="h-full bg-${progressColor} rounded-full" style="width: ${Math.min(100, overallPct)}%;"></div>
-            </div>
-
-            <p class="text-[10px] font-bold text-[#86868b] leading-relaxed">${bunkMessage}</p>
-        </div>
-    `;
+    return '';
 }
 
 function getPendingActivitiesHtml(adminNo) {
-    const assignRaw = getPortalCache('Assignment', adminNo);
-    const seminarRaw = getPortalCache('Seminar', adminNo);
-
-    let activeAssignments = [];
-    if (assignRaw) {
-        try {
-            const parsed = JSON.parse(assignRaw);
-            const payload = parsed?.data?.payload || parsed?.data || parsed?.payload || parsed;
-            const sections = payload?.sections || [];
-            const activeSection = sections.find(s => s.label === 'Active' || s.label === 'active');
-            activeAssignments = activeSection?.rows || [];
-        } catch(e) {}
-    }
-
-    let seminarRows = [];
-    if (seminarRaw) {
-        try {
-            const parsed = JSON.parse(seminarRaw);
-            const payload = parsed?.data?.payload || parsed?.data || parsed?.payload || parsed;
-            const sections = payload?.sections || [];
-            sections.forEach(sec => {
-                if (sec.rows) seminarRows.push(...sec.rows);
-            });
-        } catch(e) {}
-    }
-
-    const pendingAssignments = activeAssignments.filter(r => {
-        const statusStr = String(r['Status'] || r['status'] || r['col_4'] || '').toLowerCase();
-        return !statusStr.includes('submit') && !statusStr.includes('complete') && !statusStr.includes('yes');
-    });
-
-    const pendingSeminars = seminarRows.filter(r => {
-        const statusStr = String(r['Status'] || r['status'] || r['col_4'] || '').toLowerCase();
-        return !statusStr.includes('complete') && !statusStr.includes('submit') && !statusStr.includes('present') && !statusStr.includes('yes') && !statusStr.includes('completed');
-    });
-
-    const totalPending = pendingAssignments.length + pendingSeminars.length;
-
-    if (totalPending === 0) {
-        return `
-            <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden flex items-center justify-between cursor-pointer" onclick="window.syncAndOpenNative('Assignment', 'view-class', 'subjects')">
-                <div>
-                    <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider block mb-1">Track Activity</span>
-                    <h4 class="text-sm font-bold text-white">All Caught Up! 🎉</h4>
-                    <p class="text-[9px] font-bold text-[#86868b] mt-0.5">No pending assignments or seminars.</p>
-                </div>
-                <span class="text-xl">🙌</span>
-            </div>
-        `;
-    }
-
-    return `
-        <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden cursor-pointer" onclick="window.syncAndOpenNative('Assignment', 'view-class', 'subjects')">
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Track Activity</span>
-                <span class="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[8px] font-black uppercase tracking-wider">${totalPending} Pending</span>
-            </div>
-            
-            <div class="space-y-2 mt-2">
-                ${pendingAssignments.slice(0, 1).map(r => `
-                    <div class="flex items-start gap-2.5">
-                        <span class="text-xs mt-0.5">📂</span>
-                        <div class="flex-1 min-w-0">
-                            <h5 class="text-xs font-bold text-white leading-tight truncate">${r['Topic'] || r['topic'] || 'Assignment'}</h5>
-                            <p class="text-[9px] text-[#86868b] truncate">Due: ${r['Last Date'] || r['last date'] || '—'} • ${r['Subject'] || r['subject'] || ''}</p>
-                        </div>
-                    </div>
-                `).join('')}
-
-                ${pendingSeminars.slice(0, 1).map(r => `
-                    <div class="flex items-start gap-2.5">
-                        <span class="text-xs mt-0.5">🎙️</span>
-                        <div class="flex-1 min-w-0">
-                            <h5 class="text-xs font-bold text-white leading-tight truncate">${r['Topic'] || r['topic'] || 'Seminar'}</h5>
-                            <p class="text-[9px] text-[#86868b] truncate">Date: ${r['Date'] || r['date'] || '—'} • ${r['Subject'] || r['subject'] || ''}</p>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `;
+    return '';
 }
 
 function getLatestAnnouncementHtml() {
-    if (!window.ANNOUNCEMENTS || window.ANNOUNCEMENTS.length === 0) return '';
-    const latest = window.ANNOUNCEMENTS[0];
-
-    return `
-        <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden cursor-pointer" onclick="switchView('view-announcements')">
-            <div class="flex justify-between items-center mb-2.5">
-                <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Latest Announcement</span>
-                <span class="text-[8px] font-black text-[var(--mac-blue)] uppercase tracking-widest">${latest.category || 'General'}</span>
-            </div>
-            <h4 class="text-xs font-black text-white leading-snug truncate">${latest.title}</h4>
-            <p class="text-[10px] font-bold text-[#86868b] mt-1 line-clamp-2 leading-relaxed">${latest.description || latest.text || ''}</p>
-        </div>
-    `;
+    return '';
 }
 
 window.renderHomepageDashboard = function() {
-    const container = document.getElementById('homeDashboardContainer');
-    if (!container) return;
-
-    const info = getStudentInfo();
-    if (!info) {
-        container.innerHTML = '';
-        return;
-    }
-
-    const adminNo = info.adminNo || '';
-    const dept = (info.dept || '').toUpperCase();
-    const semNum = String(info.semester || '').match(/\d+/) ? String(info.semester || '').match(/\d+/)[0] : '3';
-
-    const liveClassHtml = getLiveClassTrackerHtml(dept, semNum);
-    const attendanceHtml = getAttendanceSummaryHtml(adminNo);
-    const activitiesHtml = getPendingActivitiesHtml(adminNo);
-    const announcementHtml = getLatestAnnouncementHtml();
-
-    container.innerHTML = liveClassHtml + attendanceHtml + activitiesHtml + announcementHtml;
+    /* homeDashboardContainer removed — home only shows shortcuts */
 };
 
 window.renderClassActivity = function() {
@@ -5220,25 +5044,87 @@ window.renderClassActivity = function() {
         });
     });
 
+    let isDemo = false;
+    if (items.length === 0) {
+        isDemo = true;
+        items.push({
+            type: 'assignment',
+            subject: 'Java Programming',
+            topic: 'Write a multithreaded chat server using sockets',
+            date: 'Tomorrow, 5:00 PM',
+            status: 'pending',
+            score: '—',
+            isExpired: false
+        });
+        items.push({
+            type: 'seminar',
+            subject: 'Database Systems',
+            topic: 'NoSQL vs Relational Databases performance study',
+            date: '3 days ago',
+            status: 'submitted',
+            score: '9.5 / 10',
+            isExpired: false
+        });
+        items.push({
+            type: 'assignment',
+            subject: 'Python Programming',
+            topic: 'Implement a REST API using Flask and SQLAlchemy',
+            date: 'Expired yesterday',
+            status: 'expired',
+            score: '—',
+            isExpired: true
+        });
+        items.push({
+            type: 'seminar',
+            subject: 'Computer Networks',
+            topic: 'TCP Congestion Control Algorithms overview',
+            date: 'Last week',
+            status: 'submitted',
+            score: '8.0 / 10',
+            isExpired: false
+        });
+    }
+
+    const totalCount = items.length;
+    const pendingCount = items.filter(i => i.status === 'pending').length;
+    const completedCount = items.filter(i => i.status === 'submitted').length;
+
+    const statsHtml = `
+        <div class="grid grid-cols-3 gap-2 mb-4 w-full">
+            <div class="glass-panel p-3 rounded-2xl border border-white/5 text-center bg-white/5 backdrop-blur-md">
+                <span class="text-[8px] font-black text-[#86868b] uppercase tracking-wider block">Total</span>
+                <span class="text-sm font-black text-white mt-0.5 block">${totalCount}</span>
+            </div>
+            <div class="glass-panel p-3 rounded-2xl border border-white/5 text-center bg-white/5 backdrop-blur-md">
+                <span class="text-[8px] font-black text-[#86868b] uppercase tracking-wider block">Pending</span>
+                <span class="text-sm font-black text-orange-400 mt-0.5 block">${pendingCount}</span>
+            </div>
+            <div class="glass-panel p-3 rounded-2xl border border-white/5 text-center bg-white/5 backdrop-blur-md">
+                <span class="text-[8px] font-black text-[#86868b] uppercase tracking-wider block">Done</span>
+                <span class="text-sm font-black text-[#00d4aa] mt-0.5 block">${completedCount}</span>
+            </div>
+        </div>
+    `;
+
+    const demoBannerHtml = isDemo ? `
+        <div class="glass-panel p-4 rounded-[2rem] border border-orange-500/20 bg-orange-500/5 backdrop-blur-md mb-5 flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-lg">✨</span>
+                <h4 class="text-xs font-black text-white">Showing Demo Preview</h4>
+            </div>
+            <p class="text-[9px] font-bold text-[#86868b] leading-normal">
+                Your assignments and seminars are currently empty. Sync from ePortal to view your actual data.
+            </p>
+            <button onclick="window.syncAndOpenNative('Assignment', 'view-class', 'subjects')" class="mt-1 w-full py-2 bg-[var(--mac-blue)] text-white rounded-full text-[10px] font-black uppercase tracking-wider spring active:scale-95">
+                🔄 Sync ePortal Data
+            </button>
+        </div>
+    ` : '';
+
     const filtered = items.filter(item => {
         if (appState.activityFilter === 'all') return true;
         return item.type === appState.activityFilter;
     });
-
-    if (items.length === 0) {
-        container.innerHTML = `
-            <div class="glass-panel rounded-[2rem] p-8 text-center my-6 border border-white/5">
-                <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">🎯</div>
-                <h3 class="text-base font-black text-white">No Activity Records Found</h3>
-                <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed mb-4">
-                    Sync your academic data from ePortal to track assignments and seminars.
-                </p>
-                <button onclick="window.syncAndOpenNative('Assignment', 'view-class', 'subjects')" class="px-6 py-2.5 bg-[var(--mac-blue)] text-white rounded-full text-xs font-black spring active:scale-95">
-                    🔄 Sync Activity Data
-                </button>
-            </div>`;
-        return;
-    }
 
     const segmentsHtml = `
         <div class="flex bg-black/10 dark:bg-white/5 p-1 rounded-2xl gap-1 border border-white/5 mb-5 w-full">
@@ -5290,7 +5176,7 @@ window.renderClassActivity = function() {
         }).join('');
     }
 
-    container.innerHTML = window.getFreshnessIndicatorHtml(appState.activityFilter === 'seminar' ? 'Seminar' : 'Assignment') + segmentsHtml + listHtml;
+    container.innerHTML = window.getFreshnessIndicatorHtml(appState.activityFilter === 'seminar' ? 'Seminar' : 'Assignment') + demoBannerHtml + statsHtml + segmentsHtml + listHtml;
 };
 
 window.renderClassSubjects = window.renderClassActivity;
@@ -5371,7 +5257,6 @@ window.initExamHubApp = () => {
     setupSwipeGestures();
     setupScrollHide();
     document.body.classList.add('app-ready');
-    if (typeof renderHomepageDashboard === 'function') renderHomepageDashboard();
 
     if (window.ExamHubUI) {
         window.ExamHubUI.afterFirstPaint(() => {

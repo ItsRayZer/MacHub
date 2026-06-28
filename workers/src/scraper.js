@@ -166,7 +166,11 @@ export async function scrapeSemesterDropdownPage(pageName, path, cookie, body) {
   let postHtml = await postResponse.text();
   if (postHtml.includes("btnLogin") || postHtml.includes("txtUser")) throw new Error("SESSION_EXPIRED");
 
-  postHtml = parseUpdatePanelDelta(postHtml);
+  if (postHtml.includes('|updatePanel|')) {
+    const parts = parseUpdatePanelDelta(postHtml);
+    const htmlParts = parts.filter(p => p.type === 'updatePanel').map(p => p.content).join('');
+    if (htmlParts) postHtml = `<html><body>${htmlParts}</body></html>`;
+  }
 
   const parsed = parseHtml(pageName, postHtml);
   parsed.semesters = semesterOptions;
@@ -817,7 +821,11 @@ export const scrapeExamResult = async (adm, cookie, body) => {
   let postHtml = await postResponse.text();
   if (postHtml.includes("btnLogin") || postHtml.includes("txtUser")) throw new Error("SESSION_EXPIRED");
 
-  postHtml = parseUpdatePanelDelta(postHtml);
+  if (postHtml.includes('|updatePanel|')) {
+    const parts = parseUpdatePanelDelta(postHtml);
+    const htmlParts = parts.filter(p => p.type === 'updatePanel').map(p => p.content).join('');
+    if (htmlParts) postHtml = `<html><body>${htmlParts}</body></html>`;
+  }
 
   const parsed = parseHtml("ExamResult", postHtml);
   parsed.semesters = semesterOptions;

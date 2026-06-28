@@ -319,7 +319,9 @@
                     }
                 } catch(e) {}
             }, 500);
-              <!-- Course Details & Shortcuts -->
+        </script>
+
+        <!-- Course Details & Shortcuts -->
         <div class="mb-6">
             <div class="flex items-center justify-between mb-3 pl-1">
                 <h4 class="text-[10px] font-black text-[#86868b] uppercase tracking-widest flex items-center gap-1.5">
@@ -361,7 +363,6 @@
                             if (sectionName === 'Attendance' && typeof renderClassAttendance === 'function') renderClassAttendance();
                             if (sectionName === 'Assignment' && typeof renderClassActivity === 'function') renderClassActivity();
                             if (sectionName === 'ExamResult' && typeof renderExamResults === 'function') renderExamResults();
-                            if (typeof renderHomepageDashboard === 'function') renderHomepageDashboard();
                         } catch(e) {
                             console.error("Sync failed for", sectionName, e);
                         }
@@ -429,9 +430,6 @@
 
             </div>
         </div>
-
-        <!-- Dynamic Home Dashboard Container -->
-        <div id="homeDashboardContainer" class="space-y-4 pb-24"></div>
 
         <div id="externalAppShell" class="external-app-shell hidden" aria-live="polite">
             <div class="external-app-toolbar">
