@@ -58,8 +58,13 @@ function getStudentInfo() {
     }
 }
 
-function getPortalCache(section, adminNo) {
+function getPortalCache(section, adminNo, semester = '') {
     if (!adminNo) return null;
+    if (semester) {
+        const key = `machub_portal_${section}_sem${semester}_${adminNo}`;
+        const data = localStorage.getItem(key);
+        if (data) return data;
+    }
     const directKey = `machub_portal_${section}_${adminNo}`;
     const direct = localStorage.getItem(directKey);
     if (direct) return direct;
@@ -4505,67 +4510,121 @@ window.renderExamResults = function () {
             </div>
         `;
 
-        // Parse continuous assessments and final internals
-        let assessData = [];
-        if (assessRaw) {
+        // ── Parse helpers: extract sections from any cache wrapper format ─────
+        // writeCache saves: { data: <apiPayload>, savedAt: timestamp }
+        // apiPayload is: { success, payload: { page, sections, semesters } }
+        // So path is: parsed.data.payload.sections
+        function extractSections(raw) {
+            if (!raw) return [];
             try {
-                const parsed = JSON.parse(assessRaw);
-                assessData = parsed?.data?.payload?.sections || parsed?.data?.sections || parsed?.payload?.sections || parsed?.sections || [];
+                const parsed = JSON.parse(raw);
+                // Handle { data: { payload: { sections } }, savedAt } wrapper (normal localStorage cache)
+                if (parsed?.data?.payload?.sections) return parsed.data.payload.sections;
+                // Handle { data: { sections } }
+                if (parsed?.data?.sections)           return parsed.data.sections;
+                // Handle unwrapped { payload: { sections } }
+                if (parsed?.payload?.sections)        return parsed.payload.sections;
+                // Handle { sections } directly
+                if (parsed?.sections)                 return parsed.sections;
+                // Handle flat array
+                if (Array.isArray(parsed))            return parsed;
             } catch (e) {
-                console.error(e);
+                console.error('[InternalMark] Parse error:', e);
             }
+            return [];
         }
 
-        let internalSubjects = [];
-        if (internalRaw) {
-            try {
-                const parsed = JSON.parse(internalRaw);
-                internalSubjects = parsed?.data?.payload?.subjects || parsed?.data?.subjects || parsed?.payload?.subjects || parsed?.subjects || [];
-            } catch (e) {
-                console.error(e);
-            }
-        }
+        // Parse continuous assessments (Assessment section)
+        const assessData = extractSections(assessRaw);
 
-        // Render merged subjects
+        // Parse InternalMark — it also returns sections[] (same shape as Assessment)
+        // Each section: { subject, headers, rows }
+        // The rows contain the final university internal mark data
+        const internalData = extractSections(internalRaw);
+
+        console.log('[InternalMark] assessData:', assessData.length, 'internalData:', internalData.length);
+
+        // Build unified set of all subject names from both data sources
         const subjectNames = new Set();
         assessData.forEach(sec => { if (sec.subject) subjectNames.add(sec.subject); });
-        internalSubjects.forEach(sub => { if (sub.subjectName) subjectNames.add(sub.subjectName); });
+        internalData.forEach(sec => { if (sec.subject) subjectNames.add(sec.subject); });
 
         let contentHtml = '';
         if (subjectNames.size > 0) {
             contentHtml = Array.from(subjectNames).map(subjectName => {
-                const matchingAssess = assessData.find(sec => sec.subject && sec.subject.toLowerCase() === subjectName.toLowerCase());
-                const matchingInternal = internalSubjects.find(sub => sub.subjectName && sub.subjectName.toLowerCase() === subjectName.toLowerCase());
+                const matchingAssess   = assessData.find(sec => sec.subject && sec.subject.toLowerCase() === subjectName.toLowerCase());
+                const matchingInternal = internalData.find(sec => sec.subject && sec.subject.toLowerCase() === subjectName.toLowerCase());
 
-                // Filter rows based on selection
+                // Filter CCR rows based on selection (Assessment section)
                 let rowsToRender = [];
                 if (matchingAssess && matchingAssess.rows) {
                     matchingAssess.rows.forEach(r => {
                         const type = r['Assessment Type'] || r['col_0'] || '';
-                        const isModel = type.toLowerCase().includes('model');
+                        const isModel    = type.toLowerCase().includes('model');
                         const isInternal = type.toLowerCase().includes('internal');
                         if (activeType === 'both') rowsToRender.push(r);
-                        else if (activeType === 'model' && isModel) rowsToRender.push(r);
+                        else if (activeType === 'model'    && isModel)    rowsToRender.push(r);
                         else if (activeType === 'internal' && isInternal) rowsToRender.push(r);
                     });
                 }
 
+                // Render final university internal mark rows (InternalMark section)
                 let finalUniversityHtml = '';
-                if (matchingInternal && (activeType === 'both' || activeType === 'internal')) {
-                    const score = matchingInternal.internalMark || matchingInternal.mark || matchingInternal.col_1 || '—';
-                    const maxMark = matchingInternal.maxMark || matchingInternal.col_2 || '—';
-                    finalUniversityHtml = `
-                        <div class="flex items-center justify-between p-3.5 bg-white/5 dark:bg-white/5 border border-white/5 rounded-2xl">
-                            <div class="flex flex-col">
-                                <span class="text-[10px] font-bold text-white uppercase tracking-wider">Final University Internal</span>
-                                <span class="text-[9px] text-[#86868b] mt-0.5">Calculated out of maximum university internal score</span>
+                if (matchingInternal && matchingInternal.rows && matchingInternal.rows.length > 0 && (activeType === 'both' || activeType === 'internal')) {
+                    // The rows typically have: Subject Name, Obtained Mark, Max Mark, etc.
+                    // Try standard column names first, then fall back to positional col_N keys
+                    const firstRow = matchingInternal.rows[0];
+                    const headers  = matchingInternal.headers || [];
+
+                    // Helper to get a value from a row by possible keys
+                    const getVal = (row, ...keys) => {
+                        for (const k of keys) {
+                            if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') return String(row[k]).trim();
+                        }
+                        return '—';
+                    };
+
+                    const markVal = getVal(firstRow,
+                        'Obtained Mark', 'ObtainedMark', 'obtained mark', 'internalMark',
+                        'Internal Mark', 'Mark', 'Score', 'mark', 'score',
+                        'col_1', 'col_2'
+                    );
+                    const maxVal  = getVal(firstRow,
+                        'Max Mark', 'MaxMark', 'max mark', 'maxMark',
+                        'Maximum', 'Out Of', 'Total Mark',
+                        'col_2', 'col_3'
+                    );
+
+                    // If there are multiple rows, render them all as a table
+                    if (matchingInternal.rows.length > 1) {
+                        const tableHeaders = headers.length > 0 ? headers : Object.keys(firstRow);
+                        finalUniversityHtml = `
+                            <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--glass-border); margin-bottom: 12px;">
+                                <table class="data-table">
+                                    <thead><tr>${tableHeaders.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                                    <tbody>
+                                        ${matchingInternal.rows.map(row => `
+                                            <tr>${tableHeaders.map(h => `<td>${row[h] !== undefined ? row[h] : '—'}</td>`).join('')}</tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="flex items-baseline gap-0.5">
-                                <span class="text-sm font-black text-[var(--mac-blue)]">${score}</span>
-                                <span class="text-[9px] font-bold text-[#86868b]">/ ${maxMark}</span>
+                        `;
+                    } else {
+                        // Single row — show as a clean summary card
+                        finalUniversityHtml = `
+                            <div class="flex items-center justify-between p-3.5 bg-white/5 dark:bg-white/5 border border-white/5 rounded-2xl">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-bold text-white uppercase tracking-wider">Final University Internal</span>
+                                    <span class="text-[9px] text-[#86868b] mt-0.5">Official mark submitted to MGU University</span>
+                                </div>
+                                <div class="flex items-baseline gap-0.5">
+                                    <span class="text-sm font-black text-[var(--mac-blue)]">${markVal}</span>
+                                    <span class="text-[9px] font-bold text-[#86868b]">/ ${maxVal}</span>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                        `;
+                    }
                 }
 
                 let ccrRowsHtml = '';
@@ -4584,16 +4643,14 @@ window.renderExamResults = function () {
                                 </thead>
                                 <tbody>
                                     ${rowsToRender.map(row => {
-                                        const type = row['Assessment Type'] || row['col_0'] || '—';
-                                        const score = row['Score'] || row['col_1'] || '—';
-                                        const max = row['Max Mark'] || row['col_2'] || '—';
-                                        const pass = row['Pass Mark'] || row['col_3'] || '—';
+                                        const type   = row['Assessment Type'] || row['col_0'] || '—';
+                                        const score  = row['Score'] || row['col_1'] || '—';
+                                        const max    = row['Max Mark'] || row['col_2'] || '—';
+                                        const pass   = row['Pass Mark'] || row['col_3'] || '—';
                                         const result = row['P/F'] || row['Result'] || row['col_4'] || '—';
-
                                         const isFail = ['fail', 'f'].some(f => String(result).toLowerCase().includes(f));
                                         const isPass = result && !isFail && result !== '—';
                                         const rowClass = isPass ? 'row-pass' : isFail ? 'row-fail' : '';
-
                                         return `
                                             <tr class="${rowClass}">
                                                 <td>${type}</td>
