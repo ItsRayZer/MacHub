@@ -356,6 +356,17 @@
                                     window.MacHubPortal.fetchSection('Assignment', true),
                                     window.MacHubPortal.fetchSection('Seminar', true)
                                 ]);
+                            } else if (sectionName === 'ExamResult') {
+                                // Sync ExamResult AND current semester's College Results (InternalMark & Assessment)
+                                const activeSem = (typeof appState !== 'undefined' && appState.selectedInternalSem) || (typeof getStudentSemNumber === 'function' ? String(getStudentSemNumber()) : '2');
+                                await Promise.all([
+                                    window.MacHubPortal.fetchSection('ExamResult', true),
+                                    window.MacHubPortal.fetchSection('InternalMark', true, activeSem),
+                                    window.MacHubPortal.fetchSection('Assessment', true, activeSem)
+                                ]);
+                                if (typeof appState !== 'undefined' && appState.internalFetchStatus) {
+                                    appState.internalFetchStatus[activeSem] = 'success';
+                                }
                             } else {
                                 await window.MacHubPortal.fetchSection(sectionName, true, sem);
                             }

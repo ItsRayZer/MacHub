@@ -4155,6 +4155,7 @@ function getStudentSemNumber() {
     }
     return 2; // Default fallback sem
 }
+window.getStudentSemNumber = getStudentSemNumber;
 
 function autoUpdateSemesterFromCache() {
     try {
@@ -4228,6 +4229,12 @@ window.toggleInternalDropdown = function (name) {
 window.switchInternalSemester = function (sem) {
     appState.selectedInternalSem = sem;
     appState.openInternalDropdown = null;
+    
+    // Automatically trigger scraping/fetch for the selected semester
+    if (typeof window.autoFetchInternals === 'function') {
+        window.autoFetchInternals(sem, true);
+    }
+    
     window.renderExamResults();
 };
 
@@ -4251,15 +4258,21 @@ window.autoFetchInternals = async function (semester, force = false) {
         appState.internalFetchStatus = {};
     }
     
+    // When force=true, reset any previous 'fetching' lock so we can re-fetch
+    if (force && appState.internalFetchStatus[semester] === 'fetching') {
+        appState.internalFetchStatus[semester] = null;
+    }
     if (appState.internalFetchStatus[semester] === 'fetching') return;
 
     appState.internalFetchStatus[semester] = 'fetching';
     try {
         if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
-            await Promise.all([
+            const [internalResult, assessResult] = await Promise.allSettled([
                 window.MacHubPortal.fetchSection('InternalMark', force, semester),
                 window.MacHubPortal.fetchSection('Assessment', force, semester)
             ]);
+            console.log('[College Results] InternalMark fetch:', internalResult?.status, internalResult?.value);
+            console.log('[College Results] Assessment fetch:', assessResult?.status, assessResult?.value);
             appState.internalFetchStatus[semester] = 'success';
         } else {
             throw new Error('Portal not initialized');
@@ -4641,21 +4654,39 @@ window.renderExamResults = function () {
         // ── Parse helpers: extract sections from any cache wrapper format ─────
         // writeCache saves: { data: <apiPayload>, savedAt: timestamp }
         // apiPayload is: { success, payload: { page, sections, semesters } }
-        // So path is: parsed.data.payload.sections
-        function extractSections(raw) {
+        // The worker executeScrape returns: { success, section, data: { page, sections }, page, timestamp }
+        // api.js fetchSection normalises: { success, payload: json.data }
+        // So writeCache stores: { data: { success, payload: { page, sections } }, savedAt }
+        function extractSections(raw, label) {
             if (!raw) return [];
             try {
                 const parsed = JSON.parse(raw);
-                // Handle { data: { payload: { sections } }, savedAt } wrapper (normal localStorage cache)
-                if (parsed?.data?.payload?.sections) return parsed.data.payload.sections;
-                // Handle { data: { sections } }
-                if (parsed?.data?.sections)           return parsed.data.sections;
-                // Handle unwrapped { payload: { sections } }
-                if (parsed?.payload?.sections)        return parsed.payload.sections;
-                // Handle { sections } directly
-                if (parsed?.sections)                 return parsed.sections;
-                // Handle flat array
-                if (Array.isArray(parsed))            return parsed;
+                // PRIMARY: { data: { payload: { sections } }, savedAt } — standard localStorage cache format
+                if (Array.isArray(parsed?.data?.payload?.sections) && parsed.data.payload.sections.length > 0)
+                    return parsed.data.payload.sections;
+                // ALSO try if data.payload is the page object itself (page, sections, semesters at top level of payload)
+                if (Array.isArray(parsed?.data?.payload?.sections))
+                    return parsed.data.payload.sections;
+                // Worker direct format: { data: { page, sections, ... } } without payload wrapper
+                if (Array.isArray(parsed?.data?.sections))
+                    return parsed.data.sections;
+                // Unwrapped: { payload: { sections } }
+                if (Array.isArray(parsed?.payload?.sections))
+                    return parsed.payload.sections;
+                // { sections } directly
+                if (Array.isArray(parsed?.sections))
+                    return parsed.sections;
+                // Flat array
+                if (Array.isArray(parsed))
+                    return parsed;
+                // Last resort: if data has rows/headers directly, wrap it
+                if (parsed?.data?.payload?.rows && Array.isArray(parsed.data.payload.rows)) {
+                    return [{ subject: label || 'General', headers: parsed.data.payload.headers || [], rows: parsed.data.payload.rows }];
+                }
+                if (parsed?.data?.rows && Array.isArray(parsed.data.rows)) {
+                    return [{ subject: label || 'General', headers: parsed.data.headers || [], rows: parsed.data.rows }];
+                }
+                console.warn(`[CollegeResults] extractSections(${label}): unrecognised shape`, JSON.stringify(parsed).substring(0, 200));
             } catch (e) {
                 console.error('[InternalMark] Parse error:', e);
             }
@@ -4663,19 +4694,25 @@ window.renderExamResults = function () {
         }
 
         // Parse continuous assessments (Assessment section)
-        const assessData = extractSections(assessRaw);
+        const assessData = extractSections(assessRaw, 'Assessment');
 
         // Parse InternalMark — it also returns sections[] (same shape as Assessment)
         // Each section: { subject, headers, rows }
         // The rows contain the final university internal mark data
-        const internalData = extractSections(internalRaw);
+        const internalData = extractSections(internalRaw, 'InternalMark');
 
-        console.log('[InternalMark] assessData:', assessData.length, 'internalData:', internalData.length);
+        console.log('[College Results] Sem', activeSem, '\u2014 assessData:', assessData.length, 'internalData:', internalData.length);
+        if (assessData.length === 0 && internalRaw) {
+            try { console.log('[College Results] Raw assessRaw keys:', Object.keys(JSON.parse(assessRaw)?.data || {}).join(',')); } catch(e){}
+        }
+        if (internalData.length === 0 && internalRaw) {
+            try { console.log('[College Results] Raw internalRaw keys:', Object.keys(JSON.parse(internalRaw)?.data || {}).join(',')); } catch(e){}
+        }
 
         // Build unified set of all subject names from both data sources
         const subjectNames = new Set();
-        assessData.forEach(sec => { if (sec.subject) subjectNames.add(sec.subject); });
-        internalData.forEach(sec => { if (sec.subject) subjectNames.add(sec.subject); });
+        assessData.forEach(sec => { if (sec.subject && sec.subject.trim() !== '') subjectNames.add(sec.subject); });
+        internalData.forEach(sec => { if (sec.subject && sec.subject.trim() !== '') subjectNames.add(sec.subject); });
 
         let contentHtml = '';
         if (subjectNames.size > 0) {
@@ -4827,10 +4864,58 @@ window.renderExamResults = function () {
             }).join('');
         }
 
+        // ── Fallback: if no subject names (sections exist but have empty/no subject field)
+        // Render all sections as raw tables so data is NEVER silently lost
+        if (!contentHtml && (assessData.length > 0 || internalData.length > 0)) {
+            const allSections = [
+                ...assessData.map(s => ({ ...s, _source: 'Assessment' })),
+                ...internalData.map(s => ({ ...s, _source: 'InternalMark' }))
+            ].filter(s => s.rows && s.rows.length > 0);
+
+            if (allSections.length > 0) {
+                contentHtml = allSections.map(sec => {
+                    const headers = sec.headers && sec.headers.length > 0
+                        ? sec.headers
+                        : Object.keys(sec.rows[0] || {});
+                    const title = sec.subject && sec.subject !== 'General'
+                        ? sec.subject
+                        : (sec._source === 'Assessment' ? 'College Assessment Marks' : 'Internal Marks');
+                    return `
+                        <div class="glass-panel rounded-[2rem] p-5 mb-4 border border-white/5">
+                            <div class="flex items-center gap-2.5 mb-3.5">
+                                <span class="text-base">📝</span>
+                                <h4 class="text-[12px] font-bold text-white">${title}</h4>
+                            </div>
+                            <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--glass-border);">
+                                <table class="data-table">
+                                    <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                                    <tbody>
+                                        ${sec.rows.map(row => `
+                                            <tr>${headers.map(h => `<td>${row[h] !== undefined ? row[h] : '—'}</td>`).join('')}</tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
         if (!contentHtml) {
+            const hasFetchError = fetchStatus === 'error';
             contentHtml = `
                 <div class="glass-panel rounded-[2rem] p-8 text-center my-6 border border-white/5">
-                    <p class="text-xs font-bold text-[#86868b]">No records found matching the chosen mark type for Semester ${activeSem}.</p>
+                    <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">📭</div>
+                    <h3 class="text-base font-black text-white">${hasFetchError ? 'Portal Fetch Failed' : 'No College Marks Found'}</h3>
+                    <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed mb-4">
+                        ${hasFetchError
+                            ? 'Could not connect to the college portal. Check your internet or portal credentials.'
+                            : `The portal returned no internal marks for Semester ${activeSem}. This semester may not have marks published yet.`}
+                    </p>
+                    <button onclick="window.autoFetchInternals('${activeSem}', true)" class="px-6 py-2.5 bg-[var(--mac-blue)] text-white rounded-full text-xs font-black spring active:scale-95">
+                        🔄 Retry Fetch
+                    </button>
                 </div>`;
         }
 

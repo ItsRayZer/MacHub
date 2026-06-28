@@ -260,10 +260,11 @@ function parseInternalMark(html) {
   }
 
   const tables = $('table').toArray();
+  const mainSubjectTable = tables.find(t => isSingleSubjectTable($(t)));
 
-  if (tables.length === 1 && isSingleSubjectTable($(tables[0]))) {
+  if (mainSubjectTable) {
     // ── Layout B: single big table with Subject Name column ──────────────────
-    const { headers, rows } = parseSingleTable($, tables[0]);
+    const { headers, rows } = parseSingleTable($, mainSubjectTable);
     // Group rows by their Subject Name cell
     const subjectMap = new Map();
     rows.forEach(row => {
