@@ -4,6 +4,40 @@
  * name, adminNo, regNo, classNo
  */
 
+window.loadLocalProfiles = function() {
+    if (!window.STUDENTS_DB || window.STUDENTS_DB._localProfilesLoaded) return;
+    try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('machub_portal_Profile_')) {
+                const raw = localStorage.getItem(key);
+                const parsed = JSON.parse(raw);
+                const payload = parsed?.data?.payload || parsed?.payload || parsed;
+                if (payload) {
+                    const adminNo = key.replace('machub_portal_Profile_', '');
+                    const exists = window.STUDENTS_DB.some(s => s.adminNo === adminNo);
+                    if (!exists) {
+                        const rawDept = payload.course || payload.department || 'BCA';
+                        const dept = ['bba', 'bsw'].includes(rawDept.toLowerCase()) ? rawDept.toUpperCase() : 'BCA';
+                        window.STUDENTS_DB.push({
+                            name: (payload.name || payload.studentName || 'Student').toUpperCase(),
+                            regNo: (payload.regNo || payload.prn || payload.registerNo || '').toUpperCase(),
+                            adminNo: adminNo,
+                            classNo: payload.classNo || '',
+                            department: dept,
+                            classGroup: dept,
+                            semester: payload.semester || ''
+                        });
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('[SmartFinder] Error loading custom profiles from cache:', err);
+    }
+    window.STUDENTS_DB._localProfilesLoaded = true;
+};
+
 window.SmartFinder = (function() {
 
     function normalize(str) {
@@ -15,6 +49,7 @@ window.SmartFinder = (function() {
      */
     function findStudent(query) {
         if (!query || !window.STUDENTS_DB) return [];
+        window.loadLocalProfiles();
         const q = normalize(query);
         if (!q) return [];
 

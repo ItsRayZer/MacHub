@@ -386,6 +386,9 @@ window.nextObStep = function(step) {
 };
 
 window.handleSmartSearch = function(query) {
+    if (typeof window.loadLocalProfiles === 'function') {
+        window.loadLocalProfiles();
+    }
     const resultsEl = document.getElementById('ob-results');
     if (!resultsEl) return;
     const q = (query || '').trim();
