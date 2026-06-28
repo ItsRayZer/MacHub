@@ -64,6 +64,24 @@ function getPortalCache(section, adminNo, semester = '') {
         const key = `machub_portal_${section}_sem${semester}_${adminNo}`;
         const data = localStorage.getItem(key);
         if (data) return data;
+        
+        // Fallback: Check if generic key contains data matching the requested semester
+        const directKey = `machub_portal_${section}_${adminNo}`;
+        const direct = localStorage.getItem(directKey);
+        if (direct) {
+            try {
+                const parsed = JSON.parse(direct);
+                const payload = parsed?.data?.payload || parsed?.data || parsed;
+                const sems = payload?.semesters || payload?.semesterOptions || [];
+                const selectedOpt = sems.find(s => s.selected);
+                if (selectedOpt) {
+                    const match = String(selectedOpt.value || '').match(/\d+/);
+                    if (match && String(match[0]) === String(semester)) {
+                        return direct;
+                    }
+                }
+            } catch (e) {}
+        }
     }
     const directKey = `machub_portal_${section}_${adminNo}`;
     const direct = localStorage.getItem(directKey);
@@ -420,6 +438,14 @@ function switchView(viewId) {
         }
     }
 
+    // Clear navigation hidden state locks when entering level-0 main tabs
+    if (['view-home', 'view-class', 'view-seats', 'view-resources', 'view-profile'].includes(viewId)) {
+        _navLockedHidden = false;
+        _navHidden = false;
+        const nav = document.getElementById('bottomNav');
+        if (nav) nav.classList.remove('nav-hidden');
+    }
+
     // Handle unified view-exam-hub alias and old aliases
     if (viewId === 'view-exam-hub' || viewId === 'view-exam') {
         viewId = 'view-class';
@@ -483,8 +509,10 @@ function switchView(viewId) {
             if (appState.examSubView === 'view-seats' && typeof showSeatNote === 'function') showSeatNote();
         }
 
-        if (viewId === 'view-departments') renderDepartments();
-        if (viewId === 'view-home') updateCountdown();
+        if (viewId === 'view-home') {
+            updateCountdown();
+            if (typeof renderHomepageDashboard === 'function') renderHomepageDashboard();
+        }
         if (viewId === 'view-profile' && typeof renderUserProfile === 'function') renderUserProfile();
         syncExternalAppView();
 
@@ -543,52 +571,18 @@ function switchView(viewId) {
         }
     };
 
-    // If either panel is missing or it's a tab switch (depth 0 to 0), switch instantly with a quick fade
-    if (!fromPanel || !toPanel || (currentDepth === 0 && targetDepth === 0)) {
-        try {
-            performUpdate();
-        } catch (e) {
-            console.error('[switchView] Error during instant view update:', e);
-        }
-        if (toPanel) {
-            toPanel.classList.add('page-fade-in');
-        }
-        return;
+    // Perform instant view update with a quick elegant fade to keep navigation stay still and smooth
+    try {
+        performUpdate();
+    } catch (e) {
+        console.error('[switchView] Error during instant view update:', e);
     }
-
-    // Otherwise, perform iOS sliding page transition
-    // Disable interaction during transition to prevent double clicks
-    document.body.style.pointerEvents = 'none';
-
-    // Make both panels visible and positioned correctly
-    fromPanel.classList.add('is-active', 'page-from');
-    toPanel.classList.add('is-active', 'page-to');
-
-    // Trigger reflow to apply positions
-    void toPanel.offsetWidth;
-
-    if (targetDepth > currentDepth) {
-        // PUSH: Slide from right
-        fromPanel.classList.add('page-slide-out-left');
-        toPanel.classList.add('page-slide-in-right');
-    } else {
-        // POP: Slide from left (going back)
-        fromPanel.classList.add('page-slide-out-right');
-        toPanel.classList.add('page-slide-in-left');
+    if (toPanel) {
+        toPanel.classList.add('page-fade-in');
     }
-
-    // Wait for transition to complete (320ms matches animation-duration in CSS)
-    setTimeout(() => {
-        try {
-            performUpdate();
-        } catch (e) {
-            console.error('[switchView] Error during sliding view update:', e);
-        } finally {
-            document.body.style.pointerEvents = '';
-        }
-    }, 320);
 }
 
+window.switchView = switchView;
 window.openExternalApp = openExternalApp;
 window.closeExternalApp = closeExternalApp;
 window.syncExternalAppView = syncExternalAppView;
@@ -809,7 +803,8 @@ function getDepartmentScheduleByCode(deptCode) {
         if (cached) {
             try {
                 const parsed = JSON.parse(cached);
-                const rows = parsed?.data?.payload?.sections?.[0]?.rows || [];
+                const payload = parsed?.data?.payload || parsed?.data || parsed?.payload || parsed;
+                const rows = payload?.sections?.[0]?.rows || payload?.rows || [];
                 rows.forEach(item => {
                     if (item.subjectName) actualSubjects.push(item.subjectName);
                 });
@@ -849,7 +844,8 @@ function getDepartmentPracticalScheduleByCode(deptCode) {
         if (cached) {
             try {
                 const parsed = JSON.parse(cached);
-                const rows = parsed?.data?.payload?.sections?.[0]?.rows || [];
+                const payload = parsed?.data?.payload || parsed?.data || parsed?.payload || parsed;
+                const rows = payload?.sections?.[0]?.rows || payload?.rows || [];
                 rows.forEach(item => {
                     if (item.subjectName) {
                         const name = item.subjectName.toLowerCase();
@@ -2253,11 +2249,13 @@ async function fetchAndFinishOnboarding() {
             throw new Error("Failed to verify portal credentials. Please check your Admission Number.");
         }
 
-        // Extract student details from scraped profile payload
-        const name = profilePayload.name || profilePayload.studentName || "Student";
-        let rawDept = profilePayload.course || profilePayload.department || "BCA";
+        // Extract student details from scraped profile payload (handles nested sections[0].data format)
+        const profileData = profilePayload?.sections?.[0]?.data || profilePayload?.data || profilePayload || {};
+        const name = profileData.name || profileData.studentName || profilePayload.name || "Student";
+        let rawDept = profileData.course || profileData.department || profilePayload.course || "BCA";
         if (rawDept === '(' || !rawDept || rawDept.length < 2) rawDept = "BCA";
-        const reg = profilePayload.regNo || profilePayload.prn || profilePayload.registerNo || "";
+        const reg = profileData.regNo || profileData.prn || profileData.registerNo || profilePayload.regNo || "";
+        const batchVal = profileData.batch || profilePayload.batch || "";
 
         // Helper to normalize department name to standard BBA/BCA/BSW/etc.
         const normalizeDept = (course) => {
@@ -2304,7 +2302,7 @@ async function fetchAndFinishOnboarding() {
         };
 
         const dept = normalizeDept(rawDept);
-        const batchInfo = calculateSemesterFromBatch(profilePayload.batch);
+        const batchInfo = calculateSemesterFromBatch(batchVal);
 
         obData.name = name;
         obData.dept = dept;
@@ -2327,7 +2325,7 @@ async function fetchAndFinishOnboarding() {
                 department: dept,
                 classGroup: dept,
                 semester: batchInfo.semester,
-                batch: profilePayload.batch || `${batchInfo.startYear} - ${batchInfo.startYear + 3}`,
+                batch: batchVal || `${batchInfo.startYear} - ${batchInfo.startYear + 3}`,
                 batchYear: batchInfo.year,
                 status: 'active',
                 credentialStatus: 'valid',
@@ -3372,15 +3370,31 @@ window.renderClassTimetable = function() {
         }
     }
 
-    const timetableKey = `CLASS_TIMETABLE_${dept}`;
-    const dayPeriods = window[timetableKey]?.[day] || [];
+    const semNum = getStudentSemNumber();
+    const semKey = `CLASS_TIMETABLE_${dept}_SEM_${semNum}`;
+    let dayPeriods = window[semKey]?.[day];
+
+    if (!dayPeriods) {
+        const fallbackKey = `CLASS_TIMETABLE_${dept}`;
+        dayPeriods = window[fallbackKey]?.[day] || [];
+    }
 
     if (dayPeriods.length === 0) {
+        const studentName = info?.name || 'Student';
+        const mailSubject = encodeURIComponent(`Timetable Update Request for ${dept} Sem ${semNum}`);
+        const mailBody = encodeURIComponent(`Hi Admin,\n\nPlease update the timetable for ${dept} Sem ${semNum}.\n\nAdmission Number: ${adminNo}\nName: ${studentName}\n\n[Attach a photo/screenshot of your timetable here]`);
+        const mailtoUrl = `mailto:machub.admin@gmail.com?subject=${mailSubject}&body=${mailBody}`;
+
         container.innerHTML = `
-            <div style="padding:2rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:1.75rem; margin:0.5rem 0;">
-                <div style="font-size:2rem; margin-bottom:0.75rem;">📅</div>
-                <h4 style="font-size:14px; font-weight:800; color:#f5f5f7; margin-bottom:6px;">No Schedule for ${day}</h4>
-                <p style="font-size:11px; color:#86868b;">No timetable uploaded for ${dept} yet.</p>
+            <div style="padding:2.5rem 2rem; text-align:center; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:2rem; margin:0.5rem 0;">
+                <div style="font-size:2.2rem; margin-bottom:1rem;">📅</div>
+                <h4 style="font-size:15px; font-weight:800; color:#f5f5f7; margin-bottom:8px;">No Timetable Uploaded</h4>
+                <p style="font-size:11px; color:#86868b; line-height:1.5; margin-bottom:18px; max-width: 250px; margin-left: auto; margin-right: auto;">
+                    We don't have the active timetable for <strong>${dept} Sem ${semNum}</strong> yet.
+                </p>
+                <a href="${mailtoUrl}" class="inline-flex items-center gap-2 px-5 py-3 bg-[var(--mac-blue)] hover:bg-[#0077ed] text-white rounded-full text-xs font-black spring active:scale-95 transition-all shadow-md" style="text-decoration:none; display: inline-block;">
+                    ✉️ Email Timetable to Admin
+                </a>
             </div>`;
         return;
     }
@@ -3822,7 +3836,7 @@ window.renderClassAttendance = function() {
     const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
     
     const maxSem = getStudentSemNumber();
-    const selectedSem = appState.selectedAttendanceSem || 'all';
+    const selectedSem = appState.selectedAttendanceSem || String(getStudentSemNumber());
     const isSemOpen = appState.openInternalDropdown === 'attendanceSem';
 
     let semFilterHtml = `
@@ -3858,11 +3872,8 @@ window.renderClassAttendance = function() {
     if (adminNo) {
         let cached = null;
         if (selectedSem !== 'all') {
-            const key1 = `machub_data_Attendance_${selectedSem}`;
-            const key2 = `machub_portal_Attendance_${adminNo}_${selectedSem}`;
-            cached = localStorage.getItem(key1) || localStorage.getItem(key2);
-        }
-        if (!cached) {
+            cached = getPortalCache('Attendance', adminNo, selectedSem);
+        } else {
             cached = getPortalCache('Attendance', adminNo);
         }
         
@@ -4102,6 +4113,70 @@ function getStudentSemNumber() {
     return 2; // Default fallback sem
 }
 
+function autoUpdateSemesterFromCache() {
+    try {
+        const info = getStudentInfo();
+        if (!info) return;
+        const adminNo = info.adminNo || localStorage.getItem('machub_student_id') || '';
+        if (!adminNo) return;
+        
+        let maxSem = 0;
+        for (let sem = 1; sem <= 8; sem++) {
+            const key = `machub_portal_Attendance_sem${sem}_${adminNo}`;
+            const keyAss = `machub_portal_Assessment_sem${sem}_${adminNo}`;
+            const keyInt = `machub_portal_InternalMark_sem${sem}_${adminNo}`;
+            if (localStorage.getItem(key) || localStorage.getItem(keyAss) || localStorage.getItem(keyInt)) {
+                maxSem = Math.max(maxSem, sem);
+            }
+        }
+        
+        // Also calculate based on batch as a fallback/verification
+        if (info.batch) {
+            const matchBatch = String(info.batch).match(/(\d{4})/);
+            if (matchBatch) {
+                const startYear = parseInt(matchBatch[1], 10);
+                const currentDate = new Date();
+                const currentYear = currentDate.getFullYear();
+                const currentMonth = currentDate.getMonth() + 1;
+                
+                let elapsedYears = currentYear - startYear;
+                if (currentMonth < 6) {
+                    elapsedYears -= 1;
+                }
+                if (elapsedYears >= 0) {
+                    let calculatedSem = 1;
+                    if (elapsedYears === 0) {
+                        calculatedSem = (currentMonth >= 6 && currentMonth < 11) ? 1 : 2;
+                    } else if (elapsedYears === 1) {
+                        calculatedSem = (currentMonth >= 6 && currentMonth < 11) ? 3 : 4;
+                    } else if (elapsedYears === 2) {
+                        calculatedSem = (currentMonth >= 6 && currentMonth < 11) ? 5 : 6;
+                    } else {
+                        calculatedSem = 6;
+                    }
+                    maxSem = Math.max(maxSem, calculatedSem);
+                }
+            }
+        }
+        
+        if (maxSem > 0) {
+            const match = info.semester ? info.semester.match(/\d+/) : null;
+            const currentSemNum = match ? parseInt(match[0], 10) : 2;
+            if (maxSem !== currentSemNum) {
+                console.log(`[MacHub] Auto-updating student semester: Sem ${currentSemNum} -> Sem ${maxSem}`);
+                info.semester = `Sem ${maxSem}`;
+                localStorage.setItem('mac_student_info', JSON.stringify(info));
+                
+                appState.selectedAttendanceSem = String(maxSem);
+                appState.selectedInternalSem = String(maxSem);
+                appState.selectedExamSem = String(maxSem);
+            }
+        }
+    } catch(e) {
+        console.warn('Failed to auto update semester:', e);
+    }
+}
+
 window.toggleInternalDropdown = function (name) {
     appState.openInternalDropdown = appState.openInternalDropdown === name ? null : name;
     window.renderExamResults();
@@ -4180,13 +4255,15 @@ window.syncExamResults = async function () {
     try {
         if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
             const activeSem = appState.selectedInternalSem || String(getStudentSemNumber());
-            if (appState.resultsSubTab === 'internal') {
-                await Promise.all([
-                    window.MacHubPortal.fetchSection('InternalMark', true, activeSem),
-                    window.MacHubPortal.fetchSection('Assessment', true, activeSem)
-                ]);
-            } else {
-                await window.MacHubPortal.fetchSection('ExamResult', true);
+            // Sync all results: University results AND College results (InternalMark & Assessment)
+            await Promise.all([
+                window.MacHubPortal.fetchSection('ExamResult', true),
+                window.MacHubPortal.fetchSection('InternalMark', true, activeSem),
+                window.MacHubPortal.fetchSection('Assessment', true, activeSem)
+            ]);
+            
+            if (appState.internalFetchStatus) {
+                appState.internalFetchStatus[activeSem] = 'success';
             }
         } else {
             throw new Error('Sync API not initialized');
@@ -4268,7 +4345,7 @@ window.renderExamResults = function () {
         let results = [];
         try {
             const parsed = JSON.parse(examRaw);
-            results = parsed?.data?.payload?.results || parsed?.data?.results || parsed?.payload?.results || parsed?.results || [];
+            results = parsed?.data?.payload?.results || parsed?.data?.results || parsed?.payload?.results || parsed?.results || parsed?.sections || parsed?.data?.sections || parsed?.payload?.sections || [];
         } catch (e) {
             console.error(e);
         }
@@ -4553,7 +4630,29 @@ window.renderExamResults = function () {
         if (subjectNames.size > 0) {
             contentHtml = Array.from(subjectNames).map(subjectName => {
                 const matchingAssess   = assessData.find(sec => sec.subject && sec.subject.toLowerCase() === subjectName.toLowerCase());
-                const matchingInternal = internalData.find(sec => sec.subject && sec.subject.toLowerCase() === subjectName.toLowerCase());
+                // Find matching internal mark:
+                // Case A: Multi-table format (one table per subject section)
+                let matchingInternal = internalData.find(sec => sec.subject && sec.subject.toLowerCase() === subjectName.toLowerCase());
+                let internalRow = matchingInternal?.rows?.[0];
+                let internalHeaders = matchingInternal?.headers || [];
+                let internalRowsAll = matchingInternal?.rows || [];
+
+                // Case B: Single-table format (one table containing all subjects as rows)
+                if (!internalRow) {
+                    for (const sec of internalData) {
+                        const foundRow = sec.rows?.find(r => {
+                            const subName = r['Subject Name'] || r['SubjectName'] || r['subject name'] || r['subject'] || r['col_1'] || r['col_0'] || '';
+                            return subName.toLowerCase().replace(/\s*\([^)]+\)/g, '').trim() === subjectName.toLowerCase();
+                        });
+                        if (foundRow) {
+                            internalRow = foundRow;
+                            internalHeaders = sec.headers || [];
+                            internalRowsAll = [foundRow];
+                            matchingInternal = sec;
+                            break;
+                        }
+                    }
+                }
 
                 // Filter CCR rows based on selection (Assessment section)
                 let rowsToRender = [];
@@ -4570,12 +4669,7 @@ window.renderExamResults = function () {
 
                 // Render final university internal mark rows (InternalMark section)
                 let finalUniversityHtml = '';
-                if (matchingInternal && matchingInternal.rows && matchingInternal.rows.length > 0 && (activeType === 'both' || activeType === 'internal')) {
-                    // The rows typically have: Subject Name, Obtained Mark, Max Mark, etc.
-                    // Try standard column names first, then fall back to positional col_N keys
-                    const firstRow = matchingInternal.rows[0];
-                    const headers  = matchingInternal.headers || [];
-
+                if (internalRow && (activeType === 'both' || activeType === 'internal')) {
                     // Helper to get a value from a row by possible keys
                     const getVal = (row, ...keys) => {
                         for (const k of keys) {
@@ -4584,26 +4678,26 @@ window.renderExamResults = function () {
                         return '—';
                     };
 
-                    const markVal = getVal(firstRow,
+                    const markVal = getVal(internalRow,
                         'Obtained Mark', 'ObtainedMark', 'obtained mark', 'internalMark',
                         'Internal Mark', 'Mark', 'Score', 'mark', 'score',
                         'col_1', 'col_2'
                     );
-                    const maxVal  = getVal(firstRow,
+                    const maxVal  = getVal(internalRow,
                         'Max Mark', 'MaxMark', 'max mark', 'maxMark',
                         'Maximum', 'Out Of', 'Total Mark',
                         'col_2', 'col_3'
                     );
 
-                    // If there are multiple rows, render them all as a table
-                    if (matchingInternal.rows.length > 1) {
-                        const tableHeaders = headers.length > 0 ? headers : Object.keys(firstRow);
+                    // If there are multiple rows in the section (Case A only), render them all as a table
+                    if (internalRowsAll.length > 1) {
+                        const tableHeaders = internalHeaders.length > 0 ? internalHeaders : Object.keys(internalRow);
                         finalUniversityHtml = `
                             <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--glass-border); margin-bottom: 12px;">
                                 <table class="data-table">
                                     <thead><tr>${tableHeaders.map(h => `<th>${h}</th>`).join('')}</tr></thead>
                                     <tbody>
-                                        ${matchingInternal.rows.map(row => `
+                                        ${internalRowsAll.map(row => `
                                             <tr>${tableHeaders.map(h => `<td>${row[h] !== undefined ? row[h] : '—'}</td>`).join('')}</tr>
                                         `).join('')}
                                     </tbody>
@@ -4693,7 +4787,521 @@ window.renderExamResults = function () {
     }
 }
 
+// Helper to convert time format (e.g. "09:30 AM") to minutes since midnight
+function getMinutesFromTimeString(timeStr) {
+    const parts = timeStr.trim().split(' ');
+    if (parts.length < 2) return 0;
+    const timeParts = parts[0].split(':');
+    let hour = parseInt(timeParts[0], 10);
+    const min = parseInt(timeParts[1], 10);
+    const ampm = parts[1].toLowerCase();
+    if (ampm === 'pm' && hour < 12) hour += 12;
+    if (ampm === 'am' && hour === 12) hour = 0;
+    return hour * 60 + min;
+}
+
+function getLiveClassTrackerHtml(dept, semNum) {
+    const timetableKey = `CLASS_TIMETABLE_${dept}_SEM_${semNum}`;
+    let timetable = window[timetableKey];
+    if (!timetable) {
+        timetable = window[`CLASS_TIMETABLE_${dept}`];
+    }
+    if (!timetable) return '';
+
+    const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const istNow = new Date(utc + (3600000 * 5.5)); // IST timezone
+    
+    const dayName = DAYS[istNow.getDay()];
+    const todaySchedule = timetable[dayName] || [];
+
+    if (dayName === 'Sunday' || dayName === 'Saturday' || todaySchedule.length === 0) {
+        return `
+            <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Smart Campus</span>
+                    <span class="text-xs">☀️</span>
+                </div>
+                <h4 class="text-sm font-bold text-white">Weekend Rest</h4>
+                <p class="text-[10px] font-bold text-[#86868b] mt-1">No classes scheduled for today. Enjoy your day!</p>
+            </div>
+        `;
+    }
+
+    const currentMins = istNow.getHours() * 60 + istNow.getMinutes();
+    let activePeriod = null;
+    let nextPeriod = null;
+
+    todaySchedule.forEach((item, idx) => {
+        const timeParts = item.time.split('-');
+        if (timeParts.length < 2) return;
+        const startMins = getMinutesFromTimeString(timeParts[0]);
+        const endMins = getMinutesFromTimeString(timeParts[1]);
+
+        if (currentMins >= startMins && currentMins < endMins) {
+            activePeriod = { ...item, startMins, endMins };
+            nextPeriod = todaySchedule[idx + 1] || null;
+        }
+    });
+
+    const lunchStart = 12 * 60 + 30; // 12:30 PM
+    const lunchEnd = 13 * 60 + 30;  // 01:30 PM
+    let isLunchBreak = (currentMins >= lunchStart && currentMins < lunchEnd);
+
+    if (isLunchBreak) {
+        nextPeriod = todaySchedule.find(item => {
+            const startStr = item.time.split('-')[0];
+            return getMinutesFromTimeString(startStr) >= lunchEnd;
+        });
+    }
+
+    if (activePeriod) {
+        const totalDuration = activePeriod.endMins - activePeriod.startMins;
+        const elapsed = currentMins - activePeriod.startMins;
+        const progressPct = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+        const minsLeft = activePeriod.endMins - currentMins;
+
+        return `
+            <div class="glass-panel p-5 rounded-[2rem] border border-[rgba(0,113,227,0.25)] bg-[rgba(0,113,227,0.03)] backdrop-blur-md relative overflow-hidden">
+                <div class="absolute top-5 right-5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#00d4aa]/15 border border-[#00d4aa]/25">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#00d4aa] animate-pulse"></span>
+                    <span class="text-[8px] font-black text-[#00d4aa] uppercase tracking-wider">LIVE</span>
+                </div>
+
+                <div class="flex flex-col mb-3">
+                    <span class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider mb-1">Live Class Tracker</span>
+                    <h4 class="text-sm font-black text-white leading-tight">Period ${activePeriod.period}: ${activePeriod.title}</h4>
+                    <span class="text-[10px] font-bold text-[#86868b] mt-1">📍 ${activePeriod.room || 'Room 201'} • ⏱ ${activePeriod.time}</span>
+                </div>
+
+                <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-3">
+                    <div class="h-full bg-[var(--mac-blue)] rounded-full transition-all duration-1000" style="width: ${progressPct}%;"></div>
+                </div>
+
+                <div class="flex justify-between items-center text-[10px] font-bold text-[#86868b]">
+                    <span>${minsLeft} minutes remaining</span>
+                    ${nextPeriod ? `<span>Next: ${nextPeriod.title}</span>` : `<span>Last period for today</span>`}
+                </div>
+            </div>
+        `;
+    }
+
+    if (isLunchBreak) {
+        const lunchMinsLeft = lunchEnd - currentMins;
+        return `
+            <div class="glass-panel p-5 rounded-[2rem] border border-orange-500/20 bg-orange-500/5 backdrop-blur-md relative overflow-hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[9px] font-black text-orange-400 uppercase tracking-wider">Smart Campus</span>
+                    <span class="text-xs">☕</span>
+                </div>
+                <h4 class="text-sm font-bold text-white">Lunch Break</h4>
+                <p class="text-[10px] font-bold text-[#86868b] mt-1">Class resumes in ${lunchMinsLeft}m at 01:30 PM.</p>
+                ${nextPeriod ? `<div class="mt-3 pt-3 border-t border-white/5 text-[9px] font-black text-[#86868b] uppercase tracking-wider">Next: Period ${nextPeriod.period} - ${nextPeriod.title}</div>` : ''}
+            </div>
+        `;
+    }
+
+    const lastPeriod = todaySchedule[todaySchedule.length - 1];
+    if (lastPeriod) {
+        const lastEndStr = lastPeriod.time.split('-')[1];
+        const lastEndMins = getMinutesFromTimeString(lastEndStr);
+        if (currentMins >= lastEndMins) {
+            return `
+                <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Smart Campus</span>
+                        <span class="text-xs">🌅</span>
+                    </div>
+                    <h4 class="text-sm font-bold text-white">Classes Over</h4>
+                    <p class="text-[10px] font-bold text-[#86868b] mt-1">All classes completed for today. Have a great evening!</p>
+                </div>
+            `;
+        }
+    }
+
+    return `
+        <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Smart Campus</span>
+                <span class="text-xs">🕒</span>
+            </div>
+            <h4 class="text-sm font-bold text-white">Morning Prep</h4>
+            <p class="text-[10px] font-bold text-[#86868b] mt-1">First class starts at 09:30 AM.</p>
+        </div>
+    `;
+}
+
+function getAttendanceSummaryHtml(adminNo) {
+    const cached = getPortalCache('Attendance', adminNo);
+    if (!cached) {
+        return `
+            <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden flex items-center justify-between cursor-pointer animate-pulse" onclick="window.syncAndOpenNative('Attendance', 'view-class', 'attendance')">
+                <div>
+                    <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider block mb-1">Attendance Tracker</span>
+                    <h4 class="text-sm font-bold text-white">Attendance Not Synced</h4>
+                    <p class="text-[9px] font-bold text-[#86868b] mt-0.5">Tap here to sync attendance data.</p>
+                </div>
+                <span class="text-xl text-[#86868b]">📅</span>
+            </div>
+        `;
+    }
+
+    let records = [];
+    try {
+        const parsed = JSON.parse(cached);
+        const payload = parsed?.data?.payload || parsed?.data || parsed?.payload || parsed;
+        records = payload?.sections?.[0]?.rows || payload?.rows || [];
+    } catch(e) {
+        return '';
+    }
+
+    if (records.length === 0) return '';
+
+    let totalConducted = 0;
+    let totalPresent = 0;
+
+    records.forEach(r => {
+        const cond = parseFloat(r.totalHours || r.conducted || r['No. of Sessions'] || r['col_3'] || "0");
+        const pres = parseFloat(r.presentHours || r.present || r['No. of Present'] || r['col_2'] || "0");
+        totalConducted += cond;
+        totalPresent += pres;
+    });
+
+    if (totalConducted === 0) return '';
+
+    const overallPct = (totalPresent / totalConducted) * 100;
+    const progressColor = overallPct >= 75 ? '[var(--mac-blue)]' : (overallPct >= 70 ? 'orange-500' : 'red-500');
+    
+    let bunkMessage = '';
+    if (overallPct >= 75) {
+        const maxBunks = Math.floor((totalPresent / 0.75) - totalConducted);
+        if (maxBunks > 0) {
+            bunkMessage = `Safe to bunk next <span class="text-[#00d4aa] font-black">${maxBunks} classes</span>! ☕`;
+        } else {
+            bunkMessage = `At critical threshold. Do not bunk any classes! ⚠️`;
+        }
+    } else {
+        const finalReq = Math.max(1, Math.ceil(3 * totalConducted - 4 * totalPresent));
+        bunkMessage = `Must attend next <span class="text-red-400 font-black">${finalReq} classes</span> consecutively! ⚠️`;
+    }
+
+    return `
+        <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden cursor-pointer" onclick="window.syncAndOpenNative('Attendance', 'view-class', 'attendance')">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Attendance Tracker</span>
+                <span class="text-sm font-black text-white">${overallPct.toFixed(1)}%</span>
+            </div>
+
+            <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-3">
+                <div class="h-full bg-${progressColor} rounded-full" style="width: ${Math.min(100, overallPct)}%;"></div>
+            </div>
+
+            <p class="text-[10px] font-bold text-[#86868b] leading-relaxed">${bunkMessage}</p>
+        </div>
+    `;
+}
+
+function getPendingActivitiesHtml(adminNo) {
+    const assignRaw = getPortalCache('Assignment', adminNo);
+    const seminarRaw = getPortalCache('Seminar', adminNo);
+
+    let activeAssignments = [];
+    if (assignRaw) {
+        try {
+            const parsed = JSON.parse(assignRaw);
+            const payload = parsed?.data?.payload || parsed?.data || parsed?.payload || parsed;
+            const sections = payload?.sections || [];
+            const activeSection = sections.find(s => s.label === 'Active' || s.label === 'active');
+            activeAssignments = activeSection?.rows || [];
+        } catch(e) {}
+    }
+
+    let seminarRows = [];
+    if (seminarRaw) {
+        try {
+            const parsed = JSON.parse(seminarRaw);
+            const payload = parsed?.data?.payload || parsed?.data || parsed?.payload || parsed;
+            const sections = payload?.sections || [];
+            sections.forEach(sec => {
+                if (sec.rows) seminarRows.push(...sec.rows);
+            });
+        } catch(e) {}
+    }
+
+    const pendingAssignments = activeAssignments.filter(r => {
+        const statusStr = String(r['Status'] || r['status'] || r['col_4'] || '').toLowerCase();
+        return !statusStr.includes('submit') && !statusStr.includes('complete') && !statusStr.includes('yes');
+    });
+
+    const pendingSeminars = seminarRows.filter(r => {
+        const statusStr = String(r['Status'] || r['status'] || r['col_4'] || '').toLowerCase();
+        return !statusStr.includes('complete') && !statusStr.includes('submit') && !statusStr.includes('present') && !statusStr.includes('yes') && !statusStr.includes('completed');
+    });
+
+    const totalPending = pendingAssignments.length + pendingSeminars.length;
+
+    if (totalPending === 0) {
+        return `
+            <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden flex items-center justify-between cursor-pointer" onclick="window.syncAndOpenNative('Assignment', 'view-class', 'subjects')">
+                <div>
+                    <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider block mb-1">Track Activity</span>
+                    <h4 class="text-sm font-bold text-white">All Caught Up! 🎉</h4>
+                    <p class="text-[9px] font-bold text-[#86868b] mt-0.5">No pending assignments or seminars.</p>
+                </div>
+                <span class="text-xl">🙌</span>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden cursor-pointer" onclick="window.syncAndOpenNative('Assignment', 'view-class', 'subjects')">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Track Activity</span>
+                <span class="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[8px] font-black uppercase tracking-wider">${totalPending} Pending</span>
+            </div>
+            
+            <div class="space-y-2 mt-2">
+                ${pendingAssignments.slice(0, 1).map(r => `
+                    <div class="flex items-start gap-2.5">
+                        <span class="text-xs mt-0.5">📂</span>
+                        <div class="flex-1 min-w-0">
+                            <h5 class="text-xs font-bold text-white leading-tight truncate">${r['Topic'] || r['topic'] || 'Assignment'}</h5>
+                            <p class="text-[9px] text-[#86868b] truncate">Due: ${r['Last Date'] || r['last date'] || '—'} • ${r['Subject'] || r['subject'] || ''}</p>
+                        </div>
+                    </div>
+                `).join('')}
+
+                ${pendingSeminars.slice(0, 1).map(r => `
+                    <div class="flex items-start gap-2.5">
+                        <span class="text-xs mt-0.5">🎙️</span>
+                        <div class="flex-1 min-w-0">
+                            <h5 class="text-xs font-bold text-white leading-tight truncate">${r['Topic'] || r['topic'] || 'Seminar'}</h5>
+                            <p class="text-[9px] text-[#86868b] truncate">Date: ${r['Date'] || r['date'] || '—'} • ${r['Subject'] || r['subject'] || ''}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function getLatestAnnouncementHtml() {
+    if (!window.ANNOUNCEMENTS || window.ANNOUNCEMENTS.length === 0) return '';
+    const latest = window.ANNOUNCEMENTS[0];
+
+    return `
+        <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden cursor-pointer" onclick="switchView('view-announcements')">
+            <div class="flex justify-between items-center mb-2.5">
+                <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Latest Announcement</span>
+                <span class="text-[8px] font-black text-[var(--mac-blue)] uppercase tracking-widest">${latest.category || 'General'}</span>
+            </div>
+            <h4 class="text-xs font-black text-white leading-snug truncate">${latest.title}</h4>
+            <p class="text-[10px] font-bold text-[#86868b] mt-1 line-clamp-2 leading-relaxed">${latest.description || latest.text || ''}</p>
+        </div>
+    `;
+}
+
+window.renderHomepageDashboard = function() {
+    const container = document.getElementById('homeDashboardContainer');
+    if (!container) return;
+
+    const info = getStudentInfo();
+    if (!info) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const adminNo = info.adminNo || '';
+    const dept = (info.dept || '').toUpperCase();
+    const semNum = String(info.semester || '').match(/\d+/) ? String(info.semester || '').match(/\d+/)[0] : '3';
+
+    const liveClassHtml = getLiveClassTrackerHtml(dept, semNum);
+    const attendanceHtml = getAttendanceSummaryHtml(adminNo);
+    const activitiesHtml = getPendingActivitiesHtml(adminNo);
+    const announcementHtml = getLatestAnnouncementHtml();
+
+    container.innerHTML = liveClassHtml + attendanceHtml + activitiesHtml + announcementHtml;
+};
+
+window.renderClassActivity = function() {
+    const container = document.getElementById('classSubjectsContent');
+    if (!container) return;
+
+    const info = getStudentInfo();
+    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
+
+    if (!adminNo) {
+        container.innerHTML = `
+            <div class="glass-panel rounded-[2rem] p-6 text-center my-6 border border-white/5">
+                <div class="text-3xl mb-3">🔑</div>
+                <h3 class="text-sm font-black text-white">Admission Number Required</h3>
+                <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed">
+                    Go to Profile → Edit and enter your Admission Number to track activities.
+                </p>
+            </div>`;
+        return;
+    }
+
+    if (!appState.activityFilter) {
+        appState.activityFilter = 'all';
+    }
+
+    const assignRaw = getPortalCache('Assignment', adminNo);
+    const seminarRaw = getPortalCache('Seminar', adminNo);
+
+    let activeAssignments = [];
+    let expiredAssignments = [];
+    if (assignRaw) {
+        try {
+            const parsed = JSON.parse(assignRaw);
+            const payload = parsed?.data?.payload || parsed?.data || parsed?.payload || parsed;
+            const sections = payload?.sections || [];
+            const activeSection = sections.find(s => s.label === 'Active' || s.label === 'active');
+            const expiredSection = sections.find(s => s.label === 'Expired' || s.label === 'expired' || s.label === 'Exprired');
+            activeAssignments = activeSection?.rows || [];
+            expiredAssignments = expiredSection?.rows || [];
+        } catch(e) {}
+    }
+
+    let seminarRows = [];
+    if (seminarRaw) {
+        try {
+            const parsed = JSON.parse(seminarRaw);
+            const payload = parsed?.data?.payload || parsed?.data || parsed?.payload || parsed;
+            const sections = payload?.sections || [];
+            sections.forEach(sec => {
+                if (sec.rows) seminarRows.push(...sec.rows);
+            });
+        } catch(e) {}
+    }
+
+    const items = [];
+    
+    activeAssignments.forEach(r => {
+        const statusStr = String(r['Status'] || r['status'] || r['col_4'] || '').trim().toLowerCase();
+        const isSubmitted = statusStr.includes('submit') || statusStr.includes('complete') || statusStr.includes('yes');
+        items.push({
+            type: 'assignment',
+            subject: r['Subject'] || r['subject'] || r['col_1'] || 'General',
+            topic: r['Topic'] || r['topic'] || r['col_2'] || 'Assignment Topic',
+            date: r['Last Date'] || r['last date'] || r['LastDate'] || r['col_3'] || '—',
+            status: isSubmitted ? 'submitted' : 'pending',
+            score: r['Mark'] || r['mark'] || r['score'] || r['col_5'] || '—',
+            isExpired: false
+        });
+    });
+
+    expiredAssignments.forEach(r => {
+        const statusStr = String(r['Status'] || r['status'] || r['col_4'] || '').trim().toLowerCase();
+        const isSubmitted = statusStr.includes('submit') || statusStr.includes('complete') || statusStr.includes('yes');
+        items.push({
+            type: 'assignment',
+            subject: r['Subject'] || r['subject'] || r['col_1'] || 'General',
+            topic: r['Topic'] || r['topic'] || r['col_2'] || 'Assignment Topic',
+            date: r['Last Date'] || r['last date'] || r['LastDate'] || r['col_3'] || '—',
+            status: isSubmitted ? 'submitted' : 'expired',
+            score: r['Mark'] || r['mark'] || r['score'] || r['col_5'] || '—',
+            isExpired: true
+        });
+    });
+
+    seminarRows.forEach(r => {
+        const statusStr = String(r['Status'] || r['status'] || r['col_4'] || '').trim().toLowerCase();
+        const isCompleted = statusStr.includes('complete') || statusStr.includes('submit') || statusStr.includes('present') || statusStr.includes('yes') || statusStr.includes('completed');
+        items.push({
+            type: 'seminar',
+            subject: r['Subject'] || r['subject'] || r['col_1'] || 'General',
+            topic: r['Topic'] || r['topic'] || r['col_2'] || 'Seminar Presentation',
+            date: r['Date'] || r['date'] || r['col_3'] || '—',
+            status: isCompleted ? 'submitted' : 'pending',
+            score: r['Score'] || r['score'] || r['Mark'] || r['mark'] || r['col_5'] || '—',
+            isExpired: false
+        });
+    });
+
+    const filtered = items.filter(item => {
+        if (appState.activityFilter === 'all') return true;
+        return item.type === appState.activityFilter;
+    });
+
+    if (items.length === 0) {
+        container.innerHTML = `
+            <div class="glass-panel rounded-[2rem] p-8 text-center my-6 border border-white/5">
+                <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">🎯</div>
+                <h3 class="text-base font-black text-white">No Activity Records Found</h3>
+                <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed mb-4">
+                    Sync your academic data from ePortal to track assignments and seminars.
+                </p>
+                <button onclick="window.syncAndOpenNative('Assignment', 'view-class', 'subjects')" class="px-6 py-2.5 bg-[var(--mac-blue)] text-white rounded-full text-xs font-black spring active:scale-95">
+                    🔄 Sync Activity Data
+                </button>
+            </div>`;
+        return;
+    }
+
+    const segmentsHtml = `
+        <div class="flex bg-black/10 dark:bg-white/5 p-1 rounded-2xl gap-1 border border-white/5 mb-5 w-full">
+            <button type="button" onclick="window.switchActivityFilter('all')" class="flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.activityFilter === 'all' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">All</button>
+            <button type="button" onclick="window.switchActivityFilter('assignment')" class="flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.activityFilter === 'assignment' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">Assignments</button>
+            <button type="button" onclick="window.switchActivityFilter('seminar')" class="flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.activityFilter === 'seminar' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">Seminars</button>
+        </div>
+    `;
+
+    let listHtml = '';
+    if (filtered.length === 0) {
+        listHtml = `
+            <div class="glass-panel rounded-[2rem] p-8 text-center my-6 border border-white/5">
+                <p class="text-xs font-bold text-[#86868b]">No records matching the selected filter.</p>
+            </div>`;
+    } else {
+        listHtml = filtered.map(item => {
+            const isSubmitted = item.status === 'submitted';
+            const isExpired = item.status === 'expired';
+            
+            let statusBadge = '';
+            if (isSubmitted) {
+                statusBadge = `<span class="px-2 py-0.5 rounded-full bg-[#00d4aa]/15 text-[#00d4aa] text-[8px] font-black uppercase tracking-wider">✓ Done</span>`;
+            } else if (isExpired) {
+                statusBadge = `<span class="px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 text-[8px] font-black uppercase tracking-wider">⚠️ Expired</span>`;
+            } else {
+                statusBadge = `<span class="px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 text-[8px] font-black uppercase tracking-wider">⏱ Pending</span>`;
+            }
+
+            const borderClass = item.type === 'assignment' ? 'border-l-[4px] border-l-[#0071e3]/60' : 'border-l-[4px] border-l-rose-500/60';
+            const typeLabel = item.type === 'assignment' ? 'Assignment' : 'Seminar';
+
+            return `
+                <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden flex flex-col gap-2 ${borderClass}">
+                    <div class="flex justify-between items-start gap-3">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-[8px] font-black text-[#86868b] uppercase tracking-wider block">${typeLabel} • ${item.subject}</span>
+                            <h4 class="text-xs font-black text-white mt-0.5 leading-snug line-clamp-2">${item.topic}</h4>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    
+                    <div class="flex justify-between items-center mt-2 pt-2 border-t border-white/5 text-[9px] font-bold text-[#86868b]">
+                        <span>${item.type === 'assignment' ? 'Due:' : 'Date:'} ${item.date}</span>
+                        ${item.score && item.score !== '—' && item.score !== '' ? `<span class="text-[var(--mac-blue)]">Score: ${item.score}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    container.innerHTML = window.getFreshnessIndicatorHtml(appState.activityFilter === 'seminar' ? 'Seminar' : 'Assignment') + segmentsHtml + listHtml;
+};
+
+window.renderClassSubjects = window.renderClassActivity;
+
+window.switchActivityFilter = function(filter) {
+    appState.activityFilter = filter;
+    window.renderClassActivity();
+};
+
 window.initExamHubApp = () => {
+    autoUpdateSemesterFromCache();
     checkOnboarding();
     
     // Sync class department with student info
@@ -4763,6 +5371,7 @@ window.initExamHubApp = () => {
     setupSwipeGestures();
     setupScrollHide();
     document.body.classList.add('app-ready');
+    if (typeof renderHomepageDashboard === 'function') renderHomepageDashboard();
 
     if (window.ExamHubUI) {
         window.ExamHubUI.afterFirstPaint(() => {
@@ -4801,9 +5410,41 @@ window.getFreshnessIndicatorHtml = function(section, semester = '') {
     const adminNo = window.ExamHubProfile?.get()?.adminNo || window.getStudentInfo?.()?.adminNo || localStorage.getItem('machub_student_id') || '';
     if (!adminNo) return '';
 
-    const semSuffix = semester ? `_sem${semester}` : '';
-    const cacheKey = `machub_portal_${section}${semSuffix}_${adminNo}`;
-    const raw = localStorage.getItem(cacheKey);
+    let raw = null;
+    let targetSem = semester;
+    
+    if (!targetSem || targetSem === 'all') {
+        let maxSavedAt = 0;
+        let bestRaw = null;
+        for (let sem = 1; sem <= 8; sem++) {
+            const key = `machub_portal_${section}_sem${sem}_${adminNo}`;
+            const val = localStorage.getItem(key);
+            if (val) {
+                try {
+                    const parsed = JSON.parse(val);
+                    if (parsed.savedAt > maxSavedAt) {
+                        maxSavedAt = parsed.savedAt;
+                        bestRaw = val;
+                    }
+                } catch(e) {}
+            }
+        }
+        if (bestRaw) {
+            raw = bestRaw;
+        } else {
+            const key = `machub_portal_${section}_${adminNo}`;
+            raw = localStorage.getItem(key);
+        }
+    } else {
+        const semSuffix = `_sem${targetSem}`;
+        const cacheKey = `machub_portal_${section}${semSuffix}_${adminNo}`;
+        raw = localStorage.getItem(cacheKey);
+    }
+    
+    if (!raw) {
+        const cacheKey = `machub_portal_${section}_${adminNo}`;
+        raw = localStorage.getItem(cacheKey);
+    }
 
     let indicatorColor = 'bg-slate-500';
     let indicatorText = 'Not yet available';

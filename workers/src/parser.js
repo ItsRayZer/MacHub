@@ -339,9 +339,15 @@ function parseDashboard(html) {
 
   // Extract active courses using the SEM {N} format
   const activeCoursesSet = new Set();
+  let dashboardSemNum = null;
   lines.forEach(line => {
-    if (/SEM\s*\d+\s*-\s*/i.test(line)) {
+    const match = line.match(/SEM\s*(\d+)\s*-\s*/i);
+    if (match) {
       activeCoursesSet.add(line.trim());
+      const parsedVal = parseInt(match[1], 10);
+      if (!dashboardSemNum || parsedVal > dashboardSemNum) {
+        dashboardSemNum = parsedVal;
+      }
     }
   });
   result.active_courses = Array.from(activeCoursesSet);
@@ -358,6 +364,7 @@ function parseDashboard(html) {
     feedback: result.feedback,
     activeCourses: result.active_courses,
     active_courses: result.active_courses,
+    semester: dashboardSemNum ? `Sem ${dashboardSemNum}` : null,
     sections: [{ data: result }]
   };
 }
@@ -434,16 +441,26 @@ function parseProfile(html) {
 
   // Find photo URL
   const $full = cheerio.load(html);
+  const extractById = (id) => {
+    const el = $full(`#${id}`);
+    return el.length ? el.text().trim() : '';
+  };
+
   const photo = $full('img[id*="photo"], img[id*="profile"], img[id*="student"], img[src*="student"]').first();
   if (photo.length) {
     result.photoUrl = photo.attr('src');
   }
 
   // Name, Admission No, Course, Batch
-  const nameMatch = bodyText.match(/View Student Profile\s*([A-Z\s]+?)\s*(\d+)/i);
-  if (nameMatch) {
-    result.name = nameMatch[1].trim();
-    result.admissionNo = nameMatch[2].trim();
+  result.name = extractById('MainContent_lblName') || extractById('MainContent_lblStudentName');
+  result.admissionNo = extractById('MainContent_lblAdmNo') || extractById('MainContent_lblAdmissionNo');
+
+  if (!result.name || !result.admissionNo) {
+    const nameMatch = bodyText.match(/View Student Profile\s*([A-Z\s]+?)\s*(\d+)/i);
+    if (nameMatch) {
+      if (!result.name) result.name = nameMatch[1].trim();
+      if (!result.admissionNo) result.admissionNo = nameMatch[2].trim();
+    }
   }
 
   // Robust Name fallbacks
@@ -516,9 +533,12 @@ function parseProfile(html) {
     }
   }
   
-  const courseMatch = bodyText.match(/View Student Profile[^]+?\d+\s*([A-Z\s()&,-]+?)\s*\(\s*\d{4}/i);
-  if (courseMatch) {
-    result.course = courseMatch[1].trim();
+  result.course = extractById('MainContent_lblCourse') || extractById('MainContent_lblProgramme') || extractById('MainContent_lblDept') || extractById('MainContent_lblDepartment') || extractById('MainContent_lblBranch');
+  if (!result.course) {
+    const courseMatch = bodyText.match(/View Student Profile[^]+?\d+\s*([A-Z\s()&,-]+?)\s*\(\s*\d{4}/i);
+    if (courseMatch) {
+      result.course = courseMatch[1].trim();
+    }
   }
   
   if (!result.course) {
@@ -535,9 +555,12 @@ function parseProfile(html) {
     }
   }
   
-  const batchMatch = bodyText.match(/\(\s*(\d{4}\s*-\s*\d{4})\s*\)/);
-  if (batchMatch) {
-    result.batch = batchMatch[1].trim();
+  result.batch = extractById('MainContent_lblBatch') || extractById('MainContent_lblDuration');
+  if (!result.batch) {
+    const batchMatch = bodyText.match(/\(\s*(\d{4}\s*-\s*\d{4})\s*\)/);
+    if (batchMatch) {
+      result.batch = batchMatch[1].trim();
+    }
   }
 
   if (!result.batch) {
@@ -559,22 +582,24 @@ function parseProfile(html) {
     return match ? match[1].trim() : '';
   };
 
-  result.dob = extractField(/Date Of Birth[^\d]*(\d{2}[-/]\d{2}[-/]\d{4})/i);
-  result.phone = extractField(/Mobile[^\d]*(\d{10})/i);
-  result.email = extractField(/Email[^\w]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})/i);
-  result.gender = extractField(/Gender[^\w]*(MALE|FEMALE|OTHER)/i);
+  result.dob = extractById('MainContent_lblDOB') || extractField(/Date Of Birth[^\d]*(\d{2}[-/]\d{2}[-/]\d{4})/i);
+  result.phone = extractById('MainContent_lblMobile') || extractField(/Mobile[^\d]*(\d{10})/i);
   
-  // Blood group matches
-  const bgMatch = bodyText.match(/Blood Group[^\w]*(A\+|A-|B\+|B-|AB\+|AB-|O\+|O-)/i);
-  result.bloodGroup = bgMatch ? bgMatch[1].trim() : '';
-  
-  result.aadhar = extractField(/Aadhaar[^\d]*(\d{12})/i);
-  result.nationality = extractField(/Nationality[^\w]*([A-Z\s]+?)\s*(?:Other Details|Religion)/i);
-  result.religion = extractField(/Religion[^\w]*([A-Z\s]+?)\s*Caste/i);
-  result.caste = extractField(/Caste[^\w]*([A-Z\s]+?)\s*Reservation/i);
-  result.category = extractField(/Reservation[^\w]*([A-Z\s]+?)\s*Annual Income/i);
-  result.income = extractField(/Annual Income[^\d]*([0-9\s]*?)\s*(?:Permanent Address|Communication Address|Other Details)/i);
-  result.abcId = extractField(/ABC ID[^\w]*([A-Za-z0-9_-]+)/i);
+  const emailSpan = $full('#MainContent_lblEmail');
+  result.email = emailSpan.length ? emailSpan.text().trim() : '';
+  if (!result.email) {
+    result.email = extractField(/Email[^\w]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})/i);
+  }
+
+  result.gender = extractById('MainContent_lblGender') || extractField(/Gender[^\w]*(MALE|FEMALE|OTHER)/i);
+  result.bloodGroup = extractById('MainContent_lblBlood') || extractField(/Blood Group[^\w]*(A\+|A-|B\+|B-|AB\+|AB-|O\+|O-)/i);
+  result.aadhar = extractById('MainContent_lblAdhar') || extractField(/Aadhaar[^\d]*(\d{12})/i);
+  result.nationality = extractById('MainContent_lblnation') || extractField(/Nationality[^\w]*([A-Z\s]+?)\s*(?:Other Details|Religion)/i);
+  result.religion = extractById('MainContent_lblReligion') || extractField(/Religion[^\w]*([A-Z\s]+?)\s*Caste/i);
+  result.caste = extractById('MainContent_lblCaste') || extractField(/Caste[^\w]*([A-Z\s]+?)\s*Reservation/i);
+  result.category = extractById('MainContent_lblReserv') || extractField(/Reservation[^\w]*([A-Z\s]+?)\s*Annual Income/i);
+  result.income = extractById('MainContent_lblAnnualInc') || extractField(/Annual Income[^\d]*([0-9\s]*?)\s*(?:Permanent Address|Communication Address|Other Details)/i);
+  result.abcId = extractById('MainContent_lblabcid') || extractField(/ABC ID[^\w]*([A-Za-z0-9_-]+)/i);
 
   // Address matching
   const addrMatch = bodyText.match(/Permanent Address\s*([^]+?)\s*Communication Address/i);

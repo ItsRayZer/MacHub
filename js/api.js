@@ -200,6 +200,84 @@
         const maskedData = maskSensitiveFields(profilePayload);
         dataToCache = { ...data, payload: { ...profilePayload, ...maskedData, isMasked: true } };
       }
+
+      // Auto-resolve semester from data if it's empty
+      if (!semester && (section === 'Attendance' || section === 'Assessment' || section === 'InternalMark')) {
+        const payload = data?.payload || data;
+        const sems = payload?.semesters || payload?.semesterOptions || [];
+        const selectedOpt = sems.find(s => s.selected);
+        if (selectedOpt) {
+          const match = String(selectedOpt.value || '').match(/\d+/);
+          if (match) semester = match[0];
+        }
+      }
+      
+      if (section === 'Attendance' || section === 'Assessment') {
+        const payload = data?.payload || data;
+        const sems = payload?.semesters || payload?.semesterOptions || [];
+        if (sems.length > 0) {
+          const semNums = sems.map(s => {
+            const val = String(s.value || s.text || '').match(/\d+/);
+            return val ? parseInt(val[0], 10) : 0;
+          });
+          const maxSem = Math.max(...semNums);
+          if (maxSem > 0 && maxSem <= 8) {
+            try {
+              const stored = localStorage.getItem('mac_student_info');
+              if (stored) {
+                const info = JSON.parse(stored);
+                const match = info.semester ? info.semester.match(/\d+/) : null;
+                const currentSemNum = match ? parseInt(match[0], 10) : 2;
+                if (maxSem !== currentSemNum) {
+                  console.log(`[MacHub] Auto-updating student semester from Sem ${currentSemNum} to Sem ${maxSem}`);
+                  info.semester = `Sem ${maxSem}`;
+                  localStorage.setItem('mac_student_info', JSON.stringify(info));
+                  setTimeout(() => {
+                    if (typeof window.renderClassTimetable === 'function') window.renderClassTimetable();
+                    if (typeof window.renderClassAttendance === 'function') window.renderClassAttendance();
+                    if (typeof window.renderExamResults === 'function') window.renderExamResults();
+                    if (typeof window.renderUserProfile === 'function') window.renderUserProfile();
+                  }, 0);
+                }
+              }
+            } catch (e) {
+              console.warn('[MacHub] Failed to auto-update student semester:', e);
+            }
+          }
+        }
+      }
+
+      if (section === 'Dashboard') {
+        const payload = data?.payload || data;
+        const dashboardSem = payload?.semester || data?.semester;
+        if (dashboardSem) {
+          const match = String(dashboardSem).match(/\d+/);
+          const maxSem = match ? parseInt(match[0], 10) : 0;
+          if (maxSem > 0 && maxSem <= 8) {
+            try {
+              const stored = localStorage.getItem('mac_student_info');
+              if (stored) {
+                const info = JSON.parse(stored);
+                const curMatch = info.semester ? info.semester.match(/\d+/) : null;
+                const currentSemNum = curMatch ? parseInt(curMatch[0], 10) : 2;
+                if (maxSem !== currentSemNum) {
+                  console.log(`[MacHub] Auto-updating student semester from Dashboard: Sem ${currentSemNum} to Sem ${maxSem}`);
+                  info.semester = `Sem ${maxSem}`;
+                  localStorage.setItem('mac_student_info', JSON.stringify(info));
+                  setTimeout(() => {
+                    if (typeof window.renderClassTimetable === 'function') window.renderClassTimetable();
+                    if (typeof window.renderClassAttendance === 'function') window.renderClassAttendance();
+                    if (typeof window.renderExamResults === 'function') window.renderExamResults();
+                    if (typeof window.renderUserProfile === 'function') window.renderUserProfile();
+                  }, 0);
+                }
+              }
+            } catch (e) {
+              console.warn('[MacHub] Failed to auto-update student semester from Dashboard:', e);
+            }
+          }
+        }
+      }
       
       localStorage.setItem(cacheKey(section, semester), JSON.stringify({ data: dataToCache, savedAt: Date.now() }));
       
@@ -386,7 +464,39 @@
           });
       }, index * 600);
     });
+    // Sync ExamResult after the main queue (takes longer from portal)
+    setTimeout(() => {
+      console.log('[MacHub API] Background sync executing for ExamResult...');
+      fetchSection('ExamResult', false)
+        .then(res => {
+          console.log('[MacHub API] Background sync successful for ExamResult');
+          // Re-render results tab if visible
+          if (typeof window.renderExamResults === 'function') window.renderExamResults();
+        })
+        .catch(err => {
+          console.warn('[MacHub API] Background sync failed for ExamResult:', err.message);
+        });
+    }, queue.length * 600 + 1200);
+    // Sync Profile to auto-update semester info
+    setTimeout(() => {
+      fetchSection('Profile', false)
+        .then(res => {
+          if (res && res.payload) {
+            const sem = res.payload.semester || res.payload.sections?.[0]?.data?.semester || '';
+            if (sem) {
+              const info = window.getStudentInfo?.();
+              if (info && info.semester !== sem) {
+                info.semester = sem;
+                if (window.saveStudentInfo) window.saveStudentInfo(info);
+                console.log('[MacHub API] Auto-updated semester to:', sem);
+              }
+            }
+          }
+        })
+        .catch(() => {});
+    }, 500);
   };
+
 
   // ══════════════════════════════════════════════════════════════════════════
   //  ACADEMIC SHEET — Attendance + Assessment (Internal Marks)

@@ -1230,6 +1230,7 @@
 
         const settings = readSettings();
         const adminNo = info.adminNo || '';
+        const localClaimed = localStorage.getItem('machub_claimed_admission') === adminNo;
 
         // Security Gate check (PIN/Claim feature removed)
         const claimBanner = document.getElementById('profileClaimBanner');
@@ -1559,87 +1560,40 @@
                     <section class="ob-ticket holo-skin-${colorSkin}" id="profile-ticketEl">
 
                         <!-- ── FRONT FACE ── -->
-                        <section class="ob-ticket-front" style="display:flex;flex-direction:column;">
+                        <section class="ob-ticket-front">
                             <div class="ob-ticket-holo"></div>
-                            <div class="notch notch-left"></div>
-                            <div class="notch notch-right"></div>
-
-                            <!-- Top bar: logo mark + year -->
-                            <div class="ticket-header">
-                                <div class="ticket-brand">
-                                    <svg class="ticket-brand-mark" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M50 5L90 28.1V71.9L50 95L10 71.9V28.1L50 5Z" stroke="#d4af37" stroke-width="7" stroke-linejoin="round"/>
-                                        <path d="M50 25L75 39.4V60.6L50 75L25 60.6V39.4L50 25Z" fill="url(#gProf)" opacity="0.9"/>
-                                        <defs>
-                                            <linearGradient id="gProf" x1="25" y1="25" x2="75" y2="75" gradientUnits="userSpaceOnUse">
-                                                <stop offset="0%" stop-color="#ffe259"/>
-                                                <stop offset="100%" stop-color="#d4841a"/>
-                                            </linearGradient>
-                                        </defs>
-                                    </svg>
-                                    <span class="brand-name">MacHub</span>
-                                </div>
-                                <span class="ticket-year-chip">${profYear}</span>
+                            <img class="ob-ticket-logo-small" src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub">
+                            <div class="data">
+                                <h3 style="margin-top: 0;">Name</h3>
+                                <p style="font-size: 20px; font-weight: 900; line-height: 1.1; margin-bottom: 2px; color: #fff; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    ${escapeHtml(p.displayName || info.name || '---')}
+                                </p>
+                                <p style="font-size: 12px; font-weight: 800; color: #ffd275; margin-bottom: 12px; margin-top: 0; font-family: monospace;">
+                                    ${escapeHtml(info.adminNo || adminNo || '—')}
+                                </p>
+                                
+                                <h3>Department</h3>
+                                <p style="font-size: 15px; font-weight: 900; color: #fff; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    ${escapeHtml(profDeptShort)}
+                                </p>
+                                
+                                <h3>Semester</h3>
+                                <p style="font-size: 15px; font-weight: 900; color: #fff; margin-bottom: 0;">
+                                    ${escapeHtml(profSemLabel)}
+                                </p>
                             </div>
-
-                            <!-- Avatar + Name block -->
-                            <div style="padding:18px 20px 0;display:flex;align-items:center;gap:14px;position:relative;z-index:2;">
-                                <div class="ticket-avatar">${profInitials}</div>
-                                <div style="min-width:0;flex:1;">
-                                    <div class="ticket-label">Student</div>
-                                    <div class="ticket-name">${escapeHtml(p.displayName || info.name || '---')}</div>
-                                    <div class="ticket-adm">${escapeHtml(info.adminNo || adminNo || '—')}</div>
+                            <aside class="divider">
+                                <div class="username">
+                                    <span>MacHub</span>
                                 </div>
-                            </div>
-
-                            <!-- Dept + Sem badges -->
-                            <div class="ticket-body" style="margin-top:0;padding-top:14px;">
-                                <div class="ticket-sem-row">
-                                    <span class="ticket-dept-badge">${profDeptShort}</span>
-                                    <span class="ticket-sem-badge">${escapeHtml(profSemLabel)}</span>
-                                </div>
-                            </div>
-
-                            <!-- Tear line -->
-                            <div class="ticket-divider"></div>
-
-                            <!-- Footer: adm number + QR glyph -->
-                            <div class="ticket-footer">
-                                <div class="ticket-footer-left">
-                                    <div class="ticket-label">Adm. No</div>
-                                    <div class="ticket-serial">${escapeHtml(info.adminNo || adminNo || '—')}</div>
-                                </div>
-                                <svg width="44" height="44" viewBox="0 0 100 100" fill="none" stroke="#d4af37" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.65">
-                                    <rect x="5" y="5" width="28" height="28" stroke-width="4.5" rx="3"/>
-                                    <rect x="12" y="12" width="14" height="14" fill="#d4af37" rx="1"/>
-                                    <rect x="67" y="5" width="28" height="28" stroke-width="4.5" rx="3"/>
-                                    <rect x="74" y="12" width="14" height="14" fill="#d4af37" rx="1"/>
-                                    <rect x="5" y="67" width="28" height="28" stroke-width="4.5" rx="3"/>
-                                    <rect x="12" y="74" width="14" height="14" fill="#d4af37" rx="1"/>
-                                    <path d="M45 10h10M45 20h10M67 45h10M78 45v10M5 45h10M5 56v-11M45 45h10v10H45zM60 67h10v10H60zM78 67h10v10H78zM67 78h10M45 78h10v10H45z"/>
-                                </svg>
-                            </div>
+                                <span class="usernum">${profYear}</span>
+                            </aside>
                         </section>
 
                         <!-- ── BACK FACE ── -->
                         <header class="ob-ticket-back">
                             <div class="ob-ticket-holo"></div>
-                            <div class="notch notch-left"></div>
-                            <div class="notch notch-right"></div>
-                            <div class="ticket-back-content">
-                                <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="mx-auto">
-                                    <path d="M50 5L90 28.1V71.9L50 95L10 71.9V28.1L50 5Z" stroke="#d4af37" stroke-width="6" stroke-linejoin="round"/>
-                                    <path d="M50 25L75 39.4V60.6L50 75L25 60.6V39.4L50 25Z" fill="url(#gProfB)" opacity="0.9"/>
-                                    <defs>
-                                        <linearGradient id="gProfB" x1="25" y1="25" x2="75" y2="75" gradientUnits="userSpaceOnUse">
-                                            <stop offset="0%" stop-color="#ffe259"/>
-                                            <stop offset="100%" stop-color="#d4841a"/>
-                                        </linearGradient>
-                                    </defs>
-                                </svg>
-                                <div class="brand-title">MacHub</div>
-                                <div class="brand-tag">Mar Augusthinose College</div>
-                            </div>
+                            <img class="logo" src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub">
                         </header>
 
                     </section>
@@ -1979,11 +1933,38 @@
     let currentAvatarFilter = 'all';
     let selectedAvatarId = localStorage.getItem('mac_avatar_id') || null;
 
+    // Opens two-option action sheet: Upload Photo OR Choose Avatar
     window.openAvatarPicker = function() {
+        openPhotoSourceMenu();
+    };
+
+    function openPhotoSourceMenu() {
+        const modal = document.getElementById('photoSourceModal');
+        if (modal) {
+            modal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    window.openPhotoSourceMenu = openPhotoSourceMenu;
+
+    window.closePhotoSourceMenu = function() {
+        const modal = document.getElementById('photoSourceModal');
+        if (modal) modal.classList.remove('open');
+        document.body.style.overflow = '';
+    };
+
+    window.handlePhotoMenuUpload = function() {
+        window.closePhotoSourceMenu();
+        document.getElementById('avatarFileInput')?.click();
+    };
+
+    window.handlePhotoMenuAvatar = function() {
+        window.closePhotoSourceMenu();
+        // Open avatar picker modal
         const modal = document.getElementById('avatarPickerModal');
         if (!modal) return;
         modal.classList.add('open');
-        filterAvatars('all', document.querySelector('.av-cat-btn'));
+        filterAvatars('all', document.querySelector('#avCats .av-cat-btn'));
         document.body.style.overflow = 'hidden';
     };
 
@@ -2065,6 +2046,8 @@
         }
 
         closeAvatarPicker();
+        // Sync bottom nav and settings profile summary
+        if (window.syncBottomNavAvatar) window.syncBottomNavAvatar();
         if (typeof renderSettingsProfileSummary === 'function') renderSettingsProfileSummary();
         if (typeof filterSettingsAvatars === 'function') filterSettingsAvatars(currentAvatarFilter, null);
         showToast(`Avatar set to ${label}! 🎭`, 'success');

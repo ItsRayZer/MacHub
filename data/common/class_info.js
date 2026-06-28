@@ -12,7 +12,7 @@
     // ==========================================
     
     // BCA lecture schedule (Monday to Friday)
-    window.CLASS_TIMETABLE_BCA = {
+    window.CLASS_TIMETABLE_BCA_SEM_4 = window.CLASS_TIMETABLE_BCA = {
         "Monday": [
             { period: "1", time: "09:30 AM - 10:30 AM", code: "MG3CCRBCA202", title: "Software Engineering", room: "Room 201" },
             { period: "2", time: "10:30 AM - 11:30 AM", code: "MG3DSEBCA201", title: "Feature Engineering", room: "Room 201" },
@@ -51,7 +51,7 @@
     };
 
     // BBA lecture schedule (Monday to Friday)
-    window.CLASS_TIMETABLE_BBA = {
+    window.CLASS_TIMETABLE_BBA_SEM_2 = window.CLASS_TIMETABLE_BBA = {
         "Monday": [
             { period: "1", time: "09:30 AM - 10:30 AM", code: "MG2CCRBBA100", title: "Organisation Behaviour", room: "Room 202" },
             { period: "2", time: "10:30 AM - 11:30 AM", code: "MG2AECENG102", title: "English for Commerce", room: "Room 202" },
@@ -90,7 +90,7 @@
     };
 
     // BSW lecture schedule (Monday to Friday)
-    window.CLASS_TIMETABLE_BSW = {
+    window.CLASS_TIMETABLE_BSW_SEM_2 = window.CLASS_TIMETABLE_BSW = {
         "Monday": [
             { period: "1", time: "09:30 AM - 10:30 AM", code: "MG2DSCSWK100", title: "Social Work Profession", room: "Room 304" },
             { period: "2", time: "10:30 AM - 11:30 AM", code: "MG2AECENG101", title: "English for Arts & Humanities", room: "Room 304" },

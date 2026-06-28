@@ -11,12 +11,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MacHub">
     <link rel="stylesheet" href="styles/tailwind.css">
-    <link rel="stylesheet" href="styles/base.css">
-    <link rel="stylesheet" href="styles/components.css">
-    <link rel="stylesheet" href="styles/mobile-optimized.css">
-    <link rel="stylesheet" href="styles/mac_ai_chat.css">
-    <link rel="stylesheet" href="styles/desktop.css">
-    <link rel="stylesheet" href="styles/claim_profile.css">
+    <link rel="stylesheet" href="styles/base.css?v=2.0.5">
+    <link rel="stylesheet" href="styles/components.css?v=2.0.5">
+    <link rel="stylesheet" href="styles/mobile-optimized.css?v=2.0.5">
+    <link rel="stylesheet" href="styles/mac_ai_chat.css?v=2.0.5">
+    <link rel="stylesheet" href="styles/desktop.css?v=2.0.5">
+    <link rel="stylesheet" href="styles/claim_profile.css?v=2.0.5">
 </head>
 <body class="pb-32 app-shell-ready">
 
@@ -119,7 +119,7 @@
                 <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="logo" id="userGreeting" style="margin: 0;">
             </div>
 
-            <!-- Right: Insta-like pulsing announcement bell button -->
+            <!-- Right: Pulsing announcement bell button -->
             <button onclick="openAnnouncements()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30 relative" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);" aria-label="Open Announcements">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -146,12 +146,8 @@
             </div>
         </div>
 
-        <div class="max-w-md mx-auto px-4 mt-3 mb-3">
-            <div class="seat-toolbar">
-                <div id="departmentFilters" class="seat-dropdown hidden"></div>
-                <div id="daySelector" class="seat-dropdown"></div>
-            </div>
-        </div>
+        <!-- departmentFilters kept hidden as placeholder in background if needed -->
+        <div id="departmentFilters" class="hidden"></div>
 
         <!-- Empty State UI -->
         <div id="emptyState" class="hidden mx-4 glass-panel rounded-[2rem] p-10 mt-4 text-center shadow-sm">
@@ -186,6 +182,8 @@
             </div>
 
             <div id="sub-view-seats">
+                <!-- Seating Day Selector -->
+                <div id="daySelector" class="seat-dropdown mb-4"></div>
                 <!-- Hall header: name left | dots center | arrows right -->
                 <div class="relative flex items-center mb-3" style="min-height:44px;">
                 <!-- Left: Hall title -->
@@ -321,10 +319,7 @@
                     }
                 } catch(e) {}
             }, 500);
-        </script>
-
-
-        <!-- Course Details & Shortcuts -->
+              <!-- Course Details & Shortcuts -->
         <div class="mb-6">
             <div class="flex items-center justify-between mb-3 pl-1">
                 <h4 class="text-[10px] font-black text-[#86868b] uppercase tracking-widest flex items-center gap-1.5">
@@ -333,29 +328,40 @@
             </div>
 
             <script>
+                window.openClassTimetable = function() {
+                    if (typeof switchExamView === 'function') switchExamView('view-class');
+                    if (typeof switchClassTab === 'function') {
+                        setTimeout(() => switchClassTab('timetable'), 50);
+                    }
+                };
+
                 window.syncAndOpenNative = async function(sectionName, mainView, subTab) {
-                    // Instantly open the tab so UI feels fast
                     if (typeof switchExamView === 'function') switchExamView(mainView);
                     if (subTab && typeof switchClassTab === 'function') {
                         setTimeout(() => switchClassTab(subTab), 50);
                     }
                     
-                    // Forcefully sync data in background and re-render
                     if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
                         try {
-                            // Pass current semester if they have a filter active
                             let sem = '';
                             if (sectionName === 'Attendance' && typeof appState !== 'undefined' && appState.selectedAttendanceSem && appState.selectedAttendanceSem !== 'all') {
                                 sem = appState.selectedAttendanceSem;
                             }
                             
-                            const data = await window.MacHubPortal.fetchSection(sectionName, true, sem); // true = force sync
+                            if (sectionName === 'Assignment') {
+                                // Sync both Assignment and Seminar for Track Activity
+                                await Promise.all([
+                                    window.MacHubPortal.fetchSection('Assignment', true),
+                                    window.MacHubPortal.fetchSection('Seminar', true)
+                                ]);
+                            } else {
+                                await window.MacHubPortal.fetchSection(sectionName, true, sem);
+                            }
                             
-                            // After sync, re-render the view
                             if (sectionName === 'Attendance' && typeof renderClassAttendance === 'function') renderClassAttendance();
-                            if (sectionName === 'Assignment' && typeof renderClassAssignment === 'function') renderClassAssignment();
-                            if (sectionName === 'Seminar' && typeof renderClassSeminar === 'function') renderClassSeminar();
+                            if (sectionName === 'Assignment' && typeof renderClassActivity === 'function') renderClassActivity();
                             if (sectionName === 'ExamResult' && typeof renderExamResults === 'function') renderExamResults();
+                            if (typeof renderHomepageDashboard === 'function') renderHomepageDashboard();
                         } catch(e) {
                             console.error("Sync failed for", sectionName, e);
                         }
@@ -370,7 +376,7 @@
                      onclick="window.syncAndOpenNative('Attendance', 'view-class', 'attendance')"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
-                         style="background: rgba(0, 212, 170, 0.15); color: #00d4aa; border: 1px solid rgba(0, 212, 170, 0.3);">
+                          style="background: rgba(0, 212, 170, 0.15); color: #00d4aa; border: 1px solid rgba(0, 212, 170, 0.3);">
                         📅
                     </div>
                     <div>
@@ -384,46 +390,48 @@
                      onclick="window.syncAndOpenNative('ExamResult', 'view-results', null)"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
-                         style="background: rgba(255, 179, 71, 0.15); color: #ffb347; border: 1px solid rgba(255, 179, 71, 0.3);">
-                        🎓
+                          style="background: rgba(255, 179, 71, 0.15); color: #ffb347; border: 1px solid rgba(255, 179, 71, 0.3);">
+                        🏆
                     </div>
                     <div>
-                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Exam Results</h3>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Exam Result</h3>
                         <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Check university semester grades</p>
                     </div>
                 </div>
 
-                <!-- Assignment -->
+                <!-- Class Timetable -->
                 <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
-                     onclick="window.syncAndOpenNative('Assignment', 'view-class', 'assignment')"
+                     onclick="window.openClassTimetable()"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
-                         style="background: rgba(45, 152, 218, 0.15); color: #2d98da; border: 1px solid rgba(45, 152, 218, 0.3);">
-                        📂
+                          style="background: rgba(0, 113, 227, 0.15); color: #0071e3; border: 1px solid rgba(0, 113, 227, 0.3);">
+                        🕒
                     </div>
                     <div>
-                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Assignment</h3>
-                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track pending submissions & deadlines</p>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Timetable</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">View your daily lecture schedule</p>
                     </div>
                 </div>
 
-                <!-- Seminar -->
+                <!-- Track Activity -->
                 <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
-                     onclick="window.syncAndOpenNative('Seminar', 'view-class', 'seminar')"
+                     onclick="window.syncAndOpenNative('Assignment', 'view-class', 'subjects')"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
-                         style="background: rgba(252, 92, 101, 0.15); color: #fc5c65; border: 1px solid rgba(252, 92, 101, 0.3);">
-                        🎙️
+                          style="background: rgba(252, 92, 101, 0.15); color: #fc5c65; border: 1px solid rgba(252, 92, 101, 0.3);">
+                        🎯
                     </div>
                     <div>
-                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Seminar</h3>
-                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track seminar presentations & scores</p>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Track Activity</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Assignments & seminar progress</p>
                     </div>
                 </div>
-
 
             </div>
         </div>
+
+        <!-- Dynamic Home Dashboard Container -->
+        <div id="homeDashboardContainer" class="space-y-4 pb-24"></div>
 
         <div id="externalAppShell" class="external-app-shell hidden" aria-live="polite">
             <div class="external-app-toolbar">
@@ -468,25 +476,22 @@
             <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item" data-top-target="exam">Exam</button>
         </div>
 
-        <!-- Class Portal Top Dropdowns -->
-        <div class="max-w-md mx-auto mt-3 mb-4">
-            <div class="seat-toolbar">
-                <div id="classDepartmentFilters" class="seat-dropdown hidden"></div>
-                <div id="classDaySelector" class="seat-dropdown"></div>
-            </div>
-        </div>
+        <!-- classDepartmentFilters kept hidden as placeholder in background if needed -->
+        <div id="classDepartmentFilters" class="hidden"></div>
 
         <!-- Classroom Hub Seating/Timetable Container -->
         <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: 100%;">
             <!-- Inner Class Toggle -->
             <div class="exam-subnav subnav-3col mb-4 mt-2" aria-label="Inner Class Menu">
                 <button type="button" id="tab-class-timetable" onclick="switchClassTab('timetable')" class="exam-subnav-item is-active" data-class-target="view-class-timetable">Timetable</button>
-                <button type="button" id="tab-class-subjects" onclick="switchClassTab('subjects')" class="exam-subnav-item" data-class-target="view-class-subjects">Subjects</button>
+                <button type="button" id="tab-class-subjects" onclick="switchClassTab('subjects')" class="exam-subnav-item" data-class-target="view-class-subjects">Track Activity</button>
                 <button type="button" id="tab-class-attendance" onclick="switchClassTab('attendance')" class="exam-subnav-item" data-class-target="view-class-attendance">Attendance</button>
             </div>
 
             <!-- Class Sub-views -->
             <div id="sub-view-class-timetable" class="w-full">
+                <!-- Class Day Selector -->
+                <div id="classDaySelector" class="seat-dropdown mb-4"></div>
                 <div id="classTimetableContent" class="space-y-4"></div>
             </div>
 
@@ -1106,7 +1111,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
-                <button onclick="switchView('view-profile')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                <button onclick="if(window.closeSettingsTray) window.closeSettingsTray(); else switchView('view-profile');" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
                         <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
@@ -1134,26 +1139,6 @@
                     <span class="text-slate-400 text-sm font-black mr-1">›</span>
                 </div>
 
-                <!-- INLINE INTERFACE TO CHANGE AVATAR -->
-                <div class="liquid-glass rounded-3xl p-4 space-y-3">
-                    <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-wider">🎭 Change Avatar</p>
-                    
-                    <!-- Avatar Categories -->
-                    <div class="flex gap-1.5 overflow-x-auto pb-1.5 no-scrollbar select-none" id="settingsAvCats">
-                        <button class="av-cat-btn active" onclick="filterSettingsAvatars('all', this)">✦ All</button>
-                        <button class="av-cat-btn" onclick="filterSettingsAvatars('female', this)">♀ Female</button>
-                        <button class="av-cat-btn" onclick="filterSettingsAvatars('male', this)">♂ Male</button>
-                        <button class="av-cat-btn" onclick="filterSettingsAvatars('tech', this)">💻 Tech</button>
-                        <button class="av-cat-btn" onclick="filterSettingsAvatars('kerala', this)">🌴 Kerala</button>
-                        <button class="av-cat-btn" onclick="filterSettingsAvatars('football', this)">⚽ Football</button>
-                        <button class="av-cat-btn" onclick="window.openAvatarPicker();">📷 Library</button>
-                    </div>
-                    
-                    <!-- Avatar Grid -->
-                    <div class="grid grid-cols-4 gap-2 pt-1" id="settingsAvGrid">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
 
                 <!-- Synced Portal Documents -->
                 <div class="space-y-2">
@@ -2170,6 +2155,28 @@
                             <label class="text-[9px] font-bold text-[#86868b] uppercase">Branch Name</label>
                             <input type="text" id="editBankBranch" placeholder="Branch Name" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" />
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Change Avatar (relocated) -->
+            <div class="space-y-3">
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-wider">🎭 Change Avatar</p>
+                <div class="liquid-glass rounded-2xl p-4 space-y-3">
+                    <!-- Avatar Categories -->
+                    <div class="flex gap-1.5 overflow-x-auto pb-1.5 no-scrollbar select-none" id="settingsAvCats">
+                        <button class="av-cat-btn active" onclick="filterSettingsAvatars('all', this)">✦ All</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('female', this)">♀ Female</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('male', this)">♂ Male</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('tech', this)">💻 Tech</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('kerala', this)">🌴 Kerala</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('football', this)">⚽ Football</button>
+                        <button class="av-cat-btn" onclick="window.openAvatarPicker();">📷 Library</button>
+                    </div>
+                    
+                    <!-- Avatar Grid -->
+                    <div class="grid grid-cols-4 gap-2 pt-1" id="settingsAvGrid">
+                        <!-- Populated by JS -->
                     </div>
                 </div>
             </div>

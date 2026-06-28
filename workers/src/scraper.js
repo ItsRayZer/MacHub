@@ -77,6 +77,103 @@ export async function scrapePage(pageName, path, cookie) {
   return parseHtml(pageName, html);
 }
 
+export async function scrapeSemesterDropdownPage(pageName, path, cookie, body) {
+  const PORTAL_BASE = "https://eportal.maraugusthinosecollege.org";
+  const url = path;
+  const requestHeaders = {
+    "Cookie": cookie,
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Host": "eportal.maraugusthinosecollege.org",
+    "Referer": PORTAL_BASE + "/Dashboard.aspx"
+  };
+
+  const getResponse = await fetch(PORTAL_BASE + url, { method: "GET", headers: requestHeaders, redirect: "manual" });
+  if (getResponse.status === 302) throw new Error("SESSION_EXPIRED");
+  const getHtml = await getResponse.text();
+  if (getHtml.includes("btnLogin") || getHtml.includes("txtUser")) throw new Error("SESSION_EXPIRED");
+
+  const $ = cheerio.load(getHtml);
+  
+  const semesterOptions = [];
+  let semesterFieldName = "";
+  let portalDefaultSem = null;
+  
+  $("select").each((_, el) => {
+    const name = $(el).attr("name") || "";
+    if (name.toLowerCase().includes("sem") || name.toLowerCase().includes("exam") || name.toLowerCase().includes("ddl")) {
+      semesterFieldName = name;
+    }
+    $(el).find("option").each((_, opt) => {
+      const value = $(opt).attr("value");
+      const text = $(opt).text().trim();
+      if (value && text) {
+        semesterOptions.push({ value, text, selected: false });
+        if ($(opt).prop("selected") || $(opt).attr("selected")) portalDefaultSem = value;
+      }
+    });
+  });
+
+  if (!semesterFieldName || semesterOptions.length === 0) {
+    return parseHtml(pageName, getHtml);
+  }
+
+  let targetSemester = body?.semester || null;
+  if (!targetSemester) {
+    let maxVal = -1;
+    let maxSemVal = "";
+    semesterOptions.forEach(opt => {
+      const numericVal = parseInt(opt.value, 10);
+      if (!isNaN(numericVal) && numericVal > maxVal) { maxVal = numericVal; maxSemVal = opt.value; }
+    });
+    targetSemester = maxSemVal || portalDefaultSem || semesterOptions[0]?.value || "2";
+  }
+
+  if (!semesterOptions.find(o => o.value == targetSemester)) {
+    return parseHtml(pageName, getHtml);
+  }
+
+  semesterOptions.forEach(opt => opt.selected = (opt.value === targetSemester));
+
+  const finalPayload = helperExtractFormFields($);
+  finalPayload[semesterFieldName] = targetSemester;
+  finalPayload["__EVENTTARGET"] = semesterFieldName;
+  finalPayload["__EVENTARGUMENT"] = "";
+  
+  delete finalPayload["ctl00$MainContent$btnSubmit"];
+  delete finalPayload["ctl00$MainContent$btn_Cancel"];
+  delete finalPayload["ctl00$MainContent$btnsubmit"];
+
+  const bodyParams = new URLSearchParams();
+  for (const [k, v] of Object.entries(finalPayload)) bodyParams.append(k, v);
+
+  let postPath = url;
+  const form = $("input[name='__VIEWSTATE']").closest("form");
+  if (form.length && form.attr("action")) {
+    const actionAttr = form.attr("action").trim();
+    if (actionAttr && actionAttr !== "#") {
+      if (actionAttr.startsWith("./")) postPath = "/" + actionAttr.substring(2);
+      else if (actionAttr.startsWith("/")) postPath = actionAttr;
+      else if (!actionAttr.startsWith("http")) {
+        const lastSlash = url.lastIndexOf("/");
+        postPath = (lastSlash >= 0 ? url.substring(0, lastSlash) : "") + "/" + actionAttr;
+      }
+    }
+  }
+
+  const postHeaders = { ...requestHeaders, "Content-Type": "application/x-www-form-urlencoded" };
+  const postResponse = await fetch(PORTAL_BASE + postPath, { method: "POST", headers: postHeaders, body: bodyParams.toString() });
+  
+  let postHtml = await postResponse.text();
+  if (postHtml.includes("btnLogin") || postHtml.includes("txtUser")) throw new Error("SESSION_EXPIRED");
+
+  postHtml = parseUpdatePanelDelta(postHtml);
+
+  const parsed = parseHtml(pageName, postHtml);
+  parsed.semesters = semesterOptions;
+  parsed.semesterOptions = semesterOptions;
+  return parsed;
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  PER-SECTION SCRAPERS
 // ═══════════════════════════════════════════════════════════════
@@ -90,8 +187,8 @@ export const scrapeDashboard = (adm, cookie) =>
 export const scrapeStudyMaterial = (adm, cookie) =>
   scrapePage('StudyMaterial', SPECS.sectionEndpoints.StudyMaterial, cookie);
 
-export const scrapeAssessment = (adm, cookie) =>
-  scrapePage('Assessment', SPECS.sectionEndpoints.Assessment, cookie);
+export const scrapeAssessment = (adm, cookie, body) =>
+  scrapeSemesterDropdownPage('Assessment', SPECS.sectionEndpoints.Assessment, cookie, body);
 
 export const scrapeAssignment = (adm, cookie) =>
   scrapePage('Assignment', SPECS.sectionEndpoints.Assignment, cookie);
@@ -621,8 +718,8 @@ export const scrapeAttendance = async (adm, cookie, body) => {
   };
 };
 
-export const scrapeInternalMark = (adm, cookie) =>
-  scrapePage('InternalMark', SPECS.sectionEndpoints.InternalMark, cookie);
+export const scrapeInternalMark = (adm, cookie, body) =>
+  scrapeSemesterDropdownPage('InternalMark', SPECS.sectionEndpoints.InternalMark, cookie, body);
 
 export const scrapeInternalToUniversity = (adm, cookie) =>
   scrapePage('InternalToUniversity', SPECS.sectionEndpoints.InternalToUniversity, cookie);

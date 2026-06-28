@@ -1268,6 +1268,9 @@
             -webkit-backdrop-filter: blur(24px) saturate(160%);
             display: none;
             z-index: 80;
+            max-height: 15.5rem;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .seat-dropdown.is-open .seat-dropdown__menu {

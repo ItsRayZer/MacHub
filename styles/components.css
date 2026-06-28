@@ -918,6 +918,7 @@ body::after {
         height: 100dvh;
         min-height: 0;
         border-radius: 0;
+    }
 }
 
 /* ── Onboarding 3D Holographic ID Ticket ── */
@@ -927,18 +928,18 @@ body::after {
     --o: 0; /* Opacity for reflection */
     --p: 50%; /* Position X for reflection */
     --h: 50%; /* Position Y for reflection */
-    --rx: 0; /* Rotation X */
-    --ry: 0; /* Rotation Y */
+    --rx: 0deg; /* Rotation X */
+    --ry: 0deg; /* Rotation Y */
+    --rx-num: 0; /* Raw number for calc() */
+    --ry-num: 0; /* Raw number for calc() */
     display: grid;
     place-content: center;
     padding: 16px 0;
     width: 100%;
-    transform: rotateZ(-3.2deg); /* Stylish slight tilt by default */
-    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 #ob-ticket-container:hover,
 #profile-ticket-container:hover {
-    transform: rotateZ(-1deg) scale(1.03); /* Straighten and scale on hover */
+    transform: scale(1.02);
 }
 
 .ob-ticket {
@@ -946,10 +947,11 @@ body::after {
     transform: translate3d(0, 0, 0.1px) scale(var(--scale)) rotateX(var(--rx)) rotateY(var(--ry));
     transform-style: preserve-3d;
     pointer-events: auto;
+    touch-action: none; /* Prevents scroll interference on touch drag */
     display: grid;
     grid-area: 1/1;
-    width: 100%;
-    max-width: 300px;
+    width: 280px;
+    margin: 0 auto;
     aspect-ratio: 20/30; /* Exact Threads ticket ratio */
     transition: transform 0.1s ease-out;
 }
@@ -1001,7 +1003,7 @@ body::after {
     background-image:
         /* Primary gold sweep */
         linear-gradient(
-            calc(-65deg + var(--ry, 0deg) * 3),
+            calc(-65deg + var(--ry-num, 0) * 3deg),
             transparent 15%,
             rgba(255, 240, 180, 0.04) 28%,
             rgba(212, 175, 55, 0.30) 36%,
@@ -1011,7 +1013,7 @@ body::after {
         ),
         /* Secondary subtle iridescent layer */
         linear-gradient(
-            calc(115deg + var(--rx, 0deg) * 2),
+            calc(115deg + var(--rx-num, 0) * 2deg),
             transparent 30%,
             rgba(120, 200, 255, 0.04) 45%,
             rgba(255, 160, 100, 0.05) 55%,
@@ -1039,7 +1041,7 @@ body::after {
     border-radius: 22px;
     /* Repeating diagonal rainbow strips — mirrors Threads golden ticket */
     background-image: repeating-linear-gradient(
-        calc(-45deg + var(--ry, 0) * 1deg),
+        calc(-45deg + var(--ry-num, 0) * 1deg),
         hsla(0,   100%, 60%, 0.06) 0%,
         hsla(30,  100%, 60%, 0.06) 3%,
         hsla(60,  100%, 60%, 0.06) 6%,
@@ -1070,6 +1072,7 @@ body::after {
     border-radius: 50%;
     z-index: 10;
 }
+.ob-ticket .notch-left {
     left: -11px;
 }
 .ob-ticket .notch-right {
@@ -1684,4 +1687,147 @@ body::after {
         to { transform: translateX(100%); }
     }
 }
+
+/* ── Academic Results Table Styling ── */
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.data-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #86868b;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.data-table td {
+    padding: 12px;
+    color: #f5f5f7;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.15s;
+}
+
+.data-table tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tr.row-pass td:first-child {
+    border-left: 3px solid #34c759;
+}
+
+.data-table tr.row-fail td:first-child {
+    border-left: 3px solid #ff3b30;
+}
+
+/* ── Restored Original Threads Golden Ticket Inner Layouts ── */
+.ob-ticket .data {
+    margin: 8% 10%;
+    margin-top: 14%;
+    padding-bottom: 20%;
+    text-transform: uppercase;
+    text-align: left;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+}
+
+.ob-ticket .data h3 {
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1;
+    margin: 10px 0 3px;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 0.15em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.ob-ticket .data p {
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.15;
+    margin: 0 0 8px;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ob-ticket .divider {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 18%;
+    padding: 0 10%;
+    background-image: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0px,
+        rgba(255, 255, 255, 0) 8px,
+        rgba(0, 0, 0, 0.3) 8px,
+        rgba(0, 0, 0, 0.3) 16px
+    );
+    background-size: 100% 1.5px;
+    background-repeat: no-repeat;
+    background-position: -4px top;
+    font-size: 14px;
+    font-weight: 400;
+    z-index: 2;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.ob-ticket .username {
+    display: flex;
+    align-items: center;
+    font-weight: 800;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+}
+
+.ob-ticket .username .profile-pic {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    object-fit: cover;
+}
+
+.ob-ticket .usernum {
+    font-size: 11px;
+    font-weight: 900;
+    opacity: 0.8;
+    letter-spacing: 0.05em;
+}
+
+.ob-ticket-logo-small {
+    position: absolute;
+    right: 8%;
+    top: 6%;
+    width: 20%;
+    z-index: 3;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4)) brightness(0) invert(1);
+    opacity: 0.95;
+}
+
 
