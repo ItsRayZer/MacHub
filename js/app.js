@@ -4102,7 +4102,7 @@ window.renderClassAttendance = function() {
                 <div style="padding-left:.5rem;">
                     <!-- Subject name -->
                     <p style="font-size:.58rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.1em;margin:0 0 .2rem;">Subject</p>
-                    <h4 style="font-size:.9rem;font-weight:800;color:var(--text-main);margin:0 0 .75rem;line-height:1.3;padding-right:2rem;">${shortName}</h4>
+                    <h4 style="font-size:.9rem;font-weight:800;color:#ffffff;margin:0 0 .75rem;line-height:1.3;padding-right:2rem;">${shortName}</h4>
 
                     <!-- Hours row -->
                     <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;flex-wrap:wrap;">

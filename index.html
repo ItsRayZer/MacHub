@@ -20,19 +20,7 @@
     <script>
         (function() {
             try {
-                const stored = localStorage.getItem('mac_profile_settings');
-                let oledMode = true; // default is true
-                if (stored) {
-                    const settings = JSON.parse(stored);
-                    if (settings.oledMode !== undefined) {
-                        oledMode = !!settings.oledMode;
-                    }
-                }
-                if (oledMode) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
+                document.documentElement.classList.add('dark');
             } catch (_) {}
         })();
     </script>
@@ -1438,13 +1426,6 @@
         <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
             <p class="settings-section-title">🎨 Appearance</p>
             <div class="liquid-glass rounded-3xl p-4 space-y-4">
-                <div class="flex justify-between items-center">
-                    <div><div class="settings-nav-label">Full Black Mode</div><div class="settings-nav-sub">OLED-friendly pure black</div></div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="toggleDisplayOled" onchange="toggleDisplaySetting('oled')" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
-                    </label>
-                </div>
                 <div class="flex justify-between items-center">
                     <div><div class="settings-nav-label">Animations</div><div class="settings-nav-sub">Spring & fade effects</div></div>
                     <label class="relative inline-flex items-center cursor-pointer">

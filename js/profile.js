@@ -57,13 +57,15 @@
             const stored = localStorage.getItem('mac_profile_settings');
             if (stored) {
                 const parsed = JSON.parse(stored);
+                // Force oledMode to always be true (Only Dark Mode)
+                parsed.oledMode = true;
                 // Force telemetry setting to always be true
                 if (parsed.analytics !== true) {
                     parsed.analytics = true;
-                    try {
-                        localStorage.setItem('mac_profile_settings', JSON.stringify(parsed));
-                    } catch(e) {}
                 }
+                try {
+                    localStorage.setItem('mac_profile_settings', JSON.stringify(parsed));
+                } catch(e) {}
                 return { ...defaults, ...parsed };
             }
         } catch(e) {}
