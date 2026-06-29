@@ -373,16 +373,7 @@ Student Profile:
                     } catch(e) {}
                 }
             }
-            return `
-                <div class="macai-glass glass-card red">
-                    <div class="glass-card-shine"></div>
-                    <div class="glass-card-content" style="align-items: stretch; width: 100%;">
-                        <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.5; margin-bottom: 8px; color: #fff;">📊 Attendance Sync</div>
-                        <div style="font-size: 13.5px; line-height: 1.4; color: rgba(255,255,255,0.8);">No cached attendance data found for Admission Number <code>${adminNo || 'not set'}</code>. Sync your credentials in Profile to cache records.</div>
-                    </div>
-                    <div class="glass-card-border"></div>
-                </div>
-            `;
+            return ``;
         }
 
         // 3. Marks / Internal assessments
@@ -434,16 +425,7 @@ Student Profile:
                     } catch(e) {}
                 }
             }
-            return `
-                <div class="macai-glass glass-card red">
-                    <div class="glass-card-shine"></div>
-                    <div class="glass-card-content" style="align-items: stretch; width: 100%;">
-                        <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.5; margin-bottom: 8px; color: #fff;">📝 Marks Sync</div>
-                        <div style="font-size: 13.5px; line-height: 1.4; color: rgba(255,255,255,0.8);">No cached assessment records found. Sync your portal credentials in Profile to load results.</div>
-                    </div>
-                    <div class="glass-card-border"></div>
-                </div>
-            `;
+            return ``;
         }
 
         // 4. Exam seat allocations

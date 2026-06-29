@@ -3023,5 +3023,103 @@
             }, 500);
         });
     </script>
+
+    <!-- Premium Apple-Style PWA Install Prompt -->
+    <div id="pwaInstallPrompt" class="fixed inset-x-0 bottom-6 mx-auto max-w-sm z-[300] px-4 pointer-events-none hidden">
+        <div class="liquid-glass rounded-3xl p-5 shadow-2xl border border-white/10 flex flex-col gap-4 pointer-events-auto backdrop-blur-[30px]" style="background: rgba(18, 18, 20, 0.95); box-shadow: 0 24px 60px rgba(0,0,0,0.8);">
+            <div class="flex items-start gap-3.5">
+                <div class="w-12 h-12 rounded-[1.1rem] bg-[#0071e3] flex items-center justify-center text-white text-2xl font-black shadow-lg flex-shrink-0">
+                    <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="w-9 h-9 object-contain">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-sm font-black text-white leading-snug">Add MacHub to Home Screen</h4>
+                    <p class="text-[10px] text-zinc-400 leading-relaxed mt-1">Get light-speed portal access, offline support, and a standalone app experience.</p>
+                </div>
+                <button onclick="window.dismissPwaPrompt()" class="text-zinc-500 hover:text-zinc-300 text-xs font-bold transition-all">✕</button>
+            </div>
+            
+            <!-- Instruction for iOS -->
+            <div id="pwaIosGuide" class="hidden bg-white/5 rounded-2xl p-3 border border-white/5 flex items-center gap-3">
+                <span class="text-lg">💡</span>
+                <p class="text-[10.5px] text-zinc-300 leading-normal">
+                    Tap <svg class="inline-block mx-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:translateY(-1px);"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg> in Safari, then scroll down and select <strong class="text-white">Add to Home Screen</strong>.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="window.dismissPwaPrompt(true)" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 font-bold text-xs rounded-xl transition-all spring active:scale-95 text-center">
+                    Don't show again
+                </button>
+                <button onclick="window.installPwaApp()" id="pwaInstallBtn" class="flex-1 py-3 bg-[#0071e3] hover:bg-blue-600 text-white font-black text-xs rounded-xl transition-all spring active:scale-95 text-center shadow-lg shadow-blue-500/15">
+                    Add to Home Screen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PWA Install Prompt Script -->
+    <script>
+        (function() {
+            let deferredPrompt = null;
+
+            // Detect if iOS
+            const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            // Detect if already in standalone mode
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                triggerPwaPrompt();
+            });
+
+            function triggerPwaPrompt() {
+                const dismissed = localStorage.getItem('machub_pwa_dismissed');
+                if (dismissed === 'true' || isStandalone) return;
+
+                const promptEl = document.getElementById('pwaInstallPrompt');
+                if (promptEl) {
+                    promptEl.classList.remove('hidden');
+                    
+                    const iosGuide = document.getElementById('pwaIosGuide');
+                    const installBtn = document.getElementById('pwaInstallBtn');
+                    if (isIos) {
+                        if (iosGuide) iosGuide.classList.remove('hidden');
+                        if (installBtn) installBtn.classList.add('hidden');
+                    } else {
+                        if (iosGuide) iosGuide.classList.add('hidden');
+                        if (installBtn) installBtn.classList.remove('hidden');
+                    }
+                }
+            }
+
+            // Fallback for iOS Safari which doesn't support beforeinstallprompt
+            if (isIos && !isStandalone) {
+                setTimeout(triggerPwaPrompt, 2000);
+            }
+
+            window.dismissPwaPrompt = function(permanent = false) {
+                const promptEl = document.getElementById('pwaInstallPrompt');
+                if (promptEl) promptEl.classList.add('hidden');
+                if (permanent) {
+                    localStorage.setItem('machub_pwa_dismissed', 'true');
+                }
+            };
+
+            window.installPwaApp = async function() {
+                if (!deferredPrompt) {
+                    if (window.showToast) {
+                        window.showToast('Please use your browser menu to "Add to Home Screen".', 'info');
+                    }
+                    return;
+                }
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to install prompt: ${outcome}`);
+                deferredPrompt = null;
+                window.dismissPwaPrompt(true);
+            };
+        })();
+    </script>
 </body>
 </html>
