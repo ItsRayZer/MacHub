@@ -854,6 +854,18 @@ body::after {
     text-align: center;
 }
 
+.dark .external-app-shell {
+    background: #000000;
+}
+.dark .external-app-loader,
+.dark .external-app-fallback {
+    background: radial-gradient(circle at 50% 20%, rgba(10, 132, 255, 0.12), transparent 34%), #000000;
+    color: #f5f5f7;
+}
+.dark .external-app-fallback strong {
+    color: #ffffff;
+}
+
 .external-app-loader.hidden,
 .external-app-fallback.hidden {
     display: none !important;
@@ -1711,7 +1723,7 @@ body::after {
 
 .data-table td {
     padding: 12px;
-    color: #f5f5f7;
+    color: var(--text-main);
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     transition: background 0.15s;
 }

@@ -4048,7 +4048,7 @@ window.renderClassAttendance = function() {
                 <!-- Stats column -->
                 <div style="flex:1;min-width:0;">
                     <p style="font-size:.6rem;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:.12em;margin:0 0 .3rem;">Attendance Summary</p>
-                    <h3 style="font-size:1.2rem;font-weight:900;color:var(--mac-fg,#1d1d1f);margin:0 0 .6rem;line-height:1.1;">${totalPresent.toFixed(0)} / ${totalHours.toFixed(0)} Hrs</h3>
+                    <h3 style="font-size:1.2rem;font-weight:900;color:var(--text-main);margin:0 0 .6rem;line-height:1.1;">${totalPresent.toFixed(0)} / ${totalHours.toFixed(0)} Hrs</h3>
                     <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
                         <span style="font-size:.6rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;background:rgba(48,209,88,.12);color:#30d158;">✓ ${safeSubjects.length} Safe</span>
                         ${warnSubjects.length ? `<span style="font-size:.6rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;background:rgba(255,159,10,.12);color:#ff9f0a;">⚠ ${warnSubjects.length} Low</span>` : ''}
@@ -4102,7 +4102,7 @@ window.renderClassAttendance = function() {
                 <div style="padding-left:.5rem;">
                     <!-- Subject name -->
                     <p style="font-size:.58rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.1em;margin:0 0 .2rem;">Subject</p>
-                    <h4 style="font-size:.9rem;font-weight:800;color:var(--mac-fg,#1d1d1f);margin:0 0 .75rem;line-height:1.3;padding-right:2rem;">${shortName}</h4>
+                    <h4 style="font-size:.9rem;font-weight:800;color:var(--text-main);margin:0 0 .75rem;line-height:1.3;padding-right:2rem;">${shortName}</h4>
 
                     <!-- Hours row -->
                     <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;flex-wrap:wrap;">
@@ -4113,7 +4113,7 @@ window.renderClassAttendance = function() {
                         <div style="width:1px;height:2rem;background:rgba(128,128,128,.15);"></div>
                         <div>
                             <p style="font-size:.52rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.08em;margin:0;">Total</p>
-                            <p style="font-size:1rem;font-weight:900;color:var(--mac-fg,#1d1d1f);margin:0;">${s.total.toFixed(0)}<span style="font-size:.6rem;font-weight:600;color:#86868b;"> hrs</span></p>
+                            <p style="font-size:1rem;font-weight:900;color:var(--text-main);margin:0;">${s.total.toFixed(0)}<span style="font-size:.6rem;font-weight:600;color:#86868b;"> hrs</span></p>
                         </div>
                         <div style="width:1px;height:2rem;background:rgba(128,128,128,.15);"></div>
                         <div>
@@ -4359,7 +4359,7 @@ window.syncExamResults = async function () {
         </div>
         <div class="glass-panel rounded-[2rem] p-12 text-center my-6 border border-white/5">
             <div class="animate-spin text-4xl mb-4">⏳</div>
-            <h3 class="text-sm font-black text-white">Syncing Academic Results...</h3>
+            <h3 class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">Syncing Academic Results...</h3>
             <p class="text-[10px] font-bold text-[#86868b] mt-2">Connecting to college portal to fetch your official marks.</p>
         </div>`;
 
@@ -4410,7 +4410,7 @@ window.renderExamResults = function () {
         container.innerHTML = `
             <div class="glass-panel rounded-[2rem] p-6 text-center my-6 border border-white/5">
                 <div class="text-3xl mb-3">🔑</div>
-                <h3 class="text-sm font-black text-white">Admission Number Required</h3>
+                <h3 class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">Admission Number Required</h3>
                 <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed">
                     Go to Profile → Edit and enter your Admission Number to sync exam results.
                 </p>
@@ -4443,7 +4443,7 @@ window.renderExamResults = function () {
             container.innerHTML = window.getFreshnessIndicatorHtml('ExamResult') + headerHtml + `
                 <div class="glass-panel rounded-[2rem] p-8 text-center my-6 relative overflow-hidden border border-white/5">
                     <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">🏆</div>
-                    <h3 class="text-base font-black text-white">Exam Results Not Synced</h3>
+                    <h3 class="text-base font-black text-[#1d1d1f] dark:text-[#f5f5f7]">Exam Results Not Synced</h3>
                     <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed mb-4">
                         Sync your university semester exam results from the college ePortal.
                     </p>
@@ -4536,7 +4536,7 @@ window.renderExamResults = function () {
                     <div class="glass-panel rounded-[2rem] p-6 mb-6 border border-white/5">
                         <div class="flex items-center gap-3 mb-4">
                             <span class="text-xl">🎓</span>
-                            <h3 class="text-sm font-bold text-white">Semester ${item.semNum} Results</h3>
+                            <h3 class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Semester ${item.semNum} Results</h3>
                         </div>
                         <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--glass-border);">
                             <table class="data-table">
@@ -4557,7 +4557,7 @@ window.renderExamResults = function () {
             resultsHtml = `
                 <div class="glass-panel rounded-[2rem] p-8 text-center my-6 border border-white/5">
                     <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">🏆</div>
-                    <h3 class="text-base font-black text-white">No Exam Results Published</h3>
+                    <h3 class="text-base font-black text-[#1d1d1f] dark:text-[#f5f5f7]">No Exam Results Published</h3>
                     <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed">
                         No semester publication results are available in your portal account for Semester ${selectedSem}.
                     </p>
@@ -4626,7 +4626,7 @@ window.renderExamResults = function () {
                 </div>
                 <div class="glass-panel rounded-[2rem] p-8 text-center my-6 relative overflow-hidden border border-white/5">
                     <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">📝</div>
-                    <h3 class="text-base font-black text-white">No College Data Found</h3>
+                    <h3 class="text-base font-black text-[#1d1d1f] dark:text-[#f5f5f7]">No College Data Found</h3>
                     <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed mb-4">
                         We couldn't retrieve internal marks or CCA assessments for Semester ${activeSem} from the portal.
                     </p>
@@ -4853,7 +4853,7 @@ window.renderExamResults = function () {
                         finalUniversityHtml = `
                             <div class="flex items-center justify-between p-3.5 bg-white/5 dark:bg-white/5 border border-white/5 rounded-2xl">
                                 <div class="flex flex-col">
-                                    <span class="text-[10px] font-bold text-white uppercase tracking-wider">Final University Internal</span>
+                                    <span class="text-[10px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] uppercase tracking-wider">Final University Internal</span>
                                     <span class="text-[9px] text-[#86868b] mt-0.5">Official mark submitted to MGU University</span>
                                 </div>
                                 <div class="flex items-baseline gap-0.5">
@@ -4911,7 +4911,7 @@ window.renderExamResults = function () {
                     <div class="glass-panel rounded-[2rem] p-5 mb-4 border border-white/5">
                         <div class="flex items-center gap-2.5 mb-3.5">
                             <span class="text-base">📝</span>
-                            <h4 class="text-[12px] font-bold text-white">${subjectName}</h4>
+                            <h4 class="text-[12px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${subjectName}</h4>
                         </div>
                         ${ccrRowsHtml}
                         ${finalUniversityHtml}
@@ -4940,7 +4940,7 @@ window.renderExamResults = function () {
                         <div class="glass-panel rounded-[2rem] p-5 mb-4 border border-white/5">
                             <div class="flex items-center gap-2.5 mb-3.5">
                                 <span class="text-base">📝</span>
-                                <h4 class="text-[12px] font-bold text-white">${title}</h4>
+                                <h4 class="text-[12px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${title}</h4>
                             </div>
                             <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--glass-border);">
                                 <table class="data-table">
@@ -4963,7 +4963,7 @@ window.renderExamResults = function () {
             contentHtml = `
                 <div class="glass-panel rounded-[2rem] p-8 text-center my-6 border border-white/5">
                     <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">📭</div>
-                    <h3 class="text-base font-black text-white">${hasFetchError ? 'Portal Fetch Failed' : 'No College Marks Found'}</h3>
+                    <h3 class="text-base font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${hasFetchError ? 'Portal Fetch Failed' : 'No College Marks Found'}</h3>
                     <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed mb-4">
                         ${hasFetchError
                             ? 'Could not connect to the college portal. Check your internet or portal credentials.'
@@ -5015,7 +5015,7 @@ function getLiveClassTrackerHtml(dept, semNum) {
                     <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Smart Campus</span>
                     <span class="text-xs">☀️</span>
                 </div>
-                <h4 class="text-sm font-bold text-white">Weekend Rest</h4>
+                <h4 class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Weekend Rest</h4>
                 <p class="text-[10px] font-bold text-[#86868b] mt-1">No classes scheduled for today. Enjoy your day!</p>
             </div>
         `;
@@ -5063,7 +5063,7 @@ function getLiveClassTrackerHtml(dept, semNum) {
 
                 <div class="flex flex-col mb-3">
                     <span class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider mb-1">Live Class Tracker</span>
-                    <h4 class="text-sm font-black text-white leading-tight">Period ${activePeriod.period}: ${activePeriod.title}</h4>
+                    <h4 class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight">Period ${activePeriod.period}: ${activePeriod.title}</h4>
                     <span class="text-[10px] font-bold text-[#86868b] mt-1">📍 ${activePeriod.room || 'Room 201'} • ⏱ ${activePeriod.time}</span>
                 </div>
 
@@ -5087,7 +5087,7 @@ function getLiveClassTrackerHtml(dept, semNum) {
                     <span class="text-[9px] font-black text-orange-400 uppercase tracking-wider">Smart Campus</span>
                     <span class="text-xs">☕</span>
                 </div>
-                <h4 class="text-sm font-bold text-white">Lunch Break</h4>
+                <h4 class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Lunch Break</h4>
                 <p class="text-[10px] font-bold text-[#86868b] mt-1">Class resumes in ${lunchMinsLeft}m at 01:30 PM.</p>
                 ${nextPeriod ? `<div class="mt-3 pt-3 border-t border-white/5 text-[9px] font-black text-[#86868b] uppercase tracking-wider">Next: Period ${nextPeriod.period} - ${nextPeriod.title}</div>` : ''}
             </div>
@@ -5105,7 +5105,7 @@ function getLiveClassTrackerHtml(dept, semNum) {
                         <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Smart Campus</span>
                         <span class="text-xs">🌅</span>
                     </div>
-                    <h4 class="text-sm font-bold text-white">Classes Over</h4>
+                    <h4 class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Classes Over</h4>
                     <p class="text-[10px] font-bold text-[#86868b] mt-1">All classes completed for today. Have a great evening!</p>
                 </div>
             `;
@@ -5118,7 +5118,7 @@ function getLiveClassTrackerHtml(dept, semNum) {
                 <span class="text-[9px] font-black text-[#86868b] uppercase tracking-wider">Smart Campus</span>
                 <span class="text-xs">🕒</span>
             </div>
-            <h4 class="text-sm font-bold text-white">Morning Prep</h4>
+            <h4 class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Morning Prep</h4>
             <p class="text-[10px] font-bold text-[#86868b] mt-1">First class starts at 09:30 AM.</p>
         </div>
     `;
@@ -5151,7 +5151,7 @@ window.renderClassActivity = function() {
         container.innerHTML = `
             <div class="glass-panel rounded-[2rem] p-6 text-center my-6 border border-white/5">
                 <div class="text-3xl mb-3">🔑</div>
-                <h3 class="text-sm font-black text-white">Admission Number Required</h3>
+                <h3 class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">Admission Number Required</h3>
                 <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed">
                     Go to Profile → Edit and enter your Admission Number to track activities.
                 </p>
@@ -5285,7 +5285,7 @@ window.renderClassActivity = function() {
         <div class="grid grid-cols-3 gap-2 mb-4 w-full">
             <div class="glass-panel p-3 rounded-2xl border border-white/5 text-center bg-white/5 backdrop-blur-md">
                 <span class="text-[8px] font-black text-[#86868b] uppercase tracking-wider block">Total</span>
-                <span class="text-sm font-black text-white mt-0.5 block">${totalCount}</span>
+                <span class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5 block">${totalCount}</span>
             </div>
             <div class="glass-panel p-3 rounded-2xl border border-white/5 text-center bg-white/5 backdrop-blur-md">
                 <span class="text-[8px] font-black text-[#86868b] uppercase tracking-wider block">Pending</span>
@@ -5302,7 +5302,7 @@ window.renderClassActivity = function() {
         <div class="glass-panel p-4 rounded-[2rem] border border-orange-500/20 bg-orange-500/5 backdrop-blur-md mb-5 flex flex-col gap-2">
             <div class="flex items-center gap-2">
                 <span class="text-lg">✨</span>
-                <h4 class="text-xs font-black text-white">Showing Demo Preview</h4>
+                <h4 class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7]">Showing Demo Preview</h4>
             </div>
             <p class="text-[9px] font-bold text-[#86868b] leading-normal">
                 Your assignments and seminars are currently empty. Sync from ePortal to view your actual data.
@@ -5354,7 +5354,7 @@ window.renderClassActivity = function() {
                     <div class="flex justify-between items-start gap-3">
                         <div class="flex-1 min-w-0">
                             <span class="text-[8px] font-black text-[#86868b] uppercase tracking-wider block">${typeLabel} • ${item.subject}</span>
-                            <h4 class="text-xs font-black text-white mt-0.5 leading-snug line-clamp-2">${item.topic}</h4>
+                            <h4 class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5 leading-snug line-clamp-2">${item.topic}</h4>
                         </div>
                         ${statusBadge}
                     </div>

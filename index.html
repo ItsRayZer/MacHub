@@ -17,6 +17,25 @@
     <link rel="stylesheet" href="styles/mac_ai_chat.css?v=2.0.5">
     <link rel="stylesheet" href="styles/desktop.css?v=2.0.5">
     <link rel="stylesheet" href="styles/claim_profile.css?v=2.0.5">
+    <script>
+        (function() {
+            try {
+                const stored = localStorage.getItem('mac_profile_settings');
+                let oledMode = true; // default is true
+                if (stored) {
+                    const settings = JSON.parse(stored);
+                    if (settings.oledMode !== undefined) {
+                        oledMode = !!settings.oledMode;
+                    }
+                }
+                if (oledMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (_) {}
+        })();
+    </script>
 </head>
 <body class="pb-32 app-shell-ready">
 

@@ -12,31 +12,34 @@
             --glass: rgba(255, 255, 255, 0.72);
             --glass-border: rgba(255, 255, 255, 0.42);
             --mac-blue: #0071e3;
-            --bg-1: #000000;
-            --bg-2: #000000;
+            --bg-1: #ffffff;
+            --bg-2: #f5f5f7;
+            --bg-body: #f5f5f7;
             --text-main: #1d1d1f;
-            --glass-shadow: 0 18px 55px rgba(15, 23, 42, 0.10);
+            --glass-shadow: 0 18px 55px rgba(15, 23, 42, 0.05);
             --glass-highlight: linear-gradient(135deg, rgba(255,255,255,0.26), transparent 46%, rgba(255,255,255,0.08));
             --liquid-blue: linear-gradient(135deg, #1f8bff 0%, #0071e3 48%, #45b4ff 100%);
             --liquid-glass: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
-            --liquid-dark: linear-gradient(135deg, rgba(29,29,31,0.96) 0%, rgba(58,58,64,0.92) 100%);
+            --liquid-dark: linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(240,240,245,0.92) 100%);
         }
-        .dark {
+        .dark, html.dark {
             --glass: rgba(28, 28, 30, 0.62);
             --glass-border: rgba(255, 255, 255, 0.08);
             --mac-blue: #0a84ff;
             --liquid-glass: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
             --bg-1: #000000;
             --bg-2: #000000;
+            --bg-body: #000000;
             --text-main: #f5f5f7;
             --glass-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
             --glass-highlight: linear-gradient(135deg, rgba(255,255,255,0.12), transparent 44%, rgba(255,255,255,0.03));
-            --liquid-dark: linear-gradient(135deg, rgba(245,245,247,0.96) 0%, rgba(214,214,219,0.92) 100%);
+            --liquid-dark: linear-gradient(135deg, rgba(29,29,31,0.96) 0%, rgba(58,58,64,0.92) 100%);
         }
 
         body {
-            background: #000000;
-            transition: background 0.5s ease, color 0.5s ease;
+            background-color: var(--bg-body);
+            background: var(--bg-body);
+            transition: background 0.5s ease, background-color 0.5s ease, color 0.5s ease;
             background-attachment: fixed;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
             overflow-x: hidden;
