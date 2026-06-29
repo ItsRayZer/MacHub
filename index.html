@@ -2577,18 +2577,7 @@
 
     </div>
 
-    <script>
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            const themeIcon = document.getElementById('themeIcon');
-            if (themeIcon) themeIcon.textContent = isDark ? '☀️' : '🌓';
-        }
-        // Auto detect system theme
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            toggleTheme();
-        }
-    </script>
+
 
     
 
