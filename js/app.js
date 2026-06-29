@@ -2738,31 +2738,7 @@ function autoSelectNextExamDay() {
     }
 }
 function showSeatNote() {
-    const info = getStudentInfo();
-    const userDept = info ? info.dept.toUpperCase() : 'BCA';
-    const futureSeatDates = getFutureSeatExamDates(userDept);
-    const activeTimetableIsPractical = window.ACTIVE_TIMETABLE_TYPE === 'practical' || isPracticalScheduleActiveForUser();
-    const selectedDateFormatted = (appState.selectedDate || '').replace(/_/g, '-');
-    const selectedDateIsPractical = (window.PRACTICAL_TIMETABLE_BCA || []).some(exam => exam.date === selectedDateFormatted);
-    
-    // Completely suppress the notification popup when there is no seating available
-    if (!futureSeatDates.length || activeTimetableIsPractical || selectedDateIsPractical) {
-        return;
-    }
-
-    const hasShown = sessionStorage.getItem('seat_note_shown');
-    if (!hasShown) {
-        const popup = document.getElementById('dailyNotePopup');
-        const content = document.getElementById('dailyNoteContent');
-        if (popup && content) {
-            popup.classList.remove('hidden');
-            setTimeout(() => {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
-            }, 10);
-            sessionStorage.setItem('seat_note_shown', 'true');
-        }
-    }
+    // Completely removed as per user request
 }
 
 function closeDailyNote() {
