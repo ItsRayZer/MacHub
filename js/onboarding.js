@@ -411,17 +411,19 @@ window.nextObStep = function(step) {
             const actionsEl = document.getElementById('ob-step3-actions');
             if (actionsEl) {
                 actionsEl.innerHTML = `
-                    <div class="grid grid-cols-2 gap-3.5">
-                        <button onclick="window.nextObStep(1)" class="btn-liquid-glass red flex-1 py-4 text-xs font-bold spring">
-                            Not Me
+                    <div class="flex items-center gap-3">
+                        <button onclick="window.nextObStep(1)" class="btn-liquid-glass red flex-1 py-3 text-sm font-bold spring">
+                            Back
                         </button>
-                        <button onclick="window.triggerSecureAccountModal('${escapeHtml(s.adminNo)}')" class="btn-liquid-glass gold flex-1 py-4 text-xs font-bold spring">
-                            Secure Account
+                        <button onclick="if (window.finishOnboarding) window.finishOnboarding(event)" class="btn-liquid-glass blue flex-1 py-3 text-sm font-bold spring">
+                            Next
                         </button>
                     </div>
-                    <button onclick="if (window.finishOnboarding) window.finishOnboarding(event)" class="btn-liquid-glass blue w-full py-4.5 text-sm font-bold spring mt-1">
-                        This is me
-                    </button>
+                    <div class="text-center mt-2.5">
+                        <button onclick="window.triggerSecureAccountModal('${escapeHtml(s.adminNo)}')" class="text-xs font-black text-amber-500 hover:text-amber-400 tracking-wider uppercase transition-all spring active:scale-95 inline-flex items-center gap-1.5 py-1">
+                            🔐 Secure Account
+                        </button>
+                    </div>
                 `;
             }
         }
