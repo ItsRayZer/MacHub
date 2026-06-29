@@ -214,7 +214,7 @@
           else if (valMatch) semester = valMatch[0];
         }
       }
-      
+
       if (section === 'Attendance' || section === 'Assessment') {
         const payload = data?.payload || data;
         const sems = payload?.semesters || payload?.semesterOptions || [];
@@ -234,7 +234,11 @@
                 if (maxSem !== currentSemNum) {
                   console.log(`[MacHub] Auto-updating student semester from Sem ${currentSemNum} to Sem ${maxSem}`);
                   info.semester = `Sem ${maxSem}`;
-                  localStorage.setItem('mac_student_info', JSON.stringify(info));
+                  if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
+                    window.ExamHubProfile.save(info);
+                  } else {
+                    localStorage.setItem('mac_student_info', JSON.stringify(info));
+                  }
                   setTimeout(() => {
                     if (typeof window.renderClassTimetable === 'function') window.renderClassTimetable();
                     if (typeof window.renderClassAttendance === 'function') window.renderClassAttendance();
@@ -266,7 +270,11 @@
                 if (maxSem !== currentSemNum) {
                   console.log(`[MacHub] Auto-updating student semester from Dashboard: Sem ${currentSemNum} to Sem ${maxSem}`);
                   info.semester = `Sem ${maxSem}`;
-                  localStorage.setItem('mac_student_info', JSON.stringify(info));
+                  if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
+                    window.ExamHubProfile.save(info);
+                  } else {
+                    localStorage.setItem('mac_student_info', JSON.stringify(info));
+                  }
                   setTimeout(() => {
                     if (typeof window.renderClassTimetable === 'function') window.renderClassTimetable();
                     if (typeof window.renderClassAttendance === 'function') window.renderClassAttendance();

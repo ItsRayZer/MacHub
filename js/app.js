@@ -4148,6 +4148,7 @@ window.renderClassAttendance = function() {
 };
 
 function getStudentSemNumber() {
+    autoUpdateSemesterFromCache();
     const info = getStudentInfo();
     if (info && info.semester) {
         const match = info.semester.match(/\d+/);
@@ -4159,22 +4160,70 @@ window.getStudentSemNumber = getStudentSemNumber;
 
 function autoUpdateSemesterFromCache() {
     try {
-        const info = getStudentInfo();
+        // Read directly from localStorage first to avoid caching issues during onboarding/init
+        const rawInfo = localStorage.getItem('mac_student_info');
+        if (!rawInfo) return;
+        const info = JSON.parse(rawInfo);
         if (!info) return;
-        const adminNo = info.adminNo || localStorage.getItem('machub_student_id') || '';
+        const adminNo = info.adminNo || info.admissionNo || info.admissionNumber || localStorage.getItem('machub_student_id') || '';
         if (!adminNo) return;
         
         let maxSem = 0;
-        for (let sem = 1; sem <= 8; sem++) {
-            const key = `machub_portal_Attendance_sem${sem}_${adminNo}`;
-            const keyAss = `machub_portal_Assessment_sem${sem}_${adminNo}`;
-            const keyInt = `machub_portal_InternalMark_sem${sem}_${adminNo}`;
-            if (localStorage.getItem(key) || localStorage.getItem(keyAss) || localStorage.getItem(keyInt)) {
-                maxSem = Math.max(maxSem, sem);
+        
+        // 1. Scan localStorage keys for semester suffixes
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes(adminNo)) {
+                const match = key.match(/_sem(\d+)_/);
+                if (match) {
+                    const s = parseInt(match[1], 10);
+                    if (s > 0 && s <= 8) {
+                        maxSem = Math.max(maxSem, s);
+                    }
+                }
             }
         }
         
-        // Also calculate based on batch as a fallback/verification
+        // 2. Parse generic keys (without suffix) to check their selected semesters
+        const checkPayloadForSelectedSem = (section) => {
+            const raw = localStorage.getItem(`machub_portal_${section}_${adminNo}`);
+            if (!raw) return 0;
+            try {
+                const parsed = JSON.parse(raw);
+                const dataObj = parsed?.data?.payload || parsed?.payload || parsed?.data || parsed;
+                const sems = dataObj?.semesters || dataObj?.semesterOptions || [];
+                const selectedOpt = sems.find(s => s.selected);
+                if (selectedOpt) {
+                    const textMatch = String(selectedOpt.text || '').match(/\d+/);
+                    const valMatch  = String(selectedOpt.value || '').match(/\d+/);
+                    if (textMatch) return parseInt(textMatch[0], 10);
+                    if (valMatch) return parseInt(valMatch[0], 10);
+                }
+            } catch(e) {}
+            return 0;
+        };
+
+        maxSem = Math.max(maxSem, checkPayloadForSelectedSem('Attendance'));
+        maxSem = Math.max(maxSem, checkPayloadForSelectedSem('Assessment'));
+        maxSem = Math.max(maxSem, checkPayloadForSelectedSem('InternalMark'));
+
+        // 3. Parse Dashboard cache
+        const dashRaw = localStorage.getItem(`machub_portal_Dashboard_${adminNo}`);
+        if (dashRaw) {
+            try {
+                const parsed = JSON.parse(dashRaw);
+                const dataObj = parsed?.data?.payload || parsed?.payload || parsed?.data || parsed;
+                const dashSem = dataObj?.semester;
+                if (dashSem) {
+                    const match = String(dashSem).match(/\d+/);
+                    if (match) {
+                        maxSem = Math.max(maxSem, parseInt(match[0], 10));
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // 4. Calculate based on batch as a fallback/verification
         if (info.batch) {
             const matchBatch = String(info.batch).match(/(\d{4})/);
             if (matchBatch) {
@@ -4209,8 +4258,15 @@ function autoUpdateSemesterFromCache() {
             if (maxSem !== currentSemNum) {
                 console.log(`[MacHub] Auto-updating student semester: Sem ${currentSemNum} -> Sem ${maxSem}`);
                 info.semester = `Sem ${maxSem}`;
-                localStorage.setItem('mac_student_info', JSON.stringify(info));
                 
+                // Write directly to localstorage AND memory cache using ExamHubProfile if available
+                if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
+                    window.ExamHubProfile.save(info);
+                } else {
+                    localStorage.setItem('mac_student_info', JSON.stringify(info));
+                }
+                
+                // Update selections
                 appState.selectedAttendanceSem = String(maxSem);
                 appState.selectedInternalSem = String(maxSem);
                 appState.selectedExamSem = String(maxSem);
