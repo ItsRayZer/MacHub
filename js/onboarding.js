@@ -596,13 +596,22 @@ window.triggerSecureAccountModal = function(adminNo) {
     if (!modal) return;
 
     const oldPwdInput = document.getElementById('sec-old-pwd');
-    if (oldPwdInput) oldPwdInput.value = adminNo;
+    if (oldPwdInput) {
+        oldPwdInput.type = 'password';
+        oldPwdInput.value = adminNo;
+    }
 
     const newPwdInput = document.getElementById('sec-new-pwd');
-    if (newPwdInput) newPwdInput.value = '';
+    if (newPwdInput) {
+        newPwdInput.type = 'password';
+        newPwdInput.value = '';
+    }
 
     const confirmPwdInput = document.getElementById('sec-confirm-pwd');
-    if (confirmPwdInput) confirmPwdInput.value = '';
+    if (confirmPwdInput) {
+        confirmPwdInput.type = 'password';
+        confirmPwdInput.value = '';
+    }
 
     modal.classList.add('open');
 };
@@ -610,6 +619,13 @@ window.triggerSecureAccountModal = function(adminNo) {
 window.closeSecureAccountModal = function() {
     const modal = document.getElementById('secureAccountModal');
     if (modal) modal.classList.remove('open');
+
+    const oldPwdInput = document.getElementById('sec-old-pwd');
+    const newPwdInput = document.getElementById('sec-new-pwd');
+    const confirmPwdInput = document.getElementById('sec-confirm-pwd');
+    if (oldPwdInput) { oldPwdInput.type = 'text'; oldPwdInput.value = ''; }
+    if (newPwdInput) { newPwdInput.type = 'text'; newPwdInput.value = ''; }
+    if (confirmPwdInput) { confirmPwdInput.type = 'text'; confirmPwdInput.value = ''; }
 };
 
 window.submitSecureAccountPasswordChange = async function() {

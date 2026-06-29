@@ -1962,7 +1962,10 @@
     }
 
     const input = document.getElementById('portal-pwd-input');
-    if (input) input.value = '';
+    if (input) {
+      input.type = 'password';
+      input.value = '';
+    }
 
     modal.classList.add('open');
     activePasswordPrompt = { admissionNumber, onSuccess, onCancel };
@@ -1971,6 +1974,11 @@
   window.closePortalPasswordModal = function () {
     const modal = document.getElementById('portalPasswordModal');
     if (modal) modal.classList.remove('open');
+    const input = document.getElementById('portal-pwd-input');
+    if (input) {
+      input.type = 'text';
+      input.value = '';
+    }
     if (activePasswordPrompt) {
       if (activePasswordPrompt.onCancel) activePasswordPrompt.onCancel();
       activePasswordPrompt = null;
@@ -2026,6 +2034,10 @@
       if (btn) btn.innerHTML = originalText;
       const modal = document.getElementById('portalPasswordModal');
       if (modal) modal.classList.remove('open');
+      if (input) {
+        input.type = 'text';
+        input.value = '';
+      }
 
       const cb = onSuccess;
       activePasswordPrompt = null;

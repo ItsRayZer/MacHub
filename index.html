@@ -668,7 +668,7 @@
         
         <!-- Typing Box -->
         <div id="navAiInputContainer" class="nav-ai-input-container">
-            <input type="text" id="navAiInput" placeholder="Ask MacAI..." autocomplete="off" />
+            <input type="text" id="navAiInput" placeholder="Ask MacAI..." autocomplete="one-time-code" autocapitalize="off" spellcheck="false" />
         </div>
 
         <!-- Separate but same to same MacAI Circle Button -->
@@ -2457,7 +2457,7 @@
                         <span id="macaiPlusIcon">+</span>
                     </button>
                     <input class="macai-input" id="macaiInput" type="text"
-                        placeholder="Ask MacAI…"
+                        placeholder="Ask MacAI…" autocomplete="one-time-code" autocapitalize="off" spellcheck="false"
                         onkeydown="if(event.key==='Enter')macaiSend()">
                     <button class="macai-circle" onclick="macaiToggleThinking()" id="macaiThinkBtn" title="Deep Thinking" style="font-size:14px;">💡</button>
                     <button id="macaiSendBtn" class="macai-circle send-wrapper" onclick="handleChatPageSendClick(event)" title="Send" style="position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">
@@ -2596,7 +2596,7 @@
                 <div class="space-y-3 pt-2 text-left">
                     <div>
                         <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="portal-pwd-input">ePortal Password</label>
-                        <input type="password" id="portal-pwd-input" placeholder="••••••••" 
+                        <input type="text" id="portal-pwd-input" placeholder="••••••••" autocomplete="off"
                             class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-[var(--mac-blue)]" />
                     </div>
                 </div>
@@ -2627,17 +2627,17 @@
                 <div class="space-y-3 pt-2 text-left">
                     <div>
                         <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-old-pwd">Old Password</label>
-                        <input type="password" id="sec-old-pwd" placeholder="••••••••" 
+                        <input type="text" id="sec-old-pwd" placeholder="••••••••" autocomplete="off"
                             class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
                     </div>
                     <div>
                         <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-new-pwd">New Password</label>
-                        <input type="password" id="sec-new-pwd" placeholder="••••••••" 
+                        <input type="text" id="sec-new-pwd" placeholder="••••••••" autocomplete="off"
                             class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
                     </div>
                     <div>
                         <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-confirm-pwd">Confirm New Password</label>
-                        <input type="password" id="sec-confirm-pwd" placeholder="••••••••" 
+                        <input type="text" id="sec-confirm-pwd" placeholder="••••••••" autocomplete="off"
                             class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
                     </div>
                 </div>
