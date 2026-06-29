@@ -1138,4 +1138,59 @@ Student Profile:
         document.head.appendChild(s);
     }
 
+    // ── Visual Viewport Virtual Keyboard Handler for Mobile ────────────────
+    if (window.visualViewport) {
+        const handleViewportResize = () => {
+            const viewportHeight = window.visualViewport.height;
+            const windowHeight = window.innerHeight;
+            const keyboardHeight = windowHeight - viewportHeight;
+            const offset = Math.max(0, keyboardHeight);
+
+            // 1. Adjust bottom navigation dock (Ask MacAI box)
+            const bottomNav = document.getElementById('bottomNav');
+            if (bottomNav) {
+                if (offset > 0) {
+                    bottomNav.style.bottom = `${offset + 10}px`;
+                } else {
+                    bottomNav.style.bottom = ''; // restore to CSS default (20px)
+                }
+            }
+
+            // 2. Adjust full-screen view-ai panel
+            const viewAi = document.getElementById('view-ai');
+            if (viewAi && viewAi.classList.contains('is-active')) {
+                if (offset > 0) {
+                    viewAi.style.bottom = `${offset}px`;
+                    // Automatically scroll chat to bottom when keyboard appears
+                    const scrollContainer = viewAi.querySelector('.macai-scroll');
+                    if (scrollContainer) {
+                        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+                    }
+                } else {
+                    viewAi.style.bottom = '0px';
+                }
+            }
+        };
+
+        window.visualViewport.addEventListener('resize', handleViewportResize);
+        window.visualViewport.addEventListener('scroll', handleViewportResize);
+        
+        // Wrap window.openMacAI to trigger resize sync
+        const originalOpen = window.openMacAI;
+        window.openMacAI = function() {
+            if (typeof originalOpen === 'function') originalOpen();
+            setTimeout(handleViewportResize, 50);
+        };
+        
+        // Wrap window.closeMacAI to reset styles
+        const originalClose = window.closeMacAI;
+        window.closeMacAI = function() {
+            if (typeof originalClose === 'function') originalClose();
+            const viewAi = document.getElementById('view-ai');
+            if (viewAi) viewAi.style.bottom = '0px';
+            const bottomNav = document.getElementById('bottomNav');
+            if (bottomNav) bottomNav.style.bottom = '';
+        };
+    }
+
 })();
