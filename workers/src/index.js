@@ -788,6 +788,190 @@ export default {
         }
       }
 
+      // ── GET /api/mgu/exam-list ────────────────────────────────────────────────
+      if (request.method === 'GET' && pathname === '/api/mgu/exam-list') {
+        try {
+          // In-memory cache (6-hour TTL) — exam list changes rarely
+          const cacheKey = 'mgu_exam_list';
+          const now = Date.now();
+          if (!globalThis._mguExamCache || (now - globalThis._mguExamCacheTs) > 6 * 60 * 60 * 1000) {
+            const res = await fetch('https://ugpapi.mgu.ac.in/ugp/api/getActiveExam', {
+              headers: { 'Accept': 'application/json', 'User-Agent': 'MacHub/2.0' },
+            });
+            if (!res.ok) throw new Error(`MGU exam list returned ${res.status}`);
+            const data = await res.json();
+            const exams = (data.activeexam || []).map(e => ({
+              value: String(e.examid),
+              label: e.examtitle || '',
+              semesterid: e.semesterid || 0,
+            }));
+            globalThis._mguExamCache = exams;
+            globalThis._mguExamCacheTs = now;
+          }
+          return corsResponse(
+            { success: true, exams: globalThis._mguExamCache },
+            200,
+            { 'Cache-Control': 'public, max-age=21600' }
+          );
+        } catch (err) {
+          console.error('[MGU] Exam list error:', err.message);
+          return errorResponse(`Failed to fetch MGU exam list: ${err.message}`, 502);
+        }
+      }
+
+      // ── GET /api/mgu/captcha ──────────────────────────────────────────────────
+      if (request.method === 'GET' && pathname === '/api/mgu/captcha') {
+        try {
+          const res = await fetch('https://ugpapi.mgu.ac.in/ugp/api/Result/GenerateCaptcha', {
+            headers: { 'Accept': 'application/json', 'User-Agent': 'MacHub/2.0' },
+          });
+          if (!res.ok) throw new Error(`MGU captcha returned ${res.status}`);
+          const data = await res.json();
+          // cap_img is already a base64 string (no data: prefix from API)
+          const imageDataUrl = data.cap_img
+            ? (data.cap_img.startsWith('data:') ? data.cap_img : `data:image/png;base64,${data.cap_img}`)
+            : null;
+          return corsResponse(
+            {
+              success: true,
+              captchaImage: imageDataUrl,
+              captchaId: data.captcha_id,
+              // IMPORTANT: the MGU API returns the plaintext answer — include it so the frontend
+              // can submit without requiring the user to manually solve the captcha.
+              captchaAnswer: data.captcha_text || null,
+            },
+            200,
+            { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+          );
+        } catch (err) {
+          console.error('[MGU] Captcha error:', err.message);
+          return errorResponse(`Failed to fetch MGU captcha: ${err.message}`, 502);
+        }
+      }
+
+      // ── POST /api/mgu/fetch-result ────────────────────────────────────────────
+      if (request.method === 'POST' && pathname === '/api/mgu/fetch-result') {
+        let body;
+        try { body = await request.json(); } catch { body = {}; }
+        const prn          = String(body.prn          || '').trim();
+        const examId       = String(body.examId       || body.examValue || '').trim();
+        const captchaAnswer = String(body.captchaAnswer || '').trim();
+        const captchaId    = String(body.captchaId   || body.captchaToken || '').trim();
+
+        if (!prn || !examId || !captchaAnswer || !captchaId) {
+          return errorResponse('prn, examId, captchaAnswer, and captchaId are required', 400);
+        }
+
+        try {
+          const params = new URLSearchParams({
+            examid:     examId,
+            prn:        prn,
+            captcha_in: captchaAnswer,
+            captcha_id: captchaId,
+          });
+          const res = await fetch(
+            `https://ugpapi.mgu.ac.in/ugp/api/Result/PublicResultView?${params.toString()}`,
+            { headers: { 'Accept': 'application/json', 'User-Agent': 'MacHub/2.0' } }
+          );
+          const responseText = await res.text();
+          let data;
+          try { data = JSON.parse(responseText); } catch { data = {}; }
+
+          // Wrong captcha → 422 ERR60
+          if (res.status === 422 || data?.status_code === 'ERR60') {
+            return corsResponse({ success: false, error: 'CAPTCHA_WRONG' }, 200);
+          }
+
+          // No result found → 500 ERR5
+          if (res.status === 500 || data?.status_code === 'ERR5') {
+            return corsResponse({ success: false, error: 'NO_RESULT_FOUND' }, 200);
+          }
+
+          if (!res.ok) {
+            return corsResponse({ success: false, error: `MGU_ERROR_${res.status}` }, 200);
+          }
+          // ── Parse response ──
+          const studentDetails = Array.isArray(data.studentDetails) ? data.studentDetails[0] : 
+                                 (Array.isArray(data.StudentDetails) ? data.StudentDetails[0] : 
+                                 (data.studentDetails || data.StudentDetails || data.studentdetails || data || {}));
+          
+          const gradeDetails   = data.gradeDetails || data.GradeDetails || data.gradedetails || data || {};
+          
+          const courseDetails  = Array.isArray(data.courseDetails) ? data.courseDetails :
+                                 (Array.isArray(data.CourseDetails) ? data.CourseDetails :
+                                 (Array.isArray(data.coursedetails) ? data.coursedetails : 
+                                 (Array.isArray(data.courses) ? data.courses : [])));
+
+          const val = (v) => (v !== undefined && v !== null && v !== '') ? String(v) : '';
+
+          const subjects = courseDetails.map(c => ({
+            code:            c.course_code    || c.courseCode || c.CourseCode || c.course_Code || '',
+            name:            c.course_name    || c.courseName || c.CourseName || c.course_Name || '',
+            category:        c.paper_identifier || c.paperIdentifier || c.PaperIdentifier || '',
+            theoryInternal:  (c.theory_pract === 'T' || c.theory_pract === 'B') ? val(c.normalised_TI) : '',
+            theoryInternalMax:(c.theory_pract === 'T' || c.theory_pract === 'B') ? val(c.normalised_TI_MAX) : '',
+            theoryExternal:  (c.theory_pract === 'T' || c.theory_pract === 'B') ? val(c.normalised_TE) : '',
+            theoryExternalMax:(c.theory_pract === 'T' || c.theory_pract === 'B') ? val(c.normalised_TE_MAX) : '',
+            theoryTotal:     (c.theory_pract === 'T' || c.theory_pract === 'B') ? val(c.T_Total) : '',
+            practInternal:   (c.theory_pract === 'P' || c.theory_pract === 'B') ? val(c.normalised_PI) : '',
+            practInternalMax:(c.theory_pract === 'P' || c.theory_pract === 'B') ? val(c.normalised_PI_MAX) : '',
+            practExternal:   (c.theory_pract === 'P' || c.theory_pract === 'B') ? val(c.normalised_PE) : '',
+            practExternalMax:(c.theory_pract === 'P' || c.theory_pract === 'B') ? val(c.normalised_PE_MAX) : '',
+            practTotal:      (c.theory_pract === 'P' || c.theory_pract === 'B') ? val(c.P_Total) : '',
+            totalMark:       val(c.Total_Mark || c.totalMark || c.TotalMark),
+            totalMarkMax:    val(c.Total_Mark_Max || c.totalMarkMax || c.TotalMarkMax),
+            grade:           c.grade          || c.Grade || '',
+            gradePoints:     val(c.GP || c.gp || c.GradePoint),
+            credits:         val(c.theory_credit || c.theoryCredit || c.theory_Credit),
+            totalCredits:    val(c.total_credit || c.totalCredit || c.total_Credit),
+            acquiredCredits: val(c.acquired_credit || c.acquiredCredit || c.acquired_Credit),
+            creditPoint:     val(c.credit_point || c.creditPoint || c.credit_Point),
+            result:          c.result         || c.Result || '',
+            type:            c.theory_pract   || c.theoryPract || c.theory_pract || '',
+          }));
+
+          const studentName = studentDetails.studentname || studentDetails.student_name || studentDetails.studentName || studentDetails.StudentName ||
+                              studentDetails.name || studentDetails.Name || studentDetails.Student_Name || 
+                              data.studentname || data.student_name || data.studentName || data.name || '';
+          
+          const studentPrn = studentDetails.PRN || studentDetails.prn || studentDetails.registerNumber || prn;
+          const regNo = studentDetails.register_no || studentDetails.registerNo || studentDetails.RegisterNo ||
+                        studentDetails.reg_no || studentDetails.regNo || studentDetails.RegNo || 
+                        studentDetails.PRN || studentDetails.prn || '';
+          
+          const semMatch = (studentDetails.examtitle || data.examtitle || '').match(/(\w+)\s+Semester/i);
+          const sem = studentDetails.semester || studentDetails.Semester || data.semester || (semMatch ? semMatch[1] : '');
+          
+          const college = studentDetails.college_name || studentDetails.collegeName || studentDetails.CollegeName ||
+                          studentDetails.college || studentDetails.College ||
+                          data.college_name || data.collegeName || '';
+          const programme = studentDetails.programme_name || studentDetails.programmeName || studentDetails.ProgrammeName ||
+                            studentDetails.course_name || studentDetails.courseName || studentDetails.programme ||
+                            data.programme_name || data.programmeName || '';
+
+          const result = {
+            studentName,
+            prn:            studentPrn,
+            registerNumber: regNo,
+            examName:       '',  // filled by caller from exam list
+            semester:       sem,
+            college,
+            programme,
+            subjects,
+            sgpa:           String(gradeDetails.sgpa || gradeDetails.SGPA || gradeDetails.Sgpa || ''),
+            cgpa:           String(gradeDetails.cgpa || gradeDetails.CGPA || gradeDetails.Cgpa || ''),
+            overallResult:  gradeDetails.concatenated_result || gradeDetails.concatenatedResult || 
+                            gradeDetails.result || gradeDetails.overallResult || '',
+            declaredDate:   '',
+          };
+
+          return corsResponse({ success: true, result }, 200);
+        } catch (err) {
+          console.error('[MGU] Fetch result error:', err.message);
+          return errorResponse(`Failed to fetch MGU result: ${err.message}`, 502);
+        }
+      }
+
       return errorResponse('Not found', 404);
     } catch (globalErr) {
       console.error(`[Worker Global Error]`, globalErr);
