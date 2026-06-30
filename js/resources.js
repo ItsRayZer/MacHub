@@ -24,34 +24,39 @@
       box-shadow: 0 20px 45px rgba(0,0,0,0.3);
     }
     .mgu-side-drawer {
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       height: 100%;
       width: 280px;
-      z-index: 100;
+      z-index: 1000;
       transform: translateX(-100%);
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
       box-shadow: 40px 0 80px rgba(0, 0, 0, 0.6);
+      visibility: hidden;
     }
     .mgu-side-drawer.is-open {
       transform: translateX(0);
+      visibility: visible;
     }
     .mgu-drawer-backdrop {
-      position: absolute;
+      position: fixed;
       inset: 0;
-      z-index: 90;
-      background: rgba(0, 0, 0, 0.4);
+      z-index: 950;
+      background: rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.3s ease, visibility 0.3s;
+      visibility: hidden;
     }
     .mgu-drawer-backdrop.is-active {
       opacity: 1;
       pointer-events: auto;
+      visibility: visible;
     }
+
     .apple-btn {
       background: linear-gradient(135deg, rgba(56, 151, 240, 0.8), rgba(0, 113, 227, 0.9));
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1084,6 +1089,7 @@
       <div class="w-full flex-1 flex flex-col relative select-none">
         <!-- Top Toolbar Header Bar -->
         <header class="w-full flex items-center justify-between mt-2 mb-4 relative ${S.activeTab === 'Major Switching / College Transfer' ? 'px-6' : ''}">
+          <!-- Left: Back Button or Spacer -->
           ${S.activeTab === 'Major Switching / College Transfer' ? `
             <button 
               onclick="window.navigateMguTab('Dashboard')"
@@ -1096,33 +1102,26 @@
               </svg>
             </button>
           ` : `
-            <button 
-              onclick="window.toggleMguSideDrawer(true)"
-              class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30"
-              style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);"
-              aria-label="Open MGU Menu"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-            </button>
+            <div class="w-10 h-10"></div>
           `}
+
+
           <!-- Center: MGU Logo -->
           <div class="logo-container" style="display:flex;align-items:center;justify-content:center;">
             <img src="assets/img/mgu_logo.png" alt="MGU Logo" class="logo animate-float" style="margin: 0; height: 32px; width: auto; object-fit: contain;">
           </div>
 
-          <!-- Right: Sync / Refresh button -->
+          <!-- Right: Hamburger Menu Button -->
           <button 
-            onclick="window.initResourcesWorkspace()"
-            class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-base z-30"
+            onclick="window.toggleMguSideDrawer(true)"
+            class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30"
             style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);"
-            aria-label="Sync Data"
+            aria-label="Open MGU Menu"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
           </button>
         </header>
@@ -1140,7 +1139,7 @@
             <button onclick="window.toggleMguSideDrawer(false)" class="text-sm font-bold text-zinc-500 hover:text-white px-2 py-1">✕</button>
           </div>
 
-          <nav class="flex-1 space-y-1.5 text-left">
+          <nav class="space-y-1.5 text-left mb-4">
             ${menuSuite.map(m => {
               const activeClass = S.activeTab === m.name ? 'active' : '';
               return `
@@ -1155,8 +1154,8 @@
             }).join('')}
           </nav>
 
-          <!-- Drawer Footer section -->
-          <div class="pt-4 border-t border-white/5 mt-4 space-y-3">
+          <!-- Drawer Footer/Logout section (directly below menu options) -->
+          <div class="pt-4 border-t border-white/5 space-y-3">
             <button 
               onclick="window.mguPortalLogout()"
               class="w-full py-2.5 bg-red-500/10 border border-red-500/25 hover:bg-red-500/20 active:scale-95 transition-all text-red-400 font-bold text-xs rounded-xl flex items-center justify-center gap-2"
