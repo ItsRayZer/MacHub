@@ -453,11 +453,20 @@
     renderMguPortalHub();
   };
 
-  // ── Render Views ──────────────────────────────────────────────
   function renderMguPortalHub() {
     const container = $('mgu-portal-container');
     if (!container) return;
 
+    const viewResourcesEl = $('view-resources');
+    if (viewResourcesEl) {
+      if (S.activeTab === 'Major Switching / College Transfer') {
+        viewResourcesEl.style.padding = '0';
+        viewResourcesEl.style.paddingBottom = '90px';
+      } else {
+        viewResourcesEl.style.padding = '';
+        viewResourcesEl.style.paddingBottom = '';
+      }
+    }
     // Premium active scraper loading overlay
     if (S.isScraping && S.hasCredentials) {
       container.innerHTML = `
@@ -736,11 +745,11 @@
       `;
     } else if (S.activeTab === 'Major Switching / College Transfer') {
       viewHtml = `
-        <div class="w-full flex-1 flex flex-col animate-slideUp" style="height: calc(100vh - 180px); min-height: 500px;">
+        <div class="w-full flex-1 flex flex-col animate-slideUp" style="height: calc(100vh - 150px); min-height: 520px;">
           <iframe 
             src="https://cap.mgu.ac.in:8443/CTMS/transfer/Candidate/login" 
-            class="w-full flex-1 border-0 rounded-2xl" 
-            style="background: #fff; width: 100%; height: 100%; min-height: 500px;"
+            class="w-full flex-1 border-0" 
+            style="background: #fff; width: 100%; height: 100%; min-height: 520px;"
             sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
           ></iframe>
         </div>
@@ -1074,8 +1083,7 @@
     }    container.innerHTML = `
       <div class="w-full flex-1 flex flex-col relative select-none">
         <!-- Top Toolbar Header Bar -->
-        <header class="w-full flex items-center justify-between mt-2 mb-4 relative">
-          <!-- Left: Hamburger Drawer Trigger or Back Button -->
+        <header class="w-full flex items-center justify-between mt-2 mb-4 relative ${S.activeTab === 'Major Switching / College Transfer' ? 'px-6' : ''}">
           ${S.activeTab === 'Major Switching / College Transfer' ? `
             <button 
               onclick="window.navigateMguTab('Dashboard')"
@@ -1164,20 +1172,23 @@
 
         <!-- Course Edit Modal Sheet -->
         <div id="apple-course-modal-sheet" class="apple-modal-sheet apple-glass"></div>
-
         <!-- Main Workspace panel view scroll block -->
-        <main class="flex-1 pt-2 pb-12 overflow-y-auto">
-          <div class="mb-4 text-left pl-1">
-            <span class="text-[9px] font-mono text-[#3897f0] font-black uppercase tracking-[0.2em]">MGU ePortal</span>
-            <h2 class="text-xl font-black text-white leading-none mt-1">${S.activeTab}</h2>
-          </div>
+        <main class="flex-1 flex flex-col ${S.activeTab === 'Major Switching / College Transfer' ? 'pt-0 pb-0' : 'pt-2 pb-12'} overflow-y-auto">
+          ${S.activeTab !== 'Major Switching / College Transfer' ? `
+            <div class="mb-4 text-left pl-1">
+              <span class="text-[9px] font-mono text-[#3897f0] font-black uppercase tracking-[0.2em]">MGU ePortal</span>
+              <h2 class="text-xl font-black text-white leading-none mt-1">${S.activeTab}</h2>
+            </div>
+          ` : ''}
           ${viewHtml}
         </main>
 
         <!-- Portal Site footer credits -->
-        <footer class="pt-6 border-t border-zinc-900/60 mt-auto text-center space-y-1">
-          <p class="text-[8px] font-mono text-zinc-500">© Mahatma Gandhi University, Priyadarsini Hills, Kottayam, Kerala, India - 686560</p>
-        </footer>
+        ${S.activeTab !== 'Major Switching / College Transfer' ? `
+          <footer class="pt-6 border-t border-zinc-900/60 mt-auto text-center space-y-1">
+            <p class="text-[8px] font-mono text-zinc-500">© Mahatma Gandhi University, Priyadarsini Hills, Kottayam, Kerala, India - 686560</p>
+          </footer>
+        ` : ''}
       </div>
     `;
   }
