@@ -476,7 +476,7 @@
     if (viewResourcesEl) {
       if (S.activeTab === 'Major Switching / College Transfer') {
         viewResourcesEl.style.padding = '0';
-        viewResourcesEl.style.paddingBottom = '90px';
+        viewResourcesEl.style.paddingBottom = '0';
         viewResourcesEl.classList.remove('max-w-md');
         viewResourcesEl.style.width = '100vw';
         viewResourcesEl.style.maxWidth = '100%';
@@ -592,25 +592,51 @@
         { name: 'Downloads', icon: '📥', bg: 'rgba(127, 140, 141, 0.12)', color: '#7f8c8d', border: 'rgba(127, 140, 141, 0.25)', desc: 'Grade cards, hall tickets & syllabus' }
       ];
 
+
       viewHtml = `
         <div class="space-y-6">
-          <!-- Profile Quick Header Card -->
-          <div class="p-5 apple-glass-card flex items-center justify-between gap-4 relative overflow-hidden">
-            <div class="space-y-1 z-10 text-left">
-              <span class="text-[9px] font-mono text-[#3897f0] font-black uppercase tracking-widest">Active Academic Session</span>
-              <h2 class="text-lg font-black text-white flex items-center gap-1.5 leading-none">Hello ABEN SOJAN 👋</h2>
-              <p class="text-[11px] text-zinc-500 font-medium">${profileData.college || ''}</p>
+          <!-- Redesigned Top Profile & Credits Panel -->
+          <div class="p-5 apple-glass-card relative overflow-hidden space-y-4 text-left">
+            <!-- Glass background glow nodes -->
+            <div class="absolute -top-12 -left-12 w-28 h-28 bg-[#3897f0]/20 rounded-full blur-3xl"></div>
+            <div class="absolute top-12 -right-12 w-28 h-28 bg-purple-500/10 rounded-full blur-3xl"></div>
+
+            <div class="flex items-center justify-between gap-4">
+              <div class="space-y-1 text-left">
+                <span class="text-[9px] font-mono text-[#3897f0] font-black uppercase tracking-widest">Active Academic Session</span>
+                <h2 class="text-lg font-black text-white flex items-center gap-1.5 leading-none">Hello ABEN SOJAN 👋</h2>
+                <p class="text-[10px] text-zinc-400 font-medium">${profileData.college || ''}</p>
+              </div>
+              <div class="text-right font-mono text-[9px] flex-shrink-0">
+                <span class="px-2.5 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/5 text-emerald-400 text-[8px] font-bold tracking-wider uppercase">
+                  ${S.isSandboxMode ? 'Sandbox' : 'Verified'}
+                </span>
+                <p class="text-zinc-500 font-bold uppercase tracking-wider mt-2">Sem: ${profileData.currentSem || ''}</p>
+              </div>
             </div>
-            <div class="text-right z-10 font-mono text-[9px] flex-shrink-0">
-              <span class="px-2 py-0.5 rounded border ${S.isSandboxMode ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}">
-                ${S.isSandboxMode ? 'Sandbox Guest' : 'Verified Ledger'}
-              </span>
-              <p class="text-zinc-500 font-bold uppercase tracking-wider mt-1.5">Sem: ${profileData.currentSem || ''}</p>
+
+            <!-- Integrated Acquired Credits Gauge -->
+            <div class="pt-4 border-t border-white/5 space-y-2 text-left">
+              <div class="flex justify-between items-baseline">
+                <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest font-sans">Acquired Credits</span>
+                <div class="flex items-baseline gap-1 font-mono">
+                  <span class="text-lg font-black text-[#3897f0]">${profileData.credits || 40}</span>
+                  <span class="text-[9px] text-zinc-500 font-bold">/ 160 CREDITS</span>
+                </div>
+              </div>
+              <!-- Premium minimalist Apple-style progress bar -->
+              <div class="w-full h-2 bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
+                <div class="h-full bg-gradient-to-r from-[#3897f0] to-[#0071e3] rounded-full transition-all duration-1000" style="width: ${((profileData.credits || 40) / 160 * 100)}%; background: linear-gradient(90deg, #3897f0 0%, #0071e3 100%);"></div>
+              </div>
+              <div class="flex justify-between items-center text-[8.5px] text-zinc-500 font-medium pt-0.5">
+                <span>Progression: ${Math.round((profileData.credits || 40) / 160 * 100)}%</span>
+                <span class="font-mono text-zinc-500">${profileData.department || 'BCA'}</span>
+              </div>
             </div>
           </div>
 
           <!-- Instructions Card -->
-          <div class="p-4 apple-glass-card space-y-2">
+          <div class="p-4 apple-glass-card space-y-2 text-left">
             <span class="text-[9px] font-mono text-[#3897f0] font-black uppercase tracking-widest block">Instructions</span>
             <p class="text-xs font-bold text-zinc-200">No Instructions Available</p>
             <p class="text-[10px] text-zinc-500 font-medium">Currently, there are no instructions for you to review. Please check back later.</p>
@@ -643,86 +669,81 @@
             </div>
           </div>
 
-          <!-- Acquired Credits Grid -->
-          <div class="grid grid-cols-2 gap-4">
-            <div class="p-4 bg-zinc-950/20 border border-zinc-900 rounded-3xl relative">
-              <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1 font-sans">Switch 1</span>
-              <div class="flex items-baseline gap-1">
-                <span class="text-2xl font-black text-white font-mono">40</span>
-                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest font-mono">Credits</span>
+          <!-- Redesigned Semester Course Information -->
+          <div class="space-y-4">
+            <div class="flex justify-between items-center px-1 text-left">
+              <div>
+                <h3 class="text-xs font-black uppercase tracking-wider text-white">Course Registry</h3>
+                <p class="text-[9px] text-zinc-500 font-medium mt-0.5">Semester Wise Registration Ledger</p>
               </div>
-              <p class="text-[9.5px] text-zinc-500 font-medium mt-1 leading-tight font-sans">CURRENT COLLEGE</p>
-              <p class="text-[8.5px] text-zinc-600 mt-1 leading-none font-sans font-semibold">${profileData.college || ''}</p>
+              <span class="text-[9px] font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded text-zinc-400 font-bold uppercase tracking-wider">FYUGP Scheme</span>
             </div>
 
-            <div class="p-4 bg-zinc-900/20 border border-zinc-900 rounded-3xl flex flex-col justify-center">
-              <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1 font-sans">TOTAL ACQUIRED CREDITS</span>
-              <div class="flex items-baseline gap-1">
-                <span class="text-2xl font-black text-[#3897f0] font-mono">${profileData.credits || 40}</span>
-                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest font-mono">Credits</span>
-              </div>
-              <p class="text-[8.5px] text-zinc-600 font-mono mt-1 font-bold uppercase tracking-wide">${profileData.department || ''}</p>
-            </div>
-          </div>
-
-          <!-- Semester Course ledger card -->
-          <div class="space-y-3">
-            <div class="flex justify-between items-baseline px-1">
-              <h3 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Semester Wise Course Information</h3>
-              <span class="text-[9px] font-mono text-zinc-600">FYUGP Scheme</span>
-            </div>
-
-            <!-- Sem Horizontal list selector -->
-            <div class="flex gap-1.5 overflow-x-auto pb-2 whitespace-nowrap">
-              ${[1,2,3,4,5,6,7,8].map(num => `
-                <button 
-                  onclick="window.switchMguSemester(${num})"
-                  class="flex-shrink-0 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-xl border border-zinc-900 text-zinc-500 mgu-sem-tab ${S.selectedSem === num ? 'active' : ''}"
-                >
-                  Sem ${num}
-                </button>
-              `).join('')}
+            <!-- Segmented Control Semester Selector -->
+            <div class="flex gap-1.5 overflow-x-auto pb-1 whitespace-nowrap scrollbar-none" style="scrollbar-width: none;">
+              ${[1,2,3,4,5,6,7,8].map(num => {
+                const active = S.selectedSem === num;
+                return `
+                  <button 
+                    onclick="window.switchMguSemester(${num})"
+                    class="flex-shrink-0 px-4 py-2 text-[10px] font-bold rounded-2xl transition-all duration-200 border ${
+                      active 
+                        ? 'bg-white/10 border-white/20 text-white shadow-sm font-black' 
+                        : 'bg-white/[0.02] border-white/5 text-zinc-500 hover:text-zinc-300'
+                    }"
+                  >
+                    Semester ${num}
+                  </button>
+                `;
+              }).join('')}
             </div>
 
-            <!-- Ledger Table -->
-            <div class="overflow-x-auto rounded-2xl border border-zinc-900 bg-zinc-950/20 backdrop-blur-xl">
-              <table class="w-full text-left border-collapse font-mono text-[10.5px]">
-                <thead>
-                  <tr class="border-b border-zinc-900 bg-zinc-950/40 text-[9px] uppercase tracking-wider text-zinc-500">
-                    <th class="py-3 px-3">Sl No.</th>
-                    <th class="py-3 px-3">Discipline Name</th>
-                    <th class="py-3 px-3">Course Code</th>
-                    <th class="py-3 px-3">Course Name</th>
-                    <th class="py-3 px-3">Status</th>
-                    <th class="py-3 px-3">College Opted</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-zinc-900 text-zinc-300">
-                  ${hasCourses ? semCourses.map((c, i) => `
-                    <tr class="hover:bg-white/[0.02] transition-colors">
-                      <td class="py-3 px-3 font-bold">${i + 1}</td>
-                      <td class="py-3 px-3 text-zinc-400">${c.discipline}</td>
-                      <td class="py-3 px-3 text-[#3897f0] font-bold">${c.code}</td>
-                      <td class="py-3 px-3 font-sans text-xs leading-normal max-w-[200px] font-medium text-zinc-200">${c.title}</td>
-                      <td class="py-3 px-3">
-                        <span class="px-2 py-0.5 rounded border border-emerald-500/20 bg-emerald-500/5 text-emerald-400">${c.status}</span>
-                      </td>
-                      <td class="py-3 px-3 text-zinc-500">${c.origin}</td>
-                    </tr>
-                  `).join('') : `
-                    <tr>
-                      <td colspan="6" class="py-8 text-center text-zinc-600 font-sans text-xs font-bold">
-                        No courses opted or available for this semester slot.
-                      </td>
-                    </tr>
-                  `}
-                </tbody>
-              </table>
+            <!-- Redesigned Course Cards List -->
+            <div class="space-y-2.5">
+              ${hasCourses ? semCourses.map((c, i) => `
+                <div class="p-4 apple-glass-card text-left flex flex-col gap-3 relative overflow-hidden transition-all hover:bg-white/[0.04]">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="px-2.5 py-0.5 bg-[#3897f0]/10 border border-[#3897f0]/20 text-[#3897f0] font-mono text-[9px] rounded-full font-bold uppercase tracking-wide">
+                      ${c.code !== '-' ? c.code : 'No Code'}
+                    </span>
+                    <span class="text-[8.5px] font-mono text-zinc-500 font-bold uppercase tracking-widest">
+                      Course #${i + 1}
+                    </span>
+                  </div>
+
+                  <div class="space-y-1">
+                    <h4 class="text-sm font-bold text-white leading-snug">${c.title}</h4>
+                    <p class="text-[10px] text-zinc-400 font-medium flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-zinc-600"></span> ${c.discipline}
+                    </p>
+                  </div>
+
+                  <div class="pt-3 border-t border-white/5 flex items-center justify-between gap-4 text-[9.5px]">
+                    <div class="flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full ${
+                        c.status.includes('Approved') 
+                          ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' 
+                          : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]'
+                      }"></span>
+                      <span class="font-bold text-zinc-300">${c.status}</span>
+                    </div>
+                    <span class="text-zinc-500 font-medium italic truncate max-w-[150px]">
+                      ${c.origin}
+                    </span>
+                  </div>
+                </div>
+              `).join('') : `
+                <div class="p-8 text-center border border-dashed border-zinc-900 rounded-3xl bg-zinc-950/10">
+                  <span class="text-2xl block mb-2 opacity-40">📚</span>
+                  <p class="text-xs font-bold text-zinc-400">No courses registered</p>
+                  <p class="text-[9.5px] text-zinc-600 mt-1 max-w-xs mx-auto">There are no opted courses found for Semester ${S.selectedSem} in the active ledger records.</p>
+                </div>
+              `}
             </div>
           </div>
 
           <!-- Latest Activity Log -->
-          <div class="p-4 bg-zinc-900/10 border border-zinc-900/50 rounded-2xl">
+          <div class="p-4 bg-zinc-900/10 border border-zinc-900/50 rounded-2xl text-left">
             <span class="text-[9px] font-mono text-zinc-500 font-bold uppercase tracking-widest block mb-2">Latest Activity</span>
             <p class="text-xs text-zinc-400 font-semibold mb-0.5">No Log Data Available</p>
           </div>
@@ -766,9 +787,10 @@
           </div>
         </div>
       `;
+
     } else if (S.activeTab === 'Major Switching / College Transfer') {
       viewHtml = `
-        <div class="w-full flex-1 flex flex-col animate-slideUp" style="height: calc(100vh - 150px); min-height: 520px;">
+        <div class="w-full flex-1 flex flex-col animate-slideUp" style="height: calc(100vh - 74px); min-height: 520px;">
           <iframe 
             src="https://cap.mgu.ac.in:8443/CTMS/transfer/Candidate/login" 
             class="w-full flex-1 border-0" 
