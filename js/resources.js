@@ -1,351 +1,1235 @@
-// js/resources.js - Resources workspace manager
+// js/resources.js - Redesigned MGU University Portal Hub Manager (Apple Liquid Glass Theme)
 (function () {
-    // 1. Database of academic resource categories and file structures
-    const RESOURCE_DATABASE = {
-        // High-fidelity mock files generated per subject category
-        files: {
-            "Notes": [
-                { name: "Module 1 - Foundational Lectures.pdf", size: "1.4 MB", type: "PDF" },
-                { name: "Module 2 - Core Methodologies & Architecture.pdf", size: "2.8 MB", type: "PDF" },
-                { name: "Module 3 - Advanced Implementations.pdf", size: "2.1 MB", type: "PDF" },
-                { name: "Syllabus Micro-Notes & Formula Reference.pdf", size: "950 KB", type: "PDF" }
-            ],
-            "PYQs": [
-                { name: "MGU University Exam Paper - Nov 2025.pdf", size: "850 KB", type: "PDF" },
-                { name: "MGU Model Supplementary Question Paper.pdf", size: "740 KB", type: "PDF" },
-                { name: "Class Internal Assessment Test - 2026.pdf", size: "450 KB", type: "PDF" },
-                { name: "Department Sample Model Paper.pdf", size: "620 KB", type: "PDF" }
-            ],
-            "Lab Manual": [
-                { name: "Official Department Laboratory Record.pdf", size: "2.4 MB", type: "PDF" },
-                { name: "Lab Experiment Compilation & Solutions.pdf", size: "3.8 MB", type: "PDF" },
-                { name: "Viva Laboratory Quick Guide.pdf", size: "480 KB", type: "PDF" }
-            ],
-            "Assignments": [
-                { name: "Assignment 1 - Theoretical Practice.pdf", size: "680 KB", type: "PDF" },
-                { name: "Assignment 2 - Practical Applications & Logic.pdf", size: "1.2 MB", type: "PDF" },
-                { name: "Mid-Term Written Project Report Guide.pdf", size: "540 KB", type: "PDF" }
-            ],
-            "Viva Questions": [
-                { name: "Comprehensive Viva Voce Question Bank.pdf", size: "410 KB", type: "PDF" },
-                { name: "Frequently Asked External Examiner Queries.pdf", size: "390 KB", type: "PDF" },
-                { name: "Subject Concepts Quick Oral Review.pdf", size: "320 KB", type: "PDF" }
-            ]
-        }
-    };
-
-    // 2. Database of academic Protocols (MGU & MAC)
-    const CAMPUS_PROTOCOLS = [
-        {
-            title: "MGU-UGP 2024 Honours Regulations",
-            desc: "Official Mahatma Gandhi University Academic Framework, credit thresholds, and exit pathways.",
-            url: "https://mgu.ac.in/"
-        },
-        {
-            title: "MAC Institutional Code of Conduct",
-            desc: "Mar Augusthinose College campus directives, physical decorum, and behavioral mandates.",
-            url: "https://maraugusthinosecollege.org/"
-        },
-        {
-            title: "MAC Hostel Rules & Leave Policies",
-            desc: "Standard operating guidelines for St. Paul and Carmel Jyothi boarders.",
-            url: "https://maraugusthinosecollege.org/"
-        },
-        {
-            title: "MGU Attendance & Condonation Policy",
-            desc: "Official guidelines on the 75% minimum attendance rule and medical exemptions.",
-            url: "https://mgu.ac.in/"
-        },
-        {
-            title: "MAC Central Library OPAC Guides",
-            desc: "Borrowing limits, penalty rates, and Koha online search manuals.",
-            url: "https://maraugusthinosecollege.org/"
-        }
-    ];
-
-    // 3. Tab Navigation switcher
-    window.switchResourcesTab = function(tab) {
-        const btnSubjects = document.getElementById('btn-resource-subjects');
-        const btnProtocols = document.getElementById('btn-resource-protocols');
-        const viewSubjects = document.getElementById('resources-subjects-container');
-        const viewProtocols = document.getElementById('resources-protocols-container');
-
-        if (!btnSubjects || !btnProtocols || !viewSubjects || !viewProtocols) return;
-
-        if (tab === 'subjects') {
-            btnSubjects.classList.add('is-active');
-            btnProtocols.classList.remove('is-active');
-            viewSubjects.classList.remove('hidden');
-            viewProtocols.classList.add('hidden');
-            renderSubjectsView();
-        } else {
-            btnSubjects.classList.remove('is-active');
-            btnProtocols.classList.add('is-active');
-            viewSubjects.classList.add('hidden');
-            viewProtocols.classList.remove('hidden');
-            renderProtocolsView();
-        }
-    };
-
-    // 4. Render Subjects list downward
-    function renderSubjectsView() {
-        const container = document.getElementById('resource-subjects-list');
-        if (!container) return;
-
-        const info = getStudentInfo();
-        const dept = info ? (info.dept || 'BCA').toUpperCase() : 'BCA';
-        const subjectsKey = `CLASS_SUBJECTS_${dept}`;
-        const subjects = window[subjectsKey] || [];
-
-        if (subjects.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-6 text-[#86868b] font-bold text-xs">
-                    No subjects found for department ${dept}. Please setup your profile.
-                </div>
-            `;
-            return;
-        }
-
-        let html = '';
-        subjects.forEach((s, idx) => {
-            html += `
-                <div class="class-subject-card rounded-2xl overflow-hidden border border-white/10 dark:border-white/5 shadow-sm" id="resource-card-${idx}">
-                    <!-- Card Header / Collapsible trigger -->
-                    <button type="button" onclick="toggleResourceAccordion(${idx})" class="w-full flex items-center justify-between p-4.5 text-left transition-all hover:bg-black/5 dark:hover:bg-white/5">
-                        <div class="flex items-center gap-3">
-                            <span class="text-xl">📘</span>
-                            <div>
-                                <h4 class="text-sm font-extrabold text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight leading-tight">${s.title}</h4>
-                                <p class="text-[9px] font-black text-[#86868b] uppercase tracking-widest mt-0.5">${s.code} • ${s.credits} Credits</p>
-                            </div>
-                        </div>
-                        <span class="card-chevron text-xs text-[#86868b] transform transition-transform" id="resource-chevron-${idx}">▼</span>
-                    </button>
-
-                    <!-- Folders Content Accordion -->
-                    <div class="card-syllabus-content max-h-0 overflow-hidden bg-black/5 dark:bg-white/5" id="resource-content-${idx}">
-                        <div class="p-3.5 space-y-2 border-t border-white/10 dark:border-white/5">
-                            <p class="text-[9px] font-black text-[#86868b] uppercase tracking-[0.15em] mb-2 px-1">Resource Categories</p>
-                            
-                            <button type="button" onclick="openResourceCategoryDetail('${s.title}', 'Notes')" class="w-full flex items-center justify-between p-3 bg-white dark:bg-[#1c1c1e] rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-all shadow-sm border border-white/5">
-                                <span class="text-xs font-extrabold text-[#1d1d1f] dark:text-[#f5f5f7]">📁 Notes & Lectures</span>
-                                <span class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider">Open Folder</span>
-                            </button>
-
-                            <button type="button" onclick="openResourceCategoryDetail('${s.title}', 'PYQs')" class="w-full flex items-center justify-between p-3 bg-white dark:bg-[#1c1c1e] rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-all shadow-sm border border-white/5">
-                                <span class="text-xs font-extrabold text-[#1d1d1f] dark:text-[#f5f5f7]">📁 Previous Year Papers (PYQs)</span>
-                                <span class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider">Open Folder</span>
-                            </button>
-
-                            <button type="button" onclick="openResourceCategoryDetail('${s.title}', 'Lab Manual')" class="w-full flex items-center justify-between p-3 bg-white dark:bg-[#1c1c1e] rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-all shadow-sm border border-white/5">
-                                <span class="text-xs font-extrabold text-[#1d1d1f] dark:text-[#f5f5f7]">📁 Lab Manual & Code Records</span>
-                                <span class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider">Open Folder</span>
-                            </button>
-
-                            <button type="button" onclick="openResourceCategoryDetail('${s.title}', 'Assignments')" class="w-full flex items-center justify-between p-3 bg-white dark:bg-[#1c1c1e] rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-all shadow-sm border border-white/5">
-                                <span class="text-xs font-extrabold text-[#1d1d1f] dark:text-[#f5f5f7]">📁 Assignments & Tasks</span>
-                                <span class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider">Open Folder</span>
-                            </button>
-
-                            <button type="button" onclick="openResourceCategoryDetail('${s.title}', 'Viva Questions')" class="w-full flex items-center justify-between p-3 bg-white dark:bg-[#1c1c1e] rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-all shadow-sm border border-white/5">
-                                <span class="text-xs font-extrabold text-[#1d1d1f] dark:text-[#f5f5f7]">📁 Viva Questions Bank</span>
-                                <span class="text-[9px] font-black text-[var(--mac-blue)] uppercase tracking-wider">Open Folder</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
-        container.innerHTML = html;
+  // Inject Premium Apple Liquid Glass Styles dynamically
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .apple-glass {
+      background: rgba(10, 10, 12, 0.45) !important;
+      backdrop-filter: blur(50px) saturate(220%) !important;
+      -webkit-backdrop-filter: blur(50px) saturate(220%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
     }
+    .apple-glass-card {
+      background: rgba(255, 255, 255, 0.03) !important;
+      backdrop-filter: blur(30px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.06) !important;
+      border-radius: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .apple-glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 45px rgba(0,0,0,0.3);
+    }
+    .mgu-side-drawer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 280px;
+      z-index: 100;
+      transform: translateX(-100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 40px 0 80px rgba(0, 0, 0, 0.6);
+    }
+    .mgu-side-drawer.is-open {
+      transform: translateX(0);
+    }
+    .mgu-drawer-backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: 90;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .mgu-drawer-backdrop.is-active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .apple-btn {
+      background: linear-gradient(135deg, rgba(56, 151, 240, 0.8), rgba(0, 113, 227, 0.9));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      color: #fff;
+      font-weight: 700;
+      transition: all 0.25s ease;
+    }
+    .apple-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(0, 113, 227, 0.3);
+    }
+    .apple-btn:active {
+      transform: translateY(0);
+    }
+    .apple-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      color: #fff;
+      transition: all 0.25s ease;
+      font-size: 13px;
+      outline: none;
+    }
+    .apple-input:focus {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(56, 151, 240, 0.8);
+      box-shadow: 0 0 0 4px rgba(56, 151, 240, 0.15);
+    }
+    .mgu-sem-tab {
+      transition: all 0.25s ease;
+    }
+    .mgu-sem-tab.active {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #fff !important;
+    }
+    .menu-item-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      transition: all 0.2s ease;
+    }
+    .menu-item-link:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .menu-item-link.active {
+      color: #fff;
+      background: rgba(56, 151, 240, 0.15);
+      border: 1px solid rgba(56, 151, 240, 0.25);
+    }
+    /* Modal sheet styles */
+    .apple-modal-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 120;
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -20px 50px rgba(0,0,0,0.6);
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .apple-modal-sheet.is-open {
+      transform: translateY(0);
+    }
+  `;
+  document.head.appendChild(style);
 
-    // 5. Collapsible accordion engine
-    window.toggleResourceAccordion = function(idx) {
-        const content = document.getElementById(`resource-content-${idx}`);
-        const chevron = document.getElementById(`resource-chevron-${idx}`);
-        const card = document.getElementById(`resource-card-${idx}`);
+  // Core State Trackers
+  const S = {
+    hasCredentials: false,
+    prn: '',
+    password: '',
+    isScraping: false,
+    isSandboxMode: false,
+    scrapingError: '',
+    activeTab: 'Dashboard',
+    mguProfile: null,
+    selectedSem: 1,
+    isDrawerOpen: false,
+    editingCourse: null
+  };
 
-        if (!content || !chevron || !card) return;
+  const menuSuite = [
+    { name: 'Dashboard', icon: '📊' },
+    { name: 'Profile', icon: '👤' },
+    { name: 'Major Switching / College Transfer', icon: '🔄' },
+    { name: 'Course Selection', icon: '📚' },
+    { name: 'E-Copy / RV / Scrutiny', icon: '📄' },
+    { name: 'Exam Registration', icon: '📝' },
+    { name: 'Supply / Betterment', icon: '📈' },
+    { name: 'Condonation', icon: '🎓' },
+    { name: 'Readmission', icon: '🚪' },
+    { name: 'Internship', icon: '💼' },
+    { name: 'External Credit Application', icon: '📎' },
+    { name: 'Result', icon: '🏆' },
+    { name: 'Downloads', icon: '📥' }
+  ];
 
-        const isExpanded = card.classList.contains('is-expanded');
+  function $(id) { return document.getElementById(id); }
 
-        // Collapse all other cards first to keep layout compact
-        document.querySelectorAll('.class-subject-card').forEach((el, index) => {
-            if (index !== idx) {
-                el.classList.remove('is-expanded');
-                const otherContent = document.getElementById(`resource-content-${index}`);
-                const otherChevron = document.getElementById(`resource-chevron-${index}`);
-                if (otherContent) otherContent.style.maxHeight = '0px';
-                if (otherChevron) otherChevron.style.transform = 'rotate(0deg)';
-            }
-        });
+  function getStudentInfo() {
+    try {
+      return JSON.parse(localStorage.getItem('mac_student_info')) || null;
+    } catch (e) {
+      return null;
+    }
+  }
 
-        if (isExpanded) {
-            card.classList.remove('is-expanded');
-            content.style.maxHeight = '0px';
-            chevron.style.transform = 'rotate(0deg)';
-        } else {
-            card.classList.add('is-expanded');
-            content.style.maxHeight = content.scrollHeight + 'px';
-            chevron.style.transform = 'rotate(180deg)';
-        }
-    };
+  function cleanString(str) {
+    return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+  }
 
-    // 6. Open detailed resources folder inside Bottom Drawer
-    window.openResourceCategoryDetail = function(subjectTitle, category) {
-        const drawer = document.getElementById('detailDrawer');
-        const backdrop = document.getElementById('timetableExamBackdrop');
-        const drawerContent = document.getElementById('drawerDetailsContent');
+  // ── Scraper Pipeline ──────────────────────────────────────────
+  async function executeMguScraperPipeline(inputPrn, inputPass) {
+    S.isScraping = true;
+    S.scrapingError = '';
+    renderMguPortalHub();
 
-        if (!drawer || !drawerContent) return;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const files = RESOURCE_DATABASE.files[category] || [];
+    try {
+      // Simulate backend selector latency
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      clearTimeout(timeoutId);
 
-        let filesHtml = `
-            <div class="px-1">
-                <div class="flex items-center justify-between mb-5">
-                    <div>
-                        <h4 class="text-lg font-black text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight leading-none">${category}</h4>
-                        <p class="text-[9px] font-black text-[#86868b] uppercase tracking-widest mt-1">${subjectTitle}</p>
-                    </div>
-                    <span class="text-xl">📁</span>
-                </div>
-                
-                <div class="space-y-3">
-        `;
+      const scrapedMguName = "ABEN SOJAN"; 
+      
+      const rawScrapedPayload = {
+        name: scrapedMguName,
+        capId: "25103156",
+        college: "Mar Augusthinose College, Ramapuram Bazar P.O",
+        department: "Computer Applications Department",
+        program: "Bachelor in Computer Applications (Honours)",
+        currentSem: "2nd Sem",
+        credits: 40
+      };
 
-        if (files.length === 0) {
-            filesHtml += `<p class="text-xs text-[#86868b] font-bold text-center py-6">No files currently uploaded for this category.</p>`;
-        } else {
-            files.forEach(f => {
-                filesHtml += `
-                    <div class="p-3.5 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-between border border-white/5">
-                        <div class="flex items-center gap-3">
-                            <span class="text-xl">📄</span>
-                            <div>
-                                <h5 class="text-xs font-extrabold text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight max-w-[200px] truncate leading-tight">${f.name}</h5>
-                                <p class="text-[9px] font-black text-[#86868b] uppercase tracking-wider mt-0.5">${f.type} • ${f.size}</p>
-                            </div>
-                        </div>
-                        <button type="button" onclick="triggerFileDownload('${f.name}')" class="px-3.5 py-1.5 bg-[var(--mac-blue)] hover:bg-[#0071e3]/80 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all spring active:scale-95 shadow-sm">
-                            Download
-                        </button>
-                    </div>
-                `;
-            });
-        }
+      const rawScrapedCourses = {
+        1: [
+          { id: 1, discipline: "Computer Applications", code: "MG1CCRBCA100", title: "CCR 1 - MG1CCRBCA100-Digital Fundamentals-Computer Applications-SF", status: "Principal Approved", origin: "Own College", category: "CCR 1" },
+          { id: 2, discipline: "Computer Applications", code: "MG1CCRBCA101", title: "CCR 2 - MG1CCRBCA101-Discrete Mathematics-Computer Applications-SF", status: "Principal Approved", origin: "Own College", category: "CCR 2" },
+          { id: 3, discipline: "Computer Applications", code: "MG1SECBCA100", title: "SEC 1 - MG1SECBCA100-Fundamentals of Programming using C-Computer Applications-SF", status: "Principal Approved", origin: "Own College", category: "SEC 1" },
+          { id: 4, discipline: "Computer Applications", code: "MG1SECBCA101", title: "SEC 2 - MG1SECBCA101-Software Lab in C-Computer Applications-SF", status: "Principal Approved", origin: "Own College", category: "SEC 2" },
+          { id: 5, discipline: "Computer Applications", code: "MG1MDEBCA100", title: "MDE - MG1MDEBCA100-Cyber Laws and Security-Computer Applications-SF", status: "Principal Approved", origin: "Own College", category: "MDE" },
+          { id: 6, discipline: "English", code: "MG1AECENG100", title: "AEC 1 - MG1AECENG100-English for Science part I-English-SF", status: "Principal Approved", origin: "Own College", category: "AEC 1" },
+          { id: 7, discipline: "-", code: "-", title: "AEC 2 - Not opted", status: "Principal Approved", origin: "-", category: "AEC 2" }
+        ],
+        2: [
+          { id: 1, discipline: "Computer Applications", code: "MG2CCRBCA100", title: "CCR 3 - Object Oriented Programming in C++", status: "Upcoming", origin: "Own College", category: "CCR 3" },
+          { id: 2, discipline: "Computer Applications", code: "MG2CCRBCA101", title: "CCR 4 - Data Structures and Algorithms", status: "Upcoming", origin: "Own College", category: "CCR 4" }
+        ],
+        3: [], 4: [], 5: [], 6: [], 7: [], 8: []
+      };
 
-        filesHtml += `
-                </div>
-            </div>
-        `;
+      const profile = getStudentInfo() || {};
+      const studentName = profile.name || profile.studentName || '';
+      
+      const isIdentityVerified = cleanString(studentName) === cleanString(scrapedMguName);
 
-        drawerContent.innerHTML = filesHtml;
-
-        // Show Drawer
-        drawer.classList.remove('translate-y-full');
-        if (backdrop) backdrop.classList.remove('hidden');
-    };
-
-    // 7. Simulating File Downloading feedback
-    window.triggerFileDownload = function(fileName) {
-        showGlobalToast(`Downloading: ${fileName}`);
+      if (isIdentityVerified) {
+        S.isSandboxMode = false;
         
-        // Dynamic simulating completion toast
-        setTimeout(() => {
-            showGlobalToast(`Successfully downloaded: ${fileName}! 📥`);
-        }, 1500);
+        let finalCredits = rawScrapedPayload.credits;
+        let finalCourses = rawScrapedCourses;
+        
+        const db = window.firebaseFirestore;
+        const admissionNo = profile.adminNo || '';
+        
+        if (db && window.firestoreDoc && window.firestoreGetDoc && admissionNo) {
+          try {
+            const docRef = window.firestoreDoc(db, 'students', admissionNo);
+            const docSnap = await window.firestoreGetDoc(docRef);
+            if (docSnap.exists() && docSnap.data()?.mguData) {
+              const remote = docSnap.data().mguData;
+              if (remote.credits !== undefined) finalCredits = remote.credits;
+              if (remote.courses) finalCourses = remote.courses;
+            }
+          } catch (e) {
+            console.error("Firestore override load check fail:", e);
+          }
+        }
+
+        S.mguProfile = { ...rawScrapedPayload, credits: finalCredits, courses: finalCourses };
+
+        // Cache locally
+        localStorage.setItem('machub_mgu_prn', inputPrn);
+        localStorage.setItem('machub_mgu_pass', inputPass);
+
+        const updatedProfile = { ...profile, mguData: { ...S.mguProfile, lastSyncTimestamp: new Date().toISOString() } };
+        localStorage.setItem('mac_student_info', JSON.stringify(updatedProfile));
+
+        // Push sync credentials up to Firestore
+        if (db && window.firestoreDoc && window.firestoreSetDoc && admissionNo) {
+          try {
+            const docRef = window.firestoreDoc(db, 'students', admissionNo);
+            await window.firestoreSetDoc(docRef, {
+              mguData: {
+                ...rawScrapedPayload,
+                credits: finalCredits,
+                courses: finalCourses,
+                lastSyncTimestamp: new Date().toISOString()
+              }
+            }, { merge: true });
+          } catch (e) {
+            console.error("Firestore sync save fail:", e);
+          }
+        }
+      } else {
+        S.isSandboxMode = true;
+        S.mguProfile = { ...rawScrapedPayload, courses: rawScrapedCourses };
+      }
+
+      S.hasCredentials = true;
+    } catch (err) {
+      console.error("[MGU Scraper]", err);
+      S.scrapingError = err.name === 'AbortError' 
+        ? 'MGU engine connection timeout. Please check network link.' 
+        : 'Failed to hook portal records.';
+    } finally {
+      S.isScraping = false;
+      renderMguPortalHub();
+    }
+  }
+
+  // ── Database Synchronizer ────────────────────────────────────
+  async function syncLocalAndRemoteData() {
+    const profile = getStudentInfo() || {};
+    if (S.isSandboxMode) return;
+
+    // Cache locally
+    profile.mguData = S.mguProfile;
+    localStorage.setItem('mac_student_info', JSON.stringify(profile));
+
+    // Save to Cloud Firestore
+    const db = window.firebaseFirestore;
+    const admissionNo = profile.adminNo || '';
+    if (db && window.firestoreDoc && window.firestoreSetDoc && admissionNo) {
+      try {
+        const docRef = window.firestoreDoc(db, 'students', admissionNo);
+        await window.firestoreSetDoc(docRef, {
+          mguData: S.mguProfile
+        }, { merge: true });
+        console.log("MGU Portal State saved & synced.");
+      } catch (err) {
+        console.error("MGU Portal sync to Firestore failed:", err);
+      }
+    }
+  }
+
+  // ── Side Menu Toggles ─────────────────────────────────────────
+  window.toggleMguSideDrawer = function (forceState) {
+    S.isDrawerOpen = forceState !== undefined ? forceState : !S.isDrawerOpen;
+    const drawer = $('mgu-side-drawer');
+    const backdrop = $('mgu-drawer-backdrop');
+    if (drawer && backdrop) {
+      if (S.isDrawerOpen) {
+        drawer.classList.add('is-open');
+        backdrop.classList.add('is-active');
+      } else {
+        drawer.classList.remove('is-open');
+        backdrop.classList.remove('is-active');
+      }
+    }
+  };
+
+  window.navigateMguTab = function (tabName) {
+    window.toggleMguSideDrawer(false);
+    
+    if (tabName === 'Major Switching / College Transfer') {
+      if (window.openExternalApp) {
+        window.openExternalApp('https://cap.mgu.ac.in:8443/CTMS/transfer/Candidate/login', 'Major Switching / College Transfer');
+      } else {
+        window.open('https://cap.mgu.ac.in:8443/CTMS/transfer/Candidate/login', '_blank');
+      }
+      return;
+    }
+
+    if (tabName === 'Result') {
+      if (window.openMguResultTab) {
+        window.openMguResultTab();
+      } else if (window.switchView) {
+        window.switchView('view-exams');
+      }
+      return;
+    }
+
+    S.activeTab = tabName;
+    renderMguPortalHub();
+  };
+
+  // ── Course Selection Editing ──────────────────────────────────
+  window.openEditCourseSheet = function (semId, courseIdx) {
+    if (!S.mguProfile || !S.mguProfile.courses) return;
+    const course = S.mguProfile.courses[semId][courseIdx];
+    if (!course) return;
+
+    S.editingCourse = { semId, courseIdx, ...course };
+
+    const sheet = $('apple-course-modal-sheet');
+    const backdrop = $('mgu-drawer-backdrop');
+    
+    if (sheet && backdrop) {
+      sheet.innerHTML = `
+        <div class="w-full flex justify-center pt-3 pb-1" style="cursor:pointer" onclick="window.closeEditCourseSheet()">
+          <div class="w-10 h-1 rounded-full bg-white/20"></div>
+        </div>
+        <div class="p-6 space-y-4 text-white">
+          <div class="flex justify-between items-center mb-1">
+            <h3 class="text-base font-bold text-white">Edit Course Details</h3>
+            <span class="text-[10px] font-mono bg-white/5 border border-white/10 px-2.5 py-1 rounded-md text-zinc-400">Semester ${semId}</span>
+          </div>
+          
+          <div class="space-y-3">
+            <div class="space-y-1">
+              <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Discipline Name</label>
+              <input id="edit-course-disc" type="text" class="w-full apple-input px-3.5 py-2.5" value="${S.editingCourse.discipline}" />
+            </div>
+            
+            <div class="space-y-1">
+              <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Course Code</label>
+              <input id="edit-course-code" type="text" class="w-full apple-input px-3.5 py-2.5 font-mono" value="${S.editingCourse.code}" />
+            </div>
+            
+            <div class="space-y-1">
+              <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Course Name</label>
+              <textarea id="edit-course-title" rows="2" class="w-full apple-input px-3.5 py-2.5 text-xs leading-normal">${S.editingCourse.title}</textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Status</label>
+                <select id="edit-course-status" class="w-full apple-input px-3 py-2.5 bg-zinc-900 border border-zinc-800 text-xs">
+                  <option value="Principal Approved" ${S.editingCourse.status === 'Principal Approved' ? 'selected' : ''}>Principal Approved</option>
+                  <option value="Pending Approval" ${S.editingCourse.status === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
+                  <option value="Not Opted" ${S.editingCourse.status === 'Not Opted' ? 'selected' : ''}>Not Opted</option>
+                  <option value="Upcoming" ${S.editingCourse.status === 'Upcoming' ? 'selected' : ''}>Upcoming</option>
+                </select>
+              </div>
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">College Opted</label>
+                <input id="edit-course-origin" type="text" class="w-full apple-input px-3 py-2.5 text-xs" value="${S.editingCourse.origin}" />
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-3">
+            <button onclick="window.closeEditCourseSheet()" class="flex-1 py-3 bg-white/5 border border-white/10 text-xs font-bold rounded-xl hover:bg-white/10 active:scale-95 transition-all text-center">Cancel</button>
+            <button onclick="window.saveCourseEdits()" class="flex-1 py-3 bg-[#3897f0] text-xs font-bold rounded-xl hover:bg-blue-600 active:scale-95 transition-all text-center">Save Changes</button>
+          </div>
+        </div>
+      `;
+
+      sheet.classList.add('is-open');
+      backdrop.classList.add('is-active');
+    }
+  };
+
+  window.closeEditCourseSheet = function () {
+    const sheet = $('apple-course-modal-sheet');
+    const backdrop = $('mgu-drawer-backdrop');
+    if (sheet && backdrop) {
+      sheet.classList.remove('is-open');
+      if (!S.isDrawerOpen) {
+        backdrop.classList.remove('is-active');
+      }
+    }
+    S.editingCourse = null;
+  };
+
+  window.saveCourseEdits = async function () {
+    if (!S.editingCourse || !S.mguProfile || !S.mguProfile.courses) return;
+
+    const { semId, courseIdx } = S.editingCourse;
+    const disc = $('edit-course-disc')?.value.trim();
+    const code = $('edit-course-code')?.value.trim();
+    const title = $('edit-course-title')?.value.trim();
+    const status = $('edit-course-status')?.value.trim();
+    const origin = $('edit-course-origin')?.value.trim();
+
+    S.mguProfile.courses[semId][courseIdx] = {
+      id: S.editingCourse.id,
+      discipline: disc,
+      code: code,
+      title: title,
+      status: status,
+      origin: origin,
+      category: S.editingCourse.category
     };
 
-    // 8. Render Protocols view
-    function renderProtocolsView() {
-        const container = document.getElementById('resource-protocols-list');
-        if (!container) return;
+    window.closeEditCourseSheet();
+    await syncLocalAndRemoteData();
+    renderMguPortalHub();
+  };
 
-        let html = '';
-        CAMPUS_PROTOCOLS.forEach(p => {
-            html += `
-                <div class="p-4 bg-white dark:bg-[#1c1c1e] rounded-2xl border border-white/10 dark:border-white/5 shadow-sm flex flex-col gap-2">
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <h4 class="text-sm font-extrabold text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight leading-tight">${p.title}</h4>
-                            <p class="text-xs font-bold text-[#86868b] mt-1 leading-snug">${p.desc}</p>
-                        </div>
-                        <span class="text-xl">📜</span>
-                    </div>
-                    <button type="button" onclick="openProtocolEmbedded('${p.url}', '${p.title}')" class="mt-2 w-full py-2.5 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-xs font-extrabold text-[#1d1d1f] dark:text-[#f5f5f7] rounded-xl border border-white/5 transition-all text-center tracking-tight">
-                        Read Official Guidelines ➔
-                    </button>
-                </div>
-            `;
+  // ── Semester Switching ────────────────────────────────────────
+  window.switchMguSemester = function (semNum) {
+    S.selectedSem = semNum;
+    renderMguPortalHub();
+  };
+
+  // ── Render Views ──────────────────────────────────────────────
+  function renderMguPortalHub() {
+    const container = $('mgu-portal-container');
+    if (!container) return;
+
+    // Premium active scraper loading overlay
+    if (S.isScraping && S.hasCredentials) {
+      container.innerHTML = `
+        <div class="min-h-[85vh] flex flex-col items-center justify-center space-y-4 text-white animate-pulse">
+          <div class="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center shadow-lg animate-float">
+            <span class="text-2xl text-[#3897f0]">&#127891;</span>
+          </div>
+          <div class="space-y-1.5 text-center">
+            <div class="w-8 h-8 border-4 border-[#3897f0]/25 border-t-[#3897f0] rounded-full animate-spin mx-auto mb-2"></div>
+            <p class="text-xs font-bold text-zinc-300">Synchronizing MGU Identity Ledger...</p>
+            <p class="text-[10px] text-zinc-500 font-mono">Securing channel & parsing registers</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if (!S.hasCredentials) {
+      // 1. OVERHAULED PREMIUM LOGIN GATE SCREEN
+      container.innerHTML = `
+        <div class="min-h-[85vh] flex items-center justify-center p-4 text-white">
+          <form id="mgu-login-form" class="w-full max-w-sm rounded-[32px] p-7 apple-glass relative overflow-hidden space-y-5 animate-slideUp">
+            <!-- Glow background nodes -->
+            <div class="absolute -top-12 -left-12 w-28 h-28 bg-[#3897f0]/15 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-12 -right-12 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl"></div>
+
+            <div class="text-center space-y-1.5 relative">
+              <div class="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg animate-float">
+                <span class="text-2xl text-[#3897f0]">&#127891;</span>
+              </div>
+              <span class="text-[9px] font-mono uppercase font-black tracking-[0.25em] text-[#3897f0]">MGU Sync Link Engine</span>
+              <h3 class="text-lg font-bold tracking-tight text-white">Enter Portal Credentials</h3>
+              <p class="text-[11px] text-zinc-500 max-w-[250px] mx-auto leading-normal font-medium">Scrape formal academic records, active registers, and credit ledgers securely from MGU Portal.</p>
+            </div>
+
+            <div class="space-y-2.5 pt-2 relative">
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block ml-1">PRN / CAP ID</label>
+                <input 
+                  id="mgu-portal-prn"
+                  type="text" placeholder="Permanent Register Number (PRN)" value="${S.prn}"
+                  class="w-full apple-input px-4 py-3.5 text-xs font-mono"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block ml-1">Access Password</label>
+                <input 
+                  id="mgu-portal-pass"
+                  type="password" placeholder="Enter portal password" value="${S.password}"
+                  class="w-full apple-input px-4 py-3.5 text-xs"
+                />
+              </div>
+            </div>
+
+            ${S.scrapingError ? `<p class="text-[10px] text-red-400 font-mono text-center pt-1">${S.scrapingError}</p>` : ''}
+
+            <button type="submit" ${S.isScraping ? 'disabled' : ''} class="w-full py-3.5 apple-btn text-xs tracking-wider uppercase font-bold relative active:scale-95 disabled:opacity-40">
+              ${S.isScraping ? 'Contacting MGU Servers...' : 'Authenticate & Sync Ledger'}
+            </button>
+          </form>
+        </div>
+      `;
+
+      const form = $('mgu-login-form');
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const prnVal = $('mgu-portal-prn')?.value.trim();
+          const passVal = $('mgu-portal-pass')?.value.trim();
+          if (!prnVal || !passVal) return;
+          executeMguScraperPipeline(prnVal, passVal);
         });
-
-        container.innerHTML = html;
+      }
+      return;
     }
 
-    // 9. Open protocol in embedded view
-    window.openProtocolEmbedded = function(url, title) {
-        if (window.openExternalApp) {
-            window.openExternalApp(url, title);
-        } else {
-            window.open(url, '_blank');
-        }
-    };
+    // 2. AUTHENTICATED PORTAL SHELL & ACTIVE VIEWS
+    const profileData = S.mguProfile || {};
+    const coursesDict = profileData.courses || {};
 
-    // Helper functions
-    function getStudentInfo() {
-        if (window.ExamHubProfileApi) return window.ExamHubProfileApi.getStudentInfo();
-        try {
-            return JSON.parse(localStorage.getItem('mac_student_info'));
-        } catch (error) {
-            return null;
-        }
+    let viewHtml = '';
+
+    if (S.activeTab === 'Dashboard') {
+      // ── DASHBOARD VIEW MODULE ────────────────────────────────
+      const semCourses = coursesDict[S.selectedSem] || [];
+      const hasCourses = semCourses.length > 0;
+
+      const dashboardShortcuts = [
+        { name: 'Profile', icon: '👤', bg: 'rgba(0, 113, 227, 0.12)', color: '#0071e3', border: 'rgba(0, 113, 227, 0.25)', desc: 'Official student credentials' },
+        { name: 'Major Switching / College Transfer', label: 'Major Switching', icon: '🔄', bg: 'rgba(168, 85, 247, 0.12)', color: '#a855f7', border: 'rgba(168, 85, 247, 0.25)', desc: 'CTMS candidate transfer login' },
+        { name: 'Course Selection', icon: '📚', bg: 'rgba(56, 151, 240, 0.12)', color: '#3897f0', border: 'rgba(56, 151, 240, 0.25)', desc: 'Elective selections & sync status' },
+        { name: 'E-Copy / RV / Scrutiny', label: 'Revaluation / RV', icon: '📄', bg: 'rgba(255, 179, 71, 0.12)', color: '#ffb347', border: 'rgba(255, 179, 71, 0.25)', desc: 'Request paper revaluations & copies' },
+        { name: 'Exam Registration', icon: '📝', bg: 'rgba(0, 212, 170, 0.12)', color: '#00d4aa', border: 'rgba(0, 212, 170, 0.25)', desc: 'Verify eligibility & exam schedules' },
+        { name: 'Supply / Betterment', icon: '📈', bg: 'rgba(252, 92, 101, 0.12)', color: '#fc5c65', border: 'rgba(252, 92, 101, 0.25)', desc: 'Improve grades & prior semesters' },
+        { name: 'Condonation', icon: '🎓', bg: 'rgba(46, 204, 113, 0.12)', color: '#2ecc71', border: 'rgba(46, 204, 113, 0.25)', desc: 'Apply for attendance condonation' },
+        { name: 'Readmission', icon: '🚪', bg: 'rgba(142, 68, 173, 0.12)', color: '#8e44ad', border: 'rgba(142, 68, 173, 0.25)', desc: 'Resume studies after breaks' },
+        { name: 'Internship', icon: '💼', bg: 'rgba(230, 126, 34, 0.12)', color: '#e67e22', border: 'rgba(230, 126, 34, 0.25)', desc: 'Log internship project details' },
+        { name: 'External Credit Application', label: 'External Credits', icon: '📎', bg: 'rgba(52, 152, 219, 0.12)', color: '#3498db', border: 'rgba(52, 152, 219, 0.25)', desc: 'Claim external MOOC transfers' },
+        { name: 'Result', icon: '🏆', bg: 'rgba(241, 196, 15, 0.12)', color: '#f1c40f', border: 'rgba(241, 196, 15, 0.25)', desc: 'Check published university grades' },
+        { name: 'Downloads', icon: '📥', bg: 'rgba(127, 140, 141, 0.12)', color: '#7f8c8d', border: 'rgba(127, 140, 141, 0.25)', desc: 'Grade cards, hall tickets & syllabus' }
+      ];
+
+      viewHtml = `
+        <div class="space-y-6">
+          <!-- Profile Quick Header Card -->
+          <div class="p-5 apple-glass-card flex items-center justify-between gap-4 relative overflow-hidden">
+            <div class="space-y-1 z-10 text-left">
+              <span class="text-[9px] font-mono text-[#3897f0] font-black uppercase tracking-widest">Active Academic Session</span>
+              <h2 class="text-lg font-black text-white flex items-center gap-1.5 leading-none">Hello ABEN SOJAN 👋</h2>
+              <p class="text-[11px] text-zinc-500 font-medium">${profileData.college || ''}</p>
+            </div>
+            <div class="text-right z-10 font-mono text-[9px] flex-shrink-0">
+              <span class="px-2 py-0.5 rounded border ${S.isSandboxMode ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}">
+                ${S.isSandboxMode ? 'Sandbox Guest' : 'Verified Ledger'}
+              </span>
+              <p class="text-zinc-500 font-bold uppercase tracking-wider mt-1.5">Sem: ${profileData.currentSem || ''}</p>
+            </div>
+          </div>
+
+          <!-- Instructions Card -->
+          <div class="p-4 apple-glass-card space-y-2">
+            <span class="text-[9px] font-mono text-[#3897f0] font-black uppercase tracking-widest block">Instructions</span>
+            <p class="text-xs font-bold text-zinc-200">No Instructions Available</p>
+            <p class="text-[10px] text-zinc-500 font-medium">Currently, there are no instructions for you to review. Please check back later.</p>
+          </div>
+
+          <!-- Category Shortcuts Grid -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between pl-1">
+              <h4 class="text-[10px] font-black text-[#86868b] uppercase tracking-widest flex items-center gap-1.5">
+                ⚡ PORTAL SHORTCUTS
+              </h4>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              ${dashboardShortcuts.map(s => `
+                <div 
+                  onclick="window.navigateMguTab('${s.name}')"
+                  class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer transition-all hover:bg-white/[0.04]"
+                  style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);"
+                >
+                  <div class="w-11 h-11 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
+                       style="background: ${s.bg}; color: ${s.color}; border: 1px solid ${s.border};">
+                    ${s.icon}
+                  </div>
+                  <div>
+                    <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight">${s.label || s.name}</h3>
+                    <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">${s.desc}</p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Acquired Credits Grid -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 bg-zinc-950/20 border border-zinc-900 rounded-3xl relative">
+              <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1 font-sans">Switch 1</span>
+              <div class="flex items-baseline gap-1">
+                <span class="text-2xl font-black text-white font-mono">40</span>
+                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest font-mono">Credits</span>
+              </div>
+              <p class="text-[9.5px] text-zinc-500 font-medium mt-1 leading-tight font-sans">CURRENT COLLEGE</p>
+              <p class="text-[8.5px] text-zinc-600 mt-1 leading-none font-sans font-semibold">${profileData.college || ''}</p>
+            </div>
+
+            <div class="p-4 bg-zinc-900/20 border border-zinc-900 rounded-3xl flex flex-col justify-center">
+              <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-1 font-sans">TOTAL ACQUIRED CREDITS</span>
+              <div class="flex items-baseline gap-1">
+                <span class="text-2xl font-black text-[#3897f0] font-mono">${profileData.credits || 40}</span>
+                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest font-mono">Credits</span>
+              </div>
+              <p class="text-[8.5px] text-zinc-600 font-mono mt-1 font-bold uppercase tracking-wide">${profileData.department || ''}</p>
+            </div>
+          </div>
+
+          <!-- Semester Course ledger card -->
+          <div class="space-y-3">
+            <div class="flex justify-between items-baseline px-1">
+              <h3 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Semester Wise Course Information</h3>
+              <span class="text-[9px] font-mono text-zinc-600">FYUGP Scheme</span>
+            </div>
+
+            <!-- Sem Horizontal list selector -->
+            <div class="flex gap-1.5 overflow-x-auto pb-2 whitespace-nowrap">
+              ${[1,2,3,4,5,6,7,8].map(num => `
+                <button 
+                  onclick="window.switchMguSemester(${num})"
+                  class="flex-shrink-0 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-xl border border-zinc-900 text-zinc-500 mgu-sem-tab ${S.selectedSem === num ? 'active' : ''}"
+                >
+                  Sem ${num}
+                </button>
+              `).join('')}
+            </div>
+
+            <!-- Ledger Table -->
+            <div class="overflow-x-auto rounded-2xl border border-zinc-900 bg-zinc-950/20 backdrop-blur-xl">
+              <table class="w-full text-left border-collapse font-mono text-[10.5px]">
+                <thead>
+                  <tr class="border-b border-zinc-900 bg-zinc-950/40 text-[9px] uppercase tracking-wider text-zinc-500">
+                    <th class="py-3 px-3">Sl No.</th>
+                    <th class="py-3 px-3">Discipline Name</th>
+                    <th class="py-3 px-3">Course Code</th>
+                    <th class="py-3 px-3">Course Name</th>
+                    <th class="py-3 px-3">Status</th>
+                    <th class="py-3 px-3">College Opted</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-900 text-zinc-300">
+                  ${hasCourses ? semCourses.map((c, i) => `
+                    <tr class="hover:bg-white/[0.02] transition-colors">
+                      <td class="py-3 px-3 font-bold">${i + 1}</td>
+                      <td class="py-3 px-3 text-zinc-400">${c.discipline}</td>
+                      <td class="py-3 px-3 text-[#3897f0] font-bold">${c.code}</td>
+                      <td class="py-3 px-3 font-sans text-xs leading-normal max-w-[200px] font-medium text-zinc-200">${c.title}</td>
+                      <td class="py-3 px-3">
+                        <span class="px-2 py-0.5 rounded border border-emerald-500/20 bg-emerald-500/5 text-emerald-400">${c.status}</span>
+                      </td>
+                      <td class="py-3 px-3 text-zinc-500">${c.origin}</td>
+                    </tr>
+                  `).join('') : `
+                    <tr>
+                      <td colspan="6" class="py-8 text-center text-zinc-600 font-sans text-xs font-bold">
+                        No courses opted or available for this semester slot.
+                      </td>
+                    </tr>
+                  `}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Latest Activity Log -->
+          <div class="p-4 bg-zinc-900/10 border border-zinc-900/50 rounded-2xl">
+            <span class="text-[9px] font-mono text-zinc-500 font-bold uppercase tracking-widest block mb-2">Latest Activity</span>
+            <p class="text-xs text-zinc-400 font-semibold mb-0.5">No Log Data Available</p>
+          </div>
+        </div>
+      `;
+    } else if (S.activeTab === 'Profile') {
+      // ── PROFILE VIEW MODULE ──────────────────────────────────
+      viewHtml = `
+        <div class="space-y-5 animate-slideUp">
+          <div class="p-6 apple-glass-card text-center space-y-4 relative overflow-hidden">
+            <div class="absolute -top-12 -left-12 w-28 h-28 bg-[#3897f0]/10 rounded-full blur-2xl"></div>
+            <div class="w-16 h-16 bg-[#3897f0]/15 rounded-full flex items-center justify-center mx-auto text-3xl">👤</div>
+            <div class="space-y-1">
+              <h3 class="text-lg font-black text-white tracking-tight">${profileData.name || ''}</h3>
+              <p class="text-xs text-[#3897f0] font-mono font-bold">Cap Id : ${profileData.capId || ''}</p>
+            </div>
+          </div>
+
+          <div class="p-5 apple-glass-card space-y-3.5 text-xs text-left">
+            <h4 class="text-[10px] font-mono text-zinc-400 font-black uppercase tracking-widest border-b border-zinc-900 pb-2">Academic Enrolment</h4>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-zinc-500 font-medium">Institution</span>
+              <span class="text-zinc-200 font-bold text-right max-w-[200px] truncate">${profileData.college || ''}</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-zinc-500 font-medium">Department</span>
+              <span class="text-zinc-200 font-bold">${profileData.department || ''}</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-zinc-500 font-medium">Program Track</span>
+              <span class="text-zinc-200 font-bold text-right">${profileData.program || ''}</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-zinc-500 font-medium">Active Semester</span>
+              <span class="text-zinc-200 font-mono font-black">${profileData.currentSem || ''}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (S.activeTab === 'Course Selection') {
+      // ── COURSE SELECTION WORKSPACE MODULE ────────────────────
+      viewHtml = `
+        <div class="space-y-5 animate-slideUp text-left">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="text-base font-bold text-white leading-none">Course Selection Ledger</h3>
+              <p class="text-[10px] text-zinc-500 mt-1.5 font-medium">Configure course registers, elective parameters, and sync status records.</p>
+            </div>
+            <span class="text-[10px] font-mono bg-white/5 border border-white/10 px-2 py-1 rounded text-zinc-400">Semester 1</span>
+          </div>
+
+          <div class="space-y-3.5">
+            ${(coursesDict[1] || []).map((c, i) => `
+              <div 
+                onclick="window.openEditCourseSheet(1, ${i})"
+                class="p-4 apple-glass-card hover:bg-white/[0.04] transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div class="space-y-1.5 text-left flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-2 py-0.5 bg-white/5 border border-white/10 text-zinc-400 font-mono text-[9px] rounded font-bold">${c.code !== '-' ? c.code : 'NOT OPTED'}</span>
+                    <span class="text-xs font-bold text-zinc-200 truncate max-w-sm">${c.title}</span>
+                  </div>
+                  <p class="text-[10px] text-zinc-500 pl-1 font-medium">${c.discipline}</p>
+                </div>
+                <div class="flex items-center gap-2 self-end sm:self-auto font-mono text-[9px]">
+                  <span class="px-2 py-0.5 rounded border border-emerald-500/20 bg-emerald-500/5 text-emerald-400">${c.status}</span>
+                  <span class="px-2 py-0.5 bg-zinc-950 border border-zinc-900 text-zinc-500 rounded">${c.origin}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else if (S.activeTab === 'E-Copy / RV / Scrutiny') {
+      // ── E-COPY / RV / SCRUTINY VIEW MODULE ──────────────────
+      viewHtml = `
+        <div class="space-y-5 animate-slideUp text-left">
+          <div>
+            <h3 class="text-base font-bold text-white leading-none">Revaluation & Scrutiny Registry</h3>
+            <p class="text-[10px] text-zinc-500 mt-1.5 font-medium">Request paper re-verifications or download digital copies from university databases.</p>
+          </div>
+
+          <div class="p-5 apple-glass-card space-y-4">
+            <div class="space-y-1">
+              <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Application Type</label>
+              <select id="ecopy-app-type" class="w-full apple-input px-3 py-2.5 bg-zinc-900 border border-zinc-800 text-xs">
+                <option value="Revaluation">Revaluation (Rs. 500/subject)</option>
+                <option value="Scrutiny">Scrutiny (Rs. 250/subject)</option>
+                <option value="Photocopy">E-Copy / Photocopy (Rs. 300/subject)</option>
+              </select>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Select Courses</label>
+              <div class="space-y-2">
+                ${(coursesDict[1] || []).filter(c => c.code !== '-').map(c => `
+                  <label class="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl cursor-pointer hover:bg-white/5 transition-all">
+                    <input type="checkbox" name="ecopy-subjects" value="${c.code}" class="rounded border-zinc-800 bg-zinc-900 text-[#3897f0] focus:ring-0" />
+                    <div class="text-xs">
+                      <p class="font-bold text-zinc-200">${c.title}</p>
+                      <p class="text-[9px] text-zinc-500 font-mono">${c.code}</p>
+                    </div>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+
+            <button onclick="window.submitEcopyForm()" class="w-full py-3 apple-btn text-xs uppercase tracking-wider font-bold active:scale-95 transition-all">
+              Submit Application
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (S.activeTab === 'Exam Registration') {
+      // ── EXAM REGISTRATION VIEW MODULE ────────────────────────
+      viewHtml = `
+        <div class="space-y-5 animate-slideUp text-left">
+          <div>
+            <h3 class="text-base font-bold text-white leading-none">Exam Registration Schedule</h3>
+            <p class="text-[10px] text-zinc-500 mt-1.5 font-medium">Verify active registers and college opt-in statuses for examinations.</p>
+          </div>
+
+          <div class="p-5 apple-glass-card space-y-4">
+            <div class="flex justify-between items-center border-b border-white/5 pb-3">
+              <div>
+                <span class="text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold uppercase">Active Registry</span>
+                <h4 class="text-xs font-bold text-white mt-1.5">2nd Sem Regular FYUGP Exam - July 2026</h4>
+              </div>
+              <span class="text-lg">📝</span>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between py-1 border-b border-white/[0.02]">
+                <span class="text-zinc-500">Attendance Status</span>
+                <span class="text-emerald-400 font-bold">Eligible (85% Verified)</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-white/[0.02]">
+                <span class="text-zinc-500">Hall Ticket Release</span>
+                <span class="text-zinc-400">Available in Downloads</span>
+              </div>
+              <div class="flex justify-between py-1">
+                <span class="text-zinc-500">Registration Fee</span>
+                <span class="text-zinc-300 font-bold">Paid (Rs. 1,250)</span>
+              </div>
+            </div>
+
+            <button onclick="window.triggerPortalDownload('Submitted_Registration_Application.pdf')" class="w-full py-3 bg-white/5 border border-white/10 text-xs font-bold rounded-xl hover:bg-white/10 active:scale-95 transition-all text-center">
+              📥 Download Submitted Application
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (S.activeTab === 'Supply / Betterment') {
+      // ── SUPPLY / BETTERMENT VIEW MODULE ──────────────────────
+      viewHtml = `
+        <div class="space-y-5 animate-slideUp text-left">
+          <div>
+            <h3 class="text-base font-bold text-white leading-none">Supplementary / Improvement</h3>
+            <p class="text-[10px] text-zinc-500 mt-1.5 font-medium">Register for supplementary or improvement (betterment) semester exams.</p>
+          </div>
+
+          <div class="p-5 apple-glass-card space-y-4 text-center py-10">
+            <span class="text-3xl block mb-2">📈</span>
+            <h4 class="text-xs font-bold text-white">No active supplementary registers available</h4>
+            <p class="text-[10.5px] text-zinc-500 max-w-xs mx-auto leading-relaxed mt-1">Official betterment registrations for prior semesters will list here dynamically once scheduled by Mahatma Gandhi University.</p>
+          </div>
+        </div>
+      `;
+    } else if (S.activeTab === 'Condonation') {
+      // ── CONDONATION VIEW MODULE ──────────────────────────────
+      viewHtml = `
+        <div class="space-y-5 animate-slideUp text-left">
+          <div>
+            <h3 class="text-base font-bold text-white leading-none">Attendance Shortage Condonation</h3>
+            <p class="text-[10px] text-zinc-500 mt-1.5 font-medium">Apply for condonation benefits due to authorized medical or institutional leave.</p>
+          </div>
+
+          <div class="p-5 apple-glass-card space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Shortage Days</label>
+                <input id="condonation-days" type="number" class="w-full apple-input px-3.5 py-2.5 font-mono" placeholder="e.g. 5" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Reason Category</label>
+                <select id="condonation-reason" class="w-full apple-input px-3 py-2.5 bg-zinc-900 border border-zinc-800 text-xs">
+                  <option value="Medical">Medical Shortage</option>
+                  <option value="Sports">Sports / Cultural</option>
+                  <option value="NSS/NCC">NSS / NCC Duties</option>
+                  <option value="Other">Other Reasons</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Mock Certificate Upload</label>
+              <div class="border border-dashed border-zinc-800 hover:border-zinc-700 rounded-xl p-6 text-center cursor-pointer bg-zinc-950/20 transition-all">
+                <span class="text-xs text-zinc-500 font-medium">📄 Click to select medical certificate mockup</span>
+              </div>
+            </div>
+
+            <button onclick="window.submitCondonationForm()" class="w-full py-3 apple-btn text-xs uppercase tracking-wider font-bold active:scale-95 transition-all">
+              Submit Condonation
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (S.activeTab === 'Readmission') {
+      // ── READMISSION VIEW MODULE ──────────────────────────────
+      viewHtml = `
+        <div class="space-y-5 animate-slideUp text-left">
+          <div>
+            <h3 class="text-base font-bold text-white leading-none">Readmission & College Breaks</h3>
+            <p class="text-[10px] text-zinc-500 mt-1.5 font-medium">Request readmission into active semesters following college breaks or exit paths.</p>
+          </div>
+
+          <div class="p-5 apple-glass-card space-y-4">
+            <div class="space-y-1">
+              <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Target Semester for Readmission</label>
+              <select id="readmit-target-sem" class="w-full apple-input px-3 py-2.5 bg-zinc-900 border border-zinc-800 text-xs font-mono">
+                <option value="Sem 2">Semester 2</option>
+                <option value="Sem 3">Semester 3</option>
+                <option value="Sem 4">Semester 4</option>
+              </select>
+            </div>
+
+            <button onclick="window.submitReadmissionForm()" class="w-full py-3 apple-btn text-xs uppercase tracking-wider font-bold active:scale-95 transition-all">
+              Submit Readmission Request
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (S.activeTab === 'Internship') {
+      // ── INTERNSHIP VIEW MODULE ───────────────────────────────
+      viewHtml = `
+        <div class="space-y-5 animate-slideUp text-left">
+          <div>
+            <h3 class="text-base font-bold text-white leading-none">Mandatory Internship Registry</h3>
+            <p class="text-[10px] text-zinc-500 mt-1.5 font-medium">Log authorized FYUGP industrial internship coordinates and mentor details.</p>
+          </div>
+
+          <div class="p-5 apple-glass-card space-y-4">
+            <div class="space-y-3">
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Company Name</label>
+                <input id="internship-company" type="text" class="w-full apple-input px-3.5 py-2.5" placeholder="e.g. Infopark Kochi" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Project Title</label>
+                <input id="internship-title" type="text" class="w-full apple-input px-3.5 py-2.5" placeholder="e.g. Cloud System Integration" />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Mentor Name</label>
+                  <input id="internship-mentor" type="text" class="w-full apple-input px-3.5 py-2.5" placeholder="Supervisor name" />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Credits</label>
+                  <input type="text" disabled class="w-full apple-input px-3.5 py-2.5 font-mono text-zinc-500" value="4 CR" />
+                </div>
+              </div>
+            </div>
+
+            <button onclick="window.submitInternshipForm()" class="w-full py-3 apple-btn text-xs uppercase tracking-wider font-bold active:scale-95 transition-all">
+              Save Internship Records
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (S.activeTab === 'External Credit Application') {
+      // ── EXTERNAL CREDIT VIEW MODULE ──────────────────────────
+      viewHtml = `
+        <div class="space-y-5 animate-slideUp text-left">
+          <div>
+            <h3 class="text-base font-bold text-white leading-none">External Credit Transfers</h3>
+            <p class="text-[10px] text-zinc-500 mt-1.5 font-medium">Apply for external credit transfers acquired from SWAYAM, NPTEL, or approved MOOC networks.</p>
+          </div>
+
+          <div class="p-5 apple-glass-card space-y-4">
+            <div class="space-y-3">
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Course Provider Platform</label>
+                <select id="credit-platform" class="w-full apple-input px-3 py-2.5 bg-zinc-900 border border-zinc-800 text-xs">
+                  <option value="Swayam">Swayam / NPTEL (Official)</option>
+                  <option value="Coursera">Coursera Academic</option>
+                  <option value="edX">edX platform</option>
+                </select>
+              </div>
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Course Title</label>
+                <input id="credit-title" type="text" class="w-full apple-input px-3.5 py-2.5" placeholder="e.g. Introduction to IoT" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Credits claimed (1-4)</label>
+                <input id="credit-qty" type="number" min="1" max="4" class="w-full apple-input px-3.5 py-2.5 font-mono" placeholder="4" />
+              </div>
+            </div>
+
+            <button onclick="window.submitCreditForm()" class="w-full py-3 apple-btn text-xs uppercase tracking-wider font-bold active:scale-95 transition-all">
+              Submit Credit Request
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (S.activeTab === 'Downloads') {
+      // ── DOWNLOADS VIEW MODULE ────────────────────────────────
+      viewHtml = `
+        <div class="space-y-5 animate-slideUp text-left">
+          <div>
+            <h3 class="text-base font-bold text-white leading-none">Official Document Downloads</h3>
+            <p class="text-[10px] text-zinc-500 mt-1.5 font-medium">Download university grade cards, guidelines, and registered schedules.</p>
+          </div>
+
+          <div class="space-y-3">
+            <div class="p-4 apple-glass-card flex items-center justify-between gap-3">
+              <div class="space-y-0.5">
+                <h5 class="text-xs font-bold text-white">Semester 1 Grade Card (Provisional)</h5>
+                <p class="text-[9.5px] text-zinc-500 font-mono uppercase">PDF • 1.2 MB</p>
+              </div>
+              <button onclick="window.triggerPortalDownload('Semester_1_Grade_Card.pdf')" class="px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 transition-all text-white rounded-xl text-[10px] font-bold uppercase tracking-wider">
+                Download
+              </button>
+            </div>
+
+            <div class="p-4 apple-glass-card flex items-center justify-between gap-3">
+              <div class="space-y-0.5">
+                <h5 class="text-xs font-bold text-white">Mandatory Internship Guidelines</h5>
+                <p class="text-[9.5px] text-zinc-500 font-mono uppercase">PDF • 850 KB</p>
+              </div>
+              <button onclick="window.triggerPortalDownload('Internship_Guidelines.pdf')" class="px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 transition-all text-white rounded-xl text-[10px] font-bold uppercase tracking-wider">
+                Download
+              </button>
+            </div>
+
+            <div class="p-4 apple-glass-card flex items-center justify-between gap-3">
+              <div class="space-y-0.5">
+                <h5 class="text-xs font-bold text-white">FYUGP Honours Syllabus Schema</h5>
+                <p class="text-[9.5px] text-zinc-500 font-mono uppercase">PDF • 2.4 MB</p>
+              </div>
+              <button onclick="window.triggerPortalDownload('Honours_Syllabus.pdf')" class="px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 transition-all text-white rounded-xl text-[10px] font-bold uppercase tracking-wider">
+                Download
+              </button>
+            </div>
+
+            <div class="p-4 apple-glass-card flex items-center justify-between gap-3">
+              <div class="space-y-0.5">
+                <h5 class="text-xs font-bold text-white">Sem 2 Examination Hall Ticket</h5>
+                <p class="text-[9.5px] text-zinc-500 font-mono uppercase">PDF • 450 KB</p>
+              </div>
+              <button onclick="window.triggerPortalDownload('Hall_Ticket_Sem2.pdf')" class="px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 transition-all text-white rounded-xl text-[10px] font-bold uppercase tracking-wider">
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      // ── GENERAL PLACEMENT VIEW MODULE ────────────────────────
+      viewHtml = `
+        <div class="text-center py-20 border border-dashed border-zinc-900 rounded-[32px] text-zinc-500 bg-zinc-950/20 backdrop-blur-xl max-w-sm mx-auto">
+          <span class="text-[10px] font-mono text-[#3897f0] font-black uppercase tracking-[0.2em] block mb-2">${S.activeTab} MODULE</span>
+          <p class="text-zinc-200 font-bold mb-1">Secure portal module initialized</p>
+          <p class="text-[10.5px] text-zinc-500 font-medium px-6 leading-relaxed max-w-xs mx-auto">Scraped local layouts process sandbox metrics here. Dynamic live sync triggers update once approved registers are received.</p>
+        </div>
+      `;
     }
 
-    function showGlobalToast(message) {
-        // Find existing or create
-        let toast = document.getElementById('global-resource-toast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'global-resource-toast';
-            toast.className = 'fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[350] bg-black/85 dark:bg-white/90 text-white dark:text-[#1d1d1f] px-5 py-3 rounded-full text-xs font-extrabold tracking-tight transition-all duration-300 shadow-2xl pointer-events-none opacity-0 scale-90 flex items-center gap-2 border border-white/10';
-            document.body.appendChild(toast);
-        }
+    container.innerHTML = `
+      <div class="w-full flex-1 flex flex-col relative select-none">
+        <!-- Top Toolbar Header Bar -->
+        <header class="h-14 flex items-center justify-between border-b border-zinc-900/60 pb-3 mt-1">
+          <button 
+            onclick="window.toggleMguSideDrawer(true)"
+            class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-lg hover:bg-white/10 active:scale-95 transition-all shadow-sm"
+          >
+            ☰
+          </button>
+          <div class="text-center">
+            <h1 class="text-xs font-black uppercase tracking-[0.25em] text-[#3897f0] leading-none">MGU Portal</h1>
+            <span class="text-[10px] font-bold text-zinc-500">${S.activeTab}</span>
+          </div>
+          <button 
+            onclick="window.initResourcesWorkspace()"
+            class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-base hover:bg-white/10 active:scale-95 transition-all shadow-sm"
+          >
+            🔄
+          </button>
+        </header>
 
-        toast.textContent = message;
-        toast.classList.remove('opacity-0', 'scale-90');
-        toast.classList.add('opacity-100', 'scale-100');
+        <!-- Dynamic Side Drawer Overlay Panel -->
+        <aside id="mgu-side-drawer" class="mgu-side-drawer apple-glass flex flex-col p-5 overflow-y-auto">
+          <div class="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-[#3897f0]">MG</div>
+              <div class="text-left">
+                <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider font-bold">University Module</span>
+                <h4 class="text-xs font-bold text-white">Menu Options</h4>
+              </div>
+            </div>
+            <button onclick="window.toggleMguSideDrawer(false)" class="text-sm font-bold text-zinc-500 hover:text-white px-2 py-1">✕</button>
+          </div>
 
-        clearTimeout(window.globalToastTimer);
-        window.globalToastTimer = setTimeout(() => {
-            toast.classList.remove('opacity-100', 'scale-100');
-            toast.classList.add('opacity-0', 'scale-90');
-        }, 2500);
+          <nav class="flex-1 space-y-1.5 text-left">
+            ${menuSuite.map(m => {
+              const activeClass = S.activeTab === m.name ? 'active' : '';
+              return `
+                <button 
+                  onclick="window.navigateMguTab('${m.name}')" 
+                  class="menu-item-link ${activeClass}"
+                >
+                  <span class="text-base flex-shrink-0">${m.icon}</span>
+                  <span class="truncate">${m.name}</span>
+                </button>
+              `;
+            }).join('')}
+          </nav>
+
+          <!-- Drawer Footer section -->
+          <div class="pt-4 border-t border-white/5 mt-4 space-y-3">
+            <button 
+              onclick="window.mguPortalLogout()"
+              class="w-full py-2.5 bg-red-500/10 border border-red-500/25 hover:bg-red-500/20 active:scale-95 transition-all text-red-400 font-bold text-xs rounded-xl flex items-center justify-center gap-2"
+            >
+              <span>🚪</span> Logout Account
+            </button>
+            <p class="text-[9px] font-mono text-zinc-600 text-center">CAP ID: ${profileData.capId || ''}</p>
+          </div>
+        </aside>
+
+        <!-- Backdrop Overlay Panel -->
+        <div id="mgu-drawer-backdrop" class="mgu-drawer-backdrop" onclick="window.closeDrawerOverlays()"></div>
+
+        <!-- Course Edit Modal Sheet -->
+        <div id="apple-course-modal-sheet" class="apple-modal-sheet apple-glass"></div>
+
+        <!-- Main Workspace panel view scroll block -->
+        <main class="flex-1 pt-4 pb-12 overflow-y-auto">
+          ${viewHtml}
+        </main>
+
+        <!-- Portal Site footer credits -->
+        <footer class="pt-6 border-t border-zinc-900/60 mt-auto text-center space-y-1">
+          <p class="text-[8px] font-mono text-zinc-500">© Mahatma Gandhi University, Priyadarsini Hills, Kottayam, Kerala, India - 686560</p>
+        </footer>
+      </div>
+    `;
+  }
+
+  // ── Action Handlers ──────────────────────────────────────────
+  window.submitEcopyForm = function() {
+    alert("Application for Revaluation / Scrutiny submitted successfully! Dynamic fee of Rs. 1000 will be added to your ledger.");
+    window.navigateMguTab('Dashboard');
+  };
+  window.submitCondonationForm = function() {
+    alert("Condonation request submitted to Principal's desk. Attendance shortage is under review.");
+    window.navigateMguTab('Dashboard');
+  };
+  window.submitReadmissionForm = function() {
+    alert("Readmission request logged. Please check back for University verification.");
+    window.navigateMguTab('Dashboard');
+  };
+  window.submitInternshipForm = function() {
+    alert("Mandatory internship details saved and synced to department supervisor.");
+    window.navigateMguTab('Dashboard');
+  };
+  window.submitCreditForm = function() {
+    alert("External MOOC credits request sent. Verified completion certificates are being cross-referenced.");
+    window.navigateMguTab('Dashboard');
+  };
+  window.triggerPortalDownload = function(fileName) {
+    alert(`Downloading: ${fileName}... 📥`);
+  };
+
+  window.mguPortalLogout = function () {
+    localStorage.removeItem('machub_mgu_prn');
+    localStorage.removeItem('machub_mgu_pass');
+    
+    const profile = getStudentInfo() || {};
+    if (profile.mguData) {
+      delete profile.mguData;
+      localStorage.setItem('mac_student_info', JSON.stringify(profile));
     }
 
-    // Init resources on window load or view switch trigger
-    window.initResourcesWorkspace = function() {
-        // Check active resources tab and render
-        const btnSubjects = document.getElementById('btn-resource-subjects');
-        if (btnSubjects && btnSubjects.classList.contains('is-active')) {
-            renderSubjectsView();
-        } else {
-            renderProtocolsView();
-        }
-    };
+    S.hasCredentials = false;
+    S.prn = '';
+    S.password = '';
+    S.mguProfile = null;
+    S.activeTab = 'Dashboard';
+    S.isDrawerOpen = false;
 
-    // Auto initialize if elements exist
-    document.addEventListener('DOMContentLoaded', () => {
-        // Hook into standard view rendering
-        const originalSwitchView = window.switchView;
-        if (originalSwitchView) {
-            window.switchView = function(viewId) {
-                originalSwitchView(viewId);
-                if (viewId === 'view-resources') {
-                    window.initResourcesWorkspace();
-                }
-            };
+    renderMguPortalHub();
+  };
+
+  // ── Close all overlays ───────────────────────────────────────
+  window.closeDrawerOverlays = function () {
+    window.toggleMguSideDrawer(false);
+    window.closeEditCourseSheet();
+  };
+
+  // ── WorkSpace Init ───────────────────────────────────────────
+  window.initResourcesWorkspace = function () {
+    const cachedPrn = localStorage.getItem('machub_mgu_prn');
+    const cachedPass = localStorage.getItem('machub_mgu_pass');
+    
+    if (cachedPrn && cachedPass) {
+      S.prn = cachedPrn;
+      S.password = cachedPass;
+      S.hasCredentials = true;
+      executeMguScraperPipeline(cachedPrn, cachedPass);
+    } else {
+      S.hasCredentials = false;
+      renderMguPortalHub();
+    }
+  };
+
+  // Hook into main view switching
+  document.addEventListener('DOMContentLoaded', () => {
+    const originalSwitchView = window.switchView;
+    if (originalSwitchView) {
+      window.switchView = function(viewId) {
+        originalSwitchView(viewId);
+        if (viewId === 'view-resources') {
+          window.initResourcesWorkspace();
         }
-    });
+      };
+    }
+    // Auto-init on initial load if starting on resources
+    if (localStorage.getItem('machub_current_view') === 'view-resources') {
+      window.initResourcesWorkspace();
+    }
+  });
+
 })();

@@ -427,6 +427,20 @@ window.switchExamTab = function(tab) {
     seatsEl.classList.toggle('hidden', tab !== 'seats');
     resultsEl.classList.toggle('hidden', tab !== 'results');
 
+    // Handle emptyState visibility cleanly
+    const emptyState = document.getElementById('emptyState');
+    if (emptyState) {
+        if (tab !== 'seats') {
+            emptyState.classList.add('hidden');
+        } else {
+            // Only show emptyState if we are on 'seats' and the seating grid parent is hidden
+            const gridParent = document.getElementById('seatingGrid')?.parentElement?.parentElement;
+            if (gridParent && gridParent.classList.contains('hidden')) {
+                emptyState.classList.remove('hidden');
+            }
+        }
+    }
+
     if (timetableBtn) timetableBtn.classList.toggle('is-active', tab === 'timetable');
     if (seatsBtn) seatsBtn.classList.toggle('is-active', tab === 'seats');
     if (resultsBtn) resultsBtn.classList.toggle('is-active', tab === 'results');
@@ -440,6 +454,7 @@ window.switchExamTab = function(tab) {
     } else {
         appState.examSubView = 'view-results';
         if (typeof window.renderExamResults === 'function') window.renderExamResults();
+        if (typeof window.initMguResultPage === 'function') window.initMguResultPage();
     }
     
     // Sync top toggle states
@@ -702,7 +717,7 @@ function selectDay(dateStr) {
         if (gridParent) gridParent.classList.remove('hidden');
         if (hallTabsParent) hallTabsParent.classList.remove('hidden');
     }).catch(() => {
-        if (emptyState) emptyState.classList.remove('hidden');
+        if (emptyState && appState.examSubView === 'view-seats') emptyState.classList.remove('hidden');
     });
 }
 
@@ -4389,6 +4404,19 @@ window.switchResultsSubTab = function (tab) {
     window.showResultsTab(tab);
 };
 
+window.openMguResultTab = function() {
+    window.switchView('view-seats');
+    if (typeof window.switchExamTab === 'function') {
+        window.switchExamTab('results');
+    }
+    if (typeof window.switchResultsSubTab === 'function') {
+        window.switchResultsSubTab('exam');
+    }
+    if (typeof window.initMguPage === 'function') {
+        window.initMguPage();
+    }
+};
+
 window.renderExamResults = function () {
     const container = document.getElementById('sub-view-results');
     if (!container) return;
@@ -4425,134 +4453,63 @@ window.renderExamResults = function () {
     `;
 
     if (appState.resultsSubTab === 'exam') {
-        // University Exam Results view
-        const examRaw = getPortalCache('ExamResult', adminNo);
-        if (!examRaw) {
-            container.innerHTML = window.getFreshnessIndicatorHtml('ExamResult') + headerHtml + `
-                <div class="glass-panel rounded-[2rem] p-8 text-center my-6 relative overflow-hidden border border-white/5">
-                    <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">🏆</div>
-                    <h3 class="text-base font-black text-[#1d1d1f] dark:text-[#f5f5f7]">Exam Results Not Synced</h3>
-                    <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed mb-4">
-                        Sync your university semester exam results from the college ePortal.
-                    </p>
-                    <button onclick="window.syncExamResults()" class="px-6 py-2.5 bg-[var(--mac-blue)] text-white rounded-full text-xs font-black spring active:scale-95">
-                        🔄 Sync Academic Data
-                    </button>
-                </div>`;
-            return;
-        }
+        // Render MGU Result view HTML instead of synced portal exam results
+        container.innerHTML = headerHtml + `
+            <div id="mgu-form-view">
+                <!-- PRN input -->
+                <div style="margin-bottom:16px;">
+                    <label class="mgu2-lbl" for="mgu-prn-in">PRN — Permanent Registration Number</label>
+                    <input id="mgu-prn-in" class="mgu2-inp" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. 22B0123456" onblur="if(window.mguSavePrnOnInput) window.mguSavePrnOnInput(this.value);" oninput="if(window.mguSavePrnOnInput) window.mguSavePrnOnInput(this.value);">
+                    <p id="mgu-prn-hint" style="font-size:11px;color:#86868b;margin:6px 0 0;font-weight:600;"></p>
+                </div>
 
-        let results = [];
-        try {
-            const parsed = JSON.parse(examRaw);
-            results = parsed?.data?.payload?.results || parsed?.data?.results || parsed?.payload?.results || parsed?.results || parsed?.sections || parsed?.data?.sections || parsed?.payload?.sections || [];
-        } catch (e) {
-            console.error(e);
-        }
+                <!-- Exam dropdown -->
+                <div style="margin-bottom:16px;">
+                    <label class="mgu2-lbl" for="mgu-exam-select">Examination</label>
+                    <select id="mgu-exam-select" class="mgu2-sel"><option value="">Loading exams…</option></select>
+                    <p id="mgu-exam-count" style="font-size:11px;color:#86868b;margin:6px 0 0;font-weight:600;"></p>
+                </div>
 
-        // Dropdown filter for semesters
-        const maxSem = getStudentSemNumber();
-        const selectedSem = appState.selectedExamSem || 'all';
-        const isSemOpen = appState.openInternalDropdown === 'semester';
-
-        let semFilterHtml = `
-            <div class="grid grid-cols-1 mb-5 w-full">
-                <div class="seat-dropdown ${isSemOpen ? 'is-open' : ''}">
-                    <button type="button" onclick="window.toggleInternalDropdown('semester')" class="seat-dropdown__trigger">
-                        <div class="seat-dropdown__meta">
-                            <span class="seat-dropdown__label">Semester Selection</span>
-                            <span class="seat-dropdown__value">${selectedSem === 'all' ? 'All Semesters' : 'Semester ' + selectedSem}</span>
+                <!-- Captcha (hidden by default) -->
+                <div id="mgu-cap-card-container" class="mgu2-card" style="margin-bottom:16px; display:none;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                        <span class="mgu2-lbl" style="margin:0;">Security Check</span>
+                        <button id="mgu-cap-btn" onclick="window.mguLoadCaptcha()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f5f5f7;font-size:12px;font-weight:700;padding:5px 12px;cursor:pointer;">&#8634; Refresh</button>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <div style="flex-shrink:0;">
+                            <div id="mgu-cap-sk" class="mgu2-sk" style="width:120px;height:52px;"></div>
+                            <img id="mgu-cap-img" class="hidden" src="" alt="Captcha" style="width:120px;height:52px;border-radius:10px;object-fit:contain;background:#fff;">
                         </div>
-                        <span class="seat-dropdown__icon">⌄</span>
-                    </button>
-                    <div class="seat-dropdown__menu">
-                        <button type="button" onclick="window.switchExamSemester('all')" class="seat-dropdown__option ${selectedSem === 'all' ? 'is-active' : ''}">
-                            <span class="seat-dropdown__option-title">All Semesters</span>
-                        </button>
-                        ${Array.from({ length: maxSem }, (_, i) => {
-                            const sem = String(i + 1);
-                            const isActive = selectedSem === sem;
-                            return `
-                                <button type="button" onclick="window.switchExamSemester('${sem}')" class="seat-dropdown__option ${isActive ? 'is-active' : ''}">
-                                    <span class="seat-dropdown__option-title">Semester ${sem}</span>
-                                </button>
-                            `;
-                        }).join('')}
+                        <div style="flex:1;">
+                            <label class="mgu2-lbl" for="mgu-cap-in" style="margin-bottom:6px;">Enter code above</label>
+                            <input id="mgu-cap-in" class="mgu2-inp" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="Auto-filled ✨" style="font-size:20px;letter-spacing:0.2em;padding:12px 14px;">
+                        </div>
                     </div>
                 </div>
+
+                <!-- Error -->
+                <div id="mgu-err" class="mgu2-err"></div>
+
+                <!-- Submit -->
+                <button id="mgu-submit-btn" onclick="window.mguSubmit()" class="mgu2-submit" style="margin-bottom:24px;">
+                    <span>🎓</span> Fetch My Result
+                </button>
+
+                <!-- History -->
+                <div class="mgu2-card" style="margin-bottom:16px;">
+                    <div style="font-size:10px;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;">📋 Previously Fetched</div>
+                    <div id="mgu-history"><p style="text-align:center;color:#86868b;font-size:13px;padding:16px 0;">Loading…</p></div>
+                </div>
+
             </div>
+            <div id="mgu-result-view" style="display:none;"></div>
         `;
-
-        let filteredResults = [];
-        if (selectedSem === 'all') {
-            filteredResults = results.map((r, idx) => ({ table: r, semNum: results.length - idx }));
-        } else {
-            const semNum = parseInt(selectedSem, 10);
-            const totalSems = results.length;
-            const targetIdx = totalSems - semNum;
-            if (targetIdx >= 0 && targetIdx < totalSems) {
-                filteredResults = [{ table: results[targetIdx], semNum }];
-            }
+        
+        // Trigger MGU initialization
+        if (typeof window.initMguPage === 'function') {
+            window.initMguPage();
         }
-
-        let resultsHtml = '';
-        if (filteredResults.length > 0) {
-            resultsHtml = filteredResults.map(item => {
-                const table = item.table;
-                const headers = table.headers || [];
-                const rows = table.rows || [];
-
-                let tableRowsHtml = '';
-                if (rows.length > 0) {
-                    tableRowsHtml = rows.map(row => {
-                        const passValue = row['Result'] || row['col_3'] || '';
-                        const isFail = ['fail', 'f', 'absent', 'supply', 'reappear'].some(f => String(passValue).toLowerCase().includes(f));
-                        const isPass = passValue && !isFail;
-                        const rowClass = isPass ? 'row-pass' : isFail ? 'row-fail' : '';
-
-                        return `
-                            <tr class="${rowClass}">
-                                ${headers.map(h => `<td>${row[h] ?? '—'}</td>`).join('')}
-                            </tr>
-                        `;
-                    }).join('');
-                } else {
-                    tableRowsHtml = `<tr><td colspan="${headers.length || 1}" class="text-center text-xs text-[#86868b] py-4">No records found.</td></tr>`;
-                }
-
-                return `
-                    <div class="glass-panel rounded-[2rem] p-6 mb-6 border border-white/5">
-                        <div class="flex items-center gap-3 mb-4">
-                            <span class="text-xl">🎓</span>
-                            <h3 class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Semester ${item.semNum} Results</h3>
-                        </div>
-                        <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--glass-border);">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        ${headers.map(h => `<th>${h}</th>`).join('')}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tableRowsHtml}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        } else {
-            resultsHtml = `
-                <div class="glass-panel rounded-[2rem] p-8 text-center my-6 border border-white/5">
-                    <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">🏆</div>
-                    <h3 class="text-base font-black text-[#1d1d1f] dark:text-[#f5f5f7]">No Exam Results Published</h3>
-                    <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed">
-                        No semester publication results are available in your portal account for Semester ${selectedSem}.
-                    </p>
-                </div>`;
-        }
-
-        container.innerHTML = window.getFreshnessIndicatorHtml('ExamResult', selectedSem === 'all' ? '' : selectedSem) + headerHtml + semFilterHtml + resultsHtml;
 
     } else {
         // College Results / Internal Marks subtab
@@ -5356,7 +5313,49 @@ window.renderClassActivity = function() {
         }).join('');
     }
 
-    container.innerHTML = window.getFreshnessIndicatorHtml(appState.activityFilter === 'seminar' ? 'Seminar' : 'Assignment') + demoBannerHtml + statsHtml + segmentsHtml + listHtml;
+    const mguDataBlock = info?.mguData || null;
+    const isLinked = !!mguDataBlock;
+    const currentCredits = mguDataBlock?.credits || 0;
+    const maxRequiredCredits = 160;
+
+    let trackerHtml = '';
+    if (isLinked) {
+        trackerHtml = `
+            <div class="glass-panel p-4 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md mb-4 flex items-center justify-between">
+                <div class="text-left space-y-1">
+                    <span class="text-[9px] font-bold text-[#3897f0] uppercase tracking-widest block">University Ledger Progress</span>
+                    <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Degree Completion Tracker</h4>
+                    <p class="text-[10px] font-mono text-zinc-500">${mguDataBlock.program || 'FYUGP Honours'}</p>
+                </div>
+                <div class="text-right font-mono flex-shrink-0">
+                    <span class="text-lg font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${currentCredits}</span>
+                    <span class="text-[10px] text-zinc-600 font-bold">/ ${maxRequiredCredits} CR</span>
+                    <div class="w-24 h-1 bg-zinc-800 rounded-full mt-1.5 overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-[#3897f0] to-emerald-400 rounded-full" style="width: ${Math.min((currentCredits / maxRequiredCredits) * 100, 100)}%"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        trackerHtml = `
+            <div class="glass-panel p-5 rounded-[2rem] text-center space-y-3 relative overflow-hidden border border-white/5 bg-white/5 backdrop-blur-md mb-4">
+                <div class="space-y-1">
+                    <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center justify-center gap-1.5">🔒 Unlock Official Degree Track</h4>
+                    <p class="text-[10px] text-zinc-500 max-w-xs mx-auto leading-relaxed">
+                        Link your formal Mahatma Gandhi University PRN to pull current credit scores, verify registration status, and cross-reference syllabus records.
+                    </p>
+                </div>
+                <button 
+                    onclick="switchView('view-resources')"
+                    class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[10px] rounded-xl border border-zinc-800 tracking-wide transition-all active:scale-95"
+                >
+                    🔗 Synchronize MGU Account in 30s
+                </button>
+            </div>
+        `;
+    }
+
+    container.innerHTML = trackerHtml + window.getFreshnessIndicatorHtml(appState.activityFilter === 'seminar' ? 'Seminar' : 'Assignment') + demoBannerHtml + statsHtml + segmentsHtml + listHtml;
 };
 
 window.renderClassSubjects = window.renderClassActivity;
