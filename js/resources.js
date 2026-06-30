@@ -467,12 +467,17 @@
       if (S.activeTab === 'Major Switching / College Transfer') {
         viewResourcesEl.style.padding = '0';
         viewResourcesEl.style.paddingBottom = '90px';
+        viewResourcesEl.classList.remove('max-w-md');
+        viewResourcesEl.style.width = '100vw';
+        viewResourcesEl.style.maxWidth = '100%';
       } else {
         viewResourcesEl.style.padding = '';
         viewResourcesEl.style.paddingBottom = '';
+        viewResourcesEl.classList.add('max-w-md');
+        viewResourcesEl.style.width = '';
+        viewResourcesEl.style.maxWidth = '';
       }
     }
-    // Premium active scraper loading overlay
     if (S.isScraping && S.hasCredentials) {
       container.innerHTML = `
         <div class="min-h-[85vh] flex flex-col items-center justify-center space-y-4 text-white animate-pulse">
