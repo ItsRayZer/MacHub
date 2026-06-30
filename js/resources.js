@@ -503,9 +503,12 @@
       `;
       return;
     }
-
     if (!S.hasCredentials) {
-      // 1. OVERHAULED PREMIUM LOGIN GATE SCREEN
+      const oldDrawer = $('mgu-side-drawer');
+      if (oldDrawer) oldDrawer.remove();
+      const oldBackdrop = $('mgu-drawer-backdrop');
+      if (oldBackdrop) oldBackdrop.remove();
+
       container.innerHTML = `
         <div class="min-h-[85vh] flex items-center justify-center p-4 text-white">
           <form id="mgu-login-form" class="w-full max-w-sm rounded-[32px] p-7 apple-glass relative overflow-hidden space-y-5 animate-slideUp">
@@ -1100,6 +1103,7 @@
           <p class="text-[10.5px] text-zinc-500 font-medium px-6 leading-relaxed max-w-xs mx-auto">Scraped local layouts process sandbox metrics here. Dynamic live sync triggers update once approved registers are received.</p>
         </div>
       `;
+
     }
 
     container.innerHTML = `
@@ -1142,54 +1146,9 @@
           `}
         </header>
 
-        <!-- Dynamic Bottom Drawer Overlay Panel -->
-        <aside id="mgu-side-drawer" class="mgu-side-drawer apple-glass flex flex-col p-5 overflow-y-auto">
-          <!-- Top Drag Handle -->
-          <div class="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4 cursor-pointer" onclick="window.toggleMguSideDrawer(false)"></div>
-
-          <div class="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-[#3897f0]">MG</div>
-              <div class="text-left">
-                <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider font-bold">University Module</span>
-                <h4 class="text-xs font-bold text-white">Menu Options</h4>
-              </div>
-            </div>
-            <button onclick="window.toggleMguSideDrawer(false)" class="text-sm font-bold text-zinc-500 hover:text-white px-2 py-1">✕</button>
-          </div>
-
-          <nav class="space-y-1.5 text-left mb-4">
-            ${menuSuite.map(m => {
-              const activeClass = S.activeTab === m.name ? 'active' : '';
-              return `
-                <button 
-                  onclick="window.navigateMguTab('${m.name}')" 
-                  class="menu-item-link ${activeClass}"
-                >
-                  <span class="text-base flex-shrink-0">${m.icon}</span>
-                  <span class="truncate">${m.name}</span>
-                </button>
-              `;
-            }).join('')}
-          </nav>
-
-          <!-- Drawer Footer/Logout section (directly below menu options) -->
-          <div class="pt-4 border-t border-white/5 space-y-3">
-            <button 
-              onclick="window.mguPortalLogout()"
-              class="w-full py-2.5 bg-red-500/10 border border-red-500/25 hover:bg-red-500/20 active:scale-95 transition-all text-red-400 font-bold text-xs rounded-xl flex items-center justify-center gap-2"
-            >
-              <span>🚪</span> Logout Account
-            </button>
-            <p class="text-[9px] font-mono text-zinc-600 text-center">CAP ID: ${profileData.capId || ''}</p>
-          </div>
-        </aside>
-
-        <!-- Backdrop Overlay Panel -->
-        <div id="mgu-drawer-backdrop" class="mgu-drawer-backdrop" onclick="window.closeDrawerOverlays()"></div>
-
         <!-- Course Edit Modal Sheet -->
         <div id="apple-course-modal-sheet" class="apple-modal-sheet apple-glass"></div>
+
         <!-- Main Workspace panel view scroll block -->
         <main class="flex-1 flex flex-col ${S.activeTab === 'Major Switching / College Transfer' ? 'pt-0 pb-0' : 'pt-2 pb-12'} overflow-y-auto">
           ${S.activeTab !== 'Major Switching / College Transfer' ? `
@@ -1209,9 +1168,69 @@
         ` : ''}
       </div>
     `;
-  }
 
-  // ── Action Handlers ──────────────────────────────────────────
+    // Ensure the MGU bottom drawer and backdrop exist on document.body for top-level stacking context
+    let drawer = $('mgu-side-drawer');
+    let backdrop = $('mgu-drawer-backdrop');
+
+    if (!backdrop) {
+      backdrop = document.createElement('div');
+      backdrop.id = 'mgu-drawer-backdrop';
+      backdrop.className = 'mgu-drawer-backdrop';
+      backdrop.onclick = window.closeDrawerOverlays;
+      document.body.appendChild(backdrop);
+    }
+
+    if (!drawer) {
+      drawer = document.createElement('aside');
+      drawer.id = 'mgu-side-drawer';
+      drawer.className = 'mgu-side-drawer apple-glass flex flex-col p-5 overflow-y-auto';
+      document.body.appendChild(drawer);
+    }
+
+    // Update the drawer content dynamically
+    drawer.innerHTML = `
+      <!-- Top Drag Handle -->
+      <div class="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4 cursor-pointer" onclick="window.toggleMguSideDrawer(false)"></div>
+
+      <div class="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-[#3897f0]">MG</div>
+          <div class="text-left">
+            <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider font-bold">University Module</span>
+            <h4 class="text-xs font-bold text-white">Menu Options</h4>
+          </div>
+        </div>
+        <button onclick="window.toggleMguSideDrawer(false)" class="text-sm font-bold text-zinc-500 hover:text-white px-2 py-1">✕</button>
+      </div>
+
+      <nav class="space-y-1.5 text-left mb-4">
+        ${menuSuite.map(m => {
+          const activeClass = S.activeTab === m.name ? 'active' : '';
+          return `
+            <button 
+              onclick="window.navigateMguTab('${m.name}')" 
+              class="menu-item-link ${activeClass}"
+            >
+              <span class="text-base flex-shrink-0">${m.icon}</span>
+              <span class="truncate">${m.name}</span>
+            </button>
+          `;
+        }).join('')}
+      </nav>
+
+      <!-- Drawer Footer/Logout section -->
+      <div class="pt-4 border-t border-white/5 space-y-3">
+        <button 
+          onclick="window.mguPortalLogout()"
+          class="w-full py-2.5 bg-red-500/10 border border-red-500/25 hover:bg-red-500/20 active:scale-95 transition-all text-red-400 font-bold text-xs rounded-xl flex items-center justify-center gap-2"
+        >
+          <span>🚪</span> Logout Account
+        </button>
+        <p class="text-[9px] font-mono text-zinc-600 text-center">CAP ID: ${profileData.capId || ''}</p>
+      </div>
+    `;
+  }
   window.submitEcopyForm = function() {
     alert("Application for Revaluation / Scrutiny submitted successfully! Dynamic fee of Rs. 1000 will be added to your ledger.");
     window.navigateMguTab('Dashboard');
