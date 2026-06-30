@@ -1,0 +1,141 @@
+{
+  "_meta": {
+    "discovered_by": "MacHub Antigravity AI — Phase 0 Discovery",
+    "discovered_at": "2026-06-30T00:00:00+05:30",
+    "discovery_method": "JS bundle analysis of main.55c285a7.js + live API probing",
+    "bundle_url": "https://edp.mgu.ac.in/static/js/main.55c285a7.js",
+    "notes": [
+      "MGU EDP is a React SPA (create-react-app, no server-side rendering)",
+      "Real API backend is at https://ugpapi.mgu.ac.in/ugp/api/ (separate domain from frontend)",
+      "Exam list and captcha endpoints require NO authentication",
+      "PublicResultView also requires NO authentication (truly public endpoint)",
+      "CRITICAL: captcha response includes captcha_text (the answer) — auto-solvable!",
+      "No rate limiting detected on 3 rapid captcha requests",
+      "No Cloudflare challenge or bot protection on public API endpoints",
+      "Response shape confirmed by decompiling minified React component (Cg = ViewResult page)"
+    ]
+  },
+
+  "pageType": "SPA - React (create-react-app, React Router hash routing)",
+
+  "examListEndpoint": {
+    "url": "https://ugpapi.mgu.ac.in/ugp/api/getActiveExam",
+    "method": "GET",
+    "authRequired": false,
+    "responseShape": {
+      "activeexam": [
+        {
+          "examtitle": "Second Semester MGU-BBA(Honours)/MGU-BCA (Honours) Regular Examination April 2026",
+          "semesterid": 2,
+          "examid": 13
+        }
+      ]
+    },
+    "note": "Returns all currently active exams. No auth required. 15 exams confirmed live."
+  },
+
+  "captchaEndpoint": {
+    "url": "https://ugpapi.mgu.ac.in/ugp/api/Result/GenerateCaptcha",
+    "method": "GET",
+    "authRequired": false,
+    "requiresSession": false,
+    "responseShape": {
+      "cap_img": "iVBORw0KGgo... (base64 PNG)",
+      "captcha_text": "MUSFYA",
+      "captcha_id": 2334485
+    },
+    "note": "CRITICAL: captcha_text contains the ANSWER. Worker can auto-solve without human input. captcha_id is integer. Image is a clean PNG.",
+    "cachingNote": "Must use Cache-Control: no-store on worker response — each call returns fresh captcha with new ID"
+  },
+
+  "resultSubmitEndpoint": {
+    "url": "https://ugpapi.mgu.ac.in/ugp/api/Result/PublicResultView",
+    "method": "GET",
+    "authRequired": false,
+    "requestParams": {
+      "examid": "integer (from getActiveExam)",
+      "prn": "student PRN string",
+      "captcha_in": "captcha answer text (case sensitive)",
+      "captcha_id": "integer captcha ID from GenerateCaptcha"
+    },
+    "responseShape_success": {
+      "studentDetails": [{ "student_name": "", "prn": "", "register_no": "", "semester": "" }],
+      "gradeDetails": {
+        "sgpa": "",
+        "cgpa": "",
+        "concatenated_result": "PASS or FAIL"
+      },
+      "courseDetails": [
+        {
+          "course_name": "",
+          "course_code": "",
+          "paper_identifier": "",
+          "theory_credit": "",
+          "total_credit": "",
+          "theory_pract": "T or P or B",
+          "normalised_TI": "",
+          "normalised_TI_MAX": "",
+          "normalised_TE": "",
+          "normalised_TE_MAX": "",
+          "T_Total": "",
+          "normalised_T_Max": "",
+          "theory_result": "",
+          "normalised_PI": "",
+          "normalised_PI_MAX": "",
+          "normalised_PE": "",
+          "normalised_PE_MAX": "",
+          "P_Total": "",
+          "normalised_P_Max": "",
+          "practical_result": "",
+          "Total_Mark": "",
+          "Total_Mark_Max": "",
+          "grade": "",
+          "GP": "",
+          "acquired_credit": "",
+          "credit_point": "",
+          "result": "PASS or FAIL",
+          "student_status": ""
+        }
+      ]
+    },
+    "responseShape_wrongCaptcha": {
+      "status_code": "ERR60",
+      "http_status": 422,
+      "message": "Incorrect CAPTCHA"
+    },
+    "responseShape_noResult": {
+      "status_code": "ERR5",
+      "http_status": 500,
+      "message": "Data not found"
+    }
+  },
+
+  "captchaType": "image",
+  "rateLimitDetected": false,
+  "stopConditionTriggered": "none",
+
+  "workerStrategy": {
+    "note": "Since captcha_text is returned with the image, the worker can auto-solve captcha transparently.",
+    "examList": "GET /api/mgu/exam-list — fetches getActiveExam, maps to { value: examid, label: examtitle, semesterid }",
+    "captcha": "GET /api/mgu/captcha — fetches GenerateCaptcha, stores captcha_text internally, returns only image and captcha_id to frontend. Frontend sends captcha_id back with submission; worker uses stored captcha_text for auto-submission OR frontend displays image for manual entry.",
+    "result": "POST /api/mgu/fetch-result — receives { prn, examId, captchaAnswer?, captchaId } from frontend, calls PublicResultView with correct params, parses and structures result"
+  },
+
+  "liveExams": [
+    { "examtitle": "Second Semester MGU-UGP(HONOURS) Special Examination February 2026", "semesterid": 2, "examid": 16 },
+    { "examtitle": "Second Semester MGU-B.Voc(Honours) Regular Examination April 2026", "semesterid": 2, "examid": 14 },
+    { "examtitle": "Second Semester MGU-BBA(Honours)/MGU-BCA (Honours) Regular Examination April 2026", "semesterid": 2, "examid": 13 },
+    { "examtitle": "Second Semester MGU-UGP(HONOURS) Regular Examination April 2026", "semesterid": 2, "examid": 12 },
+    { "examtitle": "Fourth Semester MGU-BBA(Honours)/MGU-BCA (Honours) Regular Examination March 2026", "semesterid": 4, "examid": 11 },
+    { "examtitle": "Fourth Semester MGU-UGP(HONOURS) Regular Examination March 2026", "semesterid": 4, "examid": 10 },
+    { "examtitle": "First Semester MGU-B.Voc(Honours)Regular Examination November 2025", "semesterid": 1, "examid": 9 },
+    { "examtitle": "First Semester MGU-BBA(Honours)/MGU-BCA (Honours) Regular Examination November 2025", "semesterid": 1, "examid": 8 },
+    { "examtitle": "First Semester MGU-UGP(HONOURS) Regular Examination November 2025", "semesterid": 1, "examid": 7 },
+    { "examtitle": "Third Semester MGU-BBA(Honours)/MGU-BCA (Honours) Regular Examination October 2025", "semesterid": 3, "examid": 6 },
+    { "examtitle": "Third Semester MGU-UGP(HONOURS) Regular Examination October 2025", "semesterid": 3, "examid": 5 },
+    { "examtitle": "Second Semester MGU-BBA(Honours)/MGU-BCA (Honours) Regular Examination April 2025", "semesterid": 2, "examid": 4 },
+    { "examtitle": "Second Semester MGU-UGP(HONOURS) Regular Examination April 2025", "semesterid": 2, "examid": 3 },
+    { "examtitle": "First Semester MGU-BBA(Honours)/MGU-BCA (Honours) Regular Examination November 2024", "semesterid": 1, "examid": 2 },
+    { "examtitle": "First Semester MGU-UGP(HONOURS) Regular Examination November 2024", "semesterid": 1, "examid": 1 }
+  ]
+}

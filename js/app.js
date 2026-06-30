@@ -315,7 +315,8 @@ let HALL_KEYS = [];
 function getMainNavView(viewId) {
     if (viewId === 'view-ai') return 'view-ai';
     if (['view-timetable', 'view-seats', 'view-exam-resources', 'view-class'].includes(viewId)) return 'view-exam';
-    if (viewId === 'view-resources') return 'view-resources';
+    if (viewId === 'view-chat') return 'view-chat';
+    if (viewId === 'view-resources') return 'view-resources'; // MGU Portal has no menu tab highlighted
     if (viewId === 'view-profile' || viewId === 'view-profile-edit' || viewId === 'view-settings' || (viewId && viewId.startsWith('view-settings-'))) return 'view-profile';
     return 'view-home';
 }
@@ -488,7 +489,7 @@ function switchView(viewId) {
     }
 
     // Clear navigation hidden state locks when entering level-0 main tabs
-    if (['view-home', 'view-class', 'view-seats', 'view-resources', 'view-profile'].includes(viewId)) {
+    if (['view-home', 'view-class', 'view-seats', 'view-resources', 'view-chat', 'view-profile'].includes(viewId)) {
         _navLockedHidden = false;
         _navHidden = false;
         const nav = document.getElementById('bottomNav');
@@ -509,7 +510,7 @@ function switchView(viewId) {
 
     const getViewDepth = (id) => {
         if (!id) return 0;
-        if (id === 'view-home' || id === 'view-class' || id === 'view-seats' || id === 'view-resources' || id === 'view-profile') {
+        if (id === 'view-home' || id === 'view-class' || id === 'view-seats' || id === 'view-resources' || id === 'view-chat' || id === 'view-profile') {
             return 0; // Main Tabs
         }
         if (id === 'view-announcements' || id === 'view-settings' || id === 'view-profile-edit' || id === 'view-departments' || id === 'view-exam-resources' || id === 'view-ai') {
@@ -562,8 +563,13 @@ function switchView(viewId) {
         if (viewId === 'view-profile' && typeof renderUserProfile === 'function') renderUserProfile();
         syncExternalAppView();
 
+        // Init chat view when switching to it
+        if (viewId === 'view-chat' && window.initChatView) {
+            setTimeout(() => window.initChatView(), 50);
+        }
+
         // Update Nav Bar active & Indicator movement
-        const tabs = ['view-home', 'view-exam', 'view-resources', 'view-profile'];
+        const tabs = ['view-home', 'view-exam', 'view-chat', 'view-profile'];
         const navPill = document.getElementById('navPill');
         const activeMainView = (viewId === 'view-seats' || viewId === 'view-results' || viewId === 'view-exam-resources') ? 'view-exam' : getMainNavView(viewId);
         const nextIndex = tabs.indexOf(activeMainView);
@@ -4445,7 +4451,9 @@ window.renderExamResults = function () {
     if (!adminNo) {
         container.innerHTML = `
             <div class="glass-panel rounded-[2rem] p-6 text-center my-6 border border-white/5">
-                <div class="text-3xl mb-3">🔑</div>
+                <div class="w-12 h-12 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-3 text-zinc-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"></path></svg>
+                </div>
                 <h3 class="text-sm font-black text-[#1d1d1f] dark:text-[#f5f5f7]">Admission Number Required</h3>
                 <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed">
                     Go to Profile → Edit and enter your Admission Number to sync exam results.
@@ -4463,10 +4471,10 @@ window.renderExamResults = function () {
         <div class="flex justify-center mb-6">
             <div class="bg-black/10 dark:bg-white/5 p-1 rounded-2xl flex gap-1 border border-white/5">
                 <button onclick="window.switchResultsSubTab('exam')" class="px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.resultsSubTab === 'exam' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">
-                    🏆 University Results
+                    University Results
                 </button>
                 <button onclick="window.switchResultsSubTab('internal')" class="px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.resultsSubTab === 'internal' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">
-                    🏫 College Results
+                    College Results
                 </button>
             </div>
         </div>
@@ -4513,12 +4521,12 @@ window.renderExamResults = function () {
 
                 <!-- Submit -->
                 <button id="mgu-submit-btn" onclick="window.mguSubmit()" class="mgu2-submit" style="margin-bottom:24px;">
-                    <span>🎓</span> Fetch My Result
+                    Fetch My Result
                 </button>
 
                 <!-- History -->
                 <div class="mgu2-card" style="margin-bottom:16px;">
-                    <div style="font-size:10px;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;">📋 Previously Fetched</div>
+                    <div style="font-size:10px;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;">Previously Fetched</div>
                     <div id="mgu-history"><p style="text-align:center;color:#86868b;font-size:13px;padding:16px 0;">Loading…</p></div>
                 </div>
 
@@ -4590,13 +4598,15 @@ window.renderExamResults = function () {
                     </div>
                 </div>
                 <div class="glass-panel rounded-[2rem] p-8 text-center my-6 relative overflow-hidden border border-white/5">
-                    <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">📝</div>
+                    <div class="w-12 h-12 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 text-zinc-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
                     <h3 class="text-base font-black text-[#1d1d1f] dark:text-[#f5f5f7]">No College Data Found</h3>
                     <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed mb-4">
                         We couldn't retrieve internal marks or CCA assessments for Semester ${activeSem} from the portal.
                     </p>
                     <button onclick="window.syncExamResults()" class="px-6 py-2.5 bg-[var(--mac-blue)] text-white rounded-full text-xs font-black spring active:scale-95">
-                        🔄 Retry Sync
+                        Retry Sync
                     </button>
                 </div>`;
             return;
@@ -4735,9 +4745,20 @@ window.renderExamResults = function () {
         assessData.forEach(sec => { if (sec.subject && sec.subject.trim() !== '') subjectNames.add(sec.subject); });
         internalData.forEach(sec => { if (sec.subject && sec.subject.trim() !== '') subjectNames.add(sec.subject); });
 
+        function getMarksPctColor(pct) {
+            if (pct >= 80) return '#30d158'; // green
+            if (pct >= 50) return '#ff9f0a'; // amber
+            return '#ff453a';                // red
+        }
+        function getMarksBarBg(pct) {
+            if (pct >= 80) return 'linear-gradient(90deg,#30d158,#34c759)';
+            if (pct >= 50) return 'linear-gradient(90deg,#ff9f0a,#ffcc00)';
+            return 'linear-gradient(90deg,#ff453a,#ff6961)';
+        }
+
         let contentHtml = '';
         if (subjectNames.size > 0) {
-            contentHtml = Array.from(subjectNames).map(subjectName => {
+            const cardsHtml = Array.from(subjectNames).map((subjectName, idx) => {
                 const matchingAssess   = assessData.find(sec => sec.subject && sec.subject.toLowerCase() === subjectName.toLowerCase());
                 // Find matching internal mark:
                 // Case A: Multi-table format (one table per subject section)
@@ -4776,113 +4797,168 @@ window.renderExamResults = function () {
                     });
                 }
 
-                // Render final university internal mark rows (InternalMark section)
-                let finalUniversityHtml = '';
-                if (internalRow && (activeType === 'both' || activeType === 'internal')) {
-                    // Helper to get a value from a row by possible keys
+                // Retrieve marks values if internalRow exists
+                let markVal = '—';
+                let maxVal = '—';
+                if (internalRow) {
                     const getVal = (row, ...keys) => {
                         for (const k of keys) {
                             if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') return String(row[k]).trim();
                         }
                         return '—';
                     };
-
-                    const markVal = getVal(internalRow,
+                    markVal = getVal(internalRow,
                         'Obtained Mark', 'ObtainedMark', 'obtained mark', 'internalMark',
                         'Internal Mark', 'Mark', 'Score', 'mark', 'score',
                         'col_1', 'col_2'
                     );
-                    const maxVal  = getVal(internalRow,
+                    maxVal = getVal(internalRow,
                         'Max Mark', 'MaxMark', 'max mark', 'maxMark',
                         'Maximum', 'Out Of', 'Total Mark',
                         'col_2', 'col_3'
                     );
-
-                    // If there are multiple rows in the section (Case A only), render them all as a table
-                    if (internalRowsAll.length > 1) {
-                        const tableHeaders = internalHeaders.length > 0 ? internalHeaders : Object.keys(internalRow);
-                        finalUniversityHtml = `
-                            <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--glass-border); margin-bottom: 12px;">
-                                <table class="data-table">
-                                    <thead><tr>${tableHeaders.map(h => `<th>${h}</th>`).join('')}</tr></thead>
-                                    <tbody>
-                                        ${internalRowsAll.map(row => `
-                                            <tr>${tableHeaders.map(h => `<td>${row[h] !== undefined ? row[h] : '—'}</td>`).join('')}</tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        `;
-                    } else {
-                        // Single row — show as a clean summary card
-                        finalUniversityHtml = `
-                            <div class="flex items-center justify-between p-3.5 bg-white/5 dark:bg-white/5 border border-white/5 rounded-2xl">
-                                <div class="flex flex-col">
-                                    <span class="text-[10px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] uppercase tracking-wider">Final University Internal</span>
-                                    <span class="text-[9px] text-[#86868b] mt-0.5">Official mark submitted to MGU University</span>
-                                </div>
-                                <div class="flex items-baseline gap-0.5">
-                                    <span class="text-sm font-black text-[var(--mac-blue)]">${markVal}</span>
-                                    <span class="text-[9px] font-bold text-[#86868b]">/ ${maxVal}</span>
-                                </div>
-                            </div>
-                        `;
-                    }
                 }
 
-                let ccrRowsHtml = '';
+                // Compute overall percentage of final internal or average assessment
+                let cardPct = 100;
+                let displayVal = '—';
+                let displayMax = '—';
+                if (internalRow) {
+                    const markNum = parseFloat(markVal);
+                    const maxNum = parseFloat(maxVal);
+                    if (!isNaN(markNum) && !isNaN(maxNum) && maxNum > 0) {
+                        cardPct = (markNum / maxNum) * 100;
+                        displayVal = markVal;
+                        displayMax = maxVal;
+                    }
+                } else if (rowsToRender.length > 0) {
+                    const firstRow = rowsToRender[0];
+                    const scoreVal = parseFloat(firstRow['Score'] || firstRow['col_1']) || 0;
+                    const maxVal = parseFloat(firstRow['Max Mark'] || firstRow['col_2']) || 100;
+                    cardPct = (scoreVal / maxVal) * 100;
+                    displayVal = firstRow['Score'] || firstRow['col_1'] || '—';
+                    displayMax = firstRow['Max Mark'] || firstRow['col_2'] || '—';
+                }
+
+                const color = getMarksPctColor(cardPct);
+                const barPct = Math.min(100, cardPct);
+                const shortName = subjectName.length > 36 ? subjectName.slice(0, 34) + '…' : subjectName;
+
+                // Stats row (horizontal side-by-side items like Attendance cards!)
+                let statsHtml = '';
+                if (internalRow) {
+                    statsHtml += `
+                        <div>
+                            <p style="font-size:.52rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.08em;margin:0;">Univ. Internal</p>
+                            <p style="font-size:1rem;font-weight:900;color:${color};margin:0;">${displayVal}<span style="font-size:.6rem;font-weight:600;color:#86868b;"> / ${displayMax}</span></p>
+                        </div>
+                    `;
+                }
                 if (rowsToRender.length > 0) {
-                    ccrRowsHtml = `
-                        <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--glass-border); margin-bottom: 12px;">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Assessment Type</th>
-                                        <th>Score</th>
-                                        <th>Max Mark</th>
-                                        <th>Pass</th>
-                                        <th>Result</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${rowsToRender.map(row => {
-                                        const type   = row['Assessment Type'] || row['col_0'] || '—';
-                                        const score  = row['Score'] || row['col_1'] || '—';
-                                        const max    = row['Max Mark'] || row['col_2'] || '—';
-                                        const pass   = row['Pass Mark'] || row['col_3'] || '—';
-                                        const result = row['P/F'] || row['Result'] || row['col_4'] || '—';
-                                        const isFail = ['fail', 'f'].some(f => String(result).toLowerCase().includes(f));
-                                        const isPass = result && !isFail && result !== '—';
-                                        const rowClass = isPass ? 'row-pass' : isFail ? 'row-fail' : '';
-                                        return `
-                                            <tr class="${rowClass}">
-                                                <td>${type}</td>
-                                                <td>${score}</td>
-                                                <td>${max}</td>
-                                                <td>${pass}</td>
-                                                <td>${result}</td>
-                                            </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
+                    if (statsHtml) statsHtml += `<div style="width:1px;height:2rem;background:rgba(128,128,128,.15);"></div>`;
+                    const firstAssess = rowsToRender[0];
+                    const typeName = firstAssess['Assessment Type'] || firstAssess['col_0'] || 'Exam';
+                    const typeShort = typeName.length > 10 ? typeName.slice(0, 8) + '…' : typeName;
+                    const scoreVal = firstAssess['Score'] || firstAssess['col_1'] || '—';
+                    statsHtml += `
+                        <div>
+                            <p style="font-size:.52rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.08em;margin:0;">${typeShort}</p>
+                            <p style="font-size:1rem;font-weight:900;color:var(--text-main);margin:0;">${scoreVal}</p>
+                        </div>
+                    `;
+                }
+                if (rowsToRender.length > 1) {
+                    if (statsHtml) statsHtml += `<div style="width:1px;height:2rem;background:rgba(128,128,128,.15);"></div>`;
+                    statsHtml += `
+                        <div>
+                            <p style="font-size:.52rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.08em;margin:0;">Exams</p>
+                            <p style="font-size:1rem;font-weight:900;color:var(--text-main);margin:0;">${rowsToRender.length}<span style="font-size:.6rem;font-weight:600;color:#86868b;"> tests</span></p>
                         </div>
                     `;
                 }
 
-                if (!ccrRowsHtml && !finalUniversityHtml) return '';
+                // Components list under the bar
+                let componentsListHtml = '';
+                if (internalRowsAll.length > 1) {
+                    componentsListHtml = `
+                        <div style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.4rem;">
+                            ${internalRowsAll.map(row => {
+                                const desc = row['Component'] || row['col_0'] || 'Mark Component';
+                                const val = row['Obtained Mark'] || row['col_1'] || row['Mark'] || '—';
+                                return `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:#86868b; background:rgba(255,255,255,0.02); padding:0.4rem 0.6rem; border-radius:0.75rem; border:1px solid rgba(255,255,255,0.03);">
+                                        <span style="font-weight:700; color:#e5e5ea;">${desc}</span>
+                                        <span style="font-family:monospace; font-weight:800; color:#ffffff;">${val}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                } else if (rowsToRender.length > 0) {
+                    componentsListHtml = `
+                        <div style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.4rem;">
+                            ${rowsToRender.map(row => {
+                                const type = row['Assessment Type'] || row['col_0'] || '—';
+                                const score = row['Score'] || row['col_1'] || '—';
+                                const max = row['Max Mark'] || row['col_2'] || '—';
+                                const result = row['P/F'] || row['Result'] || row['col_4'] || '—';
+                                const isFail = ['fail', 'f'].some(f => String(result).toLowerCase().includes(f));
+                                const isPass = result && !isFail && result !== '—';
+                                const statusColor = isPass ? '#30d158' : isFail ? '#ff453a' : '#86868b';
+                                return `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:#86868b; background:rgba(255,255,255,0.02); padding:0.4rem 0.6rem; border-radius:0.75rem; border:1px solid rgba(255,255,255,0.03);">
+                                        <span style="font-weight:700; color:#e5e5ea;">${type}</span>
+                                        <span style="font-family:monospace; font-weight:800; color:${statusColor}">${score} / ${max}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
 
                 return `
-                    <div class="glass-panel rounded-[2rem] p-5 mb-4 border border-white/5">
-                        <div class="flex items-center gap-2.5 mb-3.5">
-                            <span class="text-base">📝</span>
-                            <h4 class="text-[12px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${subjectName}</h4>
+                    <div class="college-result-subject-card glass-panel" style="
+                        border-radius:1.75rem;
+                        padding:1.1rem 1.25rem;
+                        border:1px solid rgba(128,128,128,.1);
+                        position:relative;
+                        overflow:hidden;
+                        transition:transform .2s ease,box-shadow .2s ease;"
+                        onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(0,0,0,.1)'"
+                        onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+
+                        <!-- Left accent bar -->
+                        <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${color};border-radius:4px 0 0 4px;"></div>
+
+                        <!-- Subject index badge -->
+                        <div style="position:absolute;top:.9rem;right:1rem;">
+                            <span style="font-size:1.1rem;font-weight:900;color:${color};opacity:.18;">${String(idx+1).padStart(2,'0')}</span>
                         </div>
-                        ${ccrRowsHtml}
-                        ${finalUniversityHtml}
+
+                        <div style="padding-left:.5rem;">
+                            <!-- Subject header -->
+                            <p style="font-size:.58rem;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.1em;margin:0 0 .2rem;">Subject</p>
+                            <h4 style="font-size:.9rem;font-weight:800;color:#ffffff;margin:0 0 .75rem;line-height:1.3;padding-right:2rem;">${shortName}</h4>
+
+                            <!-- Stats row -->
+                            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;flex-wrap:wrap;">
+                                ${statsHtml}
+                            </div>
+
+                            <!-- Progress bar -->
+                            <div style="margin-bottom:.6rem;">
+                                <div style="height:5px;border-radius:999px;background:rgba(128,128,128,.12);overflow:hidden;">
+                                    <div style="height:100%;border-radius:999px;background:${getMarksBarBg(cardPct)};width:${barPct.toFixed(1)}%;transition:width .9s cubic-bezier(.4,0,.2,1) ${idx * 0.05}s;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Components list -->
+                            ${componentsListHtml}
+                        </div>
                     </div>
                 `;
             }).join('');
+            contentHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${cardsHtml}</div>`;
         }
 
         // ── Fallback: if no subject names (sections exist but have empty/no subject field)
@@ -4904,7 +4980,6 @@ window.renderExamResults = function () {
                     return `
                         <div class="glass-panel rounded-[2rem] p-5 mb-4 border border-white/5">
                             <div class="flex items-center gap-2.5 mb-3.5">
-                                <span class="text-base">📝</span>
                                 <h4 class="text-[12px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${title}</h4>
                             </div>
                             <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--glass-border);">
@@ -4927,7 +5002,9 @@ window.renderExamResults = function () {
             const hasFetchError = fetchStatus === 'error';
             contentHtml = `
                 <div class="glass-panel rounded-[2rem] p-8 text-center my-6 border border-white/5">
-                    <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">📭</div>
+                    <div class="w-12 h-12 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 text-zinc-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
                     <h3 class="text-base font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${hasFetchError ? 'Portal Fetch Failed' : 'No College Marks Found'}</h3>
                     <p class="text-[10px] font-bold text-[#86868b] mt-2 leading-relaxed mb-4">
                         ${hasFetchError
@@ -4935,7 +5012,7 @@ window.renderExamResults = function () {
                             : `The portal returned no internal marks for Semester ${activeSem}. This semester may not have marks published yet.`}
                     </p>
                     <button onclick="window.autoFetchInternals('${activeSem}', true)" class="px-6 py-2.5 bg-[var(--mac-blue)] text-white rounded-full text-xs font-black spring active:scale-95">
-                        🔄 Retry Fetch
+                        Retry Fetch
                     </button>
                 </div>`;
         }
@@ -5159,17 +5236,20 @@ window.renderClassActivity = function() {
 
     const items = [];
     
+    // 1. Official assignments
     activeAssignments.forEach(r => {
         const statusStr = String(r['Status'] || r['status'] || r['col_4'] || '').trim().toLowerCase();
         const isSubmitted = statusStr.includes('submit') || statusStr.includes('complete') || statusStr.includes('yes');
         items.push({
+            id: 'off_act_' + Math.random(),
             type: 'assignment',
             subject: r['Subject'] || r['subject'] || r['col_1'] || 'General',
             topic: r['Topic'] || r['topic'] || r['col_2'] || 'Assignment Topic',
             date: r['Last Date'] || r['last date'] || r['LastDate'] || r['col_3'] || '—',
             status: isSubmitted ? 'submitted' : 'pending',
             score: r['Mark'] || r['mark'] || r['score'] || r['col_5'] || '—',
-            isExpired: false
+            isExpired: false,
+            isCustom: false
         });
     });
 
@@ -5177,70 +5257,56 @@ window.renderClassActivity = function() {
         const statusStr = String(r['Status'] || r['status'] || r['col_4'] || '').trim().toLowerCase();
         const isSubmitted = statusStr.includes('submit') || statusStr.includes('complete') || statusStr.includes('yes');
         items.push({
+            id: 'off_exp_' + Math.random(),
             type: 'assignment',
             subject: r['Subject'] || r['subject'] || r['col_1'] || 'General',
             topic: r['Topic'] || r['topic'] || r['col_2'] || 'Assignment Topic',
             date: r['Last Date'] || r['last date'] || r['LastDate'] || r['col_3'] || '—',
             status: isSubmitted ? 'submitted' : 'expired',
             score: r['Mark'] || r['mark'] || r['score'] || r['col_5'] || '—',
-            isExpired: true
+            isExpired: true,
+            isCustom: false
         });
     });
 
+    // 2. Official seminars
     seminarRows.forEach(r => {
         const statusStr = String(r['Status'] || r['status'] || r['col_4'] || '').trim().toLowerCase();
         const isCompleted = statusStr.includes('complete') || statusStr.includes('submit') || statusStr.includes('present') || statusStr.includes('yes') || statusStr.includes('completed');
         items.push({
+            id: 'off_sem_' + Math.random(),
             type: 'seminar',
             subject: r['Subject'] || r['subject'] || r['col_1'] || 'General',
             topic: r['Topic'] || r['topic'] || r['col_2'] || 'Seminar Presentation',
             date: r['Date'] || r['date'] || r['col_3'] || '—',
             status: isCompleted ? 'submitted' : 'pending',
             score: r['Score'] || r['score'] || r['Mark'] || r['mark'] || r['col_5'] || '—',
-            isExpired: false
+            isExpired: false,
+            isCustom: false
         });
     });
 
-    let isDemo = false;
-    if (items.length === 0) {
-        isDemo = true;
+    // 3. Custom student planner tasks from local storage
+    const customTasksKey = `machub_custom_tasks_${adminNo}`;
+    let customTasks = [];
+    try {
+        customTasks = JSON.parse(localStorage.getItem(customTasksKey) || '[]');
+    } catch(e) {}
+
+    customTasks.forEach((t, idx) => {
         items.push({
-            type: 'assignment',
-            subject: 'Java Programming',
-            topic: 'Write a multithreaded chat server using sockets',
-            date: 'Tomorrow, 5:00 PM',
-            status: 'pending',
-            score: '—',
-            isExpired: false
+            id: 'cust_' + idx,
+            type: t.type || 'assignment',
+            subject: t.subject || 'Custom',
+            topic: t.topic || 'Task Topic',
+            date: t.date || '—',
+            status: t.status || 'pending',
+            score: t.score || '—',
+            isExpired: t.status === 'expired',
+            isCustom: true,
+            customIndex: idx
         });
-        items.push({
-            type: 'seminar',
-            subject: 'Database Systems',
-            topic: 'NoSQL vs Relational Databases performance study',
-            date: '3 days ago',
-            status: 'submitted',
-            score: '9.5 / 10',
-            isExpired: false
-        });
-        items.push({
-            type: 'assignment',
-            subject: 'Python Programming',
-            topic: 'Implement a REST API using Flask and SQLAlchemy',
-            date: 'Expired yesterday',
-            status: 'expired',
-            score: '—',
-            isExpired: true
-        });
-        items.push({
-            type: 'seminar',
-            subject: 'Computer Networks',
-            topic: 'TCP Congestion Control Algorithms overview',
-            date: 'Last week',
-            status: 'submitted',
-            score: '8.0 / 10',
-            isExpired: false
-        });
-    }
+    });
 
     const totalCount = items.length;
     const pendingCount = items.filter(i => i.status === 'pending').length;
@@ -5263,21 +5329,6 @@ window.renderClassActivity = function() {
         </div>
     `;
 
-    const demoBannerHtml = isDemo ? `
-        <div class="glass-panel p-4 rounded-[2rem] border border-orange-500/20 bg-orange-500/5 backdrop-blur-md mb-5 flex flex-col gap-2">
-            <div class="flex items-center gap-2">
-                <span class="text-lg">✨</span>
-                <h4 class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7]">Showing Demo Preview</h4>
-            </div>
-            <p class="text-[9px] font-bold text-[#86868b] leading-normal">
-                Your assignments and seminars are currently empty. Sync from ePortal to view your actual data.
-            </p>
-            <button onclick="window.syncAndOpenNative('Assignment', 'view-class', 'subjects')" class="mt-1 w-full py-2 bg-[var(--mac-blue)] text-white rounded-full text-[10px] font-black uppercase tracking-wider spring active:scale-95">
-                🔄 Sync ePortal Data
-            </button>
-        </div>
-    ` : '';
-
     const filtered = items.filter(item => {
         if (appState.activityFilter === 'all') return true;
         return item.type === appState.activityFilter;
@@ -5291,11 +5342,56 @@ window.renderClassActivity = function() {
         </div>
     `;
 
+    // Redesigned Custom Task Creator Form
+    const customTaskFormHtml = `
+        <div class="flex justify-between items-center mb-4 w-full px-1">
+            <h3 class="text-xs font-black uppercase tracking-wider text-[#86868b]">Class Schedule & Activity</h3>
+            <button onclick="window.toggleAddTaskForm()" class="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/8 rounded-xl text-[10.5px] font-black text-[#3897f0] transition-all active:scale-95">
+                <span>＋</span> Add Task
+            </button>
+        </div>
+
+        <div id="custom-task-form" class="hidden glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md mb-4 flex flex-col gap-3.5 transition-all">
+            <div class="flex justify-between items-center">
+                <h4 class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7]">New Planner Task</h4>
+                <button onclick="window.toggleAddTaskForm()" class="text-[10.5px] text-zinc-500 hover:text-white font-bold">Cancel</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="space-y-1">
+                    <label class="text-[8px] font-black text-[#86868b] uppercase tracking-wider">Type</label>
+                    <select id="task-type" class="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none">
+                        <option value="assignment" class="bg-zinc-900">Assignment</option>
+                        <option value="seminar" class="bg-zinc-900">Seminar</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[8px] font-black text-[#86868b] uppercase tracking-wider">Subject</label>
+                    <input id="task-subject" type="text" placeholder="e.g. Java" class="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-bold text-white placeholder-zinc-600 outline-none">
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-[8px] font-black text-[#86868b] uppercase tracking-wider">Topic / Title</label>
+                <input id="task-topic" type="text" placeholder="e.g. Socket programming assignment" class="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-bold text-white placeholder-zinc-600 outline-none">
+            </div>
+            <div class="space-y-1">
+                <label class="text-[8px] font-black text-[#86868b] uppercase tracking-wider">Due Date</label>
+                <input id="task-date" type="datetime-local" class="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none">
+            </div>
+            <button onclick="window.saveCustomTask()" class="w-full py-2.5 bg-gradient-to-r from-[#6366f1] to-[#a855f7] text-white text-[10.5px] font-black uppercase tracking-wider rounded-xl transition-all active:scale-95 shadow-md">
+                Save Task
+            </button>
+        </div>
+    `;
+
     let listHtml = '';
     if (filtered.length === 0) {
         listHtml = `
-            <div class="glass-panel rounded-[2rem] p-8 text-center my-6 border border-white/5">
-                <p class="text-xs font-bold text-[#86868b]">No records matching the selected filter.</p>
+            <div class="glass-panel rounded-[2rem] p-8 text-center my-6 border border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent">
+                <p class="text-2xl mb-2">📅</p>
+                <h4 class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7]">No Tasks Found</h4>
+                <p class="text-[9.5px] font-bold text-[#86868b] mt-1.5 leading-relaxed max-w-[240px] mx-auto">
+                    Your class schedule is completely clear! Sync your MGU ePortal or tap "Add Task" to customize your academic plan.
+                </p>
             </div>`;
     } else {
         listHtml = filtered.map(item => {
@@ -5304,29 +5400,49 @@ window.renderClassActivity = function() {
             
             let statusBadge = '';
             if (isSubmitted) {
-                statusBadge = `<span class="px-2 py-0.5 rounded-full bg-[#00d4aa]/15 text-[#00d4aa] text-[8px] font-black uppercase tracking-wider">✓ Done</span>`;
+                statusBadge = `<span class="px-2.5 py-0.5 rounded-full bg-[#30d158]/12 text-[#30d158] text-[8px] font-black uppercase tracking-wider">✓ Done</span>`;
             } else if (isExpired) {
-                statusBadge = `<span class="px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 text-[8px] font-black uppercase tracking-wider">⚠️ Expired</span>`;
+                statusBadge = `<span class="px-2.5 py-0.5 rounded-full bg-[#ff453a]/12 text-[#ff453a] text-[8px] font-black uppercase tracking-wider">⚠️ Expired</span>`;
             } else {
-                statusBadge = `<span class="px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 text-[8px] font-black uppercase tracking-wider">⏱ Pending</span>`;
+                statusBadge = `<span class="px-2.5 py-0.5 rounded-full bg-[#ff9f0a]/12 text-[#ff9f0a] text-[8px] font-black uppercase tracking-wider">⏱ Pending</span>`;
             }
 
-            const borderClass = item.type === 'assignment' ? 'border-l-[4px] border-l-[#0071e3]/60' : 'border-l-[4px] border-l-rose-500/60';
+            const borderClass = item.type === 'assignment' ? 'border-l-[4px] border-l-[#3897f0]' : 'border-l-[4px] border-l-[#a855f7]';
             const typeLabel = item.type === 'assignment' ? 'Assignment' : 'Seminar';
 
+            let customControlsHtml = '';
+            if (item.isCustom) {
+                customControlsHtml = `
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <button onclick="window.toggleCustomTaskStatus(${item.customIndex})" class="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[10px] text-zinc-400 hover:text-white hover:bg-white/10 transition-all active:scale-90" title="Mark Done">
+                            ${isSubmitted ? '↩' : '✓'}
+                        </button>
+                        <button onclick="window.deleteCustomTask(${item.customIndex})" class="w-6 h-6 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-[10px] text-red-400 hover:bg-red-500/20 transition-all active:scale-90" title="Delete Task">
+                            ✕
+                        </button>
+                    </div>
+                `;
+            }
+
             return `
-                <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden flex flex-col gap-2 ${borderClass}">
+                <div class="glass-panel p-5 rounded-[2rem] border border-white/5 bg-white/[0.03] backdrop-blur-md relative overflow-hidden flex flex-col gap-2.5 ${borderClass}">
                     <div class="flex justify-between items-start gap-3">
                         <div class="flex-1 min-w-0">
-                            <span class="text-[8px] font-black text-[#86868b] uppercase tracking-wider block">${typeLabel} • ${item.subject}</span>
-                            <h4 class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-0.5 leading-snug line-clamp-2">${item.topic}</h4>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[8.5px] font-black text-[#86868b] uppercase tracking-wider block">${typeLabel} • ${item.subject}</span>
+                                ${item.isCustom ? '<span class="text-[7.5px] font-black uppercase tracking-widest text-[#3897f0] bg-[#3897f0]/10 px-1.5 py-0.5 rounded-md">Custom</span>' : ''}
+                            </div>
+                            <h4 class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-1.5 leading-snug line-clamp-2">${item.topic}</h4>
                         </div>
-                        ${statusBadge}
+                        <div class="flex items-center gap-2">
+                            ${statusBadge}
+                            ${customControlsHtml}
+                        </div>
                     </div>
                     
                     <div class="flex justify-between items-center mt-2 pt-2 border-t border-white/5 text-[9px] font-bold text-[#86868b]">
                         <span>${item.type === 'assignment' ? 'Due:' : 'Date:'} ${item.date}</span>
-                        ${item.score && item.score !== '—' && item.score !== '' ? `<span class="text-[var(--mac-blue)]">Score: ${item.score}</span>` : ''}
+                        ${item.score && item.score !== '—' && item.score !== '' ? `<span class="text-[#3897f0]">Score: ${item.score}</span>` : ''}
                     </div>
                 </div>
             `;
@@ -5341,18 +5457,28 @@ window.renderClassActivity = function() {
     let trackerHtml = '';
     if (isLinked) {
         trackerHtml = `
-            <div class="glass-panel p-4 rounded-[2rem] border border-white/5 bg-white/5 backdrop-blur-md mb-4 flex items-center justify-between">
-                <div class="text-left space-y-1">
-                    <span class="text-[9px] font-bold text-[#3897f0] uppercase tracking-widest block">University Ledger Progress</span>
-                    <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Degree Completion Tracker</h4>
-                    <p class="text-[10px] font-mono text-zinc-500">${mguDataBlock.program || 'FYUGP Honours'}</p>
-                </div>
-                <div class="text-right font-mono flex-shrink-0">
-                    <span class="text-lg font-black text-[#1d1d1f] dark:text-[#f5f5f7]">${currentCredits}</span>
-                    <span class="text-[10px] text-zinc-600 font-bold">/ ${maxRequiredCredits} CR</span>
-                    <div class="w-24 h-1 bg-zinc-800 rounded-full mt-1.5 overflow-hidden">
-                        <div class="h-full bg-gradient-to-r from-[#3897f0] to-emerald-400 rounded-full" style="width: ${Math.min((currentCredits / maxRequiredCredits) * 100, 100)}%"></div>
+            <div class="glass-panel p-5 rounded-[2rem] border border-white/8 bg-gradient-to-br from-white/[0.04] to-white/[0.01] backdrop-blur-xl mb-4 relative overflow-hidden">
+                <!-- Ambient glow -->
+                <div class="absolute -top-12 -left-12 w-28 h-28 bg-[#3897f0]/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="flex items-center justify-between relative z-10">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-1.5 bg-[#3897f0]/10 border border-[#3897f0]/20 rounded-full px-2.5 py-0.5 w-fit">
+                            <span class="text-[8px] font-black uppercase text-[#3897f0] tracking-wider">🎓 MGU Ledger Linked</span>
+                        </div>
+                        <h4 class="text-xs font-black text-[#1d1d1f] dark:text-[#f5f5f7] mt-2 tracking-tight">Degree Completion Tracker</h4>
+                        <p class="text-[9.5px] font-bold text-zinc-500 mt-1">${mguDataBlock.program || 'FYUGP Honours'}</p>
                     </div>
+                    <div class="text-right font-mono flex-shrink-0">
+                        <span class="text-2xl font-black text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tighter">${currentCredits}</span>
+                        <span class="text-[11px] text-zinc-500 font-black">/ ${maxRequiredCredits} CR</span>
+                    </div>
+                </div>
+                <div class="w-full h-2.5 bg-zinc-950 rounded-full mt-4 overflow-hidden border border-white/5 p-0.5 relative z-10">
+                    <div class="h-full bg-gradient-to-r from-[#6366f1] via-[#a855f7] to-[#30d158] rounded-full transition-all duration-500" style="width: ${Math.min((currentCredits / maxRequiredCredits) * 100, 100)}%"></div>
+                </div>
+                <div class="flex justify-between items-center mt-3 text-[9px] font-bold text-[#86868b] relative z-10">
+                    <span>Completed: ${Math.round(Math.min((currentCredits / maxRequiredCredits) * 100, 100))}%</span>
+                    <span>Synced: ${new Date(mguDataBlock.lastSyncTimestamp || new Date()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                 </div>
             </div>
         `;
@@ -5361,8 +5487,8 @@ window.renderClassActivity = function() {
             <div class="glass-panel p-5 rounded-[2rem] text-center space-y-3 relative overflow-hidden border border-white/5 bg-white/5 backdrop-blur-md mb-4">
                 <div class="space-y-1">
                     <h4 class="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center justify-center gap-1.5">🔒 Unlock Official Degree Track</h4>
-                    <p class="text-[10px] text-zinc-500 max-w-xs mx-auto leading-relaxed">
-                        Link your formal Mahatma Gandhi University PRN to pull current credit scores, verify registration status, and cross-reference syllabus records.
+                    <p class="text-[9.5px] text-zinc-500 max-w-xs mx-auto leading-relaxed">
+                        Link your Mahatma Gandhi University PRN to pull current credit scores, verify registration status, and cross-reference syllabus records.
                     </p>
                 </div>
                 <button 
@@ -5375,7 +5501,97 @@ window.renderClassActivity = function() {
         `;
     }
 
-    container.innerHTML = trackerHtml + window.getFreshnessIndicatorHtml(appState.activityFilter === 'seminar' ? 'Seminar' : 'Assignment') + demoBannerHtml + statsHtml + segmentsHtml + listHtml;
+    container.innerHTML = trackerHtml + window.getFreshnessIndicatorHtml(appState.activityFilter === 'seminar' ? 'Seminar' : 'Assignment') + statsHtml + segmentsHtml + customTaskFormHtml + listHtml;
+};
+
+// ── Custom Task Helper Operations ────────────────────────────────────────
+window.toggleAddTaskForm = function() {
+    const form = document.getElementById('custom-task-form');
+    if (!form) return;
+    form.classList.toggle('hidden');
+};
+
+window.saveCustomTask = function() {
+    const type = document.getElementById('task-type')?.value;
+    const subject = document.getElementById('task-subject')?.value.trim();
+    const topic = document.getElementById('task-topic')?.value.trim();
+    const date = document.getElementById('task-date')?.value.trim();
+
+    if (!subject || !topic) {
+        if (window.showToast) window.showToast('Please fill subject and topic', 'warning');
+        return;
+    }
+
+    const info = getStudentInfo();
+    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
+    if (!adminNo) return;
+
+    const customTasksKey = `machub_custom_tasks_${adminNo}`;
+    let customTasks = [];
+    try {
+        customTasks = JSON.parse(localStorage.getItem(customTasksKey) || '[]');
+    } catch(e) {}
+
+    let formattedDate = 'No deadline';
+    if (date) {
+        formattedDate = new Date(date).toLocaleDateString(undefined, { 
+            month: 'short', 
+            day: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    }
+
+    customTasks.push({
+        type,
+        subject,
+        topic,
+        date: formattedDate,
+        status: 'pending',
+        score: '—'
+    });
+
+    localStorage.setItem(customTasksKey, JSON.stringify(customTasks));
+    if (window.showToast) window.showToast('Task added to planner!', 'success');
+    
+    // Refresh view
+    window.renderClassActivity();
+};
+
+window.deleteCustomTask = function(index) {
+    const info = getStudentInfo();
+    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
+    if (!adminNo) return;
+
+    const customTasksKey = `machub_custom_tasks_${adminNo}`;
+    let customTasks = [];
+    try {
+        customTasks = JSON.parse(localStorage.getItem(customTasksKey) || '[]');
+    } catch(e) {}
+
+    customTasks.splice(index, 1);
+    localStorage.setItem(customTasksKey, JSON.stringify(customTasks));
+    
+    window.renderClassActivity();
+};
+
+window.toggleCustomTaskStatus = function(index) {
+    const info = getStudentInfo();
+    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
+    if (!adminNo) return;
+
+    const customTasksKey = `machub_custom_tasks_${adminNo}`;
+    let customTasks = [];
+    try {
+        customTasks = JSON.parse(localStorage.getItem(customTasksKey) || '[]');
+    } catch(e) {}
+
+    if (customTasks[index]) {
+        customTasks[index].status = customTasks[index].status === 'submitted' ? 'pending' : 'submitted';
+    }
+    localStorage.setItem(customTasksKey, JSON.stringify(customTasks));
+    
+    window.renderClassActivity();
 };
 
 window.renderClassSubjects = window.renderClassActivity;
@@ -5571,7 +5787,7 @@ window.getFreshnessIndicatorHtml = function(section, semester = '') {
 
     if (isFrozen) {
         indicatorColor = 'bg-indigo-500';
-        indicatorText = '🔒 Verified record';
+        indicatorText = 'Verified record';
     }
 
     return `

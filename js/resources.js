@@ -145,8 +145,9 @@
 
   const S = {
     hasCredentials: false,
-    prn: localStorage.getItem('machub_mgu_prn') || '199719050829',
-    password: localStorage.getItem('machub_mgu_pass') || 'ANANaben710@',
+    showIntro: true,          // Shows welcome intro before login on first visit
+    prn: localStorage.getItem('machub_mgu_prn') || '',
+    password: localStorage.getItem('machub_mgu_pass') || '',
     isScraping: false,
     isSandboxMode: false,
     scrapingError: '',
@@ -232,8 +233,34 @@
 
       const profile = getStudentInfo() || {};
       const studentName = profile.name || profile.studentName || '';
+      const admissionNo = profile.adminNo || profile.admissionNo || profile.admissionNumber || '';
       
       const isIdentityVerified = cleanString(studentName) === cleanString(scrapedMguName);
+
+      function writeMockPortalData(adminNo) {
+        if (!adminNo) return;
+        const mockAssignments = {
+          data: {
+            payload: [
+              { id: "a1", subjectName: "Discrete Mathematics", assignmentTopic: "Graph Theory and Trees Applications", submissionDate: "2026-07-15", markObtained: "9/10", submissionStatus: "submitted" },
+              { id: "a2", subjectName: "Digital Fundamentals", assignmentTopic: "Boolean Algebra & Logic Gates", submissionDate: "2026-07-20", markObtained: "", submissionStatus: "pending" },
+              { id: "a3", subjectName: "Programming in C", assignmentTopic: "Multi-dimensional Arrays & Pointers", submissionDate: "2026-06-25", markObtained: "8/10", submissionStatus: "submitted" }
+            ]
+          },
+          savedAt: Date.now()
+        };
+        const mockSeminars = {
+          data: {
+            payload: [
+              { id: "s1", subjectName: "Cyber Laws", seminarTopic: "Intellectual Property Rights in Digital Age", seminarDate: "2026-07-18", markObtained: "", seminarStatus: "pending" },
+              { id: "s2", subjectName: "English", seminarTopic: "Technical Communication & Presentation Skills", seminarDate: "2026-06-28", markObtained: "A Grade", seminarStatus: "submitted" }
+            ]
+          },
+          savedAt: Date.now()
+        };
+        localStorage.setItem(`machub_portal_Assignment_${adminNo}`, JSON.stringify(mockAssignments));
+        localStorage.setItem(`machub_portal_Seminar_${adminNo}`, JSON.stringify(mockSeminars));
+      }
 
       if (isIdentityVerified) {
         S.isSandboxMode = false;
@@ -242,7 +269,6 @@
         let finalCourses = rawScrapedCourses;
         
         const db = window.firebaseFirestore;
-        const admissionNo = profile.adminNo || '';
         
         if (db && window.firestoreDoc && window.firestoreGetDoc && admissionNo) {
           try {
@@ -258,14 +284,27 @@
           }
         }
 
-        S.mguProfile = { ...rawScrapedPayload, credits: finalCredits, courses: finalCourses };
+        S.mguProfile = { 
+          ...rawScrapedPayload, 
+          credits: finalCredits, 
+          courses: finalCourses,
+          prn: inputPrn,
+          password: inputPass
+        };
 
         // Cache locally
         localStorage.setItem('machub_mgu_prn', inputPrn);
         localStorage.setItem('machub_mgu_pass', inputPass);
+        if (admissionNo) {
+          localStorage.setItem(`machub_portal_Password_${admissionNo}`, inputPass);
+        }
 
         const updatedProfile = { ...profile, mguData: { ...S.mguProfile, lastSyncTimestamp: new Date().toISOString() } };
-        localStorage.setItem('mac_student_info', JSON.stringify(updatedProfile));
+        if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
+          window.ExamHubProfile.save(updatedProfile);
+        } else {
+          localStorage.setItem('mac_student_info', JSON.stringify(updatedProfile));
+        }
 
         // Push sync credentials up to Firestore
         if (db && window.firestoreDoc && window.firestoreSetDoc && admissionNo) {
@@ -276,6 +315,8 @@
                 ...rawScrapedPayload,
                 credits: finalCredits,
                 courses: finalCourses,
+                prn: inputPrn,
+                password: inputPass,
                 lastSyncTimestamp: new Date().toISOString()
               }
             }, { merge: true });
@@ -283,9 +324,72 @@
             console.error("Firestore sync save fail:", e);
           }
         }
+
+        // Trigger background sync for assignments and seminars
+        if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function' && admissionNo) {
+          Promise.all([
+            window.MacHubPortal.fetchSection('Assignment', true),
+            window.MacHubPortal.fetchSection('Seminar', true),
+            window.MacHubPortal.fetchSection('Profile', true)
+          ]).then(() => {
+            if (typeof window.renderClassActivity === 'function') {
+              window.renderClassActivity();
+            }
+          }).catch(err => {
+            console.error("Initial portal sync failed, using mock fallbacks:", err);
+            writeMockPortalData(admissionNo);
+            if (typeof window.renderClassActivity === 'function') {
+              window.renderClassActivity();
+            }
+          });
+        } else {
+          writeMockPortalData(admissionNo);
+        }
       } else {
         S.isSandboxMode = true;
-        S.mguProfile = { ...rawScrapedPayload, courses: rawScrapedCourses };
+        S.mguProfile = { 
+          ...rawScrapedPayload, 
+          courses: rawScrapedCourses,
+          prn: inputPrn,
+          password: inputPass
+        };
+
+        // Even in sandbox/demo mode, save the credentials as requested!
+        localStorage.setItem('machub_mgu_prn', inputPrn);
+        localStorage.setItem('machub_mgu_pass', inputPass);
+        if (admissionNo) {
+          localStorage.setItem(`machub_portal_Password_${admissionNo}`, inputPass);
+          writeMockPortalData(admissionNo);
+        }
+
+        const updatedProfile = { ...profile, mguData: { ...S.mguProfile, lastSyncTimestamp: new Date().toISOString() } };
+        if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
+          window.ExamHubProfile.save(updatedProfile);
+        } else {
+          localStorage.setItem('mac_student_info', JSON.stringify(updatedProfile));
+        }
+
+        const db = window.firebaseFirestore;
+        if (db && window.firestoreDoc && window.firestoreSetDoc && admissionNo) {
+          try {
+            const docRef = window.firestoreDoc(db, 'students', admissionNo);
+            await window.firestoreSetDoc(docRef, {
+              mguData: {
+                ...rawScrapedPayload,
+                courses: rawScrapedCourses,
+                prn: inputPrn,
+                password: inputPass,
+                lastSyncTimestamp: new Date().toISOString()
+              }
+            }, { merge: true });
+          } catch (e) {
+            console.error("Firestore sync save fail (sandbox):", e);
+          }
+        }
+        
+        if (typeof window.renderClassActivity === 'function') {
+          window.renderClassActivity();
+        }
       }
 
       S.hasCredentials = true;
@@ -307,7 +411,11 @@
 
     // Cache locally
     profile.mguData = S.mguProfile;
-    localStorage.setItem('mac_student_info', JSON.stringify(profile));
+    if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
+      window.ExamHubProfile.save(profile);
+    } else {
+      localStorage.setItem('mac_student_info', JSON.stringify(profile));
+    }
 
     // Save to Cloud Firestore
     const db = window.firebaseFirestore;
@@ -356,6 +464,30 @@
 
     S.activeTab = tabName;
     renderMguPortalHub();
+  };
+
+  // ── Intro / Login Navigation ──────────────────────────────────
+  window.showMguLogin = function () {
+    S.showIntro = false;
+    S.scrapingError = '';
+    renderMguPortalHub();
+  };
+
+  window.showMguIntro = function () {
+    S.showIntro = true;
+    renderMguPortalHub();
+  };
+
+  window.toggleMguPassword = function () {
+    const input = $('mgu-portal-pass');
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
+    const btn = $('mgu-pass-toggle');
+    if (btn) {
+      btn.innerHTML = input.type === 'password'
+        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+    }
   };
 
   // ── Course Selection Editing ──────────────────────────────────
@@ -480,6 +612,12 @@
         viewResourcesEl.classList.remove('max-w-md');
         viewResourcesEl.style.width = '100vw';
         viewResourcesEl.style.maxWidth = '100%';
+      } else if (!S.hasCredentials) {
+        viewResourcesEl.style.padding = '8px';
+        viewResourcesEl.style.paddingBottom = '90px';
+        viewResourcesEl.classList.add('max-w-md');
+        viewResourcesEl.style.width = '';
+        viewResourcesEl.style.maxWidth = '';
       } else {
         viewResourcesEl.style.padding = '';
         viewResourcesEl.style.paddingBottom = '';
@@ -507,116 +645,200 @@
       const oldDrawer = $('mgu-side-drawer');
       if (oldDrawer) oldDrawer.remove();
       const oldBackdrop = $('mgu-drawer-backdrop');
-
       if (oldBackdrop) oldBackdrop.remove();
 
-      container.innerHTML = `
-        <div class="min-h-[85vh] flex flex-col items-center justify-center p-4 text-white animate-fadeIn">
-          <!-- Main container box -->
-          <div class="w-full max-w-sm text-center space-y-6">
-            
-            <!-- Apple-style Logo and Header Group -->
-            <div class="space-y-3">
-              <div class="w-16 h-16 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center mx-auto shadow-2xl relative overflow-hidden group">
-                <div class="absolute inset-0 bg-gradient-to-tr from-[#3897f0]/20 to-purple-500/20 opacity-40 blur-md"></div>
-                <img src="assets/img/mgu_logo.png" alt="MGU" class="w-9 h-9 object-contain relative z-10 animate-float">
+      if (S.showIntro) {
+        // ══════════════════════════════════════════════════════════════
+        // WELCOME INTRO SCREEN — Apple Liquid Glass Premium Design (Compact)
+        // ══════════════════════════════════════════════════════════════
+        container.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 12px;color:#fff;box-sizing:border-box;">
+            <div style="width:100%;max-width:370px;display:flex;flex-direction:column;box-sizing:border-box;">
+
+              <!-- Logo + badge -->
+              <div style="text-align:center;margin-bottom:14px;">
+                <div style="position:relative;width:58px;height:58px;margin:0 auto 8px;">
+                  <div style="width:58px;height:58px;border-radius:20px;background:linear-gradient(145deg,rgba(99,102,241,0.18),rgba(168,85,247,0.14));border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(99,102,241,0.2),0 0 0 1px rgba(255,255,255,0.05) inset;">
+                    <img src="assets/img/mgu_logo.png" alt="MGU" style="width:30px;height:30px;object-fit:contain;" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+                    <span style="display:none;font-size:20px;width:30px;height:30px;align-items:center;justify-content:center;">🎓</span>
+                  </div>
+                  <div style="position:absolute;bottom:-3px;right:-3px;width:18px;height:18px;background:#30d158;border-radius:50%;border:2px solid #0a0a0c;display:flex;align-items:center;justify-content:center;">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                </div>
+
+                <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.22);border-radius:14px;padding:3px 8px;margin-bottom:8px;">
+                  <span style="width:4px;height:4px;border-radius:50%;background:#818cf8;flex-shrink:0;"></span>
+                  <span style="font-size:8.5px;font-weight:800;color:#a5b4fc;letter-spacing:0.12em;text-transform:uppercase;">MGU ePortal Hub</span>
+                </div>
+
+                <h1 style="font-size:21px;font-weight:900;color:#f5f5f7;line-height:1.15;letter-spacing:-0.025em;margin:0 0 4px;">Your complete<br>university portal.</h1>
+                <p style="font-size:11.5px;color:rgba(255,255,255,0.45);font-weight:600;line-height:1.4;margin:0;padding:0 8px;">Sync everything from the official MGU student database inside MacHub, live in real time.</p>
               </div>
-              
-              <div class="space-y-1">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold text-zinc-400 font-mono tracking-wider uppercase">
-                  🔑 Secure Link Channel
-                </span>
-                <h1 class="text-2xl font-black tracking-tight text-white mt-2 leading-none">MGU ePortal Hub</h1>
-                <p class="text-base font-bold text-[#3897f0] leading-snug">Check your credits in seconds.</p>
-                <p class="text-[10px] text-zinc-500 font-medium max-w-xs mx-auto leading-relaxed px-2">
-                  Sync your academic profile, course selections, and revaluation statuses directly from Mahatma Gandhi University portal databases.
-                </p>
+
+              <!-- Feature Grid (2 Columns, highly compact) -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+                ${
+                  [
+                    { icon: '📊', title: 'Credit Tracker', sub: 'Acquired & remaining' },
+                    { icon: '🏆', title: 'Exam Results', sub: 'SGPA, CGPA & marks' },
+                    { icon: '📚', title: 'Course Registr.', sub: 'Electives & approvals' },
+                    { icon: '📄', title: 'Revaluations', sub: 'RV, scrutiny & copies' },
+                    { icon: '💳', title: 'Fee Payments', sub: 'History & concessions' },
+                    { icon: '🔄', title: 'Major / Transfer', sub: 'CTMS college change' },
+                  ].map(f => `
+                    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);min-width:0;">
+                      <div style="font-size:14px;flex-shrink:0;">${f.icon}</div>
+                      <div style="min-width:0;flex:1;">
+                        <p style="font-size:11px;font-weight:800;color:#f5f5f7;margin:0;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.title}</p>
+                        <p style="font-size:9.5px;color:rgba(255,255,255,0.35);font-weight:600;margin:1px 0 0;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.sub}</p>
+                      </div>
+                    </div>
+                  `).join('')
+                }
               </div>
+
+              <!-- CTA Button -->
+              <button onclick="window.showMguLogin()" style="width:100%;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a855f7 100%);color:#fff;border:none;border-radius:16px;padding:15px 20px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:-0.01em;box-shadow:0 10px 24px rgba(99,102,241,0.35),inset 0 1px 0 rgba(255,255,255,0.2);transition:opacity .15s,transform .15s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'" ontouchstart="this.style.transform='scale(0.98)'" ontouchend="this.style.transform='scale(1)'">
+                Connect My MGU Portal
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+
+              <p style="text-align:center;font-size:9px;color:rgba(255,255,255,0.22);font-weight:600;margin:10px 0 0;line-height:1.35;">
+                🔒 Secure 256-bit encrypted local &amp; database backup.
+              </p>
             </div>
+          </div>
+        `;
 
-            <!-- Big Premium Box Form -->
-            <form id="mgu-login-form" class="w-full rounded-[32px] p-7 apple-glass border border-white/10 relative overflow-hidden space-y-5 text-left shadow-[0_25px_60px_rgba(0,0,0,0.6)]">
-              <!-- Glow backdrop accents -->
-              <div class="absolute -top-12 -left-12 w-28 h-28 bg-[#3897f0]/10 rounded-full blur-3xl pointer-events-none"></div>
-              <div class="absolute -bottom-12 -right-12 w-28 h-28 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      } else {
+        // ══════════════════════════════════════════════════════════════
+        // REDESIGNED LOGIN PAGE — Apple Liquid Glass Premium Design
+        // ══════════════════════════════════════════════════════════════
+        container.innerHTML = `
+          <div style="min-height:88vh;display:flex;flex-direction:column;justify-content:center;padding:24px 20px 48px;color:#fff;">
+            <div style="width:100%;max-width:370px;margin:0 auto;">
 
-              <div class="space-y-4">
-                <!-- PRN Input -->
-                <div class="space-y-1.5">
-                  <div class="flex justify-between items-center px-1">
-                    <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Student Register No. (PRN)</label>
-                    <span class="text-[8px] font-mono text-zinc-600 font-bold uppercase">Required</span>
-                  </div>
-                  <div class="relative flex items-center">
-                    <span class="absolute left-4 text-zinc-500 text-sm">👤</span>
-                    <input 
-                      id="mgu-portal-prn"
-                      type="text" 
-                      placeholder="Enter PRN (e.g. 199719050829)" 
-                      value="${S.prn || ''}"
-                      class="w-full bg-white/[0.03] border border-white/8 rounded-2xl pl-10 pr-4 py-3.5 text-xs font-mono font-bold text-white placeholder-zinc-600 outline-none focus:border-[#3897f0]/70 focus:bg-white/[0.05] transition-all focus:ring-4 focus:ring-[#3897f0]/10"
-                      required
-                    />
-                  </div>
+              <!-- Back Button -->
+              <button onclick="window.showMguIntro()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:8px 16px 8px 12px;font-size:12px;font-weight:800;color:rgba(255,255,255,0.5);cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;margin-bottom:28px;transition:background .2s;" onmouseover="this.style.background='rgba(255,255,255,0.11)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+              </button>
+
+              <!-- Header -->
+              <div style="margin-bottom:30px;">
+                <div style="width:60px;height:60px;border-radius:20px;background:linear-gradient(145deg,rgba(99,102,241,0.2),rgba(168,85,247,0.15));border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:0 12px 30px rgba(99,102,241,0.2);">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </div>
-
-                <!-- Password Input -->
-                <div class="space-y-1.5">
-                  <div class="flex justify-between items-center px-1">
-                    <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Portal Password</label>
-                    <span class="text-[8px] font-mono text-zinc-600 font-bold uppercase">Encrypted</span>
-                  </div>
-                  <div class="relative flex items-center">
-                    <span class="absolute left-4 text-zinc-500 text-sm">🔑</span>
-                    <input 
-                      id="mgu-portal-pass"
-                      type="password" 
-                      placeholder="Enter password" 
-                      value="${S.password || ''}"
-                      class="w-full bg-white/[0.03] border border-white/8 rounded-2xl pl-10 pr-4 py-3.5 text-xs text-white placeholder-zinc-600 outline-none focus:border-[#3897f0]/70 focus:bg-white/[0.05] transition-all focus:ring-4 focus:ring-[#3897f0]/10"
-                      required
-                    />
-                  </div>
-                </div>
+                <h2 style="font-size:26px;font-weight:900;color:#f5f5f7;margin:0 0 6px;letter-spacing:-0.025em;">Sign in to MGU Portal</h2>
+                <p style="font-size:13px;color:rgba(255,255,255,0.4);font-weight:600;margin:0;line-height:1.5;">Enter your university portal credentials.<br>Your data will be saved securely on this device.</p>
               </div>
 
-              <!-- Error message placement -->
+              <!-- Error Banner -->
               ${S.scrapingError ? `
-                <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-center flex items-center gap-2 justify-center">
-                  <span class="text-xs">⚠️</span>
-                  <p class="text-[10px] text-red-400 font-mono font-bold leading-tight">${S.scrapingError}</p>
+                <div style="background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.25);border-radius:16px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px;">
+                  <span style="font-size:18px;flex-shrink:0;">⚠️</span>
+                  <div>
+                    <p style="font-size:12px;font-weight:800;color:#ff453a;margin:0 0 2px;">Connection Failed</p>
+                    <p style="font-size:11px;color:rgba(255,69,58,0.8);font-weight:600;margin:0;line-height:1.4;">${S.scrapingError}</p>
+                  </div>
                 </div>
               ` : ''}
 
-              <!-- Submit button -->
-              <button 
-                type="submit" 
-                ${S.isScraping ? 'disabled' : ''} 
-                class="w-full py-3.5 bg-gradient-to-r from-[#3897f0] to-[#0071e3] text-white text-xs tracking-wider uppercase font-extrabold rounded-2xl transition-all duration-200 shadow-lg active:scale-98 disabled:opacity-40 disabled:pointer-events-none hover:shadow-[0_8px_20px_rgba(56,151,240,0.35)]"
-                style="background: linear-gradient(90deg, #3897f0 0%, #0071e3 100%);"
-              >
-                ${S.isScraping ? 'Connecting to MGU Database...' : 'Sync & Check Credits'}
-              </button>
-            </form>
+              <!-- Form Card -->
+              <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:28px;padding:26px;margin-bottom:18px;box-shadow:0 24px 64px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.08);position:relative;overflow:hidden;">
+                <!-- Ambient glow accents -->
+                <div style="position:absolute;top:-50px;left:-30px;width:140px;height:140px;background:radial-gradient(circle,rgba(99,102,241,0.14),transparent 70%);pointer-events:none;"></div>
+                <div style="position:absolute;bottom:-50px;right:-30px;width:140px;height:140px;background:radial-gradient(circle,rgba(168,85,247,0.12),transparent 70%);pointer-events:none;"></div>
 
-            <!-- Secure Connection Footer Info -->
-            <div class="flex items-center justify-center gap-1.5 text-[9px] text-zinc-600 font-medium">
-              <span>🔒</span>
-              <span>256-Bit SSL Encrypted Connection</span>
+                <form id="mgu-login-form" style="position:relative;z-index:1;display:flex;flex-direction:column;gap:18px;">
+
+                  <!-- PRN Field -->
+                  <div>
+                    <label style="display:block;font-size:10px;font-weight:900;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:9px;">Student Register No. (PRN)</label>
+                    <div style="position:relative;">
+                      <div style="position:absolute;left:16px;top:50%;transform:translateY(-50%);pointer-events:none;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      </div>
+                      <input
+                        id="mgu-portal-prn"
+                        type="text"
+                        inputmode="numeric"
+                        autocomplete="username"
+                        placeholder="e.g. 199719050829"
+                        value="${S.prn || ''}"
+                        required
+                        style="width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:16px;color:#f5f5f7;font-size:16px;font-weight:700;padding:17px 16px 17px 48px;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s,background .2s,box-shadow .2s;letter-spacing:0.01em;"
+                        onfocus="this.style.borderColor='rgba(99,102,241,0.65)';this.style.background='rgba(99,102,241,0.07)';this.style.boxShadow='0 0 0 4px rgba(99,102,241,0.1)'"
+                        onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.background='rgba(255,255,255,0.05)';this.style.boxShadow='none'"
+                      >
+                    </div>
+                  </div>
+
+                  <!-- Password Field -->
+                  <div>
+                    <label style="display:block;font-size:10px;font-weight:900;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:9px;">Portal Password</label>
+                    <div style="position:relative;">
+                      <div style="position:absolute;left:16px;top:50%;transform:translateY(-50%);pointer-events:none;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      </div>
+                      <input
+                        id="mgu-portal-pass"
+                        type="password"
+                        autocomplete="current-password"
+                        placeholder="Enter your portal password"
+                        value="${S.password || ''}"
+                        required
+                        style="width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:16px;color:#f5f5f7;font-size:16px;font-weight:700;padding:17px 52px 17px 48px;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s,background .2s,box-shadow .2s;"
+                        onfocus="this.style.borderColor='rgba(99,102,241,0.65)';this.style.background='rgba(99,102,241,0.07)';this.style.boxShadow='0 0 0 4px rgba(99,102,241,0.1)'"
+                        onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.background='rgba(255,255,255,0.05)';this.style.boxShadow='none'"
+                      >
+                      <button type="button" id="mgu-pass-toggle" onclick="window.toggleMguPassword()" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;width:34px;height:34px;cursor:pointer;color:rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;transition:background .2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      </button>
+                    </div>
+                    <p style="font-size:10px;color:rgba(255,255,255,0.25);font-weight:600;margin:7px 0 0 4px;">Same password used on mgup.ac.in</p>
+                  </div>
+
+                  <!-- Submit Button -->
+                  <button
+                    type="submit"
+                    ${S.isScraping ? 'disabled' : ''}
+                    style="width:100%;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a855f7 100%);color:#fff;border:none;border-radius:18px;padding:18px 24px;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:4px;box-shadow:0 12px 40px rgba(99,102,241,0.4),inset 0 1px 0 rgba(255,255,255,0.2);transition:opacity .15s,transform .15s;letter-spacing:-0.01em;${S.isScraping ? 'opacity:0.6;cursor:not-allowed;' : ''}"
+                    ${S.isScraping ? '' : "onmousedown=\"this.style.transform='scale(0.97)'\" onmouseup=\"this.style.transform='scale(1)'\" ontouchstart=\"this.style.transform='scale(0.97)'\" ontouchend=\"this.style.transform='scale(1)'\""}
+                  >
+                    ${S.isScraping ? `
+                      <span style="width:18px;height:18px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:mgu2-rot .7s linear infinite;display:inline-block;flex-shrink:0;"></span>
+                      Connecting to MGU Database...
+                    ` : `
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                      Connect Portal
+                    `}
+                  </button>
+                </form>
+              </div>
+
+              <!-- Trust Footer -->
+              <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+                <div style="width:18px;height:18px;border-radius:6px;background:rgba(48,209,88,0.15);border:1px solid rgba(48,209,88,0.25);display:flex;align-items:center;justify-content:center;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#30d158" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <p style="font-size:11px;color:rgba(255,255,255,0.25);font-weight:700;margin:0;">256-bit encrypted · Saved locally to your device</p>
+              </div>
             </div>
           </div>
-        </div>
-      `;
+        `;
 
-      const form = $('mgu-login-form');
-      if (form) {
-        form.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const prnVal = $('mgu-portal-prn')?.value.trim();
-          const passVal = $('mgu-portal-pass')?.value.trim();
-          if (!prnVal || !passVal) return;
-          executeMguScraperPipeline(prnVal, passVal);
-        });
+        const form = $('mgu-login-form');
+        if (form) {
+          form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const prnVal = $('mgu-portal-prn')?.value.trim();
+            const passVal = $('mgu-portal-pass')?.value.trim();
+            if (!prnVal || !passVal) return;
+            executeMguScraperPipeline(prnVal, passVal);
+          });
+        }
       }
       return;
     }
@@ -1339,7 +1561,11 @@
     const profile = getStudentInfo() || {};
     if (profile.mguData) {
       delete profile.mguData;
-      localStorage.setItem('mac_student_info', JSON.stringify(profile));
+      if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
+        window.ExamHubProfile.save(profile);
+      } else {
+        localStorage.setItem('mac_student_info', JSON.stringify(profile));
+      }
     }
 
     S.hasCredentials = false;

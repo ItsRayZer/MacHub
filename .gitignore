@@ -21,3 +21,8 @@ serviceAccountKey.json
 .dev.vars
 workers/.dev.vars
 workers/.wrangler/
+
+# Scratch & temporary credential keys
+scratch/
+credentials.json
+firebase_credentials.json

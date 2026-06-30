@@ -11,66 +11,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MacHub">
     <link rel="stylesheet" href="styles/tailwind.css">
-    <link rel="stylesheet" href="styles/base.css?v=2.0.5">
-    <link rel="stylesheet" href="styles/components.css?v=2.0.5">
-    <link rel="stylesheet" href="styles/mobile-optimized.css?v=2.0.5">
-    <link rel="stylesheet" href="styles/mac_ai_chat.css?v=2.0.5">
-    <link rel="stylesheet" href="styles/desktop.css?v=2.0.5">
-    <link rel="stylesheet" href="styles/claim_profile.css?v=2.0.5">
-    <script>
-        (function() {
-            try {
-                document.documentElement.classList.add('dark');
-            } catch (_) {}
-        })();
-    </script>
-    <style>
-        /* MGU v2 scoped styles */
-        .mgu2-hdr { position:sticky;top:0;z-index:20;background:rgba(0,0,0,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.07);padding:12px 16px;display:flex;align-items:center;gap:12px; }
-        .mgu2-back { width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#f5f5f7;flex-shrink:0; }
-        .mgu2-wrap { max-width:640px;margin:0 auto;padding:20px 16px 100px; }
-        .mgu2-inp { width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:14px;color:#f5f5f7;font-size:15px;font-weight:700;padding:14px 15px;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s; }
-        .mgu2-inp:focus { border-color:#6366f1; }
-        .mgu2-inp::placeholder { color:#86868b;font-weight:500; }
-        .mgu2-sel { width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:14px;color:#f5f5f7;font-size:14px;font-weight:600;padding:14px 15px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-appearance:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2386868b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px;transition:border-color .2s; }
-        .mgu2-sel:focus { border-color:#6366f1; }
-        .mgu2-sel option { background:#1c1c1e; }
-        .mgu2-lbl { font-size:11px;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;display:block; }
-        .mgu2-card { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:18px; }
-        .mgu2-submit { width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:0.01em;transition:opacity .2s; }
-        .mgu2-submit:disabled { opacity:0.6;cursor:not-allowed; }
-        .mgu2-spin { width:16px;height:16px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:mgu2-rot .7s linear infinite;display:inline-block; }
-        @keyframes mgu2-rot { to { transform:rotate(360deg); } }
-        .mgu2-sk { border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.09) 50%,rgba(255,255,255,0.04) 75%);background-size:200% 100%;animation:mgu2-shim 1.5s infinite; }
-        @keyframes mgu2-shim { to { background-position:-200% 0; } }
-        .mgu2-th { padding:10px 10px;text-align:left;font-size:10px;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid rgba(255,255,255,0.07);white-space:nowrap; }
-        .mgu2-th-r { text-align:right; }
-        .mgu2-tc { border-bottom:1px solid rgba(255,255,255,0.04); }
-        .mgu2-tc-r { text-align:right;font-weight:700; }
-        .mgu2-err { background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.3);border-radius:12px;color:#ff453a;font-size:13px;font-weight:700;padding:12px 14px;margin-bottom:14px;display:none; }
-        .mgu2-new { display:inline-block;font-size:9px;font-weight:900;color:#fff;background:linear-gradient(135deg,#6366f1,#a855f7);padding:2px 7px;border-radius:6px;vertical-align:middle;margin-left:6px;letter-spacing:0.05em; }
-
-        /* ── Community Chat Styles ──────────────────────────────────── */
-        #view-chat { display:flex; flex-direction:column; position:relative; }
-        .chat-header { position:sticky;top:0;z-index:10;background:rgba(18,18,20,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.06);padding:12px 16px;display:flex;align-items:center;justify-content:space-between; }
-        .chat-header-left { display:flex;align-items:center;gap:10px; }
-        .chat-header-icon { width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-        .chat-header-title { font-size:16px;font-weight:900;color:#f5f5f7;letter-spacing:-0.01em; }
-        .chat-header-sub { font-size:10px;font-weight:700;color:#86868b;display:flex;align-items:center;gap:4px;margin-top:1px; }
-        .chat-live-dot { width:6px;height:6px;border-radius:50%;background:#30d158;animation:chatPulse 2s infinite; }
-        @keyframes chatPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
-        .chat-msg-list { flex:1;overflow-y:auto;padding:16px 8px 16px;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch; }
-        .chat-input-bar { position:sticky;bottom:0;background:rgba(18,18,20,0.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,0.06);padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom)); }
-        .chat-input-row { display:flex;align-items:flex-end;gap:8px; }
-        .chat-input-wrap { flex:1;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.1);border-radius:20px;padding:8px 14px;display:flex;flex-direction:column;gap:2px;transition:border-color .2s; }
-        .chat-input-wrap:focus-within { border-color:rgba(99,102,241,0.6); }
-        #chat-input { background:transparent;border:none;outline:none;color:#f5f5f7;font-size:14px;font-family:inherit;resize:none;width:100%;max-height:80px;overflow-y:auto;line-height:1.4; }
-        #chat-input::placeholder { color:#86868b; }
-        #chat-char-count { font-size:9px;font-weight:700;color:rgba(255,255,255,0.3);text-align:right;transition:color .2s; }
-        .chat-send-btn { width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:opacity .2s,transform .15s;color:#fff; }
-        .chat-send-btn:active { transform:scale(0.9); }
-        .chat-send-btn:disabled { opacity:0.4;cursor:not-allowed; }
-    </style>
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/mobile-optimized.css">
+    <link rel="stylesheet" href="styles/mac_ai_chat.css">
+    <link rel="stylesheet" href="styles/desktop.css">
+    <link rel="stylesheet" href="styles/claim_profile.css">
 </head>
 <body class="pb-32 app-shell-ready">
 
@@ -138,15 +84,16 @@
                 </div>
             </div>
 
-            <div id="ob-step-3" class="hidden space-y-3 md:space-y-6">
+            <!-- Step 3: Confirm profile & guide -->
+            <div id="ob-step-3" class="hidden space-y-8">
                 <div class="text-left">
-                    <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.25em] mb-1">Profile linked</p>
-                    <h2 class="text-2xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight">You are ready.</h2>
+                    <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.25em] mb-2">Profile linked</p>
+                    <h2 class="text-3xl font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight">You are ready.</h2>
                 </div>
 
                 <div id="ob-confirm-card" class="text-left"></div>
 
-                <div id="ob-step3-actions" class="mt-3">
+                <div id="ob-step3-actions" class="flex flex-col gap-3.5 mt-6">
                     <!-- Populated dynamically by onboarding.js -->
                 </div>
             </div>
@@ -172,7 +119,7 @@
                 <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="logo" id="userGreeting" style="margin: 0;">
             </div>
 
-            <!-- Right: Pulsing announcement bell button -->
+            <!-- Right: Insta-like pulsing announcement bell button -->
             <button onclick="openAnnouncements()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30 relative" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);" aria-label="Open Announcements">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -199,8 +146,12 @@
             </div>
         </div>
 
-        <!-- departmentFilters kept hidden as placeholder in background if needed -->
-        <div id="departmentFilters" class="hidden"></div>
+        <div class="max-w-md mx-auto px-4 mt-3 mb-3">
+            <div class="seat-toolbar">
+                <div id="departmentFilters" class="seat-dropdown hidden"></div>
+                <div id="daySelector" class="seat-dropdown"></div>
+            </div>
+        </div>
 
         <!-- Empty State UI -->
         <div id="emptyState" class="hidden mx-4 glass-panel rounded-[2rem] p-10 mt-4 text-center shadow-sm">
@@ -222,22 +173,19 @@
                 <div id="timetableContent"></div>
             </div>
 
-            <div id="sub-view-results" class="w-full hidden">
-                <!-- Just a launch card — the full page is at view-mgu-result -->
-                <div onclick="switchView('view-mgu-result'); if(window.initMguPage) window.initMguPage();"
-                     style="cursor:pointer;background:linear-gradient(135deg,rgba(99,102,241,0.12) 0%,rgba(168,85,247,0.08) 100%);border:1px solid rgba(99,102,241,0.25);border-radius:20px;padding:28px 20px;text-align:center;margin:8px 0;">
-                    <div style="font-size:40px;margin-bottom:12px;">🎓</div>
-                    <h3 style="font-size:16px;font-weight:900;color:#f5f5f7;margin:0 0 6px;">MGU University Result</h3>
-                    <p style="font-size:12px;color:#86868b;font-weight:600;margin:0 0 16px;">Check your SGPA, CGPA and full subject marks</p>
-                    <span style="display:inline-block;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;font-size:13px;font-weight:800;padding:10px 24px;border-radius:12px;">Open Result Portal →</span>
+            <div id="sub-view-results" class="hidden w-full">
+                <!-- Sleek Glassmorphism Coming Soon Card -->
+                <div class="glass-panel rounded-3xl p-8 text-center my-6 relative overflow-hidden shadow-sm">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-[var(--mac-blue)] opacity-10 rounded-full -mr-12 -mt-12"></div>
+                    <div class="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 floating">🏆</div>
+                    <h3 class="text-xl font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Results Coming Soon</h3>
+                    <p class="text-[12px] font-bold text-[#86868b] mt-2 leading-relaxed">
+                        Semester exam results and performance analytics are being compiled. Stay tuned!
+                    </p>
                 </div>
             </div>
 
-
-
             <div id="sub-view-seats">
-                <!-- Seating Day Selector -->
-                <div id="daySelector" class="seat-dropdown mb-4"></div>
                 <!-- Hall header: name left | dots center | arrows right -->
                 <div class="relative flex items-center mb-3" style="min-height:44px;">
                 <!-- Left: Hall title -->
@@ -375,6 +323,7 @@
             }, 500);
         </script>
 
+
         <!-- Course Details & Shortcuts -->
         <div class="mb-6">
             <div class="flex items-center justify-between mb-3 pl-1">
@@ -384,49 +333,28 @@
             </div>
 
             <script>
-                window.openClassTimetable = function() {
-                    if (typeof switchExamView === 'function') switchExamView('view-class');
-                    if (typeof switchClassTab === 'function') {
-                        setTimeout(() => switchClassTab('timetable'), 50);
-                    }
-                };
-
                 window.syncAndOpenNative = async function(sectionName, mainView, subTab) {
+                    // Instantly open the tab so UI feels fast
                     if (typeof switchExamView === 'function') switchExamView(mainView);
                     if (subTab && typeof switchClassTab === 'function') {
                         setTimeout(() => switchClassTab(subTab), 50);
                     }
                     
+                    // Forcefully sync data in background and re-render
                     if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
                         try {
+                            // Pass current semester if they have a filter active
                             let sem = '';
                             if (sectionName === 'Attendance' && typeof appState !== 'undefined' && appState.selectedAttendanceSem && appState.selectedAttendanceSem !== 'all') {
                                 sem = appState.selectedAttendanceSem;
                             }
                             
-                            if (sectionName === 'Assignment') {
-                                // Sync both Assignment and Seminar for Track Activity
-                                await Promise.all([
-                                    window.MacHubPortal.fetchSection('Assignment', true),
-                                    window.MacHubPortal.fetchSection('Seminar', true)
-                                ]);
-                            } else if (sectionName === 'ExamResult') {
-                                // Sync ExamResult AND current semester's College Results (InternalMark & Assessment)
-                                const activeSem = (typeof appState !== 'undefined' && appState.selectedInternalSem) || (typeof getStudentSemNumber === 'function' ? String(getStudentSemNumber()) : '2');
-                                await Promise.all([
-                                    window.MacHubPortal.fetchSection('ExamResult', true),
-                                    window.MacHubPortal.fetchSection('InternalMark', true, activeSem),
-                                    window.MacHubPortal.fetchSection('Assessment', true, activeSem)
-                                ]);
-                                if (typeof appState !== 'undefined' && appState.internalFetchStatus) {
-                                    appState.internalFetchStatus[activeSem] = 'success';
-                                }
-                            } else {
-                                await window.MacHubPortal.fetchSection(sectionName, true, sem);
-                            }
+                            const data = await window.MacHubPortal.fetchSection(sectionName, true, sem); // true = force sync
                             
+                            // After sync, re-render the view
                             if (sectionName === 'Attendance' && typeof renderClassAttendance === 'function') renderClassAttendance();
-                            if (sectionName === 'Assignment' && typeof renderClassActivity === 'function') renderClassActivity();
+                            if (sectionName === 'Assignment' && typeof renderClassAssignment === 'function') renderClassAssignment();
+                            if (sectionName === 'Seminar' && typeof renderClassSeminar === 'function') renderClassSeminar();
                             if (sectionName === 'ExamResult' && typeof renderExamResults === 'function') renderExamResults();
                         } catch(e) {
                             console.error("Sync failed for", sectionName, e);
@@ -442,7 +370,7 @@
                      onclick="window.syncAndOpenNative('Attendance', 'view-class', 'attendance')"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
-                          style="background: rgba(0, 212, 170, 0.15); color: #00d4aa; border: 1px solid rgba(0, 212, 170, 0.3);">
+                         style="background: rgba(0, 212, 170, 0.15); color: #00d4aa; border: 1px solid rgba(0, 212, 170, 0.3);">
                         📅
                     </div>
                     <div>
@@ -453,72 +381,47 @@
 
                 <!-- Exam Results -->
                 <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
-                     onclick="window.syncAndOpenNative('ExamResult', 'view-seats', null); if(window.openCollegeResultTab) window.openCollegeResultTab();"
+                     onclick="window.syncAndOpenNative('ExamResult', 'view-results', null)"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
-                          style="background: rgba(255, 179, 71, 0.15); color: #ffb347; border: 1px solid rgba(255, 179, 71, 0.3);">
-                        🏆
+                         style="background: rgba(255, 179, 71, 0.15); color: #ffb347; border: 1px solid rgba(255, 179, 71, 0.3);">
+                        🎓
                     </div>
                     <div>
-                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Exam Result</h3>
-                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Check internal college marks & grades</p>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Exam Results</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Check university semester grades</p>
                     </div>
                 </div>
 
-                <!-- Class Timetable -->
+                <!-- Assignment -->
                 <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
-                     onclick="window.openClassTimetable()"
+                     onclick="window.syncAndOpenNative('Assignment', 'view-class', 'assignment')"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
-                          style="background: rgba(0, 113, 227, 0.15); color: #0071e3; border: 1px solid rgba(0, 113, 227, 0.3);">
-                        🕒
+                         style="background: rgba(45, 152, 218, 0.15); color: #2d98da; border: 1px solid rgba(45, 152, 218, 0.3);">
+                        📂
                     </div>
                     <div>
-                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Timetable</h3>
-                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">View your daily lecture schedule</p>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Assignment</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track pending submissions & deadlines</p>
                     </div>
                 </div>
 
-                <!-- Track Activity -->
+                <!-- Seminar -->
                 <div class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer"
-                     onclick="window.syncAndOpenNative('Assignment', 'view-class', 'subjects')"
+                     onclick="window.syncAndOpenNative('Seminar', 'view-class', 'seminar')"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <div class="w-12 h-12 rounded-[1rem] flex items-center justify-center text-2xl shadow-sm mb-1"
-                          style="background: rgba(252, 92, 101, 0.15); color: #fc5c65; border: 1px solid rgba(252, 92, 101, 0.3);">
-                        🎯
+                         style="background: rgba(252, 92, 101, 0.15); color: #fc5c65; border: 1px solid rgba(252, 92, 101, 0.3);">
+                        🎙️
                     </div>
                     <div>
-                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Track Activity</h3>
-                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Assignments & seminar progress</p>
-                    </div>
-                </div>
-                <!-- MGU University Result -->
-                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 cursor-pointer"
-                     onclick="if(window.openMguResultTab) window.openMguResultTab();"
-                     style="background:linear-gradient(135deg,rgba(99,102,241,0.08) 0%,rgba(168,85,247,0.08) 100%);border:1px solid rgba(99,102,241,0.2);">
-                    <div style="display:flex;align-items:center;gap:10px;width:100%;">
-                        <div class="w-10 h-10 rounded-[0.8rem] flex items-center justify-center text-xl shadow-sm flex-shrink-0"
-                              style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);">&#127891;</div>
-                        <div class="text-left min-w-0">
-                            <h3 class="text-[12px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7] truncate">Exam Results</h3>
-                            <p class="text-[8px] font-bold text-[#86868b] leading-[1.2] mt-0.5 truncate">SGPA &middot; CGPA &middot; Marks</p>
-                        </div>
+                        <h3 class="text-[13px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">Seminar</h3>
+                        <p class="text-[9px] font-bold text-[#86868b] leading-[1.2] mt-0.5">Track seminar presentations & scores</p>
                     </div>
                 </div>
 
-                <!-- MGU ePortal Hub -->
-                <div class="glass-panel p-4 rounded-3xl spring active:scale-95 cursor-pointer"
-                     onclick="switchView('view-resources')"
-                     style="background:linear-gradient(135deg,rgba(56,151,240,0.08) 0%,rgba(0,113,227,0.08) 100%);border:1px solid rgba(56,151,240,0.2);">
-                    <div style="display:flex;align-items:center;gap:10px;width:100%;">
-                        <div class="w-10 h-10 rounded-[0.8rem] flex items-center justify-center text-xl shadow-sm flex-shrink-0"
-                              style="background:rgba(56,151,240,0.15);color:#3897f0;border:1px solid rgba(56,151,240,0.3);">🏛️</div>
-                        <div class="text-left min-w-0">
-                            <h3 class="text-[12px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7] truncate">MGU ePortal</h3>
-                            <p class="text-[8px] font-bold text-[#86868b] leading-[1.2] mt-0.5 truncate">FYUGP courses & transfer</p>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </div>
 
@@ -565,22 +468,25 @@
             <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item" data-top-target="exam">Exam</button>
         </div>
 
-        <!-- classDepartmentFilters kept hidden as placeholder in background if needed -->
-        <div id="classDepartmentFilters" class="hidden"></div>
+        <!-- Class Portal Top Dropdowns -->
+        <div class="max-w-md mx-auto mt-3 mb-4">
+            <div class="seat-toolbar">
+                <div id="classDepartmentFilters" class="seat-dropdown hidden"></div>
+                <div id="classDaySelector" class="seat-dropdown"></div>
+            </div>
+        </div>
 
         <!-- Classroom Hub Seating/Timetable Container -->
         <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: 100%;">
             <!-- Inner Class Toggle -->
             <div class="exam-subnav subnav-3col mb-4 mt-2" aria-label="Inner Class Menu">
                 <button type="button" id="tab-class-timetable" onclick="switchClassTab('timetable')" class="exam-subnav-item is-active" data-class-target="view-class-timetable">Timetable</button>
-                <button type="button" id="tab-class-subjects" onclick="switchClassTab('subjects')" class="exam-subnav-item" data-class-target="view-class-subjects">Track Activity</button>
+                <button type="button" id="tab-class-subjects" onclick="switchClassTab('subjects')" class="exam-subnav-item" data-class-target="view-class-subjects">Subjects</button>
                 <button type="button" id="tab-class-attendance" onclick="switchClassTab('attendance')" class="exam-subnav-item" data-class-target="view-class-attendance">Attendance</button>
             </div>
 
             <!-- Class Sub-views -->
             <div id="sub-view-class-timetable" class="w-full">
-                <!-- Class Day Selector -->
-                <div id="classDaySelector" class="seat-dropdown mb-4"></div>
                 <div id="classTimetableContent" class="space-y-4"></div>
             </div>
 
@@ -633,51 +539,41 @@
         </div>
     </div>
 
-    <!-- MGU University Portal Hub View -->
+    <!-- Reconstructed Resources View -->
     <div id="view-resources" class="view-panel max-w-md mx-auto p-6 relative min-h-screen flex flex-col" style="padding-bottom: 90px;">
-        <div id="mgu-portal-container" class="w-full flex-1 flex flex-col">
-            <!-- Dynamic MGU Sync Engine will inject content here -->
-        </div>
-    </div>
-
-    <!-- Community Chat View -->
-    <div id="view-chat" class="view-panel" style="padding:0;display:flex;flex-direction:column;height:100vh;max-height:100vh;overflow:hidden;">
-        <!-- Chat Header -->
-        <div class="chat-header">
-            <div class="chat-header-left">
-                <div class="chat-header-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-                </div>
-                <div>
-                    <div class="chat-header-title">Community Chat</div>
-                    <div class="chat-header-sub">
-                        <span class="chat-live-dot"></span>
-                        Live &middot; Messages clear after 24h
-                    </div>
-                </div>
-            </div>
-            <div style="font-size:10px;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;">MacHub</div>
-        </div>
-
-        <!-- Messages List -->
-        <div id="chat-msg-list" class="chat-msg-list" style="flex:1;overflow-y:auto;padding:16px 8px 8px;">
-            <!-- Messages injected by chat.js -->
-            <div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.2);">
-                <div style="font-size:40px;margin-bottom:12px;">💬</div>
-                <p style="font-size:13px;font-weight:700;">Connecting...</p>
+        <div class="flex items-center gap-3.5 mb-6 mt-2">
+            <div class="w-12 h-12 bg-[#0071e3]/10 rounded-2xl flex items-center justify-center text-2xl shadow-md">📚</div>
+            <div>
+                <h2 class="text-2xl font-black text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight leading-none">Resources</h2>
+                <p class="text-[9px] font-black text-[#86868b] uppercase tracking-widest mt-1">Academic Study Space</p>
             </div>
         </div>
 
-        <!-- Input Bar -->
-        <div class="chat-input-bar">
-            <div class="chat-input-row">
-                <div class="chat-input-wrap">
-                    <textarea id="chat-input" rows="1" placeholder="Message everyone..." maxlength="300"></textarea>
-                    <div id="chat-char-count">0/300</div>
+        <!-- Two Toggles for Subjects & Protocols -->
+        <div class="exam-subnav mb-5" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.5rem; width: 100%;">
+            <button type="button" onclick="switchResourcesTab('subjects')" id="btn-resource-subjects" class="exam-subnav-item is-active">Subjects</button>
+            <button type="button" onclick="switchResourcesTab('protocols')" id="btn-resource-protocols" class="exam-subnav-item">Protocols</button>
+        </div>
+
+        <!-- Subjects Resource Container -->
+        <div id="resources-subjects-container" class="w-full space-y-4">
+            <div class="glass-panel p-5 rounded-[2.5rem] mb-4">
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-1">Subject selector</p>
+                <h4 class="text-sm font-bold text-[#86868b] mb-4">Select a subject to explore its academic materials:</h4>
+                <div id="resource-subjects-list" class="space-y-3">
+                    <!-- Dynamic subjects list with accordion folders will be injected here -->
                 </div>
-                <button id="chat-send-btn" class="chat-send-btn" onclick="window.sendChatMessage()" aria-label="Send message">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                </button>
+            </div>
+        </div>
+
+        <!-- Protocols Resource Container -->
+        <div id="resources-protocols-container" class="w-full space-y-4 hidden">
+            <div class="glass-panel p-5 rounded-[2.5rem] mb-4">
+                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-[0.2em] mb-1">Academic Protocols</p>
+                <h4 class="text-sm font-bold text-[#86868b] mb-4">Mahatma Gandhi University & MAC Guidelines:</h4>
+                <div id="resource-protocols-list" class="space-y-3">
+                    <!-- Sample protocols list will be injected here -->
+                </div>
             </div>
         </div>
     </div>
@@ -723,18 +619,18 @@
                 </span>
                 <span class="nav-label">Schedule</span>
             </button>
-            <button onclick="switchView('view-chat'); if(window.initChatView) window.initChatView();" id="tab-view-chat" class="nav-item" c-option="3">
+            <button onclick="switchView('view-resources')" id="tab-view-resources" class="nav-item" c-option="3">
                 <span class="nav-icon">
-                    <!-- Chat Outline -->
+                    <!-- Resources Outline (Instagram inspired Bookmark) -->
                     <svg class="icon-outline" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    <!-- Chat Filled -->
+                    <!-- Resources Filled -->
                     <svg class="icon-filled" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                        <path d="M17 3H7a2 2 0 0 0-2 2v16l7-5 7 5V5a2 2 0 0 0-2-2z"/>
                     </svg>
                 </span>
-                <span class="nav-label">Chat</span>
+                <span class="nav-label">Resources</span>
             </button>
             <button onclick="switchView('view-profile')" id="tab-view-profile" class="nav-item" c-option="4">
                 <span class="nav-icon">
@@ -752,7 +648,7 @@
         
         <!-- Typing Box -->
         <div id="navAiInputContainer" class="nav-ai-input-container">
-            <input type="text" id="navAiInput" placeholder="Ask MacAI..." autocomplete="one-time-code" autocapitalize="off" spellcheck="false" />
+            <input type="text" id="navAiInput" placeholder="Ask MacAI..." autocomplete="off" />
         </div>
 
         <!-- Separate but same to same MacAI Circle Button -->
@@ -1210,7 +1106,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
-                <button onclick="if(window.closeSettingsTray) window.closeSettingsTray(); else switchView('view-profile');" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
+                <button onclick="switchView('view-profile')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
                         <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
@@ -1238,6 +1134,26 @@
                     <span class="text-slate-400 text-sm font-black mr-1">›</span>
                 </div>
 
+                <!-- INLINE INTERFACE TO CHANGE AVATAR -->
+                <div class="liquid-glass rounded-3xl p-4 space-y-3">
+                    <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-wider">🎭 Change Avatar</p>
+                    
+                    <!-- Avatar Categories -->
+                    <div class="flex gap-1.5 overflow-x-auto pb-1.5 no-scrollbar select-none" id="settingsAvCats">
+                        <button class="av-cat-btn active" onclick="filterSettingsAvatars('all', this)">✦ All</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('female', this)">♀ Female</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('male', this)">♂ Male</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('tech', this)">💻 Tech</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('kerala', this)">🌴 Kerala</button>
+                        <button class="av-cat-btn" onclick="filterSettingsAvatars('football', this)">⚽ Football</button>
+                        <button class="av-cat-btn" onclick="window.openAvatarPicker();">📷 Library</button>
+                    </div>
+                    
+                    <!-- Avatar Grid -->
+                    <div class="grid grid-cols-4 gap-2 pt-1" id="settingsAvGrid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
 
                 <!-- Synced Portal Documents -->
                 <div class="space-y-2">
@@ -1509,6 +1425,13 @@
         <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
             <p class="settings-section-title">🎨 Appearance</p>
             <div class="liquid-glass rounded-3xl p-4 space-y-4">
+                <div class="flex justify-between items-center">
+                    <div><div class="settings-nav-label">Full Black Mode</div><div class="settings-nav-sub">OLED-friendly pure black</div></div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleDisplayOled" onchange="toggleDisplaySetting('oled')" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
+                    </label>
+                </div>
                 <div class="flex justify-between items-center">
                     <div><div class="settings-nav-label">Animations</div><div class="settings-nav-sub">Spring & fade effects</div></div>
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -2251,28 +2174,6 @@
                 </div>
             </div>
 
-            <!-- Section: Change Avatar (relocated) -->
-            <div class="space-y-3">
-                <p class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-wider">🎭 Change Avatar</p>
-                <div class="liquid-glass rounded-2xl p-4 space-y-3">
-                    <!-- Avatar Categories -->
-                    <div class="flex gap-1.5 overflow-x-auto pb-1.5 no-scrollbar select-none" id="settingsAvCats">
-                        <button class="av-cat-btn active" onclick="filterSettingsAvatars('all', this)">✦ All</button>
-                        <button class="av-cat-btn" onclick="filterSettingsAvatars('female', this)">♀ Female</button>
-                        <button class="av-cat-btn" onclick="filterSettingsAvatars('male', this)">♂ Male</button>
-                        <button class="av-cat-btn" onclick="filterSettingsAvatars('tech', this)">💻 Tech</button>
-                        <button class="av-cat-btn" onclick="filterSettingsAvatars('kerala', this)">🌴 Kerala</button>
-                        <button class="av-cat-btn" onclick="filterSettingsAvatars('football', this)">⚽ Football</button>
-                        <button class="av-cat-btn" onclick="window.openAvatarPicker();">📷 Library</button>
-                    </div>
-                    
-                    <!-- Avatar Grid -->
-                    <div class="grid grid-cols-4 gap-2 pt-1" id="settingsAvGrid">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-            </div>
-
             <!-- Action Buttons -->
             <div class="flex gap-3 pt-2">
                 <button onclick="switchView('view-profile')" class="flex-1 py-3.5 bg-white/5 border border-white/10 text-slate-300 rounded-xl font-bold text-xs spring active:scale-95">Cancel</button>
@@ -2541,7 +2442,7 @@
                         <span id="macaiPlusIcon">+</span>
                     </button>
                     <input class="macai-input" id="macaiInput" type="text"
-                        placeholder="Ask MacAI…" autocomplete="one-time-code" autocapitalize="off" spellcheck="false"
+                        placeholder="Ask MacAI…"
                         onkeydown="if(event.key==='Enter')macaiSend()">
                     <button class="macai-circle" onclick="macaiToggleThinking()" id="macaiThinkBtn" title="Deep Thinking" style="font-size:14px;">💡</button>
                     <button id="macaiSendBtn" class="macai-circle send-wrapper" onclick="handleChatPageSendClick(event)" title="Send" style="position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">
@@ -2661,7 +2562,18 @@
 
     </div>
 
-
+    <script>
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) themeIcon.textContent = isDark ? '☀️' : '🌓';
+        }
+        // Auto detect system theme
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            toggleTheme();
+        }
+    </script>
 
     
 
@@ -2680,7 +2592,7 @@
                 <div class="space-y-3 pt-2 text-left">
                     <div>
                         <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="portal-pwd-input">ePortal Password</label>
-                        <input type="text" id="portal-pwd-input" placeholder="••••••••" autocomplete="off"
+                        <input type="password" id="portal-pwd-input" placeholder="••••••••" 
                             class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-[var(--mac-blue)]" />
                     </div>
                 </div>
@@ -2711,17 +2623,17 @@
                 <div class="space-y-3 pt-2 text-left">
                     <div>
                         <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-old-pwd">Old Password</label>
-                        <input type="text" id="sec-old-pwd" placeholder="••••••••" autocomplete="off"
+                        <input type="password" id="sec-old-pwd" placeholder="••••••••" 
                             class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
                     </div>
                     <div>
                         <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-new-pwd">New Password</label>
-                        <input type="text" id="sec-new-pwd" placeholder="••••••••" autocomplete="off"
+                        <input type="password" id="sec-new-pwd" placeholder="••••••••" 
                             class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
                     </div>
                     <div>
                         <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-confirm-pwd">Confirm New Password</label>
-                        <input type="text" id="sec-confirm-pwd" placeholder="••••••••" autocomplete="off"
+                        <input type="password" id="sec-confirm-pwd" placeholder="••••••••" 
                             class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
                     </div>
                 </div>
@@ -2764,8 +2676,6 @@
     <script defer src="js/onboarding.js"></script>
     <script defer src="js/qr_id.js"></script>
     <script defer src="js/bootstrap.js"></script>
-    <script defer src="js/mgu_result.js"></script>
-    <script defer src="js/chat.js"></script>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- PORTAL NAV DRAWER — slides up from bottom when 🎓 is tapped    -->
@@ -2915,17 +2825,6 @@
                     <span class="text-[#86868b] text-xs">›</span>
                 </button>
 
-                <!-- MGU University Result -->
-                <button onclick="window.closePortalDrawer(); if(window.openMguResultTab) window.openMguResultTab();"
-                        class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
-                    <span class="text-xl w-8 text-center">&#127891;</span>
-                    <div class="flex-1">
-                        <p class="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">MGU University Result</p>
-                        <p class="text-xs text-[#86868b] font-semibold mt-0.5">SGPA &middot; CGPA &middot; Marks</p>
-                    </div>
-                    <span class="text-[#86868b] text-xs">&rsaquo;</span>
-                </button>
-
                 <!-- Grievance Form -->
                 <button onclick="window.loadPortalSection('Grievance', 'Grievance Form')"
                         class="portal-nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 active:scale-[0.97] spring text-left">
@@ -3064,162 +2963,4 @@
     <div id="examResultCelebrationOverlay" class="fixed inset-0 z-[1000] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-6 text-center" style="font-family: 'Outfit', sans-serif;">
         <div id="examResultCelebrationCard" class="bg-[#1c1c1e]/90 border border-white/10 rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl relative transform scale-90 opacity-0 transition-all duration-500 spring flex flex-col items-center">
             <div class="text-6xl mb-4 animate-bounce">🎓</div>
-            <h2 class="text-2xl font-black text-white tracking-tight">Results Published!</h2>
-            <p class="text-xs text-[#86868b] mt-2">Your MGU university exam results are now available.</p>
-            
-            <div class="my-6 w-full py-4 px-6 bg-white/5 rounded-2xl border border-white/5 flex flex-col gap-2">
-                <div id="celebStudentName" class="text-sm font-extrabold text-white">Student Name</div>
-                <div id="celebSemester" class="text-[10px] font-black text-[var(--mac-blue)] uppercase tracking-wider">Semester</div>
-                <div class="h-px bg-white/5 my-1"></div>
-                <div class="flex justify-around items-center">
-                    <div>
-                        <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-wider">Result</p>
-                        <p id="celebStatus" class="text-xl font-black text-green-400 mt-1">PASS</p>
-                    </div>
-                    <div class="w-px h-8 bg-white/10"></div>
-                    <div>
-                        <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-wider">SGPA</p>
-                        <p id="celebSgpa" class="text-xl font-black text-[#a78bfa] mt-1">--</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex flex-col gap-3 w-full">
-                <button onclick="window.dismissCelebrationOverlay('view')" class="w-full py-4 bg-white text-black font-black text-sm rounded-2xl active:scale-[0.98] transition-all spring">
-                    View Full Result
-                </button>
-                <button onclick="window.dismissCelebrationOverlay('close')" class="w-full py-3 bg-white/5 text-[#86868b] font-bold text-xs rounded-2xl active:scale-[0.98] transition-all spring">
-                    Dismiss
-                </button>
-            </div>
-        </div>
-    </div>
-
-
-
-    <!-- Custom Toast Notification Container -->
-    <div id="macToastContainer" class="mac-toast-container"></div>
-
-
-    <!-- Script: save admin number from drawer input -->
-    <script>
-        window._savePortalAdmin = function() {
-            const input = document.getElementById('portalAdminInput');
-            const val = (input?.value || '').trim();
-            if (!val) return;
-            localStorage.setItem('machub_student_id', val);
-            if (window.MacHubPortal) window.MacHubPortal.saveAdminNo(val);
-            const entry = document.getElementById('portalAdminEntry');
-            if (entry) entry.classList.add('hidden');
-            alert('Admission number saved! Tap any section to load data.');
-        };
-
-        // Show admin entry bar if no admission number found
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                const saved = localStorage.getItem('machub_student_id');
-                const entry = document.getElementById('portalAdminEntry');
-                if (!saved && entry) entry.classList.remove('hidden');
-            }, 500);
-        });
-    </script>
-
-    <!-- Premium Apple-Style PWA Install Prompt -->
-    <div id="pwaInstallPrompt" class="fixed inset-x-0 bottom-6 mx-auto max-w-sm z-[300] px-4 pointer-events-none hidden">
-        <div class="liquid-glass rounded-3xl p-5 shadow-2xl border border-white/10 flex flex-col gap-4 pointer-events-auto backdrop-blur-[30px]" style="background: rgba(18, 18, 20, 0.95); box-shadow: 0 24px 60px rgba(0,0,0,0.8);">
-            <div class="flex items-start gap-3.5">
-                <div class="w-12 h-12 rounded-[1.1rem] bg-[#0071e3] flex items-center justify-center text-white text-2xl font-black shadow-lg flex-shrink-0">
-                    <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub Logo" class="w-9 h-9 object-contain">
-                </div>
-                <div class="flex-1 min-w-0">
-                    <h4 class="text-sm font-black text-white leading-snug">Add MacHub to Home Screen</h4>
-                    <p class="text-[10px] text-zinc-400 leading-relaxed mt-1">Get light-speed portal access, offline support, and a standalone app experience.</p>
-                </div>
-                <button onclick="window.dismissPwaPrompt()" class="text-zinc-500 hover:text-zinc-300 text-xs font-bold transition-all">✕</button>
-            </div>
-            
-            <!-- Instruction for iOS -->
-            <div id="pwaIosGuide" class="hidden bg-white/5 rounded-2xl p-3 border border-white/5 flex items-center gap-3">
-                <span class="text-lg">💡</span>
-                <p class="text-[10.5px] text-zinc-300 leading-normal">
-                    Tap <svg class="inline-block mx-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:translateY(-1px);"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg> in Safari, then scroll down and select <strong class="text-white">Add to Home Screen</strong>.
-                </p>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <button onclick="window.dismissPwaPrompt(true)" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 font-bold text-xs rounded-xl transition-all spring active:scale-95 text-center">
-                    Don't show again
-                </button>
-                <button onclick="window.installPwaApp()" id="pwaInstallBtn" class="flex-1 py-3 bg-[#0071e3] hover:bg-blue-600 text-white font-black text-xs rounded-xl transition-all spring active:scale-95 text-center shadow-lg shadow-blue-500/15">
-                    Add to Home Screen
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- PWA Install Prompt Script -->
-    <script>
-        (function() {
-            let deferredPrompt = null;
-
-            // Detect if iOS
-            const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            // Detect if already in standalone mode
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                triggerPwaPrompt();
-            });
-
-            function triggerPwaPrompt() {
-                const dismissed = localStorage.getItem('machub_pwa_dismissed');
-                if (dismissed === 'true' || isStandalone) return;
-
-                const promptEl = document.getElementById('pwaInstallPrompt');
-                if (promptEl) {
-                    promptEl.classList.remove('hidden');
-                    
-                    const iosGuide = document.getElementById('pwaIosGuide');
-                    const installBtn = document.getElementById('pwaInstallBtn');
-                    if (isIos) {
-                        if (iosGuide) iosGuide.classList.remove('hidden');
-                        if (installBtn) installBtn.classList.add('hidden');
-                    } else {
-                        if (iosGuide) iosGuide.classList.add('hidden');
-                        if (installBtn) installBtn.classList.remove('hidden');
-                    }
-                }
-            }
-
-            // Fallback for iOS Safari which doesn't support beforeinstallprompt
-            if (isIos && !isStandalone) {
-                setTimeout(triggerPwaPrompt, 2000);
-            }
-
-            window.dismissPwaPrompt = function(permanent = false) {
-                const promptEl = document.getElementById('pwaInstallPrompt');
-                if (promptEl) promptEl.classList.add('hidden');
-                if (permanent) {
-                    localStorage.setItem('machub_pwa_dismissed', 'true');
-                }
-            };
-
-            window.installPwaApp = async function() {
-                if (!deferredPrompt) {
-                    if (window.showToast) {
-                        window.showToast('Please use your browser menu to "Add to Home Screen".', 'info');
-                    }
-                    return;
-                }
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User response to install prompt: ${outcome}`);
-                deferredPrompt = null;
-                window.dismissPwaPrompt(true);
-            };
-        })();
-    </script>
-</body>
-</html>
+            <h2 class="text-2xl font-black text-white tracking-ti

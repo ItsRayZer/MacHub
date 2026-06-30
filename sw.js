@@ -5,7 +5,7 @@
  * ╚══════════════════════════════════════════════════════════════════╝
  */
 
-const CACHE_NAME = 'machub-static-cache-v1';
+const CACHE_NAME = 'machub-static-cache-v3';
 
 const STATIC_ASSETS = [
   '/',
@@ -34,6 +34,8 @@ const STATIC_ASSETS = [
   '/js/pin_lock.js',
   '/js/qr_id.js',
   '/js/bootstrap.js',
+  '/js/mgu_result.js',
+  '/js/chat.js',
   '/data/common/mac_ai_database.js',
   '/data/common/student_names.js',
   '/data/common/students_db.js',

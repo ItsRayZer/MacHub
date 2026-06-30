@@ -541,7 +541,8 @@ function parseProfile(html) {
     guardianPhone: '',
     guardianEmail: '',
     photoUrl: '',
-    abcId: ''
+    abcId: '',
+    prn: ''
   };
 
   // Find photo URL
@@ -705,6 +706,9 @@ function parseProfile(html) {
   result.category = extractById('MainContent_lblReserv') || extractField(/Reservation[^\w]*([A-Z\s]+?)\s*Annual Income/i);
   result.income = extractById('MainContent_lblAnnualInc') || extractField(/Annual Income[^\d]*([0-9\s]*?)\s*(?:Permanent Address|Communication Address|Other Details)/i);
   result.abcId = extractById('MainContent_lblabcid') || extractField(/ABC ID[^\w]*([A-Za-z0-9_-]+)/i);
+  // PRN — Permanent Registration Number (MGU university registration)
+  result.prn = extractById('MainContent_lblPRN') || extractById('MainContent_lblRegNo') || extractById('MainContent_lblUnivRegNo') ||
+    extractField(/(?:PRN|Permanent Registration Number|University Registration|Reg\.?\s*No\.?|Registration Number)[^\w]*([A-Za-z0-9/-]+)/i) || null;
 
   // Address matching
   const addrMatch = bodyText.match(/Permanent Address\s*([^]+?)\s*Communication Address/i);
@@ -755,6 +759,7 @@ function parseProfile(html) {
     guardianEmail: result.guardianEmail,
     photoUrl: result.photoUrl,
     abcId: result.abcId,
+    prn: result.prn || null,
     sections: [{ data: result }]
   };
 }

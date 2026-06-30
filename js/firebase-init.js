@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebas
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-ai.js";
 import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, where } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 import { getAuth, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
 
@@ -34,6 +34,15 @@ window.firestoreDoc = doc;
 window.firestoreGetDoc = getDoc;
 window.firestoreSetDoc = setDoc;
 window.firestoreUpdateDoc = updateDoc;
+window.firestoreCollection = collection;
+window.firestoreAddDoc = addDoc;
+window.firestoreQuery = query;
+window.firestoreOrderBy = orderBy;
+window.firestoreLimit = limit;
+window.firestoreOnSnapshot = onSnapshot;
+window.firestoreServerTimestamp = serverTimestamp;
+window.firestoreDeleteDoc = deleteDoc;
+window.firestoreWhere = where;
 
 window.firebaseAuth = auth;
 window.firebaseSignInWithCustomToken = signInWithCustomToken;
