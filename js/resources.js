@@ -507,49 +507,104 @@
       const oldDrawer = $('mgu-side-drawer');
       if (oldDrawer) oldDrawer.remove();
       const oldBackdrop = $('mgu-drawer-backdrop');
+
       if (oldBackdrop) oldBackdrop.remove();
 
       container.innerHTML = `
-        <div class="min-h-[85vh] flex items-center justify-center p-4 text-white">
-          <form id="mgu-login-form" class="w-full max-w-sm rounded-[32px] p-7 apple-glass relative overflow-hidden space-y-5 animate-slideUp">
-            <!-- Glow background nodes -->
-            <div class="absolute -top-12 -left-12 w-28 h-28 bg-[#3897f0]/15 rounded-full blur-2xl"></div>
-            <div class="absolute -bottom-12 -right-12 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl"></div>
-
-            <div class="text-center space-y-1.5 relative">
-              <div class="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg animate-float">
-                <span class="text-2xl text-[#3897f0]">&#127891;</span>
+        <div class="min-h-[85vh] flex flex-col items-center justify-center p-4 text-white animate-fadeIn">
+          <!-- Main container box -->
+          <div class="w-full max-w-sm text-center space-y-6">
+            
+            <!-- Apple-style Logo and Header Group -->
+            <div class="space-y-3">
+              <div class="w-16 h-16 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center mx-auto shadow-2xl relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-tr from-[#3897f0]/20 to-purple-500/20 opacity-40 blur-md"></div>
+                <img src="assets/img/mgu_logo.png" alt="MGU" class="w-9 h-9 object-contain relative z-10 animate-float">
               </div>
-              <span class="text-[9px] font-mono uppercase font-black tracking-[0.25em] text-[#3897f0]">MGU Sync Link Engine</span>
-              <h3 class="text-lg font-bold tracking-tight text-white">Enter Portal Credentials</h3>
-              <p class="text-[11px] text-zinc-500 max-w-[250px] mx-auto leading-normal font-medium">Scrape formal academic records, active registers, and credit ledgers securely from MGU Portal.</p>
-            </div>
-
-            <div class="space-y-2.5 pt-2 relative">
+              
               <div class="space-y-1">
-                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block ml-1">PRN / CAP ID</label>
-                <input 
-                  id="mgu-portal-prn"
-                  type="text" placeholder="Permanent Register Number (PRN)" value="${S.prn}"
-                  class="w-full apple-input px-4 py-3.5 text-xs font-mono"
-                />
-              </div>
-              <div class="space-y-1">
-                <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block ml-1">Access Password</label>
-                <input 
-                  id="mgu-portal-pass"
-                  type="password" placeholder="Enter portal password" value="${S.password}"
-                  class="w-full apple-input px-4 py-3.5 text-xs"
-                />
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold text-zinc-400 font-mono tracking-wider uppercase">
+                  🔑 Secure Link Channel
+                </span>
+                <h1 class="text-2xl font-black tracking-tight text-white mt-2 leading-none">MGU ePortal Hub</h1>
+                <p class="text-base font-bold text-[#3897f0] leading-snug">Check your credits in seconds.</p>
+                <p class="text-[10px] text-zinc-500 font-medium max-w-xs mx-auto leading-relaxed px-2">
+                  Sync your academic profile, course selections, and revaluation statuses directly from Mahatma Gandhi University portal databases.
+                </p>
               </div>
             </div>
 
-            ${S.scrapingError ? `<p class="text-[10px] text-red-400 font-mono text-center pt-1">${S.scrapingError}</p>` : ''}
+            <!-- Big Premium Box Form -->
+            <form id="mgu-login-form" class="w-full rounded-[32px] p-7 apple-glass border border-white/10 relative overflow-hidden space-y-5 text-left shadow-[0_25px_60px_rgba(0,0,0,0.6)]">
+              <!-- Glow backdrop accents -->
+              <div class="absolute -top-12 -left-12 w-28 h-28 bg-[#3897f0]/10 rounded-full blur-3xl pointer-events-none"></div>
+              <div class="absolute -bottom-12 -right-12 w-28 h-28 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-            <button type="submit" ${S.isScraping ? 'disabled' : ''} class="w-full py-3.5 apple-btn text-xs tracking-wider uppercase font-bold relative active:scale-95 disabled:opacity-40">
-              ${S.isScraping ? 'Contacting MGU Servers...' : 'Authenticate & Sync Ledger'}
-            </button>
-          </form>
+              <div class="space-y-4">
+                <!-- PRN Input -->
+                <div class="space-y-1.5">
+                  <div class="flex justify-between items-center px-1">
+                    <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Student Register No. (PRN)</label>
+                    <span class="text-[8px] font-mono text-zinc-600 font-bold uppercase">Required</span>
+                  </div>
+                  <div class="relative flex items-center">
+                    <span class="absolute left-4 text-zinc-500 text-sm">👤</span>
+                    <input 
+                      id="mgu-portal-prn"
+                      type="text" 
+                      placeholder="Enter PRN (e.g. 199719050829)" 
+                      value="${S.prn || ''}"
+                      class="w-full bg-white/[0.03] border border-white/8 rounded-2xl pl-10 pr-4 py-3.5 text-xs font-mono font-bold text-white placeholder-zinc-600 outline-none focus:border-[#3897f0]/70 focus:bg-white/[0.05] transition-all focus:ring-4 focus:ring-[#3897f0]/10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <!-- Password Input -->
+                <div class="space-y-1.5">
+                  <div class="flex justify-between items-center px-1">
+                    <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Portal Password</label>
+                    <span class="text-[8px] font-mono text-zinc-600 font-bold uppercase">Encrypted</span>
+                  </div>
+                  <div class="relative flex items-center">
+                    <span class="absolute left-4 text-zinc-500 text-sm">🔑</span>
+                    <input 
+                      id="mgu-portal-pass"
+                      type="password" 
+                      placeholder="Enter password" 
+                      value="${S.password || ''}"
+                      class="w-full bg-white/[0.03] border border-white/8 rounded-2xl pl-10 pr-4 py-3.5 text-xs text-white placeholder-zinc-600 outline-none focus:border-[#3897f0]/70 focus:bg-white/[0.05] transition-all focus:ring-4 focus:ring-[#3897f0]/10"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Error message placement -->
+              ${S.scrapingError ? `
+                <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-center flex items-center gap-2 justify-center">
+                  <span class="text-xs">⚠️</span>
+                  <p class="text-[10px] text-red-400 font-mono font-bold leading-tight">${S.scrapingError}</p>
+                </div>
+              ` : ''}
+
+              <!-- Submit button -->
+              <button 
+                type="submit" 
+                ${S.isScraping ? 'disabled' : ''} 
+                class="w-full py-3.5 bg-gradient-to-r from-[#3897f0] to-[#0071e3] text-white text-xs tracking-wider uppercase font-extrabold rounded-2xl transition-all duration-200 shadow-lg active:scale-98 disabled:opacity-40 disabled:pointer-events-none hover:shadow-[0_8px_20px_rgba(56,151,240,0.35)]"
+                style="background: linear-gradient(90deg, #3897f0 0%, #0071e3 100%);"
+              >
+                ${S.isScraping ? 'Connecting to MGU Database...' : 'Sync & Check Credits'}
+              </button>
+            </form>
+
+            <!-- Secure Connection Footer Info -->
+            <div class="flex items-center justify-center gap-1.5 text-[9px] text-zinc-600 font-medium">
+              <span>🔒</span>
+              <span>256-Bit SSL Encrypted Connection</span>
+            </div>
+          </div>
         </div>
       `;
 
