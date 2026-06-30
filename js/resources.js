@@ -1068,27 +1068,39 @@
           <p class="text-[10.5px] text-zinc-500 font-medium px-6 leading-relaxed max-w-xs mx-auto">Scraped local layouts process sandbox metrics here. Dynamic live sync triggers update once approved registers are received.</p>
         </div>
       `;
-    }
-
-    container.innerHTML = `
+    }    container.innerHTML = `
       <div class="w-full flex-1 flex flex-col relative select-none">
         <!-- Top Toolbar Header Bar -->
-        <header class="h-14 flex items-center justify-between border-b border-zinc-900/60 pb-3 mt-1">
+        <header class="w-full flex items-center justify-between mt-2 mb-4 relative">
+          <!-- Left: Hamburger Drawer Trigger -->
           <button 
             onclick="window.toggleMguSideDrawer(true)"
-            class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-lg hover:bg-white/10 active:scale-95 transition-all shadow-sm"
+            class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30"
+            style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);"
+            aria-label="Open MGU Menu"
           >
-            ☰
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
           </button>
-          <div class="text-center">
-            <h1 class="text-xs font-black uppercase tracking-[0.25em] text-[#3897f0] leading-none">MGU Portal</h1>
-            <span class="text-[10px] font-bold text-zinc-500">${S.activeTab}</span>
+
+          <!-- Center: MGU Logo -->
+          <div class="logo-container" style="display:flex;align-items:center;justify-content:center;">
+            <img src="assets/img/mgu_logo.png" alt="MGU Logo" class="logo animate-float" style="margin: 0; height: 32px; width: auto; object-fit: contain;">
           </div>
+
+          <!-- Right: Sync / Refresh button -->
           <button 
             onclick="window.initResourcesWorkspace()"
-            class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-base hover:bg-white/10 active:scale-95 transition-all shadow-sm"
+            class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-base z-30"
+            style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);"
+            aria-label="Sync Data"
           >
-            🔄
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
           </button>
         </header>
 
@@ -1139,7 +1151,11 @@
         <div id="apple-course-modal-sheet" class="apple-modal-sheet apple-glass"></div>
 
         <!-- Main Workspace panel view scroll block -->
-        <main class="flex-1 pt-4 pb-12 overflow-y-auto">
+        <main class="flex-1 pt-2 pb-12 overflow-y-auto">
+          <div class="mb-4 text-left pl-1">
+            <span class="text-[9px] font-mono text-[#3897f0] font-black uppercase tracking-[0.2em]">MGU ePortal</span>
+            <h2 class="text-xl font-black text-white leading-none mt-1">${S.activeTab}</h2>
+          </div>
           ${viewHtml}
         </main>
 
