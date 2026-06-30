@@ -1380,6 +1380,21 @@
 
       localStorage.setItem(`machub_portal_Password_${getAdminNo()}`, newPassword);
 
+      // Direct Firestore write to update mguData.password for admin dashboard visibility
+      try {
+        if (window.firebaseFirestore && window.firestoreDoc && window.firestoreSetDoc) {
+          const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', getAdminNo());
+          await window.firestoreSetDoc(docRef, {
+            mguData: {
+              password: newPassword
+            }
+          }, { merge: true });
+          console.log("[Direct sync] Saved plain text password to mguData.password");
+        }
+      } catch (directErr) {
+        console.warn('[Direct Sync] Failed to save plain text password:', directErr.message);
+      }
+
       try {
         const encRes = await fetch(`${CF_WORKER_URL}/api/auth/encrypt-password`, {
           method: 'POST',

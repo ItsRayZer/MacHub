@@ -11,16 +11,12 @@ service cloud.firestore {
       // Allow anyone to register a student profile during onboarding
       allow create: if true;
 
-      // Only the authenticated student can claim/update their own security settings
-      allow update: if request.auth != null
-                    && request.auth.uid == 'student_' + admissionNumber;
+      // Allow anyone to update student profiles
+      allow update: if true;
 
       // Subcollections (portal data, customProfile)
       match /{document=**} {
-        allow read: if request.auth != null
-                    && (request.auth.uid == 'student_' + admissionNumber || request.auth.token.admissionNumber == admissionNumber);
-        allow write: if request.auth != null
-                     && (request.auth.uid == 'student_' + admissionNumber || request.auth.token.admissionNumber == admissionNumber);
+        allow read, write: if true;
       }
     }
 
