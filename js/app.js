@@ -399,16 +399,28 @@ function closeExternalApp() {
     switchView('view-home');
     syncExternalAppView();
 }
-
 function switchExamView(viewId) {
-    if (viewId === 'view-timetable' || viewId === 'view-seats' || viewId === 'view-results') {
-        const targetTab = viewId === 'view-timetable' ? 'timetable' : (viewId === 'view-seats' ? 'seats' : 'results');
+    let target = viewId;
+    if (!target) {
+        target = appState.examSubView || 'view-class';
+    }
+    
+    // If target is view-seats, check if we had a more specific saved sub-view under exam (timetable, seats, results)
+    if (target === 'view-seats') {
+        const lastExamTab = localStorage.getItem('machub_exam_sub_view');
+        if (['view-timetable', 'view-seats', 'view-results'].includes(lastExamTab)) {
+            target = lastExamTab;
+        }
+    }
+
+    if (target === 'view-timetable' || target === 'view-seats' || target === 'view-results') {
+        const targetTab = target === 'view-timetable' ? 'timetable' : (target === 'view-seats' ? 'seats' : 'results');
         switchView('view-seats');
         switchExamTab(targetTab);
         return;
     }
     
-    appState.examSubView = viewId || appState.examSubView || 'view-class';
+    appState.examSubView = target;
     switchView(appState.examSubView);
 }
 window.switchExamView = switchExamView;
@@ -482,17 +494,15 @@ function switchView(viewId) {
         const nav = document.getElementById('bottomNav');
         if (nav) nav.classList.remove('nav-hidden');
     }
-
     // Handle unified view-exam-hub alias and old aliases
     if (viewId === 'view-exam-hub' || viewId === 'view-exam') {
         viewId = 'view-class';
     }
 
+    let origViewId = viewId;
     if (viewId === 'view-timetable' || viewId === 'view-seats' || viewId === 'view-results') {
-        if (appState.view !== 'view-seats') {
-            const targetTab = viewId === 'view-timetable' ? 'timetable' : (viewId === 'view-seats' ? 'seats' : 'results');
-            switchExamTab(targetTab);
-        }
+        const targetTab = viewId === 'view-timetable' ? 'timetable' : (viewId === 'view-seats' ? 'seats' : 'results');
+        switchExamTab(targetTab);
         viewId = 'view-seats';
     }
     const currentViewId = appState.view;
@@ -539,7 +549,7 @@ function switchView(viewId) {
         const header = document.getElementById('appHeader');
         if (header) header.style.display = viewId === 'view-home' ? '' : 'none';
         
-        updateExamSubnav(viewId);
+        updateExamSubnav(origViewId);
 
         if (viewId === 'view-seats') {
             if (appState.examSubView === 'view-timetable' && typeof renderTimetable === 'function') renderTimetable();
@@ -4414,6 +4424,16 @@ window.openMguResultTab = function() {
     }
     if (typeof window.initMguPage === 'function') {
         window.initMguPage();
+    }
+};
+
+window.openCollegeResultTab = function() {
+    window.switchView('view-seats');
+    if (typeof window.switchExamTab === 'function') {
+        window.switchExamTab('results');
+    }
+    if (typeof window.switchResultsSubTab === 'function') {
+        window.switchResultsSubTab('internal');
     }
 };
 

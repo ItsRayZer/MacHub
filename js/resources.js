@@ -128,11 +128,10 @@
   `;
   document.head.appendChild(style);
 
-  // Core State Trackers
   const S = {
     hasCredentials: false,
-    prn: '',
-    password: '',
+    prn: localStorage.getItem('machub_mgu_prn') || '199719050829',
+    password: localStorage.getItem('machub_mgu_pass') || 'ANANaben710@',
     isScraping: false,
     isSandboxMode: false,
     scrapingError: '',
@@ -723,6 +722,10 @@
             <div class="flex justify-between items-center py-1">
               <span class="text-zinc-500 font-medium">Institution</span>
               <span class="text-zinc-200 font-bold text-right max-w-[200px] truncate">${profileData.college || ''}</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-zinc-500 font-medium">PRN / CAP ID</span>
+              <span class="text-zinc-200 font-mono font-bold">${localStorage.getItem('machub_mgu_prn') || '199719050829'}</span>
             </div>
             <div class="flex justify-between items-center py-1">
               <span class="text-zinc-500 font-medium">Department</span>
