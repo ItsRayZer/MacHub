@@ -25,18 +25,28 @@
     }
     .mgu-side-drawer {
       position: fixed;
-      top: 0;
       left: 0;
-      height: 100%;
-      width: 280px;
+      right: 0;
+      bottom: 0;
+      max-width: 448px; /* max-w-md */
+      margin: 0 auto;
+      background: rgba(18, 18, 18, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px 24px 0 0;
+      padding: 24px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
       z-index: 1000;
-      transform: translateX(-100%);
+      transform: translateY(100%);
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
-      box-shadow: 40px 0 80px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
       visibility: hidden;
+      max-height: 80vh;
+      overflow-y: auto;
     }
     .mgu-side-drawer.is-open {
-      transform: translateX(0);
+      transform: translateY(0);
       visibility: visible;
     }
     .mgu-drawer-backdrop {
@@ -1090,12 +1100,35 @@
           <p class="text-[10.5px] text-zinc-500 font-medium px-6 leading-relaxed max-w-xs mx-auto">Scraped local layouts process sandbox metrics here. Dynamic live sync triggers update once approved registers are received.</p>
         </div>
       `;
-    }    container.innerHTML = `
+    }
+
+    container.innerHTML = `
       <div class="w-full flex-1 flex flex-col relative select-none">
         <!-- Top Toolbar Header Bar -->
         <header class="w-full flex items-center justify-between mt-2 mb-4 relative ${S.activeTab === 'Major Switching / College Transfer' ? 'px-6' : ''}">
-          <!-- Left: Back Button or Spacer -->
-          ${S.activeTab === 'Major Switching / College Transfer' ? `
+          <!-- Left: Spacer (keeps MGU logo perfectly centered) -->
+          <div class="w-10 h-10"></div>
+
+          <!-- Center: MGU Logo -->
+          <div class="logo-container" style="display:flex;align-items:center;justify-content:center;">
+            <img src="assets/img/mgu_logo.png" alt="MGU Logo" class="logo animate-float" style="margin: 0; height: 32px; width: auto; object-fit: contain;">
+          </div>
+
+          <!-- Right: Hamburger Menu Button OR Back Button -->
+          ${S.activeTab === 'Dashboard' ? `
+            <button 
+              onclick="window.toggleMguSideDrawer(true)"
+              class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30"
+              style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);"
+              aria-label="Open MGU Menu"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+          ` : `
             <button 
               onclick="window.navigateMguTab('Dashboard')"
               class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30"
@@ -1106,33 +1139,14 @@
                 <polyline points="15 18 9 12 15 6"></polyline>
               </svg>
             </button>
-          ` : `
-            <div class="w-10 h-10"></div>
           `}
-
-
-          <!-- Center: MGU Logo -->
-          <div class="logo-container" style="display:flex;align-items:center;justify-content:center;">
-            <img src="assets/img/mgu_logo.png" alt="MGU Logo" class="logo animate-float" style="margin: 0; height: 32px; width: auto; object-fit: contain;">
-          </div>
-
-          <!-- Right: Hamburger Menu Button -->
-          <button 
-            onclick="window.toggleMguSideDrawer(true)"
-            class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30"
-            style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);"
-            aria-label="Open MGU Menu"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          </button>
         </header>
 
-        <!-- Dynamic Side Drawer Overlay Panel -->
+        <!-- Dynamic Bottom Drawer Overlay Panel -->
         <aside id="mgu-side-drawer" class="mgu-side-drawer apple-glass flex flex-col p-5 overflow-y-auto">
+          <!-- Top Drag Handle -->
+          <div class="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4 cursor-pointer" onclick="window.toggleMguSideDrawer(false)"></div>
+
           <div class="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
             <div class="flex items-center gap-2.5">
               <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-[#3897f0]">MG</div>
