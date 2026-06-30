@@ -328,15 +328,7 @@
 
   window.navigateMguTab = function (tabName) {
     window.toggleMguSideDrawer(false);
-    
-    if (tabName === 'Major Switching / College Transfer') {
-      if (window.openExternalApp) {
-        window.openExternalApp('https://cap.mgu.ac.in:8443/CTMS/transfer/Candidate/login', 'Major Switching / College Transfer');
-      } else {
-        window.open('https://cap.mgu.ac.in:8443/CTMS/transfer/Candidate/login', '_blank');
-      }
-      return;
-    }
+
 
     if (tabName === 'Result') {
       if (window.openMguResultTab) {
@@ -742,6 +734,17 @@
           </div>
         </div>
       `;
+    } else if (S.activeTab === 'Major Switching / College Transfer') {
+      viewHtml = `
+        <div class="w-full flex-1 flex flex-col animate-slideUp" style="height: calc(100vh - 180px); min-height: 500px;">
+          <iframe 
+            src="https://cap.mgu.ac.in:8443/CTMS/transfer/Candidate/login" 
+            class="w-full flex-1 border-0 rounded-2xl" 
+            style="background: #fff; width: 100%; height: 100%; min-height: 500px;"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+          ></iframe>
+        </div>
+      `;
     } else if (S.activeTab === 'Course Selection') {
       // ── COURSE SELECTION WORKSPACE MODULE ────────────────────
       viewHtml = `
@@ -1072,20 +1075,32 @@
       <div class="w-full flex-1 flex flex-col relative select-none">
         <!-- Top Toolbar Header Bar -->
         <header class="w-full flex items-center justify-between mt-2 mb-4 relative">
-          <!-- Left: Hamburger Drawer Trigger -->
-          <button 
-            onclick="window.toggleMguSideDrawer(true)"
-            class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30"
-            style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);"
-            aria-label="Open MGU Menu"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          </button>
-
+          <!-- Left: Hamburger Drawer Trigger or Back Button -->
+          ${S.activeTab === 'Major Switching / College Transfer' ? `
+            <button 
+              onclick="window.navigateMguTab('Dashboard')"
+              class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30"
+              style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);"
+              aria-label="Back to Dashboard"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+          ` : `
+            <button 
+              onclick="window.toggleMguSideDrawer(true)"
+              class="w-10 h-10 rounded-full glass-panel flex items-center justify-center spring hover:scale-105 active:scale-95 shadow-sm text-lg z-30"
+              style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);"
+              aria-label="Open MGU Menu"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#1d1d1f] dark:text-[#f5f5f7]">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+          `}
           <!-- Center: MGU Logo -->
           <div class="logo-container" style="display:flex;align-items:center;justify-content:center;">
             <img src="assets/img/mgu_logo.png" alt="MGU Logo" class="logo animate-float" style="margin: 0; height: 32px; width: auto; object-fit: contain;">
