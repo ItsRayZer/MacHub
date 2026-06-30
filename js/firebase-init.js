@@ -81,3 +81,52 @@ try {
   console.error("❌ MacAI: Firebase AI init failed —", err.message);
   window._macaiGemini = null;
 }
+
+// ── Live Notifications Listener & Sync ───────────────────────────────────────
+function startLiveNotifications() {
+  try {
+    const q = query(
+      collection(firestore, 'notifications'),
+      orderBy('sentAt', 'desc'),
+      limit(20)
+    );
+    
+    onSnapshot(q, (snapshot) => {
+      const liveNotifs = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title || '',
+          content: data.message || '',
+          category: data.type === 'urgent' ? 'Exam' : (data.type === 'warning' ? 'Class' : 'General'),
+          date: data.sentAt ? new Date(data.sentAt.seconds * 1000).toLocaleDateString() : new Date().toLocaleDateString(),
+          time: data.sentAt ? new Date(data.sentAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          link: data.link || null
+        };
+      });
+      
+      const staticData = window.STATIC_ANNOUNCEMENTS_DATA || window.ANNOUNCEMENTS_DATA || [];
+      if (!window.STATIC_ANNOUNCEMENTS_DATA) {
+        window.STATIC_ANNOUNCEMENTS_DATA = [...staticData];
+      }
+      
+      window.ANNOUNCEMENTS_DATA = [...liveNotifs, ...window.STATIC_ANNOUNCEMENTS_DATA];
+      
+      // If announcements list is visible, re-render it
+      if (typeof window.renderAnnouncements === 'function') {
+        const container = document.getElementById('announcementsList');
+        if (container) {
+          window.renderAnnouncements('All');
+        }
+      }
+    }, (err) => {
+      console.error("[Notifications Live Sync] Listener error:", err);
+    });
+  } catch (err) {
+    console.error("[Notifications Live Sync] Init error:", err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(startLiveNotifications, 1000);
+});
