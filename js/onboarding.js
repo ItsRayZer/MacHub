@@ -64,8 +64,23 @@ function saveProfile(profile) {
     }
 }
 
-function enterAppWithProfile(profile) {
+async function enterAppWithProfile(profile) {
     saveProfile(profile);
+
+    if (profile.adminNo && typeof window.checkCredentialStatus === 'function') {
+        await window.checkCredentialStatus(profile.adminNo);
+        if (window.isPortalLocked) {
+            const obScreen = document.getElementById('onboardingScreen');
+            if (obScreen) {
+                obScreen.classList.add('collapsed', 'hidden');
+                obScreen.style.pointerEvents = 'none';
+                setTimeout(() => {
+                    obScreen.style.display = 'none';
+                }, 450);
+            }
+            return;
+        }
+    }
 
     const obScreen = document.getElementById('onboardingScreen');
     if (obScreen) {
@@ -419,9 +434,9 @@ window.nextObStep = function(step) {
                             Next
                         </button>
                     </div>
-                    <div class="text-center mt-2.5">
-                        <button onclick="window.triggerSecureAccountModal('${escapeHtml(s.adminNo)}')" class="text-xs font-black text-amber-500 hover:text-amber-400 tracking-wider uppercase transition-all spring active:scale-95 inline-flex items-center gap-1.5 py-1">
-                            🔐 Secure Account
+                    <div class="text-center mt-3">
+                        <button onclick="window.triggerSecureAccountModal('${escapeHtml(s.adminNo)}')" class="btn-liquid-glass py-2.5 px-6 text-xs font-bold spring inline-block" style="border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#fff; border-radius:14px; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);">
+                            Secure Account
                         </button>
                     </div>
                 `;
@@ -591,51 +606,69 @@ window.finishOnboarding = finishSmartOnboarding;
 let secureAccountAdmin = '';
 
 window.triggerSecureAccountModal = function(adminNo) {
-    secureAccountAdmin = adminNo;
-    const modal = document.getElementById('secureAccountModal');
-    if (!modal) return;
+    window.secureAccountAdmin = adminNo;
+    
+    // Clear fields
+    ['sec-old-pwd', 'sec-new-pwd', 'sec-confirm-pwd'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.classList.remove('sa-error'); }
+    });
+    const errEl = document.getElementById('sec-old-pwd-error');
+    if (errEl) errEl.style.display = 'none';
 
-    const oldPwdInput = document.getElementById('sec-old-pwd');
-    if (oldPwdInput) {
-        oldPwdInput.type = 'password';
-        oldPwdInput.value = adminNo;
+    // Hide onboarding screen temporarily so the new view is on top
+    const obScreen = document.getElementById('onboardingScreen');
+    if (obScreen && obScreen.style.display !== 'none') {
+        window._onboardingWasActive = true;
+        obScreen.classList.add('hidden', 'collapsed');
+        obScreen.style.display = 'none';
+    }
+    
+    // Switch to the dedicated full-screen view instead of popup
+    if (typeof switchView === 'function') {
+        switchView('view-secure-account');
     }
 
-    const newPwdInput = document.getElementById('sec-new-pwd');
-    if (newPwdInput) {
-        newPwdInput.type = 'password';
-        newPwdInput.value = '';
-    }
-
-    const confirmPwdInput = document.getElementById('sec-confirm-pwd');
-    if (confirmPwdInput) {
-        confirmPwdInput.type = 'password';
-        confirmPwdInput.value = '';
-    }
-
-    modal.classList.add('open');
+    setTimeout(() => {
+        const inp = document.getElementById('sec-old-pwd');
+        if (inp) inp.focus();
+    }, 150);
 };
 
 window.closeSecureAccountModal = function() {
-    const modal = document.getElementById('secureAccountModal');
-    if (modal) modal.classList.remove('open');
-
-    const oldPwdInput = document.getElementById('sec-old-pwd');
-    const newPwdInput = document.getElementById('sec-new-pwd');
-    const confirmPwdInput = document.getElementById('sec-confirm-pwd');
-    if (oldPwdInput) { oldPwdInput.type = 'text'; oldPwdInput.value = ''; }
-    if (newPwdInput) { newPwdInput.type = 'text'; newPwdInput.value = ''; }
-    if (confirmPwdInput) { confirmPwdInput.type = 'text'; confirmPwdInput.value = ''; }
+    // If we came from onboarding, show it again
+    if (window._onboardingWasActive) {
+        window._onboardingWasActive = false;
+        const obScreen = document.getElementById('onboardingScreen');
+        if (obScreen) {
+            obScreen.classList.remove('hidden', 'collapsed');
+            obScreen.style.display = 'flex';
+        }
+        // Home is active behind onboarding usually
+        if (typeof switchView === 'function') {
+            switchView('view-home');
+        }
+        return;
+    }
+    
+    // Otherwise go to home
+    if (typeof switchView === 'function') {
+        switchView('view-home');
+    }
 };
 
 window.submitSecureAccountPasswordChange = async function() {
-    const adminNo = secureAccountAdmin;
-    const oldPassword = document.getElementById('sec-old-pwd')?.value || '';
+    const adminNo = window.secureAccountAdmin;
+    let oldPassword = document.getElementById('sec-old-pwd')?.value || '';
     const newPassword = document.getElementById('sec-new-pwd')?.value || '';
     const confirmPassword = document.getElementById('sec-confirm-pwd')?.value || '';
 
-    if (!oldPassword || !newPassword || !confirmPassword) {
-        alert('All fields are required.');
+    if (!oldPassword) {
+        oldPassword = adminNo;
+    }
+
+    if (!newPassword || !confirmPassword) {
+        alert('New password fields are required.');
         return;
     }
 
@@ -646,27 +679,124 @@ window.submitSecureAccountPasswordChange = async function() {
 
     const btn = document.getElementById('btn-submit-secure-pwd');
     const originalText = btn ? btn.innerHTML : 'Change & Save';
-    if (btn) btn.innerHTML = '⏳ Processing...';
+    if (btn) {
+        btn.innerHTML = '⏳ Verifying...';
+        btn.disabled = true;
+    }
 
     const CF_WORKER_URL = 'https://machub-proxy.mrabensojan.workers.dev';
 
-    try {
-        const res = await fetch(`${CF_WORKER_URL}/api/change-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                admissionNumber: adminNo,
-                oldPassword,
-                newPassword,
-                confirmPassword
-            })
-        });
+    // Helper: show/hide the inline error below the old password field
+    function showOldPwdError(msg) {
+        const errEl = document.getElementById('sec-old-pwd-error');
+        const inputEl = document.getElementById('sec-old-pwd');
+        if (errEl) {
+            errEl.textContent = msg || '⚠️ Current password is incorrect. Please try again.';
+            errEl.style.display = 'block';
+        }
+        if (inputEl) {
+            inputEl.style.borderColor = 'rgba(239,68,68,0.7)';
+            inputEl.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.12)';
+            inputEl.focus();
+            inputEl.select();
+        }
+    }
 
-        const json = await res.json();
-        if (!res.ok || !json.success) {
-            throw new Error(json.error || 'Password update failed');
+    function clearOldPwdError() {
+        const errEl = document.getElementById('sec-old-pwd-error');
+        const inputEl = document.getElementById('sec-old-pwd');
+        if (errEl) errEl.style.display = 'none';
+        if (inputEl) {
+            inputEl.style.borderColor = 'rgba(255,255,255,0.1)';
+            inputEl.style.boxShadow = 'none';
+        }
+    }
+
+    clearOldPwdError();
+
+    try {
+        // ── STEP 1: Verify old password via portal login ──────────────────────
+        let oldPwdVerified = false;
+        try {
+            const verifyRes = await fetch(`${CF_WORKER_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admissionNumber: adminNo, password: oldPassword }),
+                signal: AbortSignal.timeout(10000)
+            });
+            const verifyJson = await verifyRes.json().catch(() => ({}));
+            if (verifyRes.ok && verifyJson.success) {
+                oldPwdVerified = true;
+            }
+        } catch (verifyErr) {
+            console.warn('[SecureAccount] Old password verification network error:', verifyErr.message);
+            if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+            alert('Network error. Please check your connection and try again.');
+            return;
         }
 
+        if (!oldPwdVerified) {
+            if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+            showOldPwdError('⚠️ Current password is incorrect. Please try again.');
+            return;
+        }
+
+        // ── STEP 2: Old password is correct — proceed with change ──────────────
+        if (btn) {
+            btn.innerHTML = '⏳ Changing...';
+        }
+
+        let changeError = null;
+        try {
+            const res = await fetch(`${CF_WORKER_URL}/api/change-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    admissionNumber: adminNo,
+                    oldPassword,
+                    newPassword,
+                    confirmPassword
+                })
+            });
+            const json = await res.json();
+            if (!res.ok || !json.success) {
+                changeError = json.error || 'Password update failed';
+            }
+        } catch (e) {
+            changeError = e.message;
+        }
+
+        // ── STEP 2.5: Auto-login with new password to verify success ───────────
+        if (btn) {
+            btn.innerHTML = '⏳ Verifying new password...';
+        }
+
+        let newPwdWorks = false;
+        try {
+            const checkRes = await fetch(`${CF_WORKER_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admissionNumber: adminNo, password: newPassword }),
+                signal: AbortSignal.timeout(10000)
+            });
+            const checkJson = await checkRes.json().catch(() => ({}));
+            if (checkRes.ok && checkJson.success) {
+                newPwdWorks = true;
+            }
+        } catch (e) {
+            console.warn('[SecureAccount] Auto-login check network error:', e);
+        }
+
+        if (newPwdWorks) {
+            // The password was successfully changed on the portal!
+            // We ignore any spurious error message the change-password API might have returned.
+            console.log('[SecureAccount] Auto-login successful with new password!');
+        } else {
+            // New password does not work.
+            throw new Error(changeError || 'Portal rejected password change. Please ensure the new password meets the college requirements.');
+        }
+
+        // ── STEP 3: Save new password locally and to Firestore ────────────────
         localStorage.setItem(`machub_portal_Password_${adminNo}`, newPassword);
 
         try {
@@ -683,8 +813,10 @@ window.submitSecureAccountPasswordChange = async function() {
                 
                 if (window.updateFirestoreDocSecurely) {
                     await window.updateFirestoreDocSecurely(adminNo, {
-                        'security.portalPasswordEncrypted': encJson.encrypted,
-                        'security.credentialStatus': 'valid'
+                        'security.portalPasswordEncryptedAdmin': encJson.encrypted,
+                        'security.portalPasswordEncrypted': null,
+                        'security.credentialStatus': 'valid',
+                        'credentialStatus': 'valid'
                     });
                 }
             }
@@ -692,13 +824,45 @@ window.submitSecureAccountPasswordChange = async function() {
             console.warn('[Onboarding] Failed to sync updated password to database:', saveErr);
         }
 
-        alert('Account secured! Portal password updated successfully.');
+        // ── STEP 4: Success — close modal, show toast, auto-sync ──────────────
         window.closeSecureAccountModal();
 
+        if (window.showToast) {
+            window.showToast('Password changed successfully! 🔐', 'success');
+        } else {
+            alert('Password changed successfully!');
+        }
+
+        window.isPortalLocked = false;
+        localStorage.removeItem(`machub_portal_locked_${adminNo}`);
+
+        window.closeSecureAccountModal();
+
+        if (window.syncHomePortalDashboard) {
+            window.syncHomePortalDashboard();
+        }
+
+        setTimeout(() => {
+            try {
+                ['Attendance', 'InternalMark', 'Assessment', 'Assignment'].forEach(sec => {
+                    if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
+                        window.MacHubPortal.fetchSection(sec).catch(() => {});
+                    }
+                });
+            } catch(e) {}
+        }, 1500);
+
     } catch (err) {
-        alert('Failed to secure account: ' + err.message);
+        if (window.showToast) {
+            window.showToast('Failed to change password: ' + err.message, 'error');
+        } else {
+            alert('Failed to change password: ' + err.message);
+        }
     } finally {
-        if (btn) btn.innerHTML = originalText;
+        if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     }
 };
 

@@ -487,7 +487,23 @@ export const scrapeAttendanceDetails = async (admissionNumber, cookie, body, req
 
     // Smart semester selection: explicit > body.semester > highest numeric value (most recent) > portal default
     let targetSemester = requestedSemester || body?.semester || null;
-    if (!targetSemester) {
+    let targetSemesterValue = null;
+    if (targetSemester) {
+      let matchedOpt = semesterOptions.find(o => o.value == targetSemester);
+      if (!matchedOpt) {
+        const semNum = String(targetSemester).match(/\d+/)?.[0];
+        if (semNum) {
+          matchedOpt = semesterOptions.find(o => {
+            const optNum = String(o.text).match(/\d+/)?.[0];
+            return optNum && optNum === semNum;
+          });
+        }
+      }
+      if (matchedOpt) {
+        targetSemesterValue = matchedOpt.value;
+      }
+    }
+    if (!targetSemesterValue) {
       let maxVal = -1;
       let maxSemVal = "";
       semesterOptions.forEach(opt => {
@@ -497,14 +513,14 @@ export const scrapeAttendanceDetails = async (admissionNumber, cookie, body, req
           maxSemVal = opt.value;
         }
       });
-      targetSemester = maxSemVal || portalDefaultSem || semesterOptions[0]?.value || "2";
+      targetSemesterValue = maxSemVal || portalDefaultSem || semesterOptions[0]?.value || "2";
     }
-    semesterOptions.forEach(opt => { opt.selected = (opt.value === targetSemester); });
+    semesterOptions.forEach(opt => { opt.selected = (opt.value === targetSemesterValue); });
 
     // Step 2: POST using extracted tokens (postAttendanceForm does its own GET+POST)
     // We re-use postAttendanceForm which re-GETs internally to get fresh VIEWSTATE
     // This is the correct behaviour — the VIEWSTATE must match the POST target
-    const html = await postAttendanceForm("/AttendanceNew.aspx", cookie, targetSemester);
+    const html = await postAttendanceForm("/AttendanceNew.aspx", cookie, targetSemesterValue);
     const $ = cheerio.load(html);
     const records = [];
     let dataTable = null;
@@ -627,7 +643,23 @@ export const scrapeAttendanceSubjectWise = async (admissionNumber, cookie, body,
 
     // Smart semester selection: explicit > body.semester > highest numeric value (most recent) > portal default
     let targetSemester = requestedSemester || body?.semester || null;
-    if (!targetSemester) {
+    let targetSemesterValue = null;
+    if (targetSemester) {
+      let matchedOpt = semesterOptions.find(o => o.value == targetSemester);
+      if (!matchedOpt) {
+        const semNum = String(targetSemester).match(/\d+/)?.[0];
+        if (semNum) {
+          matchedOpt = semesterOptions.find(o => {
+            const optNum = String(o.text).match(/\d+/)?.[0];
+            return optNum && optNum === semNum;
+          });
+        }
+      }
+      if (matchedOpt) {
+        targetSemesterValue = matchedOpt.value;
+      }
+    }
+    if (!targetSemesterValue) {
       let maxVal = -1;
       let maxSemVal = "";
       semesterOptions.forEach(opt => {
@@ -637,12 +669,12 @@ export const scrapeAttendanceSubjectWise = async (admissionNumber, cookie, body,
           maxSemVal = opt.value;
         }
       });
-      targetSemester = maxSemVal || portalDefaultSem || semesterOptions[0]?.value || "2";
+      targetSemesterValue = maxSemVal || portalDefaultSem || semesterOptions[0]?.value || "2";
     }
-    semesterOptions.forEach(opt => { opt.selected = (opt.value === targetSemester); });
+    semesterOptions.forEach(opt => { opt.selected = (opt.value === targetSemesterValue); });
 
     // Step 2: POST to get subject-wise data (postAttendanceForm does its own GET+POST)
-    const html = await postAttendanceForm("/AttendanceDetails_New.aspx", cookie, targetSemester);
+    const html = await postAttendanceForm("/AttendanceDetails_New.aspx", cookie, targetSemesterValue);
     const $ = cheerio.load(html);
     const subjects = [];
     let dataTable = null;

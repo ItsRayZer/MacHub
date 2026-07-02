@@ -278,19 +278,7 @@
     </div> <!-- end view-seats -->
 
     <div id="view-home" class="view-panel is-active max-w-md mx-auto p-6 relative">
-        <!-- Password Reset Handshake Alert Banner -->
-        <div id="homeCredentialsAlert" class="mb-5 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-between hidden">
-            <div class="flex items-center gap-3">
-                <span class="text-lg">⚠️</span>
-                <div>
-                    <h5 class="text-xs font-black text-red-400">Sync Paused</h5>
-                    <p class="text-[9px] text-zinc-400 leading-tight">Enter your updated portal password to resume background sync.</p>
-                </div>
-            </div>
-            <button onclick="window.triggerUpdatePortalPassword()" class="px-3.5 py-2 bg-red-500 text-white font-black text-[9px] uppercase tracking-wider rounded-xl spring active:scale-95">
-                Update
-            </button>
-        </div>
+        <!-- Sync Paused banner removed — password lock page (view-portal-password-lock) handles all credential issues -->
 
         <!-- Apple Premium Glass Greeting Card -->
         <div class="glass-panel p-6 rounded-[2rem] mb-6 flex items-center justify-between gap-4 relative overflow-hidden cursor-pointer group active:scale-[0.98] transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/10" 
@@ -1691,39 +1679,121 @@
 
     <!-- DEDICATED SETTINGS PAGE: CHANGE PASSWORD -->
     <div id="view-settings-change-password" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
-        style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
-        <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
-            <div class="flex items-center gap-3">
-                <button onclick="switchView('view-settings')" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white spring active:scale-90" aria-label="Back">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                </button>
-                <h3 class="text-lg font-black tracking-tight" style="color:#f5f5f7;">Change Password</h3>
-            </div>
-            
+        style="padding: 0; font-family: 'Outfit', sans-serif; color:#f5f5f7; background: #000;">
+
+        <!-- Sticky Header -->
+        <div class="flex items-center gap-3 px-4 pt-safe-top pt-5 pb-4 sticky top-0 z-10"
+            style="background: rgba(0,0,0,0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <button onclick="switchView('view-settings')"
+                class="w-10 h-10 rounded-full flex items-center justify-center spring active:scale-90"
+                style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h3 style="font-size:17px; font-weight:900; letter-spacing:-0.02em; color:#f5f5f7;">Change Password</h3>
         </div>
-        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar">
-            <p class="settings-section-title">🔑 Change Password</p>
-            <div class="liquid-glass rounded-3xl p-4 space-y-3">
-                <div>
-                    <label class="text-[9px] font-bold text-[#86868b] uppercase">Current Password</label>
-                    <input type="password" id="pwd_old" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" placeholder="••••••••" />
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto no-scrollbar" style="padding: 28px 20px 120px;">
+
+            <!-- Hero Section -->
+            <div class="flex flex-col items-center text-center mb-10">
+                <div style="position:relative; margin-bottom:20px;">
+                    <div style="position:absolute; inset:-16px; border-radius:50%; background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%); filter:blur(12px);"></div>
+                    <div style="position:relative; width:76px; height:76px; border-radius:50%; background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.15)); border: 1.5px solid rgba(99,102,241,0.35); display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow: 0 0 40px rgba(99,102,241,0.15);">
+                        🔐
+                    </div>
                 </div>
-                <div>
-                    <label class="text-[9px] font-bold text-[#86868b] uppercase">New Password</label>
-                    <input type="password" id="pwd_new" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" placeholder="••••••••" />
-                </div>
-                <div>
-                    <label class="text-[9px] font-bold text-[#86868b] uppercase">Confirm New Password</label>
-                    <input type="password" id="pwd_confirm" class="w-full mt-1 p-3 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-white focus:border-[var(--mac-blue)] outline-none" placeholder="••••••••" />
-                </div>
-                <button onclick="window.submitPortalPasswordChange()" class="w-full py-3.5 bg-[#00F5D4] text-black rounded-2xl font-bold text-xs spring active:scale-95 mt-2">
-                    Save Password
-                </button>
+                <h2 style="font-size:22px; font-weight:900; letter-spacing:-0.03em; color:#f5f5f7; margin-bottom:6px;">Change Portal Password</h2>
+                <p style="font-size:13px; color:#86868b; font-weight:500; line-height:1.5; max-width:260px;">Update your Mar Augusthinose College ePortal login password securely.</p>
             </div>
+
+            <!-- Password Fields Card (Redesigned) -->
+            <div style="background: rgba(255,255,255,0.02); border: 1.5px solid rgba(255,255,255,0.06); border-radius:32px; padding:32px; display:flex; flex-direction:column; gap:28px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+
+                <!-- Current Password -->
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-size:10px; font-weight:800; color:#86868b; text-transform:uppercase; letter-spacing:0.12em; padding-left:4px;">Current Portal Password</label>
+                    <div style="position:relative;">
+                        <input type="password" id="pwd_old" autocomplete="current-password"
+                            placeholder="Enter current password"
+                            style="width:100%; padding:20px 54px 20px 22px; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.08); border-radius:22px; color:#fff; font-size:17px; font-weight:600; font-family:'Outfit',sans-serif; outline:none; box-sizing:border-box; transition: all 0.25s ease;"
+                            onfocus="this.style.borderColor='#0071e3'; this.style.background='rgba(255,255,255,0.06)'; this.style.boxShadow='0 0 0 4px rgba(0,113,227,0.25)';"
+                            onblur="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.background='rgba(255,255,255,0.03)'; this.style.boxShadow='none';" />
+                        <button type="button" onclick="window.toggleLockPasswordVisibility('pwd_old')"
+                            style="position:absolute; right:18px; top:50%; transform:translateY(-50%); background:none; border:none; color:#86868b; cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color .2s;"
+                            onmouseenter="this.style.color='#f5f5f7'" onmouseleave="this.style.color='#86868b'">
+                            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div style="height:1px; background:rgba(255,255,255,0.06); margin:4px 0;"></div>
+
+                <!-- New Password -->
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-size:10px; font-weight:800; color:#86868b; text-transform:uppercase; letter-spacing:0.12em; padding-left:4px;">New Password</label>
+                    <div style="position:relative;">
+                        <input type="password" id="pwd_new" autocomplete="new-password"
+                            placeholder="Choose a new password"
+                            style="width:100%; padding:20px 54px 20px 22px; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.08); border-radius:22px; color:#fff; font-size:17px; font-weight:600; font-family:'Outfit',sans-serif; outline:none; box-sizing:border-box; transition: all 0.25s ease;"
+                            onfocus="this.style.borderColor='#0071e3'; this.style.background='rgba(255,255,255,0.06)'; this.style.boxShadow='0 0 0 4px rgba(0,113,227,0.25)';"
+                            onblur="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.background='rgba(255,255,255,0.03)'; this.style.boxShadow='none';"
+                            oninput="window.updatePwdStrength(this.value)" />
+                        <button type="button" onclick="window.toggleLockPasswordVisibility('pwd_new')"
+                            style="position:absolute; right:18px; top:50%; transform:translateY(-50%); background:none; border:none; color:#86868b; cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color .2s;"
+                            onmouseenter="this.style.color='#f5f5f7'" onmouseleave="this.style.color='#86868b'">
+                            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
+                    </div>
+                    <!-- Strength bar -->
+                    <div id="pwd-strength-bar" style="margin-top:8px; display:flex; gap:6px;">
+                        <div class="str-seg" style="height:4px; flex:1; border-radius:4px; background:rgba(255,255,255,0.08); transition:background .3s;"></div>
+                        <div class="str-seg" style="height:4px; flex:1; border-radius:4px; background:rgba(255,255,255,0.08); transition:background .3s;"></div>
+                        <div class="str-seg" style="height:4px; flex:1; border-radius:4px; background:rgba(255,255,255,0.08); transition:background .3s;"></div>
+                        <div class="str-seg" style="height:4px; flex:1; border-radius:4px; background:rgba(255,255,255,0.08); transition:background .3s;"></div>
+                    </div>
+                    <p id="pwd-strength-label" style="font-size:11px; font-weight:700; color:#86868b; margin-top:4px; padding-left:2px;"></p>
+                </div>
+
+                <!-- Confirm New Password -->
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-size:10px; font-weight:800; color:#86868b; text-transform:uppercase; letter-spacing:0.12em; padding-left:4px;">Confirm New Password</label>
+                    <div style="position:relative;">
+                        <input type="password" id="pwd_confirm" autocomplete="new-password"
+                            placeholder="Re-enter new password"
+                            style="width:100%; padding:20px 54px 20px 22px; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.08); border-radius:22px; color:#fff; font-size:17px; font-weight:600; font-family:'Outfit',sans-serif; outline:none; box-sizing:border-box; transition: all 0.25s ease;"
+                            onfocus="this.style.borderColor='#0071e3'; this.style.background='rgba(255,255,255,0.06)'; this.style.boxShadow='0 0 0 4px rgba(0,113,227,0.25)';"
+                            onblur="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.background='rgba(255,255,255,0.03)'; this.style.boxShadow='none';" />
+                        <button type="button" onclick="window.toggleLockPasswordVisibility('pwd_confirm')"
+                            style="position:absolute; right:18px; top:50%; transform:translateY(-50%); background:none; border:none; color:#86868b; cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color .2s;"
+                            onmouseenter="this.style.color='#f5f5f7'" onmouseleave="this.style.color='#86868b'">
+                            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info tip -->
+            <div style="margin-top:20px; padding:18px 20px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:24px; display:flex; align-items:flex-start; gap:12px;">
+                <span style="font-size:18px; flex-shrink:0; margin-top:-1px;">💡</span>
+                <p style="font-size:12px; color:#86868b; font-weight:600; line-height:1.6; margin:0;">
+                    If your current password is still the default (admission number), enter it in the <strong style="color:#f5f5f7;">Current Portal Password</strong> field above.
+                </p>
+            </div>
+
+            <!-- Submit Button (Redesigned White Apple Pill) -->
+            <button id="btn-submit-change-pwd" onclick="window.submitPortalPasswordChange()"
+                style="width:100%; margin-top:28px; padding:20px; background:#ffffff; border:none; border-radius:24px; color:#000000; font-size:16px; font-weight:900; font-family:'Outfit',sans-serif; cursor:pointer; letter-spacing:-0.01em; box-shadow:0 12px 36px rgba(255,255,255,0.12); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display:flex; align-items:center; justify-content:center; gap:10px;"
+                onmouseenter="this.style.background='#f5f5f7'; this.style.transform='translateY(-1px)';" onmouseleave="this.style.background='#ffffff'; this.style.transform='translateY(0)';"
+                onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Update Password</span>
+            </button>
+
         </div>
     </div>
+
 
     <!-- DEDICATED SETTINGS PAGE: ACTIVE DEVICES -->
     <div id="view-settings-active-devices" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
@@ -2038,16 +2108,6 @@
             <div class="liquid-glass rounded-3xl p-4 space-y-4">
                 <div class="flex justify-between items-center">
                     <div>
-                        <div class="settings-nav-label">Local Snapshots Cache</div>
-                        <div class="settings-nav-sub">Cache portal data locally for offline usage</div>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="privacyLocalCache" onchange="togglePrivacySetting('localCache')" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--mac-blue)]"></div>
-                    </label>
-                </div>
-                <div class="flex justify-between items-center">
-                    <div>
                         <div class="settings-nav-label">Auto-Wipe on Exit</div>
                         <div class="settings-nav-sub">Delete local database on tab close</div>
                     </div>
@@ -2086,6 +2146,362 @@
         <div class="flex-1 overflow-y-auto px-4 py-6" id="claim-flow-container">
             <!-- Populated dynamically by claim_profile.js -->
         </div>
+    </div>
+
+    <!-- DEDICATED VIEW: PORTAL PASSWORD LOCK SCREEN -->
+    <div id="view-portal-password-lock" class="view-panel"
+        style="display:flex;flex-direction:column;min-height:100dvh;width:100%;position:relative;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#fff;">
+
+        <!-- Page-scoped styles -->
+        <style>
+            @keyframes ppl-orb-float-1 {
+                0%,100% { transform: translateY(0px); }
+                50%     { transform: translateY(-30px); }
+            }
+            @keyframes ppl-orb-float-2 {
+                0%,100% { transform: translateY(0px); }
+                50%     { transform: translateY(30px); }
+            }
+            @keyframes ppl-page-enter {
+                from { opacity:0; transform:translateY(16px); }
+                to   { opacity:1; transform:translateY(0); }
+            }
+            @keyframes ppl-card-enter-1 {
+                from { opacity:0; transform:translateY(16px); }
+                to   { opacity:1; transform:translateY(0); }
+            }
+            @keyframes ppl-card-enter-2 {
+                from { opacity:0; transform:translateY(16px); }
+                to   { opacity:1; transform:translateY(0); }
+            }
+            @keyframes ppl-shake {
+                0%   { transform:translateX(0); }
+                20%  { transform:translateX(-6px); }
+                40%  { transform:translateX(6px); }
+                60%  { transform:translateX(-4px); }
+                80%  { transform:translateX(4px); }
+                100% { transform:translateX(0); }
+            }
+            #ppl-input-wrap.ppl-shake { animation: ppl-shake 0.35s ease-in-out; }
+
+            #view-portal-password-lock .ppl-content {
+                animation: ppl-page-enter 0.35s ease-out both;
+            }
+            #ppl-profile-mini {
+                animation: ppl-card-enter-1 0.35s 0.10s ease-out both;
+            }
+            #ppl-input-card {
+                animation: ppl-card-enter-2 0.35s 0.20s ease-out both;
+            }
+
+            /* Back button */
+            #ppl-back-btn {
+                display:flex;align-items:center;gap:6px;
+                padding:8px 16px;
+                background:rgba(255,255,255,0.08);
+                border:1px solid rgba(255,255,255,0.12);
+                backdrop-filter:blur(20px);
+                -webkit-backdrop-filter:blur(20px);
+                border-radius:50px;
+                color:rgba(255,255,255,0.80);
+                font-size:14px;font-weight:600;
+                cursor:pointer;
+                transition:all 0.15s ease;
+                white-space:nowrap;
+            }
+            #ppl-back-btn:hover { background:rgba(255,255,255,0.13); }
+            #ppl-back-btn:active { transform:scale(0.97); opacity:0.85; }
+
+            /* Continue button */
+            #btn-unlock-portal {
+                width:100%;
+                padding:15px 24px;
+                background:linear-gradient(135deg,#6366f1 0%,#4f46e5 100%);
+                border:none;border-radius:14px;
+                font-size:15px;font-weight:600;letter-spacing:0.01em;
+                color:#fff;cursor:pointer;
+                box-shadow:0 4px 15px rgba(99,102,241,0.35),0 1px 3px rgba(0,0,0,0.3),0 0 0 0.5px rgba(255,255,255,0.15) inset;
+                transition:all 0.2s ease;
+                display:flex;align-items:center;justify-content:center;gap:8px;
+            }
+            #btn-unlock-portal:hover:not(:disabled) {
+                box-shadow:0 6px 22px rgba(99,102,241,0.50),0 1px 3px rgba(0,0,0,0.3),0 0 0 0.5px rgba(255,255,255,0.15) inset;
+                filter:brightness(1.07);
+            }
+            #btn-unlock-portal:active:not(:disabled) { transform:scale(0.98); box-shadow:0 2px 8px rgba(99,102,241,0.25); }
+            #btn-unlock-portal:disabled { opacity:0.45;cursor:not-allowed;box-shadow:none; }
+
+            /* Spinner */
+            @keyframes ppl-spin { to { transform:rotate(360deg); } }
+            .ppl-spinner {
+                width:18px;height:18px;
+                border:2px solid rgba(255,255,255,0.3);
+                border-top-color:#fff;
+                border-radius:50%;
+                animation:ppl-spin 0.7s linear infinite;
+                flex-shrink:0;
+            }
+
+            /* Password input */
+            #lock-portal-pwd {
+                width:100%;box-sizing:border-box;
+                padding:14px 48px 14px 16px;
+                background:rgba(255,255,255,0.07);
+                border:1.5px solid rgba(255,255,255,0.12);
+                border-radius:12px;
+                font-size:15px;font-weight:400;color:#fff;
+                caret-color:#6366f1;
+                outline:none;
+                transition:border-color 0.2s ease,box-shadow 0.2s ease,background 0.2s ease;
+                font-family:inherit;
+            }
+            #lock-portal-pwd::placeholder { color:rgba(255,255,255,0.30); }
+            #lock-portal-pwd:focus {
+                border-color:rgba(99,102,241,0.70);
+                box-shadow:0 0 0 3px rgba(99,102,241,0.20);
+                background:rgba(255,255,255,0.09);
+            }
+
+            /* Glass card */
+            .ppl-glass-card {
+                background:rgba(255,255,255,0.05);
+                backdrop-filter:blur(40px) saturate(180%);
+                -webkit-backdrop-filter:blur(40px) saturate(180%);
+                border:1px solid rgba(255,255,255,0.12);
+                border-radius:28px;
+                box-shadow:0 0 0 0.5px rgba(255,255,255,0.08) inset,0 8px 32px rgba(0,0,0,0.4),0 2px 8px rgba(0,0,0,0.3);
+                position:relative;
+                overflow:hidden;
+            }
+            .ppl-glass-card::before {
+                content:'';
+                position:absolute;top:0;left:0;right:0;height:1px;
+                background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25) 30%,rgba(255,255,255,0.35) 50%,rgba(255,255,255,0.25) 70%,transparent);
+                border-radius:28px 28px 0 0;pointer-events:none;
+            }
+        </style>
+
+        <!-- Full-page gradient background -->
+        <div style="position:absolute;inset:0;z-index:0;
+            background:
+                radial-gradient(ellipse at 20% 20%,rgba(99,102,241,0.18) 0%,transparent 50%),
+                radial-gradient(ellipse at 80% 80%,rgba(59,130,246,0.15) 0%,transparent 50%),
+                radial-gradient(ellipse at 50% 50%,rgba(15,15,20,1) 0%,rgba(10,10,16,1) 100%);"></div>
+
+        <!-- Animated orb 1 (top-left) -->
+        <div style="position:absolute;top:-80px;left:-80px;width:400px;height:400px;z-index:0;pointer-events:none;
+            background:radial-gradient(circle,rgba(99,102,241,0.12),transparent);
+            filter:blur(80px);
+            animation:ppl-orb-float-1 20s infinite ease-in-out;"></div>
+
+        <!-- Animated orb 2 (bottom-right) -->
+        <div style="position:absolute;bottom:-80px;right:-80px;width:300px;height:300px;z-index:0;pointer-events:none;
+            background:radial-gradient(circle,rgba(59,130,246,0.10),transparent);
+            filter:blur(60px);
+            animation:ppl-orb-float-2 25s infinite ease-in-out 2s;"></div>
+
+        <!-- ════════════════════════ ZONE 1: TOP BAR ════════════════════════ -->
+        <div style="position:relative;z-index:10;height:60px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <!-- Left: Back button -->
+            <button id="ppl-back-btn" onclick="window.exitLockedProfileToSearch()" aria-label="Go back">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Back
+            </button>
+
+            <!-- Center: MacHub logo — absolute so it's always centered regardless of back button width -->
+            <div style="position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;">
+                <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub" style="height:20px;width:auto;">
+            </div>
+
+            <!-- Right: Spacer to balance the back button -->
+            <div style="visibility:hidden;padding:8px 16px;font-size:14px;">Back</div>
+        </div>
+
+        <!-- ════════════════════════ ZONE 2: MAIN CONTENT ════════════════════════ -->
+        <div class="ppl-content" style="position:relative;z-index:10;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 20px;gap:20px;width:100%;box-sizing:border-box;">
+            <div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:20px;">
+
+                <!-- Profile mini-card (shown when student info available) -->
+                <div id="ppl-profile-mini" style="display:none;">
+                    <div class="ppl-glass-card" style="padding:16px 20px;display:flex;align-items:center;gap:14px;">
+                        <!-- Avatar -->
+                        <div id="ppl-avatar" style="width:52px;height:52px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#3b82f6);overflow:hidden;">
+                            <!-- Initials injected by JS -->
+                        </div>
+                        <!-- Info -->
+                        <div style="min-width:0;">
+                            <div id="ppl-student-name" style="font-size:15px;font-weight:600;color:rgba(255,255,255,0.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+                            <div id="ppl-student-admno" style="font-size:12px;color:rgba(255,255,255,0.50);margin-top:2px;"></div>
+                            <div id="ppl-student-dept" style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Heading -->
+                <div>
+                    <h1 id="ppl-title" style="font-size:22px;font-weight:700;letter-spacing:-0.02em;color:rgba(255,255,255,0.95);margin:0;line-height:1.2;">Welcome back.</h1>
+                    <p id="ppl-subtitle" style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.55);margin:6px 0 0;line-height:1.5;">Enter your EduloomPro portal password to continue.</p>
+                </div>
+
+                <!-- Password input card -->
+                <div id="ppl-input-card" class="ppl-glass-card" style="padding:20px;">
+                    <div id="ppl-input-wrap" style="position:relative;">
+                        <input
+                            type="password"
+                            id="lock-portal-pwd"
+                            placeholder="Portal password"
+                            autocomplete="current-password"
+                            autocorrect="off"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            onkeydown="if(event.key==='Enter'){window.submitPortalLockVerification();}"
+                            oninput="window.pplClearError && window.pplClearError();"
+                        />
+                        <!-- Show/hide toggle -->
+                        <button type="button"
+                            onclick="window.toggleLockPasswordVisibility('lock-portal-pwd')"
+                            style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.40);display:flex;align-items:center;justify-content:center;padding:4px;transition:color 0.15s ease;"
+                            onmouseover="this.style.color='rgba(255,255,255,0.70)'"
+                            onmouseout="this.style.color='rgba(255,255,255,0.40)'"
+                            aria-label="Toggle password visibility">
+                            <svg id="ppl-eye-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Security note -->
+                    <p style="font-size:11px;color:rgba(255,255,255,0.30);text-align:center;margin:10px 0 0;">Your password is stored securely on this device only.</p>
+
+                    <!-- Error state (hidden by default) -->
+                    <p id="ppl-error-msg" style="font-size:12px;color:rgba(239,68,68,0.90);text-align:center;margin:8px 0 0;display:none;">Incorrect password. Please try again.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════ ZONE 3: BOTTOM AREA ════════════════════════ -->
+        <div style="position:relative;z-index:10;padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom));flex-shrink:0;">
+            <div style="max-width:420px;margin:0 auto;">
+                <!-- Continue button -->
+                <button id="btn-unlock-portal" onclick="window.submitPortalLockVerification()" disabled>
+                    <span id="ppl-btn-text">Continue</span>
+                </button>
+                <!-- Fine print -->
+                <p style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center;margin:12px 0 0;">Secured connection to EduloomPro portal</p>
+            </div>
+        </div>
+
+        <!-- Inline boot script for this view -->
+        <script>
+        (function() {
+            function pplBoot() {
+                // Populate profile mini-card from localStorage
+                try {
+                    const raw = localStorage.getItem('mac_student_info');
+                    if (raw) {
+                        const info = JSON.parse(raw);
+                        if (info && (info.name || info.adminNo)) {
+                            const card = document.getElementById('ppl-profile-mini');
+                            const nameEl = document.getElementById('ppl-student-name');
+                            const admEl  = document.getElementById('ppl-student-admno');
+                            const deptEl = document.getElementById('ppl-student-dept');
+                            const avatarEl = document.getElementById('ppl-avatar');
+
+                            const name    = info.name || '';
+                            const adminNo = info.adminNo || info.admissionNo || info.admissionNumber || '';
+                            const dept    = info.dept || info.department || info.course || '';
+                            const sem     = info.semester || '';
+
+                            if (nameEl) nameEl.textContent = name;
+                            if (admEl)  admEl.textContent  = adminNo;
+                            if (deptEl) {
+                                let deptText = dept;
+                                if (sem) deptText += (dept ? '  \u2022  ' : '') + 'Semester ' + sem;
+                                deptEl.textContent = deptText;
+                            }
+                            if (avatarEl) {
+                                // Build initials
+                                const parts = name.trim().split(/\s+/).filter(Boolean);
+                                const initials = parts.length >= 2
+                                    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                                    : (name.substring(0, 2).toUpperCase() || '?');
+                                avatarEl.textContent = initials;
+                            }
+                            if (card) card.style.display = 'block';
+                        }
+                    }
+                } catch(e) {}
+
+                // Auto-focus password field
+                setTimeout(function() {
+                    const inp = document.getElementById('lock-portal-pwd');
+                    if (inp) inp.focus();
+                }, 120);
+
+                // Wire continue button enable/disable on input
+                const inp = document.getElementById('lock-portal-pwd');
+                const btn = document.getElementById('btn-unlock-portal');
+                if (inp && btn) {
+                    inp.addEventListener('input', function() {
+                        btn.disabled = !inp.value.trim();
+                    });
+                }
+
+                // Error helpers exposed to api.js
+                window.pplShowError = function(msg) {
+                    const el = document.getElementById('ppl-error-msg');
+                    const wrap = document.getElementById('ppl-input-wrap');
+                    const inp2 = document.getElementById('lock-portal-pwd');
+                    if (el) { el.textContent = msg || 'Incorrect password. Please try again.'; el.style.display = 'block'; }
+                    if (wrap) {
+                        wrap.classList.remove('ppl-shake');
+                        void wrap.offsetWidth; // reflow to restart
+                        wrap.classList.add('ppl-shake');
+                    }
+                    if (inp2) { inp2.value = ''; inp2.focus(); }
+                    if (btn) btn.disabled = true;
+                };
+                window.pplClearError = function() {
+                    const el = document.getElementById('ppl-error-msg');
+                    if (el) el.style.display = 'none';
+                };
+
+                // Loading state helpers
+                window.pplSetLoading = function(loading) {
+                    const b = document.getElementById('btn-unlock-portal');
+                    const t = document.getElementById('ppl-btn-text');
+                    if (!b) return;
+                    if (loading) {
+                        b.disabled = true;
+                        b.innerHTML = '<span class="ppl-spinner"></span><span>Verifying...</span>';
+                    } else {
+                        b.disabled = false;
+                        b.innerHTML = '<span id="ppl-btn-text">Continue</span>';
+                        // Re-check input
+                        const i = document.getElementById('lock-portal-pwd');
+                        if (i) b.disabled = !i.value.trim();
+                    }
+                };
+            }
+
+            // Run on view activation or immediately
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', pplBoot);
+            } else {
+                pplBoot();
+            }
+
+            // Re-run every time this view is shown
+            document.addEventListener('viewSwitched', function(e) {
+                if (e && e.detail && e.detail.viewId === 'view-portal-password-lock') {
+                    pplBoot();
+                }
+            });
+        })();
+        </script>
     </div>
 
     <!-- DEDICATED VIEW: PIN LOCK SCREEN -->
@@ -2670,13 +3086,9 @@
         <div class="machub-modal-backdrop" onclick="window.closePortalPasswordModal()"></div>
         <div class="machub-modal-content">
             <div class="text-center space-y-4">
-                <div class="w-14 h-14 rounded-full bg-[var(--mac-blue)]/10 border border-[var(--mac-blue)]/20 flex items-center justify-center mx-auto text-xl">
-                    🔑
-                </div>
+                <div class="w-14 h-14 rounded-full bg-[var(--mac-blue)]/10 border border-[var(--mac-blue)]/20 flex items-center justify-center mx-auto text-xl">🔑</div>
                 <h4 id="pwd-modal-title" class="text-lg font-black text-white/90">Portal Password Required</h4>
-                <p id="pwd-modal-desc" class="text-xs text-zinc-400 leading-relaxed px-2">
-                    Enter your official portal password to authorize syncing.
-                </p>
+                <p id="pwd-modal-desc" class="text-xs text-zinc-400 leading-relaxed px-2">Enter your official portal password to authorize syncing.</p>
                 <div class="space-y-3 pt-2 text-left">
                     <div>
                         <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="portal-pwd-input">ePortal Password</label>
@@ -2685,56 +3097,246 @@
                     </div>
                 </div>
                 <div class="flex gap-3 pt-4">
-                    <button onclick="window.closePortalPasswordModal()" class="flex-1 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 font-bold text-xs rounded-xl transition-all">
-                        Cancel
-                    </button>
-                    <button onclick="window.submitPortalPasswordVerification()" class="flex-1 py-3.5 bg-[var(--mac-blue)] hover:bg-[var(--mac-blue)]/90 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-[var(--mac-blue)]/15">
-                        <span>Verify & Save</span>
-                    </button>
+                    <button onclick="window.closePortalPasswordModal()" class="flex-1 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 font-bold text-xs rounded-xl transition-all">Cancel</button>
+                    <button onclick="window.submitPortalPasswordVerification()" class="flex-1 py-3.5 bg-[var(--mac-blue)] hover:bg-[var(--mac-blue)]/90 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-[var(--mac-blue)]/15"><span>Verify &amp; Save</span></button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- DEDICATED DIALOG MODAL: SECURE ACCOUNT (CHANGE DEFAULT PASSWORD) -->
-    <div id="secureAccountModal" class="machub-modal">
-        <div class="machub-modal-backdrop" onclick="window.closeSecureAccountModal()"></div>
-        <div class="machub-modal-content">
-            <div class="text-center space-y-4">
-                <div class="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-xl">
-                    🛡️
+    <!-- DEDICATED DIALOG MODAL: MGU RESULT IDENTITY CONFIRMATION -->
+    <div id="mguConfirmModal" class="machub-modal">
+        <div class="machub-modal-backdrop" onclick="window.closeMguConfirmModal()"></div>
+        <div class="machub-modal-content animate-scale-up" style="border-radius:28px; padding:28px; max-width:360px; background:#111; border:1px solid rgba(255,255,255,0.1); margin:auto;">
+            <div style="text-align:center; margin-bottom:24px;">
+                <div style="position:relative; display:inline-block; margin-bottom:16px;">
+                    <div style="position:absolute; inset:-12px; border-radius:50%; background:radial-gradient(circle,rgba(59,130,246,0.2) 0%,transparent 70%); filter:blur(8px);"></div>
+                    <div style="position:relative; width:64px; height:64px; border-radius:50%; background:rgba(59,130,246,0.1); border:1.5px solid rgba(59,130,246,0.3); display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto;">🎓</div>
                 </div>
-                <h4 class="text-lg font-black text-white/90">Secure Your Account</h4>
-                <p class="text-xs text-zinc-400 leading-relaxed px-2">
-                    Change your default password (admission number) to a secure one on the portal.
-                </p>
-                <div class="space-y-3 pt-2 text-left">
-                    <div>
-                        <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-old-pwd">Old Password</label>
-                        <input type="text" id="sec-old-pwd" placeholder="••••••••" autocomplete="off"
-                            class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-new-pwd">New Password</label>
-                        <input type="text" id="sec-new-pwd" placeholder="••••••••" autocomplete="off"
-                            class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider" for="sec-confirm-pwd">Confirm New Password</label>
-                        <input type="text" id="sec-confirm-pwd" placeholder="••••••••" autocomplete="off"
-                            class="w-full mt-1 p-3.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-amber-500/50" />
-                    </div>
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button onclick="window.closeSecureAccountModal()" class="flex-1 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 font-bold text-xs rounded-xl transition-all">
-                        Cancel
-                    </button>
-                    <button onclick="window.submitSecureAccountPasswordChange()" id="btn-submit-secure-pwd" class="flex-1 py-3.5 bg-amber-500 hover:bg-amber-600 text-black font-black text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/15">
-                        <span>Change & Save</span>
-                    </button>
-                </div>
+                <h4 style="font-size:19px; font-weight:900; color:#f5f5f7; letter-spacing:-0.02em; margin:0 0 6px;">Confirm Student Profile</h4>
+                <p style="font-size:13px; color:#86868b; font-weight:500; line-height:1.5; margin:0;">Is this your official Mahatma Gandhi University profile?</p>
+            </div>
+
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:18px; padding:16px; margin-bottom:24px;">
+                <div style="font-size:11px; font-weight:800; color:#86868b; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Verified Name</div>
+                <div id="mgu-conf-name" style="font-size:17px; font-weight:900; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div>
+                <div style="height:1px; background:rgba(255,255,255,0.06); margin:12px 0;"></div>
+                <div style="font-size:11px; font-weight:800; color:#86868b; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">PRN / Register Number</div>
+                <div id="mgu-conf-prn" style="font-size:15px; font-weight:700; color:#3897f0;"></div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <button type="button" onclick="window.closeMguConfirmModal()"
+                    style="flex:1; padding:15px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:16px; color:#86868b; font-size:14px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:background .2s;"
+                    onmouseenter="this.style.background='rgba(255,255,255,0.08)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">
+                    Cancel
+                </button>
+                <button type="button" onclick="window.acceptMguProfileLink()" id="btn-submit-mgu-confirm"
+                    style="flex:2; padding:15px; background:linear-gradient(135deg,#3897f0,#00f5d4); border:none; border-radius:16px; color:#000; font-size:14px; font-weight:900; font-family:'Outfit',sans-serif; cursor:pointer; box-shadow:0 6px 20px rgba(56,151,240,0.25); transition:opacity .2s;"
+                    onmouseenter="this.style.opacity='0.9'" onmouseleave="this.style.opacity='1'">
+                    Confirm &amp; Link
+                </button>
             </div>
         </div>
+    </div>
+
+
+    <!-- DEDICATED FULL-SCREEN VIEW: SECURE ACCOUNT (CHANGE PASSWORD) -->
+    <!-- Matches view-portal-password-lock theme: dark gradient, floating orbs, MacHub logo top center -->
+    <div id="view-secure-account" class="view-panel flex"
+        style="flex-direction:column;min-height:100dvh;width:100%;position:relative;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#fff;">
+
+        <style>
+            @keyframes sa-orb-float-1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-28px)} }
+            @keyframes sa-orb-float-2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(26px)} }
+            @keyframes sa-page-enter  { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+            #view-secure-account .sa-content { animation: sa-page-enter 0.38s ease-out both; }
+            .sa-glass-card {
+                background:rgba(255,255,255,0.05);
+                backdrop-filter:blur(40px) saturate(180%);
+                -webkit-backdrop-filter:blur(40px) saturate(180%);
+                border:1px solid rgba(255,255,255,0.12);
+                border-radius:28px;
+                box-shadow:0 0 0 0.5px rgba(255,255,255,0.08) inset, 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+                position:relative; overflow:hidden;
+            }
+            .sa-glass-card::before {
+                content:''; position:absolute; top:0; left:0; right:0; height:1px;
+                background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25) 30%,rgba(255,255,255,0.35) 50%,rgba(255,255,255,0.25) 70%,transparent);
+                border-radius:28px 28px 0 0; pointer-events:none;
+            }
+            #sa-back-btn {
+                display:flex; align-items:center; gap:6px;
+                padding:8px 16px;
+                background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);
+                backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+                border-radius:50px; color:rgba(255,255,255,0.80);
+                font-size:14px; font-weight:600; cursor:pointer;
+                transition:all 0.15s ease; white-space:nowrap;
+            }
+            #sa-back-btn:hover { background:rgba(255,255,255,0.13); }
+            #sa-back-btn:active { transform:scale(0.97); opacity:0.85; }
+            .sa-input {
+                width:100%; box-sizing:border-box;
+                padding:15px 50px 15px 18px;
+                background:rgba(255,255,255,0.07); border:1.5px solid rgba(255,255,255,0.12);
+                border-radius:14px; font-size:15px; font-weight:500; color:#fff;
+                caret-color:#a78bfa; outline:none; font-family:inherit;
+                transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+            }
+            .sa-input::placeholder { color:rgba(255,255,255,0.28); }
+            .sa-input:focus { border-color:rgba(139,92,246,0.70); box-shadow:0 0 0 3px rgba(139,92,246,0.20); background:rgba(255,255,255,0.09); }
+            .sa-input.sa-error { border-color:rgba(239,68,68,0.70) !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
+            #btn-submit-secure-pwd {
+                width:100%; padding:16px 24px;
+                background:rgba(255,255,255,0.10);
+                border:1px solid rgba(255,255,255,0.20);
+                backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+                border-radius:14px; font-size:15px; font-weight:700; letter-spacing:0.01em;
+                color:#fff; cursor:pointer;
+                box-shadow:0 0 0 0.5px rgba(255,255,255,0.12) inset, 0 4px 16px rgba(0,0,0,0.25);
+                transition:all 0.2s ease;
+                display:flex; align-items:center; justify-content:center; gap:8px;
+            }
+            #btn-submit-secure-pwd:hover:not(:disabled) { background:rgba(255,255,255,0.16); border-color:rgba(255,255,255,0.30); box-shadow:0 0 0 0.5px rgba(255,255,255,0.18) inset, 0 6px 22px rgba(0,0,0,0.30); }
+            #btn-submit-secure-pwd:active:not(:disabled) { transform:scale(0.98); }
+            #btn-submit-secure-pwd:disabled { opacity:0.35; cursor:not-allowed; }
+            #btn-sa-cancel {
+                width:100%; padding:14px;
+                background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+                border-radius:14px; font-size:14px; font-weight:600;
+                color:rgba(255,255,255,0.50); cursor:pointer;
+                transition:all 0.2s ease;
+            }
+            #btn-sa-cancel:hover { background:rgba(255,255,255,0.09); color:rgba(255,255,255,0.75); }
+            #btn-sa-cancel:active { transform:scale(0.98); }
+        </style>
+
+        <!-- Full-page gradient bg (same as lock page) -->
+        <div style="position:absolute;inset:0;z-index:0;
+            background:
+                radial-gradient(ellipse at 20% 20%,rgba(139,92,246,0.18) 0%,transparent 50%),
+                radial-gradient(ellipse at 80% 80%,rgba(59,130,246,0.14) 0%,transparent 50%),
+                radial-gradient(ellipse at 50% 50%,rgba(15,15,20,1) 0%,rgba(10,10,16,1) 100%);"></div>
+
+        <!-- Floating orb 1 -->
+        <div style="position:absolute;top:-80px;left:-80px;width:380px;height:380px;z-index:0;pointer-events:none;
+            background:radial-gradient(circle,rgba(139,92,246,0.13),transparent);
+            filter:blur(80px); animation:sa-orb-float-1 22s infinite ease-in-out;"></div>
+
+        <!-- Floating orb 2 -->
+        <div style="position:absolute;bottom:-80px;right:-80px;width:300px;height:300px;z-index:0;pointer-events:none;
+            background:radial-gradient(circle,rgba(59,130,246,0.10),transparent);
+            filter:blur(60px); animation:sa-orb-float-2 28s infinite ease-in-out 3s;"></div>
+
+        <!-- TOP BAR: back + MacHub logo centered -->
+        <div style="position:relative;z-index:10;height:60px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <button id="sa-back-btn" onclick="window.closeSecureAccountModal()" aria-label="Go back">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                Back
+            </button>
+            <div style="position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;">
+                <img src="assets/img/file_00000000378c7207842a975d80367515.png" alt="MacHub" style="height:20px;width:auto;">
+            </div>
+            <div style="visibility:hidden;padding:8px 16px;font-size:14px;">Back</div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="sa-content" style="position:relative;z-index:10;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 20px 30px;gap:20px;width:100%;box-sizing:border-box;overflow-y:auto;">
+            <div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:16px;">
+
+                <!-- Title -->
+                <div style="margin-bottom:4px;">
+                    <h1 style="font-size:22px;font-weight:700;letter-spacing:-0.02em;color:rgba(255,255,255,0.95);margin:0 0 6px;line-height:1.2;">Secure Your Account</h1>
+                    <p style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.48);margin:0;line-height:1.5;">Change your ePortal password. Leave the current password field blank if you haven't changed it from your admission number.</p>
+                </div>
+
+                <!-- Fields glass card -->
+                <div class="sa-glass-card" style="padding:24px;display:flex;flex-direction:column;gap:20px;">
+
+                    <!-- Current Password -->
+                    <div>
+                        <label style="display:block;font-size:10px;font-weight:800;color:rgba(255,255,255,0.38);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Current Password</label>
+                        <div style="position:relative;">
+                            <input type="password" id="sec-old-pwd" class="sa-input"
+                                placeholder="Leave blank if using admission number"
+                                autocomplete="current-password"
+                                oninput="var e=document.getElementById('sec-old-pwd-error');if(e){e.style.display='none';}this.classList.remove('sa-error');" />
+                            <button type="button" onclick="window.toggleLockPasswordVisibility('sec-old-pwd')"
+                                style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;padding:4px;transition:color .15s ease;"
+                                onmouseover="this.style.color='rgba(255,255,255,0.70)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'" aria-label="Toggle visibility">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </button>
+                        </div>
+                        <p id="sec-old-pwd-error" style="display:none;color:rgba(239,68,68,0.90);font-size:12px;margin:6px 0 0 2px;font-weight:600;line-height:1.4;">Current password is incorrect. Please try again.</p>
+                    </div>
+
+                    <!-- Divider -->
+                    <div style="height:1px;background:rgba(255,255,255,0.07);"></div>
+
+                    <!-- New Password -->
+                    <div>
+                        <label style="display:block;font-size:10px;font-weight:800;color:rgba(255,255,255,0.38);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">New Password</label>
+                        <div style="position:relative;">
+                            <input type="password" id="sec-new-pwd" class="sa-input"
+                                placeholder="Choose a strong password"
+                                autocomplete="new-password" />
+                            <button type="button" onclick="window.toggleLockPasswordVisibility('sec-new-pwd')"
+                                style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;padding:4px;transition:color .15s ease;"
+                                onmouseover="this.style.color='rgba(255,255,255,0.70)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'" aria-label="Toggle visibility">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div>
+                        <label style="display:block;font-size:10px;font-weight:800;color:rgba(255,255,255,0.38);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Confirm New Password</label>
+                        <div style="position:relative;">
+                            <input type="password" id="sec-confirm-pwd" class="sa-input"
+                                placeholder="Re-enter new password"
+                                autocomplete="new-password"
+                                onkeydown="if(event.key==='Enter') window.submitSecureAccountPasswordChange();" />
+                            <button type="button" onclick="window.toggleLockPasswordVisibility('sec-confirm-pwd')"
+                                style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;padding:4px;transition:color .15s ease;"
+                                onmouseover="this.style.color='rgba(255,255,255,0.70)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'" aria-label="Toggle visibility">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center;margin:0;">Your new password is encrypted and stored securely on this device.</p>
+                </div>
+
+                <!-- Liquid glass submit + cancel -->
+                <button id="btn-submit-secure-pwd" onclick="window.submitSecureAccountPasswordChange()">
+                    Change Password
+                </button>
+                <button id="btn-sa-cancel" onclick="window.closeSecureAccountModal()">
+                    Cancel
+                </button>
+
+            </div>
+        </div>
+
+        <script>
+        (function() {
+            document.addEventListener('viewSwitched', function(e) {
+                if (e && e.detail && e.detail.viewId === 'view-secure-account') {
+                    ['sec-old-pwd','sec-new-pwd','sec-confirm-pwd'].forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) { el.value = ''; el.classList.remove('sa-error'); }
+                    });
+                    var errEl = document.getElementById('sec-old-pwd-error');
+                    if (errEl) errEl.style.display = 'none';
+                    setTimeout(function() {
+                        var inp = document.getElementById('sec-old-pwd');
+                        if (inp) inp.focus();
+                    }, 150);
+                }
+            });
+        })();
+        </script>
     </div>
 
     <script type="module" src="js/firebase-init.js"></script>

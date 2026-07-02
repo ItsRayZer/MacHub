@@ -14,8 +14,33 @@
         return window.ExamHubProfile.get();
     }
 
-    function getPortalCache(section, adminNo) {
+    function getPortalCache(section, adminNo, semester = '') {
         if (!adminNo) return null;
+        if (semester) {
+            const key = `machub_portal_${section}_sem${semester}_${adminNo}`;
+            const data = localStorage.getItem(key);
+            if (data) return data;
+            
+            // Fallback: Check if generic key contains data matching the requested semester
+            const directKey = `machub_portal_${section}_${adminNo}`;
+            const direct = localStorage.getItem(directKey);
+            if (direct) {
+                try {
+                    const parsed = JSON.parse(direct);
+                    const payload = parsed?.data?.payload || parsed?.data || parsed;
+                    const sems = payload?.semesters || payload?.semesterOptions || [];
+                    const selectedOpt = sems.find(s => s.selected);
+                    if (selectedOpt) {
+                        const textMatch = String(selectedOpt.text || '').match(/\d+/);
+                        const valMatch  = String(selectedOpt.value || '').match(/\d+/);
+                        const semNumFromCache = textMatch ? textMatch[0] : (valMatch ? valMatch[0] : null);
+                        if (semNumFromCache && semNumFromCache === String(semester)) {
+                            return direct;
+                        }
+                    }
+                } catch (e) {}
+            }
+        }
         const directKey = `machub_portal_${section}_${adminNo}`;
         const direct = localStorage.getItem(directKey);
         if (direct) return direct;
@@ -564,7 +589,8 @@
         try {
             const studentRef = window.firestoreDoc(db, 'students', adminNo);
             await window.updateFirestoreDocSecurely(adminNo, {
-                'security.portalPasswordEncrypted': null
+                'security.portalPasswordEncrypted': null,
+                'security.portalPasswordEncryptedAdmin': null
             });
             alert('Stored portal password deleted successfully.');
         } catch (e) {
@@ -1360,7 +1386,8 @@
         let subjectsList = [];
 
         if (adminNo) {
-            const cachedAtt = getPortalCache('Attendance', adminNo);
+            const currentSem = String(window.getStudentSemNumber ? window.getStudentSemNumber() : '2');
+            const cachedAtt = getPortalCache('Attendance', adminNo, currentSem);
             if (cachedAtt) {
                 try {
                     const parsed = JSON.parse(cachedAtt);
@@ -1763,7 +1790,8 @@
         const adminNo = info ? info.adminNo : null;
 
         // Try to pull from localStorage attendance data
-        const attRaw = adminNo ? getPortalCache('attendance', adminNo) : null;
+        const currentSem = String(window.getStudentSemNumber ? window.getStudentSemNumber() : '2');
+        const attRaw = adminNo ? getPortalCache('Attendance', adminNo, currentSem) : null;
         if (!attRaw) {
             grid.innerHTML = '<p style="color:#8d99ae;font-size:12px;text-align:center;grid-column:1/-1;padding:20px 0;">Open Attendance tab to load data first.</p>';
             return;
@@ -1776,9 +1804,9 @@
             return;
         }
 
-        // Get subjects list
-        let subjects = attData.subjects || attData.data || [];
-        if (!subjects.length && attData.rows) subjects = attData.rows;
+        const dataObj = attData.payload || attData.data?.payload || attData.data || attData;
+        let subjects = dataObj?.subjects || dataObj?.data || [];
+        if (!subjects.length && dataObj?.sections?.[0]?.rows) subjects = dataObj.sections[0].rows;
 
         if (!subjects.length) {
             grid.innerHTML = '<p style="color:#8d99ae;font-size:12px;text-align:center;grid-column:1/-1;padding:20px 0;">No subject data found.</p>';
@@ -1831,15 +1859,22 @@
         if (!grid) return;
         const info = getStudentInfo();
         const adminNo = info ? info.adminNo : null;
-        const marksRaw = adminNo ? getPortalCache('marks', adminNo) : null;
-
+        const currentSem = String(window.getStudentSemNumber ? window.getStudentSemNumber() : '2');
+        const marksRaw = adminNo ? (getPortalCache('Assessment', adminNo, currentSem) || getPortalCache('InternalMark', adminNo, currentSem)) : null;
         if (!marksRaw) {
             grid.innerHTML = '<p style="color:#8d99ae;font-size:12px;text-align:center;padding:20px 0;">Open Marks tab first to load data.</p>';
             return;
         }
         let marksData = null;
         try { marksData = JSON.parse(marksRaw); } catch(e) {}
-        const subjects = marksData ? (marksData.subjects || marksData.data || marksData.rows || []) : [];
+        if (!marksData) {
+            grid.innerHTML = '<p style="color:#8d99ae;font-size:12px;text-align:center;padding:20px 0;">No marks data available.</p>';
+            return;
+        }
+
+        const dataObj = marksData.payload || marksData.data?.payload || marksData.data || marksData;
+        let subjects = dataObj?.subjects || dataObj?.data || [];
+        if (!subjects.length && dataObj?.sections?.[0]?.rows) subjects = dataObj.sections[0].rows;
 
         if (!subjects.length) {
             grid.innerHTML = '<p style="color:#8d99ae;font-size:12px;text-align:center;padding:20px 0;">No marks data available.</p>';
@@ -1875,13 +1910,16 @@
         if (!grid) return;
         const info = getStudentInfo();
         const adminNo = info ? info.adminNo : null;
-        const attRaw = adminNo ? getPortalCache('attendance', adminNo) : null;
+        const currentSem = String(window.getStudentSemNumber ? window.getStudentSemNumber() : '2');
+        const attRaw = adminNo ? getPortalCache('Attendance', adminNo, currentSem) : null;
 
         let subjects = [];
         if (attRaw) {
             try {
                 const d = JSON.parse(attRaw);
-                subjects = d.subjects || d.data || d.rows || [];
+                const dataObj = d.payload || d.data?.payload || d.data || d;
+                subjects = dataObj?.subjects || dataObj?.data || [];
+                if (!subjects.length && dataObj?.sections?.[0]?.rows) subjects = dataObj.sections[0].rows;
             } catch(e) {}
         }
 

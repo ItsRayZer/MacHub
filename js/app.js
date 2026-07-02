@@ -440,18 +440,10 @@ window.switchExamTab = function(tab) {
     seatsEl.classList.toggle('hidden', tab !== 'seats');
     resultsEl.classList.toggle('hidden', tab !== 'results');
 
-    // Handle emptyState visibility cleanly
+    // Handle emptyState visibility cleanly (always hidden as per user request)
     const emptyState = document.getElementById('emptyState');
     if (emptyState) {
-        if (tab !== 'seats') {
-            emptyState.classList.add('hidden');
-        } else {
-            // Only show emptyState if we are on 'seats' and the seating grid parent is hidden
-            const gridParent = document.getElementById('seatingGrid')?.parentElement?.parentElement;
-            if (gridParent && gridParent.classList.contains('hidden')) {
-                emptyState.classList.remove('hidden');
-            }
-        }
+        emptyState.classList.add('hidden');
     }
 
     if (timetableBtn) timetableBtn.classList.toggle('is-active', tab === 'timetable');
@@ -460,12 +452,18 @@ window.switchExamTab = function(tab) {
 
     if (tab === 'timetable') {
         appState.examSubView = 'view-timetable';
+        localStorage.setItem('machub_current_view', 'view-timetable');
+        localStorage.setItem('machub_exam_sub_view', 'view-timetable');
         if (typeof renderTimetable === 'function') renderTimetable();
     } else if (tab === 'seats') {
         appState.examSubView = 'view-seats';
+        localStorage.setItem('machub_current_view', 'view-seats');
+        localStorage.setItem('machub_exam_sub_view', 'view-seats');
         if (typeof showSeatNote === 'function') showSeatNote();
     } else {
         appState.examSubView = 'view-results';
+        localStorage.setItem('machub_current_view', 'view-results');
+        localStorage.setItem('machub_exam_sub_view', 'view-results');
         if (typeof window.renderExamResults === 'function') window.renderExamResults();
         if (typeof window.initMguResultPage === 'function') window.initMguResultPage();
     }
@@ -479,6 +477,9 @@ window.switchExamTab = function(tab) {
 };
 
 function switchView(viewId) {
+    if (window.isPortalLocked && viewId !== 'view-portal-password-lock' && viewId !== 'view-secure-account') {
+        viewId = 'view-portal-password-lock';
+    }
     // Save current view state before normalization
     if (viewId) {
         localStorage.setItem('machub_current_view', viewId);
@@ -490,10 +491,17 @@ function switchView(viewId) {
 
     // Clear navigation hidden state locks when entering level-0 main tabs
     if (['view-home', 'view-class', 'view-seats', 'view-resources', 'view-chat', 'view-profile'].includes(viewId)) {
-        _navLockedHidden = false;
-        _navHidden = false;
-        const nav = document.getElementById('bottomNav');
-        if (nav) nav.classList.remove('nav-hidden');
+        if (window.isPortalLocked) {
+            _navLockedHidden = true;
+            _navHidden = true;
+            const nav = document.getElementById('bottomNav');
+            if (nav) nav.classList.add('nav-hidden');
+        } else {
+            _navLockedHidden = false;
+            _navHidden = false;
+            const nav = document.getElementById('bottomNav');
+            if (nav) nav.classList.remove('nav-hidden');
+        }
     }
     // Handle unified view-exam-hub alias and old aliases
     if (viewId === 'view-exam-hub' || viewId === 'view-exam') {
@@ -733,7 +741,7 @@ function selectDay(dateStr) {
         if (gridParent) gridParent.classList.remove('hidden');
         if (hallTabsParent) hallTabsParent.classList.remove('hidden');
     }).catch(() => {
-        if (emptyState && appState.examSubView === 'view-seats') emptyState.classList.remove('hidden');
+        // Do not show emptyState banner at the top
     });
 }
 
@@ -2599,7 +2607,16 @@ function checkOnboarding() {
     } else {
         if (obScreen) obScreen.classList.add('hidden', 'collapsed');
         applyUserProfile();
-        if (typeof showBottomNav === 'function') showBottomNav();
+        
+        if (saved.adminNo && localStorage.getItem(`machub_portal_locked_${saved.adminNo}`) === 'true') {
+            window.isPortalLocked = true;
+            setTimeout(() => {
+                switchView('view-portal-password-lock');
+                if (typeof hideBottomNav === 'function') hideBottomNav();
+            }, 50);
+        } else {
+            if (typeof showBottomNav === 'function') showBottomNav();
+        }
     }
 }
 
@@ -4242,8 +4259,8 @@ function autoUpdateSemesterFromCache() {
             } catch(e) {}
         }
 
-        // 4. Calculate based on batch as a fallback/verification
-        if (info.batch) {
+        // 4. Calculate based on batch as a fallback/verification (only if maxSem was not resolved from portal options)
+        if (maxSem === 0 && info.batch) {
             const matchBatch = String(info.batch).match(/(\d{4})/);
             if (matchBatch) {
                 const startYear = parseInt(matchBatch[1], 10);
@@ -4266,7 +4283,7 @@ function autoUpdateSemesterFromCache() {
                     } else {
                         calculatedSem = 6;
                     }
-                    maxSem = Math.max(maxSem, calculatedSem);
+                    maxSem = calculatedSem;
                 }
             }
         }
@@ -4283,6 +4300,12 @@ function autoUpdateSemesterFromCache() {
                     window.ExamHubProfile.save(info);
                 } else {
                     localStorage.setItem('mac_student_info', JSON.stringify(info));
+                }
+                
+                if (window.updateFirestoreDocSecurely && adminNo) {
+                    window.updateFirestoreDocSecurely(adminNo, {
+                        semester: `Sem ${maxSem}`
+                    }).catch(err => console.warn('[Auto-Semester] Firestore update failed:', err));
                 }
                 
                 // Update selections
@@ -4486,8 +4509,8 @@ window.renderExamResults = function () {
             <div id="mgu-form-view">
                 <!-- PRN input -->
                 <div style="margin-bottom:16px;">
-                    <label class="mgu2-lbl" for="mgu-prn-in">PRN — Permanent Registration Number</label>
-                    <input id="mgu-prn-in" class="mgu2-inp" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. 22B0123456" onblur="if(window.mguSavePrnOnInput) window.mguSavePrnOnInput(this.value);" oninput="if(window.mguSavePrnOnInput) window.mguSavePrnOnInput(this.value);">
+                    <label class="mgu2-lbl" for="mgu-prn-in">PRN / Register Number</label>
+                    <input id="mgu-prn-in" class="mgu2-inp" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. 22B0123456">
                     <p id="mgu-prn-hint" style="font-size:11px;color:#86868b;margin:6px 0 0;font-weight:600;"></p>
                 </div>
 

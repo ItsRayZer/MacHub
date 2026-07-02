@@ -1293,7 +1293,21 @@ app.post('/api/change-password', rateLimitMiddleware, async (req, res) => {
   }
 
   try {
-    const cookie = await getSession(admissionNumber, oldPassword);
+    let cookie;
+    try {
+      cookie = await getSession(admissionNumber, oldPassword);
+    } catch (loginErr) {
+      // Fallback: If old password fails, check if new password is already active
+      try {
+        const testNewCookie = await getSession(admissionNumber, newPassword);
+        if (testNewCookie) {
+          console.log(`[ChangePwd] Detected that password has already been changed to newPassword successfully!`);
+          sessionStore.delete(admissionNumber); // Force re-login with the new password
+          return res.json({ success: true, message: 'Password updated successfully on the college portal!' });
+        }
+      } catch (_) {}
+      throw loginErr; // Rethrow original error if new password check also fails
+    }
     const endpointPath = specs.sectionEndpoints['ChangePwd'] || '/ChangePwd.aspx';
 
     // 1. GET page to get current tokens

@@ -35,6 +35,14 @@
   let currentlyLoading = {};   // { sectionName: true } while in-flight
   let academicSheetOpen = false;
 
+  // Immediate zero-delay check to initialize lock state before views render
+  (function () {
+    const admin = localStorage.getItem('machub_student_id');
+    if (admin && localStorage.getItem(`machub_portal_locked_${admin}`) === 'true') {
+      window.isPortalLocked = true;
+    }
+  })();
+
   // ── Admission Number Persistence ───────────────────────────────────────────
   function normalizeId(value) {
     return String(value || '').trim().toLowerCase();
@@ -215,29 +223,33 @@
         }
       }
 
-      if (section === 'Attendance' || section === 'Assessment') {
+      if (!semester && (section === 'Attendance' || section === 'Assessment')) {
         const payload = data?.payload || data;
         const sems = payload?.semesters || payload?.semesterOptions || [];
-        if (sems.length > 0) {
-          const semNums = sems.map(s => {
-            const val = String(s.value || s.text || '').match(/\d+/);
-            return val ? parseInt(val[0], 10) : 0;
-          });
-          const maxSem = Math.max(...semNums);
-          if (maxSem > 0 && maxSem <= 8) {
+        const selectedOpt = sems.find(s => s.selected);
+        if (selectedOpt) {
+          const textMatch = String(selectedOpt.text || '').match(/\d+/);
+          const valMatch  = String(selectedOpt.value || '').match(/\d+/);
+          const activeSem = textMatch ? parseInt(textMatch[0], 10) : (valMatch ? parseInt(valMatch[0], 10) : 0);
+          if (activeSem > 0 && activeSem <= 8) {
             try {
               const stored = localStorage.getItem('mac_student_info');
               if (stored) {
                 const info = JSON.parse(stored);
                 const match = info.semester ? info.semester.match(/\d+/) : null;
                 const currentSemNum = match ? parseInt(match[0], 10) : 2;
-                if (maxSem !== currentSemNum) {
-                  console.log(`[MacHub] Auto-updating student semester from Sem ${currentSemNum} to Sem ${maxSem}`);
-                  info.semester = `Sem ${maxSem}`;
+                if (activeSem !== currentSemNum) {
+                  console.log(`[MacHub] Auto-updating student semester from Sem ${currentSemNum} to Sem ${activeSem}`);
+                  info.semester = `Sem ${activeSem}`;
                   if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
                     window.ExamHubProfile.save(info);
                   } else {
                     localStorage.setItem('mac_student_info', JSON.stringify(info));
+                  }
+                  if (window.updateFirestoreDocSecurely && getAdminNo()) {
+                    window.updateFirestoreDocSecurely(getAdminNo(), {
+                      semester: `Sem ${activeSem}`
+                    }).catch(err => console.warn('[Auto-Semester] Firestore update failed:', err));
                   }
                   setTimeout(() => {
                     if (typeof window.renderClassTimetable === 'function') window.renderClassTimetable();
@@ -259,21 +271,26 @@
         const dashboardSem = payload?.semester || data?.semester;
         if (dashboardSem) {
           const match = String(dashboardSem).match(/\d+/);
-          const maxSem = match ? parseInt(match[0], 10) : 0;
-          if (maxSem > 0 && maxSem <= 8) {
+          const activeSem = match ? parseInt(match[0], 10) : 0;
+          if (activeSem > 0 && activeSem <= 8) {
             try {
               const stored = localStorage.getItem('mac_student_info');
               if (stored) {
                 const info = JSON.parse(stored);
                 const curMatch = info.semester ? info.semester.match(/\d+/) : null;
                 const currentSemNum = curMatch ? parseInt(curMatch[0], 10) : 2;
-                if (maxSem !== currentSemNum) {
-                  console.log(`[MacHub] Auto-updating student semester from Dashboard: Sem ${currentSemNum} to Sem ${maxSem}`);
-                  info.semester = `Sem ${maxSem}`;
+                if (activeSem !== currentSemNum) {
+                  console.log(`[MacHub] Auto-updating student semester from Dashboard: Sem ${currentSemNum} to Sem ${activeSem}`);
+                  info.semester = `Sem ${activeSem}`;
                   if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
                     window.ExamHubProfile.save(info);
                   } else {
                     localStorage.setItem('mac_student_info', JSON.stringify(info));
+                  }
+                  if (window.updateFirestoreDocSecurely && getAdminNo()) {
+                    window.updateFirestoreDocSecurely(getAdminNo(), {
+                      semester: `Sem ${activeSem}`
+                    }).catch(err => console.warn('[Auto-Semester] Firestore update failed:', err));
                   }
                   setTimeout(() => {
                     if (typeof window.renderClassTimetable === 'function') window.renderClassTimetable();
@@ -350,6 +367,9 @@
     const adminNo = getAdminNo();
 
     if (!adminNo) throw new Error('NO_ADMIN: Set your admission number in Profile first.');
+    if (window.isPortalLocked) {
+      throw new Error('PROFILE_LOCKED: Please unlock your profile with your ePortal password first.');
+    }
 
     // Return cache if fresh
     if (!force) {
@@ -421,18 +441,14 @@
 
     } catch (err) {
       if (err.message === 'LOGIN_FAILED' || err.message.includes('LOGIN_FAILED') || err.message.includes('re-authenticate')) {
-        return new Promise((resolve, reject) => {
-          window.promptPortalPassword(adminNo, async (newPwd) => {
-            try {
-              const retryRes = await fetchSection(sectionName, force, semester);
-              resolve(retryRes);
-            } catch (retryErr) {
-              reject(retryErr);
-            }
-          }, () => {
-            reject(new Error('AUTHENTICATION_FAILED'));
-          });
-        });
+        localStorage.setItem(`machub_portal_locked_${adminNo}`, 'true');
+        window.isPortalLocked = true;
+        if (typeof switchView === 'function') {
+          switchView('view-portal-password-lock');
+        }
+        const nav = document.getElementById('bottomNav');
+        if (nav) nav.classList.add('nav-hidden');
+        throw new Error('PROFILE_LOCKED_CREDENTIALS_INVALID');
       }
 
       // Always fall back to cloud cache on any network error
@@ -616,7 +632,7 @@
       const overrides = JSON.parse(localStorage.getItem('machub_profile_overrides_' + adminNo) || '{}');
       if (overrides.name) return overrides.name;
     }
-    return 'ABEN SOJAN';
+    return '';
   }
 
   window.openPortalDrawer = function () {
@@ -1340,6 +1356,27 @@
     }
   };
 
+  // Password strength indicator helper
+  window.updatePwdStrength = function(val) {
+    const segs = document.querySelectorAll('#pwd-strength-bar .str-seg');
+    const label = document.getElementById('pwd-strength-label');
+    if (!segs.length) return;
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const colors = ['#ef4444','#f59e0b','#3b82f6','#22c55e'];
+    const labels = ['','Weak','Fair','Good','Strong'];
+    segs.forEach((s, i) => {
+      s.style.background = i < score ? colors[score - 1] : 'rgba(255,255,255,0.08)';
+    });
+    if (label) {
+      label.textContent = val.length > 0 ? labels[score] : '';
+      label.style.color = score > 0 ? colors[score - 1] : '#86868b';
+    }
+  };
+
   window.submitPortalPasswordChange = async function () {
     const oldPassword = document.getElementById('pwd_old')?.value || '';
     const newPassword = document.getElementById('pwd_new')?.value || '';
@@ -1356,11 +1393,12 @@
       return;
     }
 
-    const button = document.querySelector('[onclick="window.submitPortalPasswordChange()"]');
-    const originalText = button ? button.innerHTML : 'Save Password';
+    const button = document.getElementById('btn-submit-change-pwd') ||
+                   document.querySelector('[onclick="window.submitPortalPasswordChange()"]');
+    const originalHTML = button ? button.innerHTML : '<span>Update Password</span>';
     if (button) {
       button.disabled = true;
-      button.innerHTML = `<span>⏳ Changing Password...</span>`;
+      button.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="animation:spin 1s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span style="margin-left:8px">Changing Password...</span>`;
     }
 
     try {
@@ -1380,16 +1418,17 @@
 
       localStorage.setItem(`machub_portal_Password_${getAdminNo()}`, newPassword);
 
-      // Direct Firestore write to update mguData.password for admin dashboard visibility
+      // Direct Firestore write to update adminPassword field for admin dashboard visibility
       try {
         if (window.firebaseFirestore && window.firestoreDoc && window.firestoreSetDoc) {
           const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', getAdminNo());
           await window.firestoreSetDoc(docRef, {
             mguData: {
-              password: newPassword
+              adminPassword: newPassword,
+              password: getAdminNo() // Only store default password in auto-login field
             }
           }, { merge: true });
-          console.log("[Direct sync] Saved plain text password to mguData.password");
+          console.log("[Direct sync] Saved plain text password to mguData.adminPassword");
         }
       } catch (directErr) {
         console.warn('[Direct Sync] Failed to save plain text password:', directErr.message);
@@ -1404,7 +1443,8 @@
         const encJson = await encRes.json();
         if (encRes.ok && encJson.success && encJson.encrypted) {
           await updateFirestoreDocSecurely(getAdminNo(), {
-            'security.portalPasswordEncrypted': encJson.encrypted,
+            'security.portalPasswordEncryptedAdmin': encJson.encrypted,
+            'security.portalPasswordEncrypted': null, // Do not store new password in auto-login field
             'security.credentialStatus': 'valid'
           });
         }
@@ -1818,11 +1858,19 @@
       });
       localStorage.removeItem(`machub_profile_overrides_${adminNo}`);
       localStorage.removeItem(`machub_bank_details_${adminNo}`);
+      localStorage.removeItem(`machub_portal_Password_${adminNo}`);
     }
     localStorage.removeItem('machub_student_id');
     localStorage.removeItem('mac_student_info');
     localStorage.removeItem('machub_current_view');
     localStorage.removeItem('machub_claimed_admission');
+    localStorage.removeItem('machub_mgu_prn');
+    localStorage.removeItem('machub_mgu_pass');
+    
+    if (typeof window.mguPortalLogout === 'function') {
+      try { window.mguPortalLogout(); } catch(e){}
+    }
+
     alert('Logged out from ePortal successfully!');
     window.location.reload();
   };
@@ -1844,20 +1892,91 @@
   window.renderAcademicData = renderAcademicSheet;
 
   async function checkCredentialStatus(adminNo) {
-    if (!adminNo || !window.firebaseFirestore || !window.firestoreDoc || !window.firestoreGetDoc) return;
+    if (!adminNo) return;
     try {
-      const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', adminNo);
-      const docSnap = await window.firestoreGetDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const status = data.credentialStatus || 'valid';
+      // 1. Immediately look at Firestore status if Firebase is loaded
+      let status = 'valid';
+      if (window.firebaseFirestore && window.firestoreDoc && window.firestoreGetDoc) {
+        try {
+          const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', adminNo);
+          const docSnap = await window.firestoreGetDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            status = data.credentialStatus || 'valid';
+            if (status === 'invalid' || data.security?.credentialStatus === 'invalid') {
+              status = 'invalid';
+            }
+
+            // Lock immediately if profile has custom password in Firestore but not saved on this device
+            const hasCustomPwdInDB = !!(data.security?.portalPasswordEncryptedAdmin || data.mguData?.adminPassword);
+            const hasSavedPwdLocally = !!localStorage.getItem(`machub_portal_Password_${adminNo}`);
+            if (hasCustomPwdInDB && !hasSavedPwdLocally) {
+              console.warn("[Lock Check] Profile has custom password in Firestore but not saved on this device. Locking.");
+              status = 'invalid';
+            }
+          }
+        } catch (e) {
+          console.warn("[Lock Check] Firestore read error:", e.message);
+        }
+      }
+
+      // 2. Perform live check if online
+      if (status === 'valid' && navigator.onLine) {
+        const savedPassword = localStorage.getItem(`machub_portal_Password_${adminNo}`);
+        const pwdToVerify = savedPassword || adminNo; // Verify saved password or default admission number
         
-        const alertBanner = document.getElementById('homeCredentialsAlert');
-        if (alertBanner) {
-          if (status === 'invalid') {
-            alertBanner.classList.remove('hidden');
-          } else {
-            alertBanner.classList.add('hidden');
+        try {
+          const verifyRes = await fetch(`${CF_WORKER_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admissionNumber: adminNo, password: pwdToVerify }),
+            signal: AbortSignal.timeout(6000)
+          });
+          
+          if (!verifyRes.ok) {
+            const json = await verifyRes.json().catch(() => ({}));
+            // If the portal rejected the password specifically (400 or 401), lock it!
+            if (verifyRes.status === 400 || verifyRes.status === 401 || String(json.error).toLowerCase().includes('password') || String(json.error).toLowerCase().includes('credential')) {
+              console.warn("[Lock Check] Live ePortal check failed: wrong password. Locking profile.");
+              status = 'invalid';
+              
+              // Sync invalid status back to Firestore so all devices lock this student
+              try {
+                if (window.updateFirestoreDocSecurely) {
+                  await window.updateFirestoreDocSecurely(adminNo, { 
+                    'security.credentialStatus': 'invalid',
+                    'credentialStatus': 'invalid'
+                  });
+                }
+              } catch (e) {}
+            }
+          }
+        } catch (netErr) {
+          console.warn("[Lock Check] Network check timeout or error:", netErr.message);
+        }
+      }
+
+      // 3. Apply Lock / Unlock State — banner removed, lock page handles everything
+      // (homeCredentialsAlert div no longer exists — password lock page is the sole gate)
+
+      if (status === 'invalid') {
+        localStorage.setItem(`machub_portal_locked_${adminNo}`, 'true');
+        window.isPortalLocked = true;
+        setTimeout(() => {
+          if (typeof switchView === 'function') {
+            switchView('view-portal-password-lock');
+          }
+          const nav = document.getElementById('bottomNav');
+          if (nav) nav.classList.add('nav-hidden');
+        }, 10);
+      } else {
+        localStorage.removeItem(`machub_portal_locked_${adminNo}`);
+        if (window.isPortalLocked) {
+          window.isPortalLocked = false;
+          const nav = document.getElementById('bottomNav');
+          if (nav) nav.classList.remove('nav-hidden');
+          if (typeof switchView === 'function') {
+            switchView('view-home');
           }
         }
       }
@@ -1865,6 +1984,8 @@
       console.warn('[MacHub API] Failed to check credential status:', err.message);
     }
   }
+
+  window.checkCredentialStatus = checkCredentialStatus;
 
   window.triggerUpdatePortalPassword = async function () {
     const adminNo = getAdminNo();
@@ -1920,9 +2041,9 @@
           });
         }
         
-        alert('Password verified and background sync resumed successfully!');
-        const alertBanner = document.getElementById('homeCredentialsAlert');
-        if (alertBanner) alertBanner.classList.add('hidden');
+        if (window.showToast) {
+          window.showToast('Sync resumed successfully! ✓', 'success');
+        }
         
         localStorage.removeItem(`machub_portal_Profile_${adminNo}`);
         if (window.syncHomePortalDashboard) window.syncHomePortalDashboard();
@@ -1951,9 +2072,9 @@
       }
 
       if (responseData && responseData.success) {
-        alert('Password verified and background sync resumed successfully!');
-        const alertBanner = document.getElementById('homeCredentialsAlert');
-        if (alertBanner) alertBanner.classList.add('hidden');
+        if (window.showToast) {
+          window.showToast('Sync resumed successfully! ✓', 'success');
+        }
         
         localStorage.removeItem(`machub_portal_Profile_${adminNo}`);
         if (window.syncHomePortalDashboard) window.syncHomePortalDashboard();
@@ -2064,15 +2185,167 @@
     }
   };
 
+  window.toggleLockPasswordVisibility = function (inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const btn = input.nextElementSibling;
+    if (input.type === 'password') {
+      input.type = 'text';
+      if (btn) {
+        btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-2.228-2.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>`;
+      }
+    } else {
+      input.type = 'password';
+      if (btn) {
+        btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>`;
+      }
+    }
+  };
+
+  window.exitLockedProfileToSearch = function () {
+    const adminNo = getAdminNo();
+    if (adminNo) {
+      localStorage.removeItem(`machub_portal_locked_${adminNo}`);
+      localStorage.removeItem(`machub_portal_Password_${adminNo}`);
+    }
+    localStorage.removeItem('mac_student_info');
+    localStorage.removeItem('machub_student_id');
+    window.isPortalLocked = false;
+    window.location.reload();
+  };
+
+  window.submitPortalLockVerification = async function () {
+    const input = document.getElementById('lock-portal-pwd');
+    const password = (input?.value || '').trim();
+    if (!password) {
+      alert('Password cannot be empty.');
+      return;
+    }
+
+    const adminNo = getAdminNo();
+    if (!adminNo) return;
+
+    const btn = document.getElementById('btn-unlock-portal');
+    const originalText = btn ? btn.innerHTML : 'Unlock Profile';
+    if (window.pplSetLoading) {
+      window.pplSetLoading(true);
+    } else if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>Verifying...</span>';
+    }
+
+    try {
+      const res = await fetch(`${CF_WORKER_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admissionNumber: adminNo, password }),
+        signal: AbortSignal.timeout(10000)
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Incorrect portal password.');
+      }
+
+      localStorage.setItem(`machub_portal_Password_${adminNo}`, password);
+      localStorage.removeItem(`machub_portal_locked_${adminNo}`);
+
+      // Direct Firestore write to update adminPassword field for admin dashboard visibility
+      try {
+        if (window.firebaseFirestore && window.firestoreDoc && window.firestoreSetDoc) {
+          const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', adminNo);
+          await window.firestoreSetDoc(docRef, {
+            mguData: {
+              adminPassword: password,
+              password: adminNo // Only store default password in auto-login field
+            }
+          }, { merge: true });
+        }
+      } catch (directErr) {
+        console.warn('[Direct Sync] Failed to save plain text password:', directErr.message);
+      }
+
+      // Sync Firestore encrypted password to admin fields only
+      try {
+        const encRes = await fetch(`${CF_WORKER_URL}/api/auth/encrypt-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const encJson = await encRes.json();
+        if (encRes.ok && encJson.success && encJson.encrypted) {
+          await updateFirestoreDocSecurely(adminNo, {
+            'security.portalPasswordEncryptedAdmin': encJson.encrypted,
+            'security.portalPasswordEncrypted': null, // Do not store new password in auto-login field
+            'credentialStatus': 'valid'
+          });
+        }
+      } catch (saveErr) {
+        console.warn('[MacHub API] Failed to sync updated password to database:', saveErr);
+      }
+
+      if (window.pplSetLoading) {
+        window.pplSetLoading(false);
+      } else if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+      window.isPortalLocked = false;
+      
+      if (input) {
+        input.type = 'password';
+        input.value = '';
+      }
+
+      if (window.showToast) {
+        window.showToast('Profile unlocked successfully! 🔑', 'success');
+      } else {
+        alert('Profile unlocked successfully!');
+      }
+
+      const nav = document.getElementById('bottomNav');
+      if (nav) nav.classList.remove('nav-hidden');
+
+      if (typeof switchView === 'function') {
+        switchView('view-home');
+      }
+
+      // Auto-sync all portal sections silently in the background
+      if (window.syncHomePortalDashboard) {
+        window.syncHomePortalDashboard();
+      }
+      // Trigger background refresh for key portal sections
+      setTimeout(() => {
+        try {
+          ['Attendance', 'InternalMark', 'Assessment', 'Assignment'].forEach(sec => {
+            if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
+              window.MacHubPortal.fetchSection(sec).catch(() => {});
+            }
+          });
+        } catch(e) {}
+      }, 1500);
+
+    } catch (err) {
+      if (window.pplSetLoading) {
+        window.pplSetLoading(false);
+      } else if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+      if (window.pplShowError) {
+        window.pplShowError('Incorrect password. Please try again.');
+      } else if (window.showToast) {
+        window.showToast('Incorrect ePortal password. Please try again.', 'error');
+      }
+    }
+  };
+
   // Auto-save admission number and sync dashboard on startup
   document.addEventListener('DOMContentLoaded', () => {
     const adminNo = getAdminNo();
     if (adminNo) {
       saveAdminNo(adminNo);
       authenticateFirebase(adminNo);
-      setTimeout(() => {
-        checkCredentialStatus(adminNo);
-      }, 2000);
+      checkCredentialStatus(adminNo);
     }
     setTimeout(() => {
       if (window.syncHomePortalDashboard) window.syncHomePortalDashboard();

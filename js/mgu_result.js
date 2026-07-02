@@ -27,15 +27,6 @@
   async function savePrnToLocalAndRemote(prn) {
     if (!prn) return;
     try {
-      const info = (window.ExamHubProfile?.get || window.getStudentInfo)?.() || {};
-      info.prn = prn;
-      if (window.ExamHubProfile?.save) {
-        window.ExamHubProfile.save(info);
-      } else {
-        localStorage.setItem('mac_student_info', JSON.stringify(info));
-      }
-      localStorage.setItem('machub_mgu_prn', prn);
-      
       const an = adminNo();
       if (an) {
         const db = window.firebaseFirestore;
@@ -46,8 +37,33 @@
           await updFn(ref, { prn: prn });
         }
       }
+      // Update in-memory profile too
+      const info = (window.ExamHubProfile?.get || window.getStudentInfo)?.() || {};
+      info.prn = prn;
+      if (window.ExamHubProfile?.save) window.ExamHubProfile.save(info);
     } catch (e) {
       console.warn('[MGU] save prn error:', e);
+    }
+  }
+
+  async function saveApaarToProfile(apaar) {
+    if (!apaar) return;
+    try {
+      const an = adminNo();
+      if (an) {
+        const db = window.firebaseFirestore;
+        const docFn = window.firestoreDoc;
+        const updFn = window.firestoreUpdateDoc;
+        if (db && docFn && updFn) {
+          const ref = docFn(db, 'students', an);
+          await updFn(ref, { apaarId: apaar });
+        }
+      }
+      const info = (window.ExamHubProfile?.get || window.getStudentInfo)?.() || {};
+      info.apaarId = apaar;
+      if (window.ExamHubProfile?.save) window.ExamHubProfile.save(info);
+    } catch (e) {
+      console.warn('[MGU] save apaar error:', e);
     }
   }
   function toast(msg, t) {
@@ -139,10 +155,6 @@
     const prn     = ($('mgu-prn-in')?.value || '').trim();
     const examId  = ($('mgu-exam-select')?.value || '').trim();
     
-    if (prn) {
-      savePrnToLocalAndRemote(prn);
-    }
-    
     const capIn   = ($('mgu-cap-in')?.value || '').trim();
     const capAns  = capIn || S.capAns || '';
     const capId   = S.capId;
@@ -204,8 +216,28 @@
       submitAttempts = 0;
       d.result.examName = examName;
       S.result = d.result;
-      await firestoreSave(d.result, examId, examName);
-      showResultView(d.result);
+
+      // Check if PRN is already linked in currently loaded profile
+      const currentPrn = (() => {
+        const p = window.ExamHubProfile?.get() || window.getStudentInfo?.() || {};
+        return p.prn || p.data?.prn || null;
+      })();
+
+      if (currentPrn && currentPrn.toLowerCase() === prn.toLowerCase()) {
+        // Already linked, save history and show
+        await firestoreSave(d.result, examId, examName);
+        showResultView(d.result);
+      } else {
+        // Needs confirmation to link PRN to logged in student profile
+        S.pendingConfirm = { result: d.result, examId, examName, prn };
+        const confNameEl = $('mgu-conf-name');
+        const confPrnEl = $('mgu-conf-prn');
+        if (confNameEl) confNameEl.textContent = d.result.studentName || 'Unknown Student';
+        if (confPrnEl) confPrnEl.textContent = prn;
+        
+        const modal = $('mguConfirmModal');
+        if (modal) modal.classList.add('open');
+      }
     } catch (e) {
       console.error('[MGU] submit error:', e);
       const errMsg = e.message || '';
@@ -279,7 +311,7 @@
 
     const localProfile = window.getStudentInfo?.() || {};
     const localName = localProfile.name || localProfile.studentName || '';
-    const studentNameVal = (r.studentName || localName || 'ABEN SOJAN').toUpperCase();
+    const studentNameVal = (r.studentName || localName || '').toUpperCase();
 
     const subjects = (r.subjects || []);
     const rows = subjects.map(s => {
@@ -436,7 +468,7 @@
     const pass = (r.overallResult || '').toUpperCase().includes('PASS');
     const localProfile = window.getStudentInfo?.() || {};
     const localName = localProfile.name || localProfile.studentName || '';
-    const studentNameVal = (r.studentName || localName || 'ABEN SOJAN').toUpperCase();
+    const studentNameVal = (r.studentName || localName || '').toUpperCase();
     const logoUrl = window.location.origin + '/assets/img/mgu_logo.png';
 
     const rows = (r.subjects || []).map(s => {
@@ -701,6 +733,47 @@
   window.mguLoadCaptcha = loadCaptcha;
   window.mguSubmit      = submit;
   window.mguSavePrnOnInput = savePrnToLocalAndRemote;
+
+  window.closeMguConfirmModal = function () {
+    const modal = $('mguConfirmModal');
+    if (modal) modal.classList.remove('open');
+    S.pendingConfirm = null;
+  };
+
+  window.acceptMguProfileLink = async function () {
+    if (!S.pendingConfirm) return;
+    const { result, examId, examName, prn } = S.pendingConfirm;
+    
+    const btn = $('btn-submit-mgu-confirm');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Linking...';
+    }
+
+    try {
+      // Save PRN to profile/Firestore database
+      await savePrnToLocalAndRemote(prn);
+      
+      // Save result history
+      await firestoreSave(result, examId, examName);
+      
+      // Show result view
+      showResultView(result);
+      
+      // Close confirm modal
+      window.closeMguConfirmModal();
+      
+      toast('Profile linked successfully! 🎓', 'success');
+    } catch (err) {
+      toast('Failed to link profile: ' + err.message, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Confirm & Link';
+      }
+    }
+  };
+
   window.mguManualSave  = async () => {
     const en = $('mgu-manual-exam')?.value?.trim() || '';
     const sg = $('mgu-manual-sgpa')?.value?.trim() || '';
@@ -718,24 +791,32 @@
 
   /* ── Page Init ─────────────────────────────────────────────── */
   window.initMguPage = async function () {
-    if (S.result) {
-      showResultView(S.result);
-      return;
-    }
-    // Reset to form view
+    // ALWAYS reset state on page open — never carry over a previous student's result.
+    // This prevents session bleed where one student's result was shown to another.
+    S.result = null;
+    S.history = [];
+    S.busy = false;
+
+    // Always show the form — each student must identify themselves
     showFormView();
 
-    // PRN auto-fill
-    const prn = profilePrn();
+    // PRN auto-fill: only from the currently logged-in profile (Firestore / in-memory),
+    // NOT from localStorage — localStorage persists across sessions and would bleed PRNs.
+    const loggedInPrn = (() => {
+      const p = window.ExamHubProfile?.get() || window.getStudentInfo?.() || {};
+      return p.prn || p.data?.prn || null; // intentionally ignore localStorage
+    })();
+
     const prnIn = $('mgu-prn-in');
     const prnHint = $('mgu-prn-hint');
     if (prnIn) {
-      if (prn) {
-        prnIn.value = prn;
-        if (prnHint) { prnHint.textContent = '✓ Auto-filled from your college profile'; prnHint.style.color = '#30d158'; }
+      prnIn.value = ''; // always clear first
+      if (loggedInPrn) {
+        prnIn.value = loggedInPrn;
+        if (prnHint) { prnHint.textContent = '✓ PRN auto-filled from your profile'; prnHint.style.color = '#30d158'; }
       } else {
-        prnIn.placeholder = 'Enter your PRN';
-        if (prnHint) { prnHint.textContent = 'PRN not found in profile — enter manually'; prnHint.style.color = '#86868b'; }
+        prnIn.placeholder = 'Enter your PRN (Permanent Registration Number)';
+        if (prnHint) { prnHint.textContent = 'Enter your PRN as printed on your hall ticket'; prnHint.style.color = '#86868b'; }
       }
     }
 

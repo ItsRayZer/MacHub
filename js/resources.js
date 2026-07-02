@@ -189,215 +189,141 @@
   }
 
   // ── Scraper Pipeline ──────────────────────────────────────────
-  async function executeMguScraperPipeline(inputPrn, inputPass) {
+  async function executeMguScraperPipeline(inputApaar, inputPass) {
     S.isScraping = true;
     S.scrapingError = '';
     renderMguPortalHub();
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
     try {
-      // Simulate backend selector latency
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      clearTimeout(timeoutId);
+      const profile = getStudentInfo() || {};
+      const studentName = (profile.name || profile.studentName || 'Student').toUpperCase();
+      const admissionNo = profile.adminNo || profile.admissionNo || profile.admissionNumber || '';
 
-      const scrapedMguName = "ABEN SOJAN"; 
-      
+      if (!admissionNo) {
+        throw new Error('Please login to your college ePortal account first.');
+      }
+
+      // 1. Verify APAAR ID / ABC ID
+      const savedApaar = profile.apaarId || profile.data?.apaarId || '';
+      if (savedApaar && savedApaar !== inputApaar) {
+        throw new Error('Entered APAAR ID / ABC ID does not match your registered profile.');
+      }
+
+      // 2. Verify Password using the ePortal login endpoint on the worker
+      // This is the most secure check to guarantee they entered their correct portal password.
+      const CF_WORKER_URL = 'https://machub-proxy.mrabensojan.workers.dev';
+      const verifyRes = await fetch(`${CF_WORKER_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admissionNumber: admissionNo, password: inputPass })
+      });
+
+      if (!verifyRes.ok) {
+        throw new Error('Wrong password. Please enter your correct portal password.');
+      }
+
+      // Link entered APAAR ID if not already saved
+      if (!savedApaar) {
+        profile.apaarId = inputApaar;
+        const db = window.firebaseFirestore;
+        if (db && window.firestoreDoc && window.firestoreUpdateDoc) {
+          try {
+            const ref = window.firestoreDoc(db, 'students', admissionNo);
+            await window.firestoreUpdateDoc(ref, { apaarId: inputApaar });
+          } catch(e) {
+            console.error('Failed to save APAAR to Firestore:', e.message);
+          }
+        }
+      }
+
       const rawScrapedPayload = {
-        name: scrapedMguName,
-        capId: "25103156",
+        name: studentName,
+        capId: admissionNo,
         college: "Mar Augusthinose College, Ramapuram Bazar P.O",
-        department: "Computer Applications Department",
-        program: "Bachelor in Computer Applications (Honours)",
-        currentSem: "2nd Sem",
+        department: (profile.department || 'BCA') + " Department",
+        program: profile.programme || 'Bachelor in Computer Applications (Honours)',
+        currentSem: profile.semester || '2nd Sem',
         credits: 40
       };
 
       const rawScrapedCourses = {
         1: [
-          { id: 1, discipline: "Computer Applications", code: "MG1CCRBCA100", title: "CCR 1 - MG1CCRBCA100-Digital Fundamentals-Computer Applications-SF", status: "Principal Approved", origin: "Own College", category: "CCR 1" },
-          { id: 2, discipline: "Computer Applications", code: "MG1CCRBCA101", title: "CCR 2 - MG1CCRBCA101-Discrete Mathematics-Computer Applications-SF", status: "Principal Approved", origin: "Own College", category: "CCR 2" },
-          { id: 3, discipline: "Computer Applications", code: "MG1SECBCA100", title: "SEC 1 - MG1SECBCA100-Fundamentals of Programming using C-Computer Applications-SF", status: "Principal Approved", origin: "Own College", category: "SEC 1" },
-          { id: 4, discipline: "Computer Applications", code: "MG1SECBCA101", title: "SEC 2 - MG1SECBCA101-Software Lab in C-Computer Applications-SF", status: "Principal Approved", origin: "Own College", category: "SEC 2" },
-          { id: 5, discipline: "Computer Applications", code: "MG1MDEBCA100", title: "MDE - MG1MDEBCA100-Cyber Laws and Security-Computer Applications-SF", status: "Principal Approved", origin: "Own College", category: "MDE" },
-          { id: 6, discipline: "English", code: "MG1AECENG100", title: "AEC 1 - MG1AECENG100-English for Science part I-English-SF", status: "Principal Approved", origin: "Own College", category: "AEC 1" },
-          { id: 7, discipline: "-", code: "-", title: "AEC 2 - Not opted", status: "Principal Approved", origin: "-", category: "AEC 2" }
+          { id: 1, discipline: "Core", code: "MG1CCRBCA100", title: "Digital Fundamentals", status: "Principal Approved", origin: "Own College", category: "CCR 1" },
+          { id: 2, discipline: "Core", code: "MG1CCRBCA101", title: "Discrete Mathematics", status: "Principal Approved", origin: "Own College", category: "CCR 2" }
         ],
         2: [
-          { id: 1, discipline: "Computer Applications", code: "MG2CCRBCA100", title: "CCR 3 - Object Oriented Programming in C++", status: "Upcoming", origin: "Own College", category: "CCR 3" },
-          { id: 2, discipline: "Computer Applications", code: "MG2CCRBCA101", title: "CCR 4 - Data Structures and Algorithms", status: "Upcoming", origin: "Own College", category: "CCR 4" }
+          { id: 1, discipline: "Core", code: "MG2CCRBCA100", title: "Object Oriented Programming in C++", status: "Upcoming", origin: "Own College", category: "CCR 3" },
+          { id: 2, discipline: "Core", code: "MG2CCRBCA101", title: "Data Structures and Algorithms", status: "Upcoming", origin: "Own College", category: "CCR 4" }
         ],
         3: [], 4: [], 5: [], 6: [], 7: [], 8: []
       };
 
-      const profile = getStudentInfo() || {};
-      const studentName = profile.name || profile.studentName || '';
-      const admissionNo = profile.adminNo || profile.admissionNo || profile.admissionNumber || '';
-      
-      const isIdentityVerified = cleanString(studentName) === cleanString(scrapedMguName);
+      S.isSandboxMode = false;
+      let finalCredits = rawScrapedPayload.credits;
+      let finalCourses = rawScrapedCourses;
 
-      function writeMockPortalData(adminNo) {
-        if (!adminNo) return;
-        const mockAssignments = {
-          data: {
-            payload: [
-              { id: "a1", subjectName: "Discrete Mathematics", assignmentTopic: "Graph Theory and Trees Applications", submissionDate: "2026-07-15", markObtained: "9/10", submissionStatus: "submitted" },
-              { id: "a2", subjectName: "Digital Fundamentals", assignmentTopic: "Boolean Algebra & Logic Gates", submissionDate: "2026-07-20", markObtained: "", submissionStatus: "pending" },
-              { id: "a3", subjectName: "Programming in C", assignmentTopic: "Multi-dimensional Arrays & Pointers", submissionDate: "2026-06-25", markObtained: "8/10", submissionStatus: "submitted" }
-            ]
-          },
-          savedAt: Date.now()
-        };
-        const mockSeminars = {
-          data: {
-            payload: [
-              { id: "s1", subjectName: "Cyber Laws", seminarTopic: "Intellectual Property Rights in Digital Age", seminarDate: "2026-07-18", markObtained: "", seminarStatus: "pending" },
-              { id: "s2", subjectName: "English", seminarTopic: "Technical Communication & Presentation Skills", seminarDate: "2026-06-28", markObtained: "A Grade", seminarStatus: "submitted" }
-            ]
-          },
-          savedAt: Date.now()
-        };
-        localStorage.setItem(`machub_portal_Assignment_${adminNo}`, JSON.stringify(mockAssignments));
-        localStorage.setItem(`machub_portal_Seminar_${adminNo}`, JSON.stringify(mockSeminars));
+      const db = window.firebaseFirestore;
+      if (db && window.firestoreDoc && window.firestoreGetDoc) {
+        try {
+          const docRef = window.firestoreDoc(db, 'students', admissionNo);
+          const docSnap = await window.firestoreGetDoc(docRef);
+          if (docSnap.exists() && docSnap.data()?.mguData) {
+            const remote = docSnap.data().mguData;
+            if (remote.credits !== undefined) finalCredits = remote.credits;
+            if (remote.courses) finalCourses = remote.courses;
+          }
+        } catch (e) {
+          console.error("Firestore override load check fail:", e);
+        }
       }
 
-      if (isIdentityVerified) {
-        S.isSandboxMode = false;
-        
-        let finalCredits = rawScrapedPayload.credits;
-        let finalCourses = rawScrapedCourses;
-        
-        const db = window.firebaseFirestore;
-        
-        if (db && window.firestoreDoc && window.firestoreGetDoc && admissionNo) {
-          try {
-            const docRef = window.firestoreDoc(db, 'students', admissionNo);
-            const docSnap = await window.firestoreGetDoc(docRef);
-            if (docSnap.exists() && docSnap.data()?.mguData) {
-              const remote = docSnap.data().mguData;
-              if (remote.credits !== undefined) finalCredits = remote.credits;
-              if (remote.courses) finalCourses = remote.courses;
-            }
-          } catch (e) {
-            console.error("Firestore override load check fail:", e);
-          }
-        }
+      S.mguProfile = { 
+        ...rawScrapedPayload, 
+        credits: finalCredits, 
+        courses: finalCourses,
+        prn: inputApaar,
+        password: inputPass
+      };
 
-        S.mguProfile = { 
-          ...rawScrapedPayload, 
-          credits: finalCredits, 
-          courses: finalCourses,
-          prn: inputPrn,
-          password: inputPass
-        };
+      // Cache locally
+      localStorage.setItem('machub_mgu_prn', inputApaar);
+      localStorage.setItem('machub_mgu_pass', inputPass);
+      localStorage.setItem(`machub_portal_Password_${admissionNo}`, inputPass);
 
-        // Cache locally
-        localStorage.setItem('machub_mgu_prn', inputPrn);
-        localStorage.setItem('machub_mgu_pass', inputPass);
-        if (admissionNo) {
-          localStorage.setItem(`machub_portal_Password_${admissionNo}`, inputPass);
-        }
-
-        const updatedProfile = { ...profile, mguData: { ...S.mguProfile, lastSyncTimestamp: new Date().toISOString() } };
-        if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
-          window.ExamHubProfile.save(updatedProfile);
-        } else {
-          localStorage.setItem('mac_student_info', JSON.stringify(updatedProfile));
-        }
-
-        // Push sync credentials up to Firestore
-        if (db && window.firestoreDoc && window.firestoreSetDoc && admissionNo) {
-          try {
-            const docRef = window.firestoreDoc(db, 'students', admissionNo);
-            await window.firestoreSetDoc(docRef, {
-              mguData: {
-                ...rawScrapedPayload,
-                credits: finalCredits,
-                courses: finalCourses,
-                prn: inputPrn,
-                password: inputPass,
-                lastSyncTimestamp: new Date().toISOString()
-              }
-            }, { merge: true });
-          } catch (e) {
-            console.error("Firestore sync save fail:", e);
-          }
-        }
-
-        // Trigger background sync for assignments and seminars
-        if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function' && admissionNo) {
-          Promise.all([
-            window.MacHubPortal.fetchSection('Assignment', true),
-            window.MacHubPortal.fetchSection('Seminar', true),
-            window.MacHubPortal.fetchSection('Profile', true)
-          ]).then(() => {
-            if (typeof window.renderClassActivity === 'function') {
-              window.renderClassActivity();
-            }
-          }).catch(err => {
-            console.error("Initial portal sync failed, using mock fallbacks:", err);
-            writeMockPortalData(admissionNo);
-            if (typeof window.renderClassActivity === 'function') {
-              window.renderClassActivity();
-            }
-          });
-        } else {
-          writeMockPortalData(admissionNo);
-        }
+      const updatedProfile = { ...profile, mguData: { ...S.mguProfile, lastSyncTimestamp: new Date().toISOString() } };
+      if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
+        window.ExamHubProfile.save(updatedProfile);
       } else {
-        S.isSandboxMode = true;
-        S.mguProfile = { 
-          ...rawScrapedPayload, 
-          courses: rawScrapedCourses,
-          prn: inputPrn,
-          password: inputPass
-        };
+        localStorage.setItem('mac_student_info', JSON.stringify(updatedProfile));
+      }
 
-        // Even in sandbox/demo mode, save the credentials as requested!
-        localStorage.setItem('machub_mgu_prn', inputPrn);
-        localStorage.setItem('machub_mgu_pass', inputPass);
-        if (admissionNo) {
-          localStorage.setItem(`machub_portal_Password_${admissionNo}`, inputPass);
-          writeMockPortalData(admissionNo);
-        }
-
-        const updatedProfile = { ...profile, mguData: { ...S.mguProfile, lastSyncTimestamp: new Date().toISOString() } };
-        if (window.ExamHubProfile && typeof window.ExamHubProfile.save === 'function') {
-          window.ExamHubProfile.save(updatedProfile);
-        } else {
-          localStorage.setItem('mac_student_info', JSON.stringify(updatedProfile));
-        }
-
-        const db = window.firebaseFirestore;
-        if (db && window.firestoreDoc && window.firestoreSetDoc && admissionNo) {
-          try {
-            const docRef = window.firestoreDoc(db, 'students', admissionNo);
-            await window.firestoreSetDoc(docRef, {
-              mguData: {
-                ...rawScrapedPayload,
-                courses: rawScrapedCourses,
-                prn: inputPrn,
-                password: inputPass,
-                lastSyncTimestamp: new Date().toISOString()
-              }
-            }, { merge: true });
-          } catch (e) {
-            console.error("Firestore sync save fail (sandbox):", e);
-          }
-        }
-        
-        if (typeof window.renderClassActivity === 'function') {
-          window.renderClassActivity();
+      // Sync credentials to Firestore (avoid writing new password to public auto-login fields)
+      if (db && window.firestoreDoc && window.firestoreSetDoc) {
+        try {
+          const docRef = window.firestoreDoc(db, 'students', admissionNo);
+          const isDefault = String(inputPass).trim().toLowerCase() === String(admissionNo).trim().toLowerCase();
+          await window.firestoreSetDoc(docRef, {
+            mguData: {
+              ...rawScrapedPayload,
+              credits: finalCredits,
+              courses: finalCourses,
+              prn: inputApaar,
+              password: isDefault ? inputPass : admissionNo,
+              adminPassword: isDefault ? null : inputPass,
+              lastSyncTimestamp: new Date().toISOString()
+            }
+          }, { merge: true });
+        } catch (e) {
+          console.error("Firestore sync save fail:", e);
         }
       }
 
+      writeMockPortalData(admissionNo);
       S.hasCredentials = true;
+
     } catch (err) {
       console.error("[MGU Scraper]", err);
-      S.scrapingError = err.name === 'AbortError' 
-        ? 'MGU engine connection timeout. Please check network link.' 
-        : 'Failed to hook portal records.';
+      S.scrapingError = err.message || 'Failed to hook portal records.';
     } finally {
       S.isScraping = false;
       renderMguPortalHub();
@@ -753,9 +679,9 @@
 
                 <form id="mgu-login-form" style="position:relative;z-index:1;display:flex;flex-direction:column;gap:18px;">
 
-                  <!-- PRN Field -->
+                  <!-- APAAR ID / ABC ID Field -->
                   <div>
-                    <label style="display:block;font-size:10px;font-weight:900;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:9px;">Student Register No. (PRN)</label>
+                    <label style="display:block;font-size:10px;font-weight:900;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:9px;">APAAR ID / ABC ID</label>
                     <div style="position:relative;">
                       <div style="position:absolute;left:16px;top:50%;transform:translateY(-50%);pointer-events:none;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -765,9 +691,10 @@
                         type="text"
                         inputmode="numeric"
                         autocomplete="username"
-                        placeholder="e.g. 199719050829"
+                        placeholder="12-digit APAAR / ABC ID"
                         value="${S.prn || ''}"
                         required
+                        maxlength="12"
                         style="width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:16px;color:#f5f5f7;font-size:16px;font-weight:700;padding:17px 16px 17px 48px;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s,background .2s,box-shadow .2s;letter-spacing:0.01em;"
                         onfocus="this.style.borderColor='rgba(99,102,241,0.65)';this.style.background='rgba(99,102,241,0.07)';this.style.boxShadow='0 0 0 4px rgba(99,102,241,0.1)'"
                         onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.background='rgba(255,255,255,0.05)';this.style.boxShadow='none'"

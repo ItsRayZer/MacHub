@@ -400,6 +400,9 @@
         const deviceToken = generateDeviceToken();
 
         let portalPasswordEncrypted = null;
+        let portalPasswordEncryptedAdmin = null;
+        const isDefaultPassword = String(CLAIM_STATE.password || '').trim().toLowerCase() === String(CLAIM_STATE.admissionNumber || '').trim().toLowerCase();
+
         if (CLAIM_STATE.password) {
             try {
                 const encRes = await fetch(`${CF_WORKER_URL}/api/auth/encrypt-password`, {
@@ -409,7 +412,11 @@
                 });
                 const encData = await encRes.json();
                 if (encData.success) {
-                    portalPasswordEncrypted = encData.encrypted;
+                    if (isDefaultPassword) {
+                        portalPasswordEncrypted = encData.encrypted;
+                    } else {
+                        portalPasswordEncryptedAdmin = encData.encrypted;
+                    }
                 }
             } catch (encErr) {
                 console.warn('Failed to encrypt portal password on claim:', encErr.message);
@@ -425,7 +432,8 @@
                 lastVerifiedAt: new Date().toISOString(),
                 identityVerified: true,
                 deviceTokens: [deviceToken],
-                portalPasswordEncrypted
+                portalPasswordEncrypted,
+                portalPasswordEncryptedAdmin
             };
 
             // Call the secure Worker endpoint to update the student doc in Firestore (bypassing rules)
