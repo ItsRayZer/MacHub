@@ -1452,6 +1452,9 @@
         console.warn('[MacHub API] Failed to sync changed password to database:', saveErr);
       }
 
+      window.isPortalLocked = false;
+      localStorage.removeItem(`machub_portal_locked_${getAdminNo()}`);
+
       if (button) {
         button.innerHTML = `<span>✅ Password Changed!</span>`;
         button.style.backgroundColor = '#30d158';
@@ -1858,7 +1861,7 @@
       });
       localStorage.removeItem(`machub_profile_overrides_${adminNo}`);
       localStorage.removeItem(`machub_bank_details_${adminNo}`);
-      localStorage.removeItem(`machub_portal_Password_${adminNo}`);
+      // intentionally preserving machub_portal_Password_${adminNo} so future logins use the changed password
     }
     localStorage.removeItem('machub_student_id');
     localStorage.removeItem('mac_student_info');

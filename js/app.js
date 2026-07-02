@@ -3976,7 +3976,8 @@ window.renderClassAttendance = function() {
         // Auto-fetch and re-render
         if (adminNo && window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
             const semToFetch = selectedSem !== 'all' ? selectedSem : '';
-            window.MacHubPortal.fetchSection('Attendance', true, semToFetch)
+            // Pass false to first check Cloud Cache (Firestore) for instant loading, falling back to scrape
+            window.MacHubPortal.fetchSection('Attendance', false, semToFetch)
                 .then(() => { window.renderClassAttendance(); })
                 .catch(() => {
                     const loadEl = document.getElementById('attendance-loading-state');
