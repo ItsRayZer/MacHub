@@ -22,7 +22,7 @@
   }
   function profilePrn() {
     const p = window.ExamHubProfile?.get() || window.getStudentInfo?.() || {};
-    return p.prn || p.data?.prn || localStorage.getItem('machub_mgu_prn') || null;
+    return p.prn || p.data?.prn || p.reg || localStorage.getItem('machub_mgu_prn') || null;
   }
   async function savePrnToLocalAndRemote(prn) {
     if (!prn) return;
@@ -34,12 +34,13 @@
         const updFn = window.firestoreUpdateDoc;
         if (db && docFn && updFn) {
           const ref = docFn(db, 'students', an);
-          await updFn(ref, { prn: prn });
+          await updFn(ref, { prn: prn, reg: prn });
         }
       }
       // Update in-memory profile too
       const info = (window.ExamHubProfile?.get || window.getStudentInfo)?.() || {};
       info.prn = prn;
+      info.reg = prn;
       if (window.ExamHubProfile?.save) window.ExamHubProfile.save(info);
     } catch (e) {
       console.warn('[MGU] save prn error:', e);
@@ -804,7 +805,7 @@
     // NOT from localStorage — localStorage persists across sessions and would bleed PRNs.
     const loggedInPrn = (() => {
       const p = window.ExamHubProfile?.get() || window.getStudentInfo?.() || {};
-      return p.prn || p.data?.prn || null; // intentionally ignore localStorage
+      return p.prn || p.data?.prn || p.reg || null; // intentionally ignore localStorage
     })();
 
     const prnIn = $('mgu-prn-in');

@@ -2604,6 +2604,7 @@ function checkOnboarding() {
     if (!saved) {
         if (obScreen) obScreen.classList.remove('hidden');
         if (typeof hideBottomNav === 'function') hideBottomNav();
+        if (typeof window.initOnboardingBackground === 'function') window.initOnboardingBackground();
     } else {
         if (obScreen) obScreen.classList.add('hidden', 'collapsed');
         applyUserProfile();

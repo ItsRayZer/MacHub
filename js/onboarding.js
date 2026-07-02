@@ -23,6 +23,56 @@ function profileAccent(student) {
     return palette[code % palette.length];
 }
 
+window.initOnboardingBackground = function() {
+    const bgContainer = document.getElementById('ob-mesh-bg');
+    if (!bgContainer) return;
+    
+    // Hardcoded color palettes derived from the images to ensure 0 CPU overhead
+    const backgrounds = [
+        { image: 'assets/onboarding_bg/bg1.jpg', colors: ['#3b82f6', '#a855f7', '#ec4899', '#6366f1'] },
+        { image: 'assets/onboarding_bg/bg2.jpg', colors: ['#10b981', '#3b82f6', '#14b8a6', '#8b5cf6'] },
+        { image: 'assets/onboarding_bg/bg3.jpg', colors: ['#f59e0b', '#ef4444', '#db2777', '#f97316'] },
+        { image: 'assets/onboarding_bg/bg4.jpg', colors: ['#6366f1', '#4ade80', '#0ea5e9', '#d946ef'] },
+        { image: 'assets/onboarding_bg/bg5.jpg', colors: ['#eab308', '#ec4899', '#8b5cf6', '#3b82f6'] },
+        { image: 'assets/onboarding_bg/bg6.jpg', colors: ['#f43f5e', '#a855f7', '#3b82f6', '#06b6d4'] },
+        { image: 'assets/onboarding_bg/bg7.jpg', colors: ['#8b5cf6', '#ec4899', '#f43f5e', '#f97316'] },
+        { image: 'assets/onboarding_bg/bg8.jpg', colors: ['#14b8a6', '#3b82f6', '#6366f1', '#a855f7'] },
+        { image: 'assets/onboarding_bg/bg9.jpg', colors: ['#ec4899', '#f43f5e', '#eab308', '#22c55e'] },
+        { image: 'assets/onboarding_bg/bg10.jpeg', colors: ['#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e'] },
+        { image: 'assets/onboarding_bg/bg11.jpeg', colors: ['#22c55e', '#14b8a6', '#0ea5e9', '#3b82f6'] },
+        { image: 'assets/onboarding_bg/bg12.jpeg', colors: ['#f97316', '#eab308', '#22c55e', '#14b8a6'] }
+    ];
+    
+    const randomIndex = Math.floor(Math.random() * backgrounds.length);
+    const selected = backgrounds[randomIndex];
+    
+    // 1. Immediately inject the CSS variables for colors so the fluid blobs appear and animate INSTANTLY.
+    bgContainer.style.setProperty('--mesh-color-1', selected.colors[0]);
+    bgContainer.style.setProperty('--mesh-color-2', selected.colors[1]);
+    bgContainer.style.setProperty('--mesh-color-3', selected.colors[2]);
+    bgContainer.style.setProperty('--mesh-color-4', selected.colors[3]);
+    
+    // 2. Set an initial fast-loading dark background
+    bgContainer.style.backgroundColor = '#050505';
+    
+    // 3. Asynchronously load and off-thread decode the heavy JPEG image to prevent UI stutter/lag
+    const img = new Image();
+    img.src = selected.image;
+    
+    const applyImage = () => {
+        requestAnimationFrame(() => {
+            bgContainer.style.backgroundImage = `url('${selected.image}')`;
+        });
+    };
+
+    if ('decode' in img) {
+        // Off-main-thread decoding prevents the page from freezing when loading large 300KB JPEGs
+        img.decode().then(applyImage).catch(applyImage);
+    } else {
+        img.onload = applyImage;
+    }
+};
+
 function syncSelectedProfileToObData() {
     if (!window._selectedStudentFromDB) return null;
     if (!window.obData) window.obData = { name: '', dept: '', reg: '', adminNo: '' };
