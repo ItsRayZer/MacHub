@@ -2375,6 +2375,22 @@ async function fetchAndFinishOnboarding() {
             await window.authenticateFirebase(adminNo);
         }
 
+        // Add to local search list immediately
+        if (window.studentsList) {
+            const exists = window.studentsList.some(s => s.adminNo === adminNo || s.admission_no === adminNo);
+            if (!exists) {
+                window.studentsList.push({
+                    name: name,
+                    department: dept,
+                    course: dept,
+                    adminNo: adminNo,
+                    admission_no: adminNo,
+                    regNo: reg,
+                    batch: batchVal
+                });
+            }
+        }
+
         // Auto-create/update student doc in Firestore via the secure Cloudflare Worker endpoint
         try {
             const newStudent = {
@@ -2868,6 +2884,7 @@ if (typeof initDraggableSheet !== 'undefined') window.initDraggableSheet = initD
 function setupScrollHide() {
     let _lastScrollY = window.scrollY || 0;
     let _scrollTicking = false;
+    let _scrollTimer = null;
 
     if (typeof window.addEventListener === 'function') {
         window.addEventListener('scroll', () => {
@@ -2880,12 +2897,30 @@ function setupScrollHide() {
                 if (!isAiPage) {
                     const delta = currentY - _lastScrollY;
                     const bottomNav = document.getElementById('bottomNav');
+                    const aiBtn = document.getElementById('macAiFloatingBtn');
                     
                     if (bottomNav) {
-                        if (delta > 8 && currentY > 50) {
-                            bottomNav.classList.add('nav-scrolled-down');
-                        } else if (delta < -8 || currentY <= 20) {
-                            bottomNav.classList.remove('nav-scrolled-down');
+                        // Instant fluid trigger based on scroll direction
+                        if (delta > 5 && currentY > 50) {
+                            if (!bottomNav.classList.contains('nav-scrolled-down')) {
+                                bottomNav.classList.add('nav-scrolled-down');
+                                // Trigger "gulp" effect on AI button
+                                if (aiBtn) {
+                                    aiBtn.classList.add('eating-gulp');
+                                    clearTimeout(_scrollTimer);
+                                    _scrollTimer = setTimeout(() => aiBtn.classList.remove('eating-gulp'), 300);
+                                }
+                            }
+                        } else if (delta < -5 || currentY <= 20) {
+                            if (bottomNav.classList.contains('nav-scrolled-down')) {
+                                bottomNav.classList.remove('nav-scrolled-down');
+                                // Trigger "spit" effect on AI button
+                                if (aiBtn) {
+                                    aiBtn.classList.add('eating-spit');
+                                    clearTimeout(_scrollTimer);
+                                    _scrollTimer = setTimeout(() => aiBtn.classList.remove('eating-spit'), 300);
+                                }
+                            }
                         }
                     }
                 }

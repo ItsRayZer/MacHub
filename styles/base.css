@@ -2685,32 +2685,43 @@
     100% { transform: translate(50px, -25px) scale(1.25); }
 }
 
-/* Scrolled Down State: hide menu tabs & text container completely, only show AI floating button */
+/* Liquid Glass Bouncy "Eating" Animation State */
 #bottomNav.nav-scrolled-down #navPill {
-    max-width: 0 !important;
+    transform: translateX(30px) scale(0, 0.1) !important;
     opacity: 0 !important;
-    transform: translateX(120px) scale(0.6) !important;
     pointer-events: none !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    border-left-width: 0 !important;
-    border-right-width: 0 !important;
-    margin-right: -4px !important; /* Offset the flex gap completely */
-}
-
-#bottomNav.nav-scrolled-down #navPill > * {
-    opacity: 0 !important;
-    transform: scale(0.5) !important;
-    pointer-events: none !important;
+    /* Fast, elastic morphing. Delay opacity so it physically shrinks to 0 before fading out */
+    transition: transform 0.5s cubic-bezier(0.5, -0.3, 0.1, 1.5), opacity 0.1s ease 0.4s !important;
 }
 
 #bottomNav.nav-scrolled-down .nav-ai-input-container {
-    width: 0 !important;
+    transform: translateX(20px) scale(0, 0.1) !important;
     opacity: 0 !important;
     pointer-events: none !important;
-    padding: 0 !important;
-    border-width: 0 !important;
-    margin-right: 0 !important;
+    transition: transform 0.4s cubic-bezier(0.5, -0.3, 0.1, 1.5), opacity 0.1s ease 0.3s !important;
+}
+
+/* Base pill transitions when opening */
+#bottomNav #navPill {
+    transform-origin: center right !important; /* Anchors the shrink/grow to the right side (AI button side) */
+    /* Springy open that stretches out from the right */
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease !important;
+}
+#bottomNav .nav-ai-input-container {
+    transform-origin: center right !important;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease !important;
+}
+
+/* Gulp effect on AI button when it eats the pill */
+.nav-ai-pill {
+    z-index: 20 !important; /* ON TOP of the nav pill to swallow it */
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.eating-gulp {
+    transform: scale(1.15) !important;
+}
+.eating-spit {
+    transform: scale(0.9) !important;
 }
 
 /* Hide liquid glass indicator when no option is selected (e.g. c-current="0" in view-ai) */

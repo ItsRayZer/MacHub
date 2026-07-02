@@ -29,18 +29,15 @@ window.initOnboardingBackground = function() {
     
     // Hardcoded color palettes derived from the images to ensure 0 CPU overhead
     const backgrounds = [
-        { image: 'assets/onboarding_bg/bg1.jpg', colors: ['#3b82f6', '#a855f7', '#ec4899', '#6366f1'] },
-        { image: 'assets/onboarding_bg/bg2.jpg', colors: ['#10b981', '#3b82f6', '#14b8a6', '#8b5cf6'] },
-        { image: 'assets/onboarding_bg/bg3.jpg', colors: ['#f59e0b', '#ef4444', '#db2777', '#f97316'] },
-        { image: 'assets/onboarding_bg/bg4.jpg', colors: ['#6366f1', '#4ade80', '#0ea5e9', '#d946ef'] },
-        { image: 'assets/onboarding_bg/bg5.jpg', colors: ['#eab308', '#ec4899', '#8b5cf6', '#3b82f6'] },
-        { image: 'assets/onboarding_bg/bg6.jpg', colors: ['#f43f5e', '#a855f7', '#3b82f6', '#06b6d4'] },
-        { image: 'assets/onboarding_bg/bg7.jpg', colors: ['#8b5cf6', '#ec4899', '#f43f5e', '#f97316'] },
-        { image: 'assets/onboarding_bg/bg8.jpg', colors: ['#14b8a6', '#3b82f6', '#6366f1', '#a855f7'] },
-        { image: 'assets/onboarding_bg/bg9.jpg', colors: ['#ec4899', '#f43f5e', '#eab308', '#22c55e'] },
-        { image: 'assets/onboarding_bg/bg10.jpeg', colors: ['#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e'] },
-        { image: 'assets/onboarding_bg/bg11.jpeg', colors: ['#22c55e', '#14b8a6', '#0ea5e9', '#3b82f6'] },
-        { image: 'assets/onboarding_bg/bg12.jpeg', colors: ['#f97316', '#eab308', '#22c55e', '#14b8a6'] }
+        { image: 'assets/onboarding_bg/bg1.jpg', colors: ['#10b981', '#3b82f6', '#14b8a6', '#8b5cf6'] },
+        { image: 'assets/onboarding_bg/bg2.jpg', colors: ['#f59e0b', '#ef4444', '#db2777', '#f97316'] },
+        { image: 'assets/onboarding_bg/bg3.jpg', colors: ['#6366f1', '#4ade80', '#0ea5e9', '#d946ef'] },
+        { image: 'assets/onboarding_bg/bg4.jpg', colors: ['#eab308', '#ec4899', '#8b5cf6', '#3b82f6'] },
+        { image: 'assets/onboarding_bg/bg5.jpg', colors: ['#f43f5e', '#a855f7', '#3b82f6', '#06b6d4'] },
+        { image: 'assets/onboarding_bg/bg6.jpg', colors: ['#3b82f6', '#a855f7', '#ec4899', '#6366f1'] },
+        { image: 'assets/onboarding_bg/bg7.jpg', colors: ['#10b981', '#3b82f6', '#14b8a6', '#8b5cf6'] },
+        { image: 'assets/onboarding_bg/bg8.jpeg', colors: ['#f59e0b', '#ef4444', '#db2777', '#f97316'] },
+        { image: 'assets/onboarding_bg/bg9.jpeg', colors: ['#6366f1', '#4ade80', '#0ea5e9', '#d946ef'] }
     ];
     
     const randomIndex = Math.floor(Math.random() * backgrounds.length);
