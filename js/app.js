@@ -40,64 +40,91 @@ let currentClassDept = 'BCA';
 function getStudentInfo() {
     if (window.ExamHubProfileApi) {
         const info = window.ExamHubProfileApi.getStudentInfo();
-        if (info) {
+        if (info && (info.adminNo || info.admissionNo || info.name)) {
             info.dept = info.dept || info.department || info.course || '';
             info.adminNo = info.adminNo || info.admissionNo || info.admissionNumber || '';
+            return info;
         }
-        return info;
     }
     try {
         const info = JSON.parse(localStorage.getItem('mac_student_info'));
-        if (info) {
+        if (info && (info.adminNo || info.admissionNo || info.name)) {
             info.dept = info.dept || info.department || info.course || '';
             info.adminNo = info.adminNo || info.admissionNo || info.admissionNumber || '';
+            return info;
         }
-        return info;
-    } catch (error) {
-        return null;
+    } catch (error) {}
+    const savedAdmin = localStorage.getItem('machub_student_id');
+    if (savedAdmin) {
+        return { name: 'Student', adminNo: savedAdmin, dept: 'General', classGroup: '' };
     }
+    return null;
 }
+
+window.clearUserSession = function() {
+    try {
+        localStorage.removeItem('machub_student_id');
+        localStorage.removeItem('mac_student_info');
+        localStorage.removeItem('machub_current_view');
+        localStorage.removeItem('machub_claimed_profile');
+        sessionStorage.clear();
+
+        if (window.ExamHubProfileApi && window.ExamHubProfileApi.clear) {
+            window.ExamHubProfileApi.clear();
+        }
+        if (window.ExamHubProfile && window.ExamHubProfile.clear) {
+            window.ExamHubProfile.clear();
+        }
+
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith('machub_') || key.startsWith('mac_'))) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+    } catch (e) {
+        console.warn('Error clearing session:', e);
+    }
+};
+
+window.portalLogout = function() {
+    window.clearUserSession();
+    const obScreen = document.getElementById('onboardingScreen');
+    if (obScreen) {
+        obScreen.classList.remove('hidden');
+        if (typeof window.nextObStep === 'function') window.nextObStep(1);
+    }
+    if (typeof window.switchView === 'function') {
+        window.switchView('view-search');
+    }
+};
 
 // How long before cached data is considered stale and a background refresh is triggered (4 hours)
 const PORTAL_CACHE_STALE_MS = 4 * 60 * 60 * 1000;
 
 function getPortalCache(section, adminNo, semester = '') {
     if (!adminNo) return null;
-    if (semester) {
-        const key = `machub_portal_${section}_sem${semester}_${adminNo}`;
-        const data = localStorage.getItem(key);
-        if (data) return data;
-        
-        // Fallback: Check if generic key contains data matching the requested semester
-        const directKey = `machub_portal_${section}_${adminNo}`;
-        const direct = localStorage.getItem(directKey);
-        if (direct) {
-            try {
-                const parsed = JSON.parse(direct);
-                const payload = parsed?.data?.payload || parsed?.data || parsed;
-                const sems = payload?.semesters || payload?.semesterOptions || [];
-                const selectedOpt = sems.find(s => s.selected);
-                if (selectedOpt) {
-                    // Match by text-based number first (e.g. "Semester 4" → "4"), then raw value
-                    const textMatch = String(selectedOpt.text || '').match(/\d+/);
-                    const valMatch  = String(selectedOpt.value || '').match(/\d+/);
-                    const semNumFromCache = textMatch ? textMatch[0] : (valMatch ? valMatch[0] : null);
-                    if (semNumFromCache && semNumFromCache === String(semester)) {
-                        return direct;
-                    }
-                }
-            } catch (e) {}
-        }
-    }
-    const directKey = `machub_portal_${section}_${adminNo}`;
-    const direct = localStorage.getItem(directKey);
-    if (direct) return direct;
     
-    // Check for semester-specific keys
+    // 1. If specific semester requested, check exact semester key first
+    if (semester) {
+        const semKey = `machub_portal_${section}_sem${semester}_${adminNo}`;
+        const semData = localStorage.getItem(semKey);
+        if (semData) return semData;
+    }
+    
+    // 2. Check main generic key (machub_portal_SECTION_ADMIN)
+    const directKey = `machub_portal_${section}_${adminNo}`;
+    const directData = localStorage.getItem(directKey);
+    if (directData) return directData;
+
+    // 3. Fallback: check any semester key matching this section & admin
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith(`machub_portal_${section}_sem`) && key.endsWith(`_${adminNo}`)) {
-            return localStorage.getItem(key);
+        if (key && key.startsWith(`machub_portal_${section}_`) && key.includes(adminNo)) {
+            const val = localStorage.getItem(key);
+            if (val) return val;
         }
     }
     return null;
@@ -188,7 +215,7 @@ function updateCountdown() {
     if (!window.EXAM_TIMETABLE || window.EXAM_TIMETABLE.length === 0) return;
 
     const info = getStudentInfo();
-    const userDept = info ? info.dept.toUpperCase() : null;
+    const userDept = (info && info.dept) ? String(info.dept).toUpperCase() : null;
 
     if (info) {
         const homeGreeting = document.getElementById('homeGreeting');
@@ -322,9 +349,10 @@ function getMainNavView(viewId) {
 }
 
 function updateExamSubnav(activeView) {
+    const currentExamSubView = (typeof appState !== 'undefined' && appState.examSubView) ? appState.examSubView : 'view-timetable';
     document.querySelectorAll('.exam-subnav-item').forEach(btn => {
         if (btn.hasAttribute('data-exam-target')) {
-            btn.classList.toggle('is-active', btn.dataset.examTarget === activeView);
+            btn.classList.toggle('is-active', btn.dataset.examTarget === currentExamSubView);
         } else if (btn.hasAttribute('data-top-target')) {
             const target = btn.dataset.topTarget;
             const isActive = (target === 'class' && activeView === 'view-class') ||
@@ -403,12 +431,12 @@ function closeExternalApp() {
 function switchExamView(viewId) {
     let target = viewId;
     if (!target) {
-        target = appState.examSubView || 'view-class';
+        target = appState.examSubView || 'view-seats';
     }
     
     // If target is view-seats, check if we had a more specific saved sub-view under exam (timetable, seats, results)
     if (target === 'view-seats') {
-        const lastExamTab = localStorage.getItem('machub_exam_sub_view');
+        const lastExamTab = localStorage.getItem('machub_exam_sub_view') || 'view-timetable';
         if (['view-timetable', 'view-seats', 'view-results'].includes(lastExamTab)) {
             target = lastExamTab;
         }
@@ -416,7 +444,7 @@ function switchExamView(viewId) {
 
     if (target === 'view-timetable' || target === 'view-seats' || target === 'view-results') {
         const targetTab = target === 'view-timetable' ? 'timetable' : (target === 'view-seats' ? 'seats' : 'results');
-        switchView('view-seats');
+        switchView('view-seats', false, targetTab);
         switchExamTab(targetTab);
         return;
     }
@@ -452,20 +480,29 @@ window.switchExamTab = function(tab) {
 
     if (tab === 'timetable') {
         appState.examSubView = 'view-timetable';
-        localStorage.setItem('machub_current_view', 'view-timetable');
         localStorage.setItem('machub_exam_sub_view', 'view-timetable');
         if (typeof renderTimetable === 'function') renderTimetable();
     } else if (tab === 'seats') {
         appState.examSubView = 'view-seats';
-        localStorage.setItem('machub_current_view', 'view-seats');
         localStorage.setItem('machub_exam_sub_view', 'view-seats');
         if (typeof showSeatNote === 'function') showSeatNote();
     } else {
         appState.examSubView = 'view-results';
-        localStorage.setItem('machub_current_view', 'view-results');
         localStorage.setItem('machub_exam_sub_view', 'view-results');
         if (typeof window.renderExamResults === 'function') window.renderExamResults();
         if (typeof window.initMguResultPage === 'function') window.initMguResultPage();
+    }
+
+    // Update browser URL to match active subtab client-side
+    if (typeof window.reactNavigate === 'function') {
+        const adminNo = localStorage.getItem('machub_student_id') || 'student';
+        let routePath = `/${adminNo}/schedule/exam/timetable`;
+        if (tab === 'seats') routePath = `/${adminNo}/schedule/exam/seats`;
+        else if (tab === 'results') routePath = `/${adminNo}/schedule/exam/results`;
+        
+        if (window.location.pathname !== routePath) {
+            window.reactNavigate(routePath);
+        }
     }
     
     // Sync top toggle states
@@ -474,23 +511,91 @@ window.switchExamTab = function(tab) {
     document.querySelectorAll('.exam-subnav-item[data-exam-target]').forEach(el => {
         el.classList.toggle('is-active', el.dataset.examTarget === appState.examSubView);
     });
+
+    if (typeof window.updateSubnavIndicators === 'function') {
+        window.updateSubnavIndicators();
+    }
 };
 
-function switchView(viewId) {
+function switchView(viewId, isFromRouter, subTabId) {
+    if (typeof window.closeArcToolMenu === 'function') window.closeArcToolMenu();
+    if (typeof window.closeSecondaryArcMenu === 'function') window.closeSecondaryArcMenu();
+
+    if (viewId !== 'view-public-profile') {
+        document.body.classList.remove('public-showcase-mode');
+        const bottomNav = document.getElementById('bottomNav');
+        if (bottomNav) bottomNav.style.removeProperty('display');
+        const header = document.getElementById('appHeader');
+        if (header) header.style.removeProperty('display');
+        const aiBtn = document.getElementById('macAiFloatingBtn');
+        if (aiBtn) aiBtn.style.removeProperty('display');
+    }
+
     if (window.isPortalLocked && viewId !== 'view-portal-password-lock' && viewId !== 'view-secure-account') {
         viewId = 'view-portal-password-lock';
+    }
+
+    // Bi-directional client-side routing sync
+    if (!isFromRouter && typeof window.reactNavigate === 'function') {
+        const adminNo = localStorage.getItem('machub_student_id') || 'student';
+        let routePath = `/${adminNo}/dashboard`;
+        
+        if (viewId === 'view-home') {
+            routePath = `/${adminNo}/dashboard`;
+        } else if (viewId === 'view-class') {
+            let tab = subTabId || (typeof appState !== 'undefined' && appState.classSubTab);
+            if (!tab) {
+                tab = localStorage.getItem('machub_class_sub_tab') || 'attendance';
+            }
+            if (tab === 'attendance') routePath = `/${adminNo}/schedule/class/attendance`;
+            else if (tab === 'subjects' || tab === 'activity') routePath = `/${adminNo}/schedule/class/activity`;
+            else if (tab === 'timetable') routePath = `/${adminNo}/schedule/class/timetable`;
+        } else if (viewId === 'view-seats' || viewId === 'view-timetable' || viewId === 'view-results') {
+            let tab = subTabId || (typeof appState !== 'undefined' && appState.examSubView && appState.examSubView.replace('view-', ''));
+            if (!tab) {
+                const stored = localStorage.getItem('machub_exam_sub_view');
+                tab = stored ? stored.replace('view-', '') : 'timetable';
+            }
+            if (viewId === 'view-timetable') tab = 'timetable';
+            if (viewId === 'view-results') tab = 'results';
+            
+            if (tab === 'seats') routePath = `/${adminNo}/schedule/exam/seats`;
+            else if (tab === 'timetable') routePath = `/${adminNo}/schedule/exam/timetable`;
+            else if (tab === 'results') routePath = `/${adminNo}/schedule/exam/results`;
+        } else if (viewId === 'view-exam-resources') {
+            routePath = `/${adminNo}/schedule/exam/resources`;
+        } else if (viewId === 'view-profile') {
+            routePath = `/${adminNo}/profile`;
+        } else if (viewId === 'view-profile-edit') {
+            routePath = `/${adminNo}/profile/studio`;
+        } else if (viewId === 'view-chat' || viewId === 'view-explore') {
+            routePath = `/${adminNo}/explore`;
+        } else if (viewId === 'view-ai') {
+            routePath = `/${adminNo}/macai`;
+        } else if (viewId === 'view-settings') {
+            routePath = `/${adminNo}/settings`;
+        } else if (viewId && viewId.startsWith('view-settings-')) {
+            const sub = viewId.replace('view-settings-', '');
+            if (sub === 'change-password') routePath = `/${adminNo}/settings/security/password`;
+            else if (sub === 'active-devices') routePath = `/${adminNo}/settings/security/devices`;
+            else if (sub === 'allotment-memo') routePath = `/${adminNo}/settings/documents/allotment-memo`;
+            else if (sub === 'hall-ticket') routePath = `/${adminNo}/settings/documents/hall-ticket`;
+            else if (sub === 'fee-payment') routePath = `/${adminNo}/settings/documents/fee-payment`;
+            else if (sub === 'grievance') routePath = `/${adminNo}/settings/support/grievance`;
+            else if (sub === 'concession') routePath = `/${adminNo}/settings/support/concession`;
+            else if (sub === 'feedback') routePath = `/${adminNo}/settings/support/feedback`;
+            else routePath = `/${adminNo}/settings/${sub}`;
+        }
+        
+        window.reactNavigate(routePath);
     }
     // Save current view state before normalization
     if (viewId) {
         localStorage.setItem('machub_current_view', viewId);
-        if (['view-class', 'view-seats', 'view-timetable', 'view-results', 'view-exam-resources'].includes(viewId)) {
-            appState.examSubView = viewId;
-            localStorage.setItem('machub_exam_sub_view', viewId);
-        }
     }
 
     // Clear navigation hidden state locks when entering level-0 main tabs
-    if (['view-home', 'view-class', 'view-seats', 'view-resources', 'view-chat', 'view-profile'].includes(viewId)) {
+    if (['view-home', 'view-class', 'view-seats', 'view-resources', 'view-chat', 'view-explore', 'view-profile'].includes(viewId)) {
         if (window.isPortalLocked) {
             _navLockedHidden = true;
             _navHidden = true;
@@ -510,7 +615,15 @@ function switchView(viewId) {
 
     let origViewId = viewId;
     if (viewId === 'view-timetable' || viewId === 'view-seats' || viewId === 'view-results') {
-        const targetTab = viewId === 'view-timetable' ? 'timetable' : (viewId === 'view-seats' ? 'seats' : 'results');
+        let targetTab = viewId === 'view-timetable' ? 'timetable' : (viewId === 'view-seats' ? 'seats' : 'results');
+        if (viewId === 'view-seats') {
+            if (subTabId) {
+                targetTab = subTabId;
+            } else {
+                const stored = localStorage.getItem('machub_exam_sub_view');
+                targetTab = stored ? stored.replace('view-', '') : 'timetable';
+            }
+        }
         switchExamTab(targetTab);
         viewId = 'view-seats';
     }
@@ -518,7 +631,7 @@ function switchView(viewId) {
 
     const getViewDepth = (id) => {
         if (!id) return 0;
-        if (id === 'view-home' || id === 'view-class' || id === 'view-seats' || id === 'view-resources' || id === 'view-chat' || id === 'view-profile') {
+        if (id === 'view-home' || id === 'view-class' || id === 'view-seats' || id === 'view-resources' || id === 'view-chat' || id === 'view-explore' || id === 'view-profile') {
             return 0; // Main Tabs
         }
         if (id === 'view-announcements' || id === 'view-settings' || id === 'view-profile-edit' || id === 'view-departments' || id === 'view-exam-resources' || id === 'view-ai') {
@@ -542,6 +655,15 @@ function switchView(viewId) {
         // Scroll to top of page when changing view
         window.scrollTo(0, 0);
 
+        // Reset profile edit mode & hide creation toolbar when navigating away from profile view
+        if (viewId !== 'view-profile') {
+            document.body.classList.remove('is-scrolling-down');
+            if (typeof window.toggleCanvasAddMenu === 'function') window.toggleCanvasAddMenu(false);
+            if (typeof window.switchProfileMode === 'function' && window.appState && window.appState.profileMode === 'edit') {
+                window.switchProfileMode('view');
+            }
+        }
+
         document.querySelectorAll('.view-panel').forEach(el => {
             el.classList.remove('is-active', 'page-from', 'page-to', 'page-slide-in-right', 'page-slide-out-left', 'page-slide-in-left', 'page-slide-out-right', 'page-fade-in');
         });
@@ -560,6 +682,23 @@ function switchView(viewId) {
         
         updateExamSubnav(origViewId);
 
+        if (typeof window.updateSubnavIndicators === 'function') {
+            window.updateSubnavIndicators();
+        }
+
+        if (viewId === 'view-class') {
+            if (typeof window.switchClassTab === 'function') {
+                const target = subTabId || localStorage.getItem('machub_class_sub_tab') || 'attendance';
+                window.switchClassTab(target);
+            }
+        }
+        if (viewId === 'view-seats') {
+            if (typeof window.switchExamTab === 'function') {
+                const target = subTabId || (localStorage.getItem('machub_exam_sub_view') ? localStorage.getItem('machub_exam_sub_view').replace('view-', '') : 'timetable');
+                window.switchExamTab(target);
+            }
+        }
+
         if (viewId === 'view-seats') {
             if (appState.examSubView === 'view-timetable' && typeof renderTimetable === 'function') renderTimetable();
             if (appState.examSubView === 'view-seats' && typeof showSeatNote === 'function') showSeatNote();
@@ -571,15 +710,27 @@ function switchView(viewId) {
         if (viewId === 'view-profile' && typeof renderUserProfile === 'function') renderUserProfile();
         syncExternalAppView();
 
-        // Init chat view when switching to it
-        if (viewId === 'view-chat' && window.initChatView) {
-            setTimeout(() => window.initChatView(), 50);
+        // Init explore view when switching to it
+        if ((viewId === 'view-explore' || viewId === 'view-chat') && window.initExploreView) {
+            setTimeout(() => window.initExploreView(), 20);
         }
 
-        // Update Nav Bar active & Indicator movement
-        const tabs = ['view-home', 'view-exam', 'view-chat', 'view-profile'];
+        document.dispatchEvent(new CustomEvent('viewSwitched', { detail: { viewId } }));
+
+        // Update Nav Bar active & Indicator movement (Home: 1, Schedule: 2, Explore: 3, Profile: 4)
+        const tabs = ['view-home', 'view-exam', 'view-explore', 'view-profile'];
         const navPill = document.getElementById('navPill');
-        const activeMainView = (viewId === 'view-seats' || viewId === 'view-results' || viewId === 'view-exam-resources') ? 'view-exam' : getMainNavView(viewId);
+        let activeMainView = 'view-home';
+        if (viewId === 'view-seats' || viewId === 'view-results' || viewId === 'view-class' || viewId === 'view-timetable' || viewId === 'view-exam-resources' || viewId === 'view-exam') {
+            activeMainView = 'view-exam';
+        } else if (viewId === 'view-explore' || viewId === 'view-chat') {
+            activeMainView = 'view-explore';
+        } else if (viewId === 'view-profile' || viewId === 'view-profile-edit') {
+            activeMainView = 'view-profile';
+        } else if (viewId === 'view-home') {
+            activeMainView = 'view-home';
+        }
+
         const nextIndex = tabs.indexOf(activeMainView);
 
         if (navPill) {
@@ -595,7 +746,7 @@ function switchView(viewId) {
             }
         }
 
-        tabs.forEach((tab, index) => {
+        tabs.forEach((tab) => {
             const btn = document.getElementById('tab-' + tab);
             if (!btn) return;
             if (tab === activeMainView) {
@@ -669,7 +820,7 @@ function renderDaySelector() {
     if(!ds) return;
     
     const info = getStudentInfo();
-    const userDept = info ? info.dept.toUpperCase() : 'BCA';
+    const userDept = (info && info.dept) ? String(info.dept).toUpperCase() : 'BCA';
 
     const uniqueDates = getFutureSeatExamDates(userDept);
     const selectedDate = appState.selectedDate.replace(/_/g, '-');
@@ -738,8 +889,12 @@ function selectDay(dateStr) {
     window.ExamHubSeats.loadDay(dateStr).then((payload) => {
         applyLoadedSeatData(payload);
 
-        if (gridParent) gridParent.classList.remove('hidden');
-        if (hallTabsParent) hallTabsParent.classList.remove('hidden');
+        if (gridParent && appState.examSubView === 'seats') {
+            gridParent.classList.remove('hidden');
+        }
+        if (hallTabsParent && appState.examSubView === 'seats') {
+            hallTabsParent.classList.remove('hidden');
+        }
     }).catch(() => {
         // Do not show emptyState banner at the top
     });
@@ -968,7 +1123,7 @@ function getCountdownSchedule(userDept, now) {
 
 function isPracticalScheduleActiveForUser() {
     const info = getStudentInfo();
-    const userDept = info ? info.dept.toUpperCase() : null;
+    const userDept = (info && info.dept) ? String(info.dept).toUpperCase() : null;
     if (!userDept) return false;
 
     const now = new Date();
@@ -1571,7 +1726,7 @@ function renderTimetableLegacy() {
     
     if (!container) return;
 
-    const userDept = studentInfo ? studentInfo.dept.toUpperCase() : 'BCA';
+    const userDept = (studentInfo && studentInfo.dept) ? String(studentInfo.dept).toUpperCase() : 'BCA';
     
     // Pick the correct dept-specific timetable
     const deptMap = {
@@ -1706,7 +1861,7 @@ function renderTimetable() {
 
     if (!container) return;
 
-    const userDept = studentInfo ? studentInfo.dept.toUpperCase() : 'BCA';
+    const userDept = (studentInfo && studentInfo.dept) ? String(studentInfo.dept).toUpperCase() : 'BCA';
     const now = new Date();
     const theorySchedule = getDepartmentScheduleByCode(userDept);
     const practicalSchedule = getDepartmentPracticalScheduleByCode(userDept);
@@ -1904,7 +2059,7 @@ function renderMap() {
     invigilatorDesk?.classList.remove('hidden');
 
     const info = getStudentInfo();
-    const userDept = info ? info.dept.toUpperCase() : 'BCA';
+    const userDept = (info && info.dept) ? String(info.dept).toUpperCase() : 'BCA';
     const futureSeatDates = getFutureSeatExamDates(userDept);
     const activeTimetableIsPractical = window.ACTIVE_TIMETABLE_TYPE === 'practical' || isPracticalScheduleActiveForUser();
     const selectedDateFormatted = appState.selectedDate.replace(/_/g, '-');
@@ -2157,7 +2312,7 @@ function openDrawer(info, seat) {
     const examMeta = document.getElementById('drawerExamMeta');
     
     const deptMap = { 'BCA': window.TIMETABLE_BCA, 'BBA': window.TIMETABLE_BBA, 'BSW': window.TIMETABLE_BSW };
-    const schedule = deptMap[info.d.toUpperCase()];
+    const schedule = deptMap[String(info.d || 'BCA').toUpperCase()];
     const selectedDateFormatted = appState.selectedDate.replace(/_/g, '-');
     
     if (schedule && examCard) {
@@ -2251,18 +2406,19 @@ async function fetchAndFinishOnboarding() {
 
     const CF_WORKER_URL = 'https://machub-proxy.mrabensojan.workers.dev';
     
-    try {
+    let passwordToUse = localStorage.getItem(`machub_portal_Password_${adminNo}`) || adminNo;
+    
+    const performScrape = async (pwd) => {
         let profilePayload = null;
         let scrapeSuccessful = false;
-
-        // Try Worker profile scrape directly using adminNo as password
+        
         try {
             const scrapeRes = await fetch(`${CF_WORKER_URL}/api/scrape/profile`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     admissionNumber: adminNo,
-                    password: adminNo
+                    password: pwd
                 })
             });
             const scrapeData = await scrapeRes.json();
@@ -2274,7 +2430,6 @@ async function fetchAndFinishOnboarding() {
             console.warn('Direct worker scrape failed, trying Cloud Function:', scrapeErr.message);
         }
 
-        // If direct scrape failed, try Cloud Function
         if (!scrapeSuccessful) {
             try {
                 let responseData;
@@ -2283,14 +2438,14 @@ async function fetchAndFinishOnboarding() {
                     const result = await onDemandScrapeFunc({
                         admissionNumber: adminNo,
                         target: 'profile',
-                        customPassword: adminNo
+                        customPassword: pwd
                     });
                     responseData = result.data;
                 } else {
                     const res = await fetch(`https://asia-south1-machub-6af39.cloudfunctions.net/onDemandScrape`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ data: { admissionNumber: adminNo, target: 'profile', customPassword: adminNo } })
+                        body: JSON.stringify({ data: { admissionNumber: adminNo, target: 'profile', customPassword: pwd } })
                     });
                     const json = await res.json();
                     if (res.ok) responseData = json.result;
@@ -2304,10 +2459,33 @@ async function fetchAndFinishOnboarding() {
                 console.error('Cloud Function scrape failed:', fnErr.message);
             }
         }
+        
+        return { success: scrapeSuccessful, payload: profilePayload };
+    };
 
-        if (!scrapeSuccessful || !profilePayload) {
-            throw new Error("Failed to verify portal credentials. Please check your Admission Number.");
+    try {
+        let result = await performScrape(passwordToUse);
+        
+        if (!result.success) {
+            const promptPwd = prompt("Verify ePortal Credentials:\nEnter your current ePortal password to authenticate and claim this profile:");
+            if (promptPwd === null) {
+                throw new Error("Onboarding cancelled by user.");
+            }
+            const cleanPromptPwd = promptPwd.trim();
+            if (!cleanPromptPwd) {
+                throw new Error("Password cannot be empty.");
+            }
+            
+            btn.innerHTML = `Retrying Scraping...`;
+            result = await performScrape(cleanPromptPwd);
+            if (!result.success) {
+                throw new Error("Incorrect portal password. Please try again.");
+            }
+            passwordToUse = cleanPromptPwd;
+            localStorage.setItem(`machub_portal_Password_${adminNo}`, cleanPromptPwd);
         }
+
+        const profilePayload = result.payload;
 
         // Extract student details from scraped profile payload (handles nested sections[0].data format)
         const profileData = profilePayload?.sections?.[0]?.data || profilePayload?.data || profilePayload || {};
@@ -2469,6 +2647,34 @@ async function fetchAndFinishOnboarding() {
 
 window.fetchAndFinishOnboarding = fetchAndFinishOnboarding;
 
+window.pplClearError = function() {
+    const el = document.getElementById('ppl-error-msg');
+    if (el) el.style.display = 'none';
+};
+
+window.updateSubnavIndicators = function(skipAnimation = false) {
+    document.querySelectorAll('.exam-subnav').forEach(nav => {
+        const items = Array.from(nav.querySelectorAll('.exam-subnav-item'));
+        const activeIndex = items.findIndex(el => el.classList.contains('is-active'));
+        if (activeIndex !== -1) {
+            const nextOption = String(activeIndex + 1);
+            let currentOption = nav.getAttribute('c-current') || nextOption;
+            if (skipAnimation || !nav.hasAttribute('data-initialized')) {
+                currentOption = nextOption;
+                nav.setAttribute('data-initialized', 'true');
+            }
+            nav.setAttribute('c-previous', currentOption);
+            nav.setAttribute('c-current', nextOption);
+        }
+    });
+};
+
+setTimeout(() => {
+    if (typeof window.updateSubnavIndicators === 'function') {
+        window.updateSubnavIndicators();
+    }
+}, 300);
+
 function nextObStep(step) {
     ['ob-step-1', 'ob-step-2', 'ob-step-2b', 'ob-step-3'].forEach(id => {
         const el = document.getElementById(id);
@@ -2617,8 +2823,11 @@ function checkOnboarding() {
     const saved = getStudentInfo();
     const obScreen = document.getElementById('onboardingScreen');
 
-    if (!saved) {
-        if (obScreen) obScreen.classList.remove('hidden');
+    if (!saved || !saved.adminNo) {
+        if (obScreen) {
+            obScreen.classList.remove('hidden', 'collapsed');
+            obScreen.style.display = 'flex';
+        }
         if (typeof hideBottomNav === 'function') hideBottomNav();
         if (typeof window.initOnboardingBackground === 'function') window.initOnboardingBackground();
     } else {
@@ -2788,7 +2997,7 @@ function autoSelectNextExamDay() {
     }
 
     const info = getStudentInfo();
-    const userDept = info ? info.dept.toUpperCase() : null;
+    const userDept = (info && info.dept) ? String(info.dept).toUpperCase() : null;
     const now = new Date();
     const futureSeatDates = userDept ? getFutureSeatExamDates(userDept, now) : [];
     const nextDateStr = futureSeatDates[0] || null;
@@ -3063,6 +3272,10 @@ window.renderClassDaySelector = function() {
     const container = document.getElementById('classDaySelector');
     if (!container) return;
 
+    if (typeof window.renderClassDivisionSelector === 'function') {
+        window.renderClassDivisionSelector();
+    }
+
     const isOpen = appState.openClassDropdown === 'day';
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -3083,6 +3296,20 @@ window.renderClassDaySelector = function() {
                     </button>
                 `).join('')}
             </div>
+        </div>
+    `;
+};
+
+window.renderClassDivisionSelector = function() {
+    const container = document.getElementById('classDivisionSelector');
+    if (!container) return;
+
+    const division = localStorage.getItem('machub_timetable_division') || 'A';
+
+    container.innerHTML = `
+        <div style="display:flex; height:100%; padding:0.25rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.06); border-radius:1.35rem; gap:0.25rem; align-items:center; box-sizing:border-box;">
+            <button type="button" onclick="window.setTimetableDivision('A')" style="flex:1; height:100%; border-radius:1.1rem; font-size:11px; font-weight:800; border:none; outline:none; cursor:pointer; transition:all 0.2s ease; ${division === 'A' ? 'background:#ffffff; color:#1d1d1f; box-shadow:0 2px 8px rgba(0,0,0,0.12);' : 'background:transparent; color:#86868b;'}">Div A</button>
+            <button type="button" onclick="window.setTimetableDivision('B')" style="flex:1; height:100%; border-radius:1.1rem; font-size:11px; font-weight:800; border:none; outline:none; cursor:pointer; transition:all 0.2s ease; ${division === 'B' ? 'background:#ffffff; color:#1d1d1f; box-shadow:0 2px 8px rgba(0,0,0,0.12);' : 'background:transparent; color:#86868b;'}">Div B</button>
         </div>
     `;
 };
@@ -3138,6 +3365,22 @@ window.switchClassTab = function(tab) {
 
     if (tab === 'attendance') {
         renderClassAttendance();
+    }
+
+    if (typeof window.updateSubnavIndicators === 'function') {
+        window.updateSubnavIndicators();
+    }
+
+    // Update browser URL to match active subtab client-side
+    if (typeof window.reactNavigate === 'function') {
+        const adminNo = localStorage.getItem('machub_student_id') || 'student';
+        let routePath = `/${adminNo}/schedule/class/attendance`;
+        if (tab === 'timetable') routePath = `/${adminNo}/schedule/class/timetable`;
+        else if (tab === 'subjects') routePath = `/${adminNo}/schedule/class/activity`;
+        
+        if (window.location.pathname !== routePath) {
+            window.reactNavigate(routePath);
+        }
     }
 };
 
@@ -3201,7 +3444,7 @@ window.getCurrentScheduleState = function(now = new Date()) {
         status: 'weekend',
         periodIndex: -1,
         currentTitle: 'Weekend Mode',
-        currentSubtitle: 'School is closed',
+        currentSubtitle: 'College is closed',
         currentRoom: 'Closed',
         currentCode: '',
         nextTitle: '',
@@ -3325,14 +3568,14 @@ window.getCurrentScheduleState = function(now = new Date()) {
         state.totalSecs = 3600;
         state.timerLabel = 'FINAL BELL RINGS IN';
         
-        state.nextTitle = 'School Closed';
+        state.nextTitle = 'College Closed';
         state.nextSubtitle = 'Classes complete for today';
     } else {
         state.status = 'after_school';
         state.currentTitle = 'Classes Finished';
         state.currentSubtitle = 'All periods completed for today';
         state.currentRoom = 'Closed';
-        state.timerLabel = 'NEXT SCHOOL DAY STARTS IN';
+        state.timerLabel = 'NEXT COLLEGE DAY STARTS IN';
         
         let daysToNext = (dayOfWeek === 5) ? 3 : 1;
         const secsToMidnight = (24 * 3600) - totalSecsToday;
@@ -3365,6 +3608,14 @@ window.setTimetableDisplayMode = function(mode) {
     renderClassFilters();
     renderClassDaySelector();
     renderClassTimetable();
+};
+
+window.setTimetableDivision = function(div) {
+    localStorage.setItem('machub_timetable_division', div);
+    if (typeof window.renderClassDivisionSelector === 'function') {
+        window.renderClassDivisionSelector();
+    }
+    window.renderClassTimetable();
 };
 
 window.tickClassTimetable = function() {
@@ -3472,6 +3723,11 @@ window.renderClassTimetable = function() {
         dayPeriods = window[fallbackKey]?.[day] || [];
     }
 
+    const division = localStorage.getItem('machub_timetable_division') || 'A';
+    if (division === 'B') {
+        dayPeriods = [];
+    }
+
     if (dayPeriods.length === 0) {
         const studentName = info?.name || 'Student';
         const mailSubject = encodeURIComponent(`Timetable Update Request for ${dept} Sem ${semNum}`);
@@ -3497,7 +3753,7 @@ window.renderClassTimetable = function() {
     const statusLabel = scheduleState.status === 'weekend' ? 'WEEKEND'
         : scheduleState.status === 'lunch_break' ? 'LUNCH BREAK'
         : scheduleState.status === 'before_school' ? 'MORNING'
-        : scheduleState.status === 'after_school' ? 'SCHOOL OVER'
+        : scheduleState.status === 'after_school' ? 'COLLEGE OVER'
         : 'LIVE CLASS';
 
     // ── 1. Live Status Island ────────────────────────────────────────────
@@ -3544,43 +3800,22 @@ window.renderClassTimetable = function() {
         </div>
     `;
 
-    // ── 2. Today / Next Day Toggle ───────────────────────────────────────
+    // ── 2. Today / Next Day & Division Toggle ───────────────────────────────────────
     const todayToggleLabel = `Today (${isWeekend ? 'Mon' : todayName.slice(0,3)})`;
     const nextToggleLabel = `Next (${nextSchoolDayName.slice(0,3)})`;
+    
     const toggleHtml = `
-        <div style="display:flex;padding:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:1rem;gap:4px;margin-bottom:14px;">
-            <button type="button" onclick="window.setTimetableDisplayMode('today')" id="tt-toggle-today" style="flex:1;padding:9px 4px;font-size:12px;font-weight:700;border-radius:12px;outline:none;border:none;cursor:pointer;transition:all 0.25s ease;${timetableDisplayMode === 'today' ? 'background:#ffffff;color:#1d1d1f;box-shadow:0 2px 8px rgba(0,0,0,0.15);' : 'background:transparent;color:#86868b;'}">${todayToggleLabel}</button>
-            <button type="button" onclick="window.setTimetableDisplayMode('next')" id="tt-toggle-next" style="flex:1;padding:9px 4px;font-size:12px;font-weight:700;border-radius:12px;outline:none;border:none;cursor:pointer;transition:all 0.25s ease;${timetableDisplayMode === 'next' ? 'background:#ffffff;color:#1d1d1f;box-shadow:0 2px 8px rgba(0,0,0,0.15);' : 'background:transparent;color:#86868b;'}">${nextToggleLabel}</button>
-        </div>
-    `;
-
-    // ── 3. Day Selector Dropdown (seat-dropdown style) ───────────────────
-    const weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
-    const isDayOpen = appState.openTimetableDayDropdown === true;
-    const daySelectorHtml = `
-        <div style="margin-bottom:16px;">
-            <div class="seat-dropdown ${isDayOpen ? 'is-open' : ''}">
-                <button type="button" onclick="window.toggleTimetableDayDropdown()" class="seat-dropdown__trigger">
-                    <div class="seat-dropdown__meta">
-                        <span class="seat-dropdown__label">Viewing Day</span>
-                        <span class="seat-dropdown__value">📅 ${day}</span>
-                    </div>
-                    <span class="seat-dropdown__icon">⌄</span>
-                </button>
-                <div class="seat-dropdown__menu">
-                    ${weekdays.map(wd => {
-                        const isToday = wd === (isWeekend ? 'Monday' : todayName);
-                        const isTomorrow = wd === nextSchoolDayName && !isToday;
-                        return `
-                            <button type="button" onclick="window.selectClassDayFromDropdown('${wd}')" class="seat-dropdown__option ${wd === day ? 'is-active' : ''}">
-                                <span class="seat-dropdown__option-title">${wd}</span>
-                                ${isToday ? '<span class="seat-dropdown__option-meta">— Today</span>' : isTomorrow ? '<span class="seat-dropdown__option-meta">— Tomorrow</span>' : ''}
-                            </button>`;
-                    }).join('')}
-                </div>
+        <div style="display:flex; gap: 8px; margin-bottom: 14px;">
+            <!-- Day Selection Filter -->
+            <div style="display:flex;flex:1;padding:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:1rem;gap:4px;">
+                <button type="button" onclick="window.setTimetableDisplayMode('today')" id="tt-toggle-today" style="flex:1;padding:9px 4px;font-size:12px;font-weight:700;border-radius:12px;outline:none;border:none;cursor:pointer;transition:all 0.25s ease;${timetableDisplayMode === 'today' ? 'background:#ffffff;color:#1d1d1f;box-shadow:0 2px 8px rgba(0,0,0,0.15);' : 'background:transparent;color:#86868b;'}">${todayToggleLabel}</button>
+                <button type="button" onclick="window.setTimetableDisplayMode('next')" id="tt-toggle-next" style="flex:1;padding:9px 4px;font-size:12px;font-weight:700;border-radius:12px;outline:none;border:none;cursor:pointer;transition:all 0.25s ease;${timetableDisplayMode === 'next' ? 'background:#ffffff;color:#1d1d1f;box-shadow:0 2px 8px rgba(0,0,0,0.15);' : 'background:transparent;color:#86868b;'}">${nextToggleLabel}</button>
             </div>
         </div>
     `;
+
+    // ── 3. Day Selector Dropdown (Removed) ───────────────────
+    const daySelectorHtml = '';
 
     // ── 4. Sync Banner ───────────────────────────────────────────────────
     const syncAlertHtml = actualSubjects.length === 0 ? `
@@ -3926,36 +4161,28 @@ window.renderClassAttendance = function() {
     if (!container) return;
 
     const info = getStudentInfo();
-    const adminNo = info?.adminNo || localStorage.getItem('machub_student_id') || '';
+    const adminNo = (window.MacHubPortal && typeof window.MacHubPortal.getAdminNo === 'function' ? window.MacHubPortal.getAdminNo() : '') || info?.adminNo || localStorage.getItem('machub_student_id') || '';
     
     const maxSem = getStudentSemNumber();
     const selectedSem = appState.selectedAttendanceSem || String(getStudentSemNumber());
     const isSemOpen = appState.openInternalDropdown === 'attendanceSem';
 
     let semFilterHtml = `
-        <div class="grid grid-cols-1 mb-5 w-full">
-            <div class="seat-dropdown ${isSemOpen ? 'is-open' : ''}">
-                <button type="button" onclick="window.toggleInternalDropdown('attendanceSem')" class="seat-dropdown__trigger">
-                    <div class="seat-dropdown__meta">
-                        <span class="seat-dropdown__label">Semester Selection</span>
-                        <span class="seat-dropdown__value">${selectedSem === 'all' ? 'Latest Cached' : 'Semester ' + selectedSem}</span>
-                    </div>
-                    <span class="seat-dropdown__icon">⌄</span>
+        <div class="flex justify-center mb-5 overflow-x-auto max-w-full no-scrollbar">
+            <div class="bg-black/10 dark:bg-white/5 p-1 rounded-2xl flex gap-1 border border-white/5">
+                <button type="button" onclick="window.switchAttendanceSemester('all')" 
+                        class="px-3.5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${selectedSem === 'all' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">
+                    Latest
                 </button>
-                <div class="seat-dropdown__menu">
-                    <button type="button" onclick="window.switchAttendanceSemester('all')" class="seat-dropdown__option ${selectedSem === 'all' ? 'is-active' : ''}">
-                        <span class="seat-dropdown__option-title">Latest Cached</span>
-                    </button>
-                    ${Array.from({ length: maxSem }, (_, i) => {
-                        const sem = String(i + 1);
-                        const isActive = selectedSem === sem;
-                        return `
-                            <button type="button" onclick="window.switchAttendanceSemester('${sem}')" class="seat-dropdown__option ${isActive ? 'is-active' : ''}">
-                                <span class="seat-dropdown__option-title">Semester ${sem}</span>
-                            </button>
-                        `;
-                    }).join('')}
-                </div>
+                ${['1', '2', '3', '4', '5', '6'].map(sem => {
+                    const isActive = selectedSem === sem;
+                    return `
+                        <button type="button" onclick="window.switchAttendanceSemester('${sem}')" 
+                                class="px-3.5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${isActive ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">
+                            Sem ${sem}
+                        </button>
+                    `;
+                }).join('')}
             </div>
         </div>
     `;
@@ -3979,13 +4206,27 @@ window.renderClassAttendance = function() {
             try {
                 const parsed = JSON.parse(cached);
                 const dataObj = parsed?.data?.payload || parsed?.payload || parsed?.data || parsed;
-                // Support both possible data structures
-                const rows =
-                    dataObj?.subjectWise?.sections?.[0]?.rows ||
-                    dataObj?.sections?.[0]?.rows ||
-                    dataObj?.sections?.[0]?.data ||
-                    dataObj?.subjects ||
-                    [];
+                // Support all possible data structures
+                let rows = [];
+                if (Array.isArray(dataObj)) {
+                    rows = dataObj;
+                } else {
+                    rows =
+                        dataObj?.subjectWise?.sections?.[0]?.rows ||
+                        dataObj?.sections?.[0]?.rows ||
+                        dataObj?.sections?.[0]?.data ||
+                        dataObj?.subjects ||
+                        dataObj?.rows ||
+                        parsed?.data?.payload?.sections?.[0]?.rows ||
+                        parsed?.data?.sections?.[0]?.rows ||
+                        parsed?.payload?.sections?.[0]?.rows ||
+                        parsed?.sections?.[0]?.rows ||
+                        parsed?.data?.payload?.rows ||
+                        parsed?.data?.rows ||
+                        parsed?.payload?.rows ||
+                        parsed?.rows ||
+                        [];
+                }
                 rows.forEach(item => {
                     if (item.subjectName || item.subject) {
                         subjects.push({
@@ -4406,8 +4647,8 @@ window.autoFetchInternals = async function (semester, force = false) {
                 window.MacHubPortal.fetchSection('InternalMark', force, semester),
                 window.MacHubPortal.fetchSection('Assessment', force, semester)
             ]);
-            console.log('[College Results] InternalMark fetch:', internalResult?.status, internalResult?.value);
-            console.log('[College Results] Assessment fetch:', assessResult?.status, assessResult?.value);
+            console.log('[College Result] InternalMark fetch:', internalResult?.status, internalResult?.value);
+            console.log('[College Result] Assessment fetch:', assessResult?.status, assessResult?.value);
             appState.internalFetchStatus[semester] = 'success';
         } else {
             throw new Error('Portal not initialized');
@@ -4429,10 +4670,10 @@ window.syncExamResults = async function () {
         <div class="flex justify-center mb-6">
             <div class="bg-black/10 dark:bg-white/5 p-1 rounded-2xl flex gap-1 border border-white/5">
                 <button onclick="window.switchResultsSubTab('exam')" class="px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.resultsSubTab === 'exam' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">
-                    🏆 University Results
+                    🏆 MGU Result
                 </button>
                 <button onclick="window.switchResultsSubTab('internal')" class="px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.resultsSubTab === 'internal' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">
-                    🏫 College Results
+                    🏫 College Result
                 </button>
             </div>
         </div>
@@ -4446,7 +4687,7 @@ window.syncExamResults = async function () {
     try {
         if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
             const activeSem = appState.selectedInternalSem || String(getStudentSemNumber());
-            // Sync all results: University results AND College results (InternalMark & Assessment)
+            // Sync all results: MGU Result AND College Result (InternalMark & Assessment)
             await Promise.all([
                 window.MacHubPortal.fetchSection('ExamResult', true),
                 window.MacHubPortal.fetchSection('InternalMark', true, activeSem),
@@ -4481,26 +4722,17 @@ window.switchResultsSubTab = function (tab) {
 };
 
 window.openMguResultTab = function() {
-    window.switchView('view-seats');
-    if (typeof window.switchExamTab === 'function') {
-        window.switchExamTab('results');
-    }
-    if (typeof window.switchResultsSubTab === 'function') {
-        window.switchResultsSubTab('exam');
-    }
+    appState.resultsSubTab = 'exam';
+    window.switchView('view-results');
     if (typeof window.initMguPage === 'function') {
         window.initMguPage();
     }
 };
 
 window.openCollegeResultTab = function() {
-    window.switchView('view-seats');
-    if (typeof window.switchExamTab === 'function') {
-        window.switchExamTab('results');
-    }
-    if (typeof window.switchResultsSubTab === 'function') {
-        window.switchResultsSubTab('internal');
-    }
+    appState.resultsSubTab = 'internal';
+    window.switchView('view-results');
+    if (typeof window.renderExamResults === 'function') window.renderExamResults();
 };
 
 window.renderExamResults = function () {
@@ -4531,10 +4763,10 @@ window.renderExamResults = function () {
         <div class="flex justify-center mb-6">
             <div class="bg-black/10 dark:bg-white/5 p-1 rounded-2xl flex gap-1 border border-white/5">
                 <button onclick="window.switchResultsSubTab('exam')" class="px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.resultsSubTab === 'exam' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">
-                    University Results
+                    MGU Result
                 </button>
                 <button onclick="window.switchResultsSubTab('internal')" class="px-5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${appState.resultsSubTab === 'internal' ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">
-                    College Results
+                    College Result
                 </button>
             </div>
         </div>
@@ -4600,7 +4832,7 @@ window.renderExamResults = function () {
         }
 
     } else {
-        // College Results / Internal Marks subtab
+        // College Result / Internal Marks subtab
         const activeSem = appState.selectedInternalSem || String(getStudentSemNumber());
         const internalRaw = getPortalCache('InternalMark', adminNo, activeSem);
         const assessRaw = getPortalCache('Assessment', adminNo, activeSem);
@@ -4693,33 +4925,27 @@ window.renderExamResults = function () {
         const isTypeOpen = appState.openInternalDropdown === 'markType';
 
         let filterHtml = `
-            <div class="grid grid-cols-2 gap-3 mb-5 w-full">
-                <!-- Semester Selector -->
-                <div class="seat-dropdown ${isSemOpen ? 'is-open' : ''}">
-                    <button type="button" onclick="window.toggleInternalDropdown('semester')" class="seat-dropdown__trigger">
-                        <div class="seat-dropdown__meta">
-                            <span class="seat-dropdown__label">Semester</span>
-                            <span class="seat-dropdown__value">Sem ${activeSem}</span>
-                        </div>
-                        <span class="seat-dropdown__icon">⌄</span>
-                    </button>
-                    <div class="seat-dropdown__menu">
-                        ${semesters.map(sem => {
-                            const isActive = activeSem === sem;
-                            return `
-                                <button type="button" onclick="window.switchInternalSemester('${sem}')" class="seat-dropdown__option ${isActive ? 'is-active' : ''}">
-                                    <span class="seat-dropdown__option-title">Sem ${sem}</span>
-                                    <span class="seat-dropdown__option-meta">View Semester ${sem} Marks</span>
-                                </button>
-                            `;
-                        }).join('')}
-                    </div>
+            <!-- Horizontal Semester Filter Pills -->
+            <div class="flex justify-center mb-4 overflow-x-auto max-w-full no-scrollbar">
+                <div class="bg-black/10 dark:bg-white/5 p-1 rounded-2xl flex gap-1 border border-white/5">
+                    ${['1', '2', '3', '4', '5', '6'].map(sem => {
+                        const isActive = activeSem === sem;
+                        return `
+                            <button type="button" onclick="window.switchInternalSemester('${sem}')" 
+                                    class="px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${isActive ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">
+                                Sem ${sem}
+                            </button>
+                        `;
+                    }).join('')}
                 </div>
-                <!-- Type Selector -->
+            </div>
+            
+            <!-- Type Selector Dropdown -->
+            <div class="mb-5 w-full">
                 <div class="seat-dropdown ${isTypeOpen ? 'is-open' : ''}">
                     <button type="button" onclick="window.toggleInternalDropdown('markType')" class="seat-dropdown__trigger">
                         <div class="seat-dropdown__meta">
-                            <span class="seat-dropdown__label">Mark Type</span>
+                            <span class="seat-dropdown__label">Filter Mark Type</span>
                             <span class="seat-dropdown__value">${typeLabel}</span>
                         </div>
                         <span class="seat-dropdown__icon">⌄</span>
@@ -4792,12 +5018,12 @@ window.renderExamResults = function () {
         // The rows contain the final university internal mark data
         const internalData = extractSections(internalRaw, 'InternalMark');
 
-        console.log('[College Results] Sem', activeSem, '\u2014 assessData:', assessData.length, 'internalData:', internalData.length);
+        console.log('[College Result] Sem', activeSem, '\u2014 assessData:', assessData.length, 'internalData:', internalData.length);
         if (assessData.length === 0 && internalRaw) {
-            try { console.log('[College Results] Raw assessRaw keys:', Object.keys(JSON.parse(assessRaw)?.data || {}).join(',')); } catch(e){}
+            try { console.log('[College Result] Raw assessRaw keys:', Object.keys(JSON.parse(assessRaw)?.data || {}).join(',')); } catch(e){}
         }
         if (internalData.length === 0 && internalRaw) {
-            try { console.log('[College Results] Raw internalRaw keys:', Object.keys(JSON.parse(internalRaw)?.data || {}).join(',')); } catch(e){}
+            try { console.log('[College Result] Raw internalRaw keys:', Object.keys(JSON.parse(internalRaw)?.data || {}).join(',')); } catch(e){}
         }
 
         // Build unified set of all subject names from both data sources
@@ -5077,7 +5303,7 @@ window.renderExamResults = function () {
                 </div>`;
         }
 
-        container.innerHTML = window.getFreshnessIndicatorHtml('InternalMark', activeSem) + headerHtml + filterHtml + contentHtml;
+        container.innerHTML = headerHtml + filterHtml + contentHtml;
     }
 }
 
@@ -5662,6 +5888,9 @@ window.switchActivityFilter = function(filter) {
 };
 
 window.initExamHubApp = () => {
+    // 1. Capture persisted view FIRST before initializing subtabs
+    const savedCurrentView = localStorage.getItem('machub_current_view');
+
     autoUpdateSemesterFromCache();
     checkOnboarding();
     
@@ -5678,23 +5907,33 @@ window.initExamHubApp = () => {
     renderClassSubjects();
     renderClassAttendance();
 
-    const storedClassSubTab = localStorage.getItem('machub_class_sub_tab');
-    if (storedClassSubTab && typeof window.switchClassTab === 'function') {
-        window.switchClassTab(storedClassSubTab);
-    } else if (typeof window.switchClassTab === 'function') {
-        window.switchClassTab('timetable');
+    const isRoutedSchedule = window.location.pathname.includes('/schedule/');
+    if (!isRoutedSchedule) {
+        const storedClassSubTab = localStorage.getItem('machub_class_sub_tab');
+        if (storedClassSubTab && typeof window.switchClassTab === 'function') {
+            window.switchClassTab(storedClassSubTab);
+        } else if (typeof window.switchClassTab === 'function') {
+            window.switchClassTab('timetable');
+        }
     }
 
-    // Restore persisted view or default to view-home
-    const persistedView = localStorage.getItem('machub_current_view');
+    const storedExamSubTab = localStorage.getItem('machub_exam_sub_view');
+    if (storedExamSubTab && typeof window.switchExamTab === 'function') {
+        const targetTab = storedExamSubTab === 'view-timetable' ? 'timetable' : (storedExamSubTab === 'view-results' ? 'results' : 'seats');
+        window.switchExamTab(targetTab);
+    } else if (typeof window.switchExamTab === 'function') {
+        window.switchExamTab('timetable');
+    }
+
+    // Default view is ALWAYS view-home first, or restore last visited view if valid
     let targetView = 'view-home';
-    if (persistedView) {
-        if (['view-timetable', 'view-seats', 'view-results'].includes(persistedView)) {
-            targetView = persistedView;
+    if (savedCurrentView && savedCurrentView !== 'null' && savedCurrentView !== 'undefined') {
+        if (['view-timetable', 'view-seats', 'view-results'].includes(savedCurrentView)) {
+            targetView = 'view-seats';
         } else {
-            const panel = document.getElementById(persistedView);
+            const panel = document.getElementById(savedCurrentView);
             if (panel && panel.classList.contains('view-panel')) {
-                targetView = persistedView;
+                targetView = savedCurrentView;
             }
         }
     }
@@ -6013,4 +6252,6 @@ setInterval(() => {
         }
     });
 }, 60000);
+
+
 
