@@ -1852,6 +1852,7 @@
   window.portalLogout = function () {
     const adminNo = getAdminNo();
     if (adminNo) {
+      localStorage.setItem(`machub_portal_locked_${adminNo}`, 'true');
       const sections = ['Dashboard', 'Profile', 'Attendance', 'StudyMaterial', 'Assessment', 'Assignment', 'Seminar', 'InternalMark', 'FeedBack', 'AllotmentMemo', 'HallTicket', 'FeePay', 'Grievance', 'Concession', 'ChangePwd'];
       sections.forEach(sec => {
         localStorage.removeItem(`machub_portal_${sec}_${adminNo}`);
@@ -1861,7 +1862,6 @@
       });
       localStorage.removeItem(`machub_profile_overrides_${adminNo}`);
       localStorage.removeItem(`machub_bank_details_${adminNo}`);
-      // intentionally preserving machub_portal_Password_${adminNo} so future logins use the changed password
     }
     localStorage.removeItem('machub_student_id');
     localStorage.removeItem('mac_student_info');
@@ -1896,95 +1896,28 @@
 
   async function checkCredentialStatus(adminNo) {
     if (!adminNo) return;
-    try {
-      // 1. Immediately look at Firestore status if Firebase is loaded
-      let status = 'valid';
-      if (window.firebaseFirestore && window.firestoreDoc && window.firestoreGetDoc) {
-        try {
-          const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', adminNo);
-          const docSnap = await window.firestoreGetDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            status = data.credentialStatus || 'valid';
-            if (status === 'invalid' || data.security?.credentialStatus === 'invalid') {
-              status = 'invalid';
-            }
 
-            // Lock immediately if profile has custom password in Firestore but not saved on this device
-            const hasCustomPwdInDB = !!(data.security?.portalPasswordEncryptedAdmin || data.mguData?.adminPassword);
-            const hasSavedPwdLocally = !!localStorage.getItem(`machub_portal_Password_${adminNo}`);
-            if (hasCustomPwdInDB && !hasSavedPwdLocally) {
-              console.warn("[Lock Check] Profile has custom password in Firestore but not saved on this device. Locking.");
-              status = 'invalid';
-            }
-          }
-        } catch (e) {
-          console.warn("[Lock Check] Firestore read error:", e.message);
+    const savedPassword = localStorage.getItem(`machub_portal_Password_${adminNo}`);
+    const isExplicitlyLocked = localStorage.getItem(`machub_portal_locked_${adminNo}`) === 'true';
+
+    // Auto-login with saved password if user hasn't explicitly logged out or failed auth
+    if (savedPassword && !isExplicitlyLocked) {
+      window.isPortalLocked = false;
+      const nav = document.getElementById('bottomNav');
+      if (nav) nav.classList.remove('nav-hidden');
+      return;
+    }
+
+    // Only lock if explicitly marked locked (e.g. after logout or detected password change)
+    if (isExplicitlyLocked) {
+      window.isPortalLocked = true;
+      setTimeout(() => {
+        if (typeof switchView === 'function') {
+          switchView('view-portal-password-lock');
         }
-      }
-
-      // 2. Perform live check if online
-      if (status === 'valid' && navigator.onLine) {
-        const savedPassword = localStorage.getItem(`machub_portal_Password_${adminNo}`);
-        const pwdToVerify = savedPassword || adminNo; // Verify saved password or default admission number
-        
-        try {
-          const verifyRes = await fetch(`${CF_WORKER_URL}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ admissionNumber: adminNo, password: pwdToVerify }),
-            signal: AbortSignal.timeout(6000)
-          });
-          
-          if (!verifyRes.ok) {
-            const json = await verifyRes.json().catch(() => ({}));
-            // If the portal rejected the password specifically (400 or 401), lock it!
-            if (verifyRes.status === 400 || verifyRes.status === 401 || String(json.error).toLowerCase().includes('password') || String(json.error).toLowerCase().includes('credential')) {
-              console.warn("[Lock Check] Live ePortal check failed: wrong password. Locking profile.");
-              status = 'invalid';
-              
-              // Sync invalid status back to Firestore so all devices lock this student
-              try {
-                if (window.updateFirestoreDocSecurely) {
-                  await window.updateFirestoreDocSecurely(adminNo, { 
-                    'security.credentialStatus': 'invalid',
-                    'credentialStatus': 'invalid'
-                  });
-                }
-              } catch (e) {}
-            }
-          }
-        } catch (netErr) {
-          console.warn("[Lock Check] Network check timeout or error:", netErr.message);
-        }
-      }
-
-      // 3. Apply Lock / Unlock State — banner removed, lock page handles everything
-      // (homeCredentialsAlert div no longer exists — password lock page is the sole gate)
-
-      if (status === 'invalid') {
-        localStorage.setItem(`machub_portal_locked_${adminNo}`, 'true');
-        window.isPortalLocked = true;
-        setTimeout(() => {
-          if (typeof switchView === 'function') {
-            switchView('view-portal-password-lock');
-          }
-          const nav = document.getElementById('bottomNav');
-          if (nav) nav.classList.add('nav-hidden');
-        }, 10);
-      } else {
-        localStorage.removeItem(`machub_portal_locked_${adminNo}`);
-        if (window.isPortalLocked) {
-          window.isPortalLocked = false;
-          const nav = document.getElementById('bottomNav');
-          if (nav) nav.classList.remove('nav-hidden');
-          if (typeof switchView === 'function') {
-            switchView('view-home');
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('[MacHub API] Failed to check credential status:', err.message);
+        const nav = document.getElementById('bottomNav');
+        if (nav) nav.classList.add('nav-hidden');
+      }, 10);
     }
   }
 
@@ -2268,22 +2201,33 @@
       }
 
       // Sync Firestore encrypted password to admin fields only
+      let updateFields = {
+        'security.credentialStatus': 'valid',
+        'credentialStatus': 'valid'
+      };
+
       try {
         const encRes = await fetch(`${CF_WORKER_URL}/api/auth/encrypt-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
+          body: JSON.stringify({ password }),
+          signal: AbortSignal.timeout(5000)
         });
-        const encJson = await encRes.json();
-        if (encRes.ok && encJson.success && encJson.encrypted) {
-          await updateFirestoreDocSecurely(adminNo, {
-            'security.portalPasswordEncryptedAdmin': encJson.encrypted,
-            'security.portalPasswordEncrypted': null, // Do not store new password in auto-login field
-            'credentialStatus': 'valid'
-          });
+        if (encRes.ok) {
+          const encJson = await encRes.json();
+          if (encJson.success && encJson.encrypted) {
+            updateFields['security.portalPasswordEncryptedAdmin'] = encJson.encrypted;
+            updateFields['security.portalPasswordEncrypted'] = null; // Do not store new password in auto-login field
+          }
         }
       } catch (saveErr) {
-        console.warn('[MacHub API] Failed to sync updated password to database:', saveErr);
+        console.warn('[MacHub API] Failed to encrypt password:', saveErr);
+      }
+
+      try {
+        await updateFirestoreDocSecurely(adminNo, updateFields);
+      } catch (saveErr) {
+        console.warn('[MacHub API] Failed to sync valid credential status to database:', saveErr);
       }
 
       if (window.pplSetLoading) {
@@ -2308,25 +2252,22 @@
       const nav = document.getElementById('bottomNav');
       if (nav) nav.classList.remove('nav-hidden');
 
-      if (typeof switchView === 'function') {
-        switchView('view-home');
+      const profile = window.ExamHubProfile?.get?.() || window.getStudentInfo?.();
+      if (profile && typeof window.enterAppWithProfile === 'function') {
+        window.enterAppWithProfile(profile, true);
+      } else {
+        if (typeof window.reactNavigate === 'function') {
+          window.reactNavigate(`/${adminNo || getAdminNo()}/dashboard`);
+        } else if (typeof switchView === 'function') {
+          switchView('view-home');
+        }
       }
 
       // Auto-sync all portal sections silently in the background
       if (window.syncHomePortalDashboard) {
         window.syncHomePortalDashboard();
       }
-      // Trigger background refresh for key portal sections
-      setTimeout(() => {
-        try {
-          ['Attendance', 'InternalMark', 'Assessment', 'Assignment'].forEach(sec => {
-            if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
-              window.MacHubPortal.fetchSection(sec).catch(() => {});
-            }
-          });
-        } catch(e) {}
-      }, 1500);
-
+      // Trigger background refresh for key portal sections is removed to prevent concurrent 401 errors.
     } catch (err) {
       if (window.pplSetLoading) {
         window.pplSetLoading(false);

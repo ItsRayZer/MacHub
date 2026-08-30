@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@700;800&family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
         /* Hide all scrollbars globally */
         * {
@@ -8,7 +9,24 @@
             display: none !important;
         }
 
+        /* Isolated Standalone Public Showcase Page Mode */
+        body.public-showcase-mode #bottomNav,
+        body.public-showcase-mode #appHeader,
+        body.public-showcase-mode #macAiFloatingBtn,
+        body.public-showcase-mode #arcToolPopover,
+        body.public-showcase-mode #secondaryArcToolPopover,
+        body.public-showcase-mode #undoRedoEditBar,
+        body.public-showcase-mode .portal-drawer {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
         :root {
+            --canvas-paper: #FAFAF8;
+            --canvas-paper-line: rgba(23, 22, 19, 0.08);
+            --canvas-ink: #171613;
+            --canvas-accent: #3D4A5C;
             --glass: rgba(255, 255, 255, 0.72);
             --glass-border: rgba(255, 255, 255, 0.42);
             --mac-blue: #0071e3;
@@ -58,19 +76,33 @@
             z-index: -1;
         }
         .view-panel {
-            display: none;
-        }
-
-        .view-panel:not(.is-active) {
             display: none !important;
         }
 
-        .view-panel.is-active {
-            display: block;
+        /* AIRTIGHT VIEW PANEL ISOLATION: All inactive views are completely removed from rendering */
+        .view-panel:not(.is-active),
+        div[id^="view-"]:not(.is-active) {
+            display: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            max-height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
 
-        .view-panel.is-active.flex {
-            display: flex;
+        .view-panel.is-active,
+        div[id^="view-"].is-active {
+            display: flex !important;
+            flex-direction: column !important;
+            height: auto !important;
+            min-height: 100vh !important;
+            max-height: none !important;
+            overflow: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
         }
 
         body:not(.app-ready) .view-panel {
@@ -219,6 +251,37 @@
         .nav-pill[c-current="2"] { --nav-translate: calc(var(--nav-step) * 1); }
         .nav-pill[c-current="3"] { --nav-translate: calc(var(--nav-step) * 2); }
         .nav-pill[c-current="4"] { --nav-translate: calc(var(--nav-step) * 3); }
+
+        @keyframes springUp {
+            from { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
+            to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+        }
+
+        @keyframes arcIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        @keyframes secondaryArcIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .edit-nav-item {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, filter 0.3s ease;
+        }
+
+        .edit-nav-item.active-centered {
+            transform: scale(1.15);
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 10px rgba(0, 245, 212, 0.6));
+            color: #00F5D4 !important;
+        }
+
+        .edit-nav-item.inactive-flank {
+            opacity: 0.45;
+            transform: scale(0.9);
+        }
 
         .nav-pill[c-previous="1"][c-current="2"] .nav-indicator,
         .nav-pill[c-previous="2"][c-current="3"] .nav-indicator,
@@ -3082,3 +3145,306 @@
 
 
 
+
+/* Fix 300ms click delay and make buttons fast */
+*, html, body, button, a, input, select, textarea { touch-action: manipulation !important; }
+
+
+/* Liquid glass animation for exam toggles */
+.exam-subnav { position: relative; z-index: 1; }
+.exam-subnav-item { position: relative; z-index: 1; }
+.exam-subnav-indicator { position: absolute; top: 0.35rem; bottom: 0.35rem; left: 0.35rem; border-radius: 999px; background: rgba(255, 255, 255, 0.85); box-shadow: 0 4px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8); z-index: 0; pointer-events: none; }
+.exam-subnav[c-previous] .exam-subnav-indicator { transition: transform 0.45s cubic-bezier(0.68, -0.6, 0.32, 1.6); }
+.dark .exam-subnav-indicator { background: rgba(255, 255, 255, 0.22); box-shadow: 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15); }
+.subnav-2col { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+.subnav-2col .exam-subnav-indicator { width: calc(50% - 0.525rem) !important; }
+.subnav-2col[c-current="1"] .exam-subnav-indicator { transform: translateX(0) !important; }
+.subnav-2col[c-current="2"] .exam-subnav-indicator { transform: translateX(calc(100% + 0.35rem)) !important; }
+
+/* Canvas portfolio item styling */
+.canvas-item-block { transition: all 0.25s ease; position: relative; }
+.is-edit-mode .canvas-item-block { outline: 1.5px dashed rgba(0, 245, 212, 0.4); outline-offset: 3px; cursor: grab; }
+.is-edit-mode .canvas-item-block:active { cursor: grabbing; }
+.is-edit-mode .canvas-item-block:hover { outline-color: rgba(0, 245, 212, 0.9); }
+.canvas-item-block.is-dragging { opacity: 0.45; transform: scale(0.98); }
+/* ── Apple Liquid Glass Edit Mode Plus Button ── */
+.nav-ai-pill.is-plus-btn {
+    background: rgba(22, 23, 29, 0.72) !important;
+    backdrop-filter: blur(28px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    box-shadow: 0 16px 38px -8px rgba(0, 0, 0, 0.65), inset 0 1px 0.5px rgba(255, 255, 255, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+    border-radius: 9999px !important;
+}
+.nav-ai-pill.is-plus-btn:hover {
+    background: rgba(28, 30, 38, 0.82) !important;
+    border-color: rgba(255, 255, 255, 0.32) !important;
+    box-shadow: 0 20px 42px -6px rgba(0, 0, 0, 0.75), inset 0 1px 0.5px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Profile Edit Mode Auto-Hide on Scroll (Applied strictly when Profile View is active) */
+#macAiFloatingBtn.is-plus-btn, #canvasAddMenu {
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease !important;
+}
+
+#view-profile:not(.is-active) ~ #canvasAddMenu {
+    display: none !important;
+}
+
+body.is-scrolling-down #view-profile.is-active #macAiFloatingBtn.is-plus-btn,
+body.is-scrolling-down #view-profile.is-active ~ #macAiFloatingBtn.is-plus-btn,
+body.is-scrolling-down #view-profile.is-active #canvasAddMenu,
+body.is-scrolling-down #view-profile.is-active ~ #canvasAddMenu {
+    transform: translateY(90px) scale(0.7) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Instagram Story Ring Accent */
+.gradient-story-ring {
+    position: relative;
+    padding: 3.5px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #f09433, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888);
+    box-shadow: 0 4px 18px rgba(220, 39, 67, 0.35);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.gradient-story-ring:hover {
+    transform: scale(1.04);
+}
+
+/* Nothing OS Monospace Stat Numbers (Reserved specifically for attendance % and exam marks) */
+.stat-mono-number {
+    font-family: 'Space Grotesk', 'Consolas', 'Monaco', 'Courier New', monospace !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+    color: #00F5D4 !important;
+    text-shadow: 0 0 14px rgba(0, 245, 212, 0.4);
+}
+
+/* Animated SVG Attendance Progress Ring */
+.att-progress-ring-circle {
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.6s ease;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+/* Inline Session Suggestion Cards */
+.suggestion-card-dashed {
+    border: 1.5px dashed rgba(255, 255, 255, 0.22) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    backdrop-filter: blur(12px) !important;
+    transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.suggestion-card-dashed:hover {
+    border-color: rgba(0, 245, 212, 0.6) !important;
+    background: rgba(0, 245, 212, 0.05) !important;
+}
+
+/* ── Geometric 180° Radial Arc Floating Container (No Blur) ── */
+.arc-tool-popover {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    pointer-events: none;
+}
+.arc-tool-popover.is-open {
+    display: block;
+}
+.arc-item-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+.arc-item-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem 0.5rem;
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f5f5f7;
+    font-size: 0.7rem;
+    font-weight: 700;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.arc-item-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(0, 245, 212, 0.4);
+    transform: translateY(-2px);
+}
+.arc-item-btn:active {
+    transform: scale(0.92);
+}
+.skill-chip-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    background: rgba(0, 245, 212, 0.1);
+    border: 1px solid rgba(0, 245, 212, 0.3);
+    color: #00F5D4;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+/* ── Direct Canvas Element Selection & Handles ── */
+.canvas-element-block {
+    position: relative;
+    transition: outline 0.2s ease, box-shadow 0.2s ease;
+}
+.canvas-element-selected {
+    outline: 2px solid var(--machub-accent, #00F5D4) !important;
+    outline-offset: 4px;
+    border-radius: 1.25rem;
+    box-shadow: 0 0 20px rgba(0, 245, 212, 0.25) !important;
+}
+.element-handle {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(18, 18, 22, 0.95);
+    border: 1.5px solid var(--machub-accent, #00F5D4);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 40;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.element-handle:hover {
+    transform: scale(1.15);
+}
+.element-handle-drag {
+    top: -10px;
+    left: -10px;
+    cursor: grab;
+}
+.element-handle-resize {
+    bottom: -10px;
+    right: -10px;
+}
+.element-handle-delete {
+    top: -10px;
+    right: -10px;
+    background: rgba(239, 68, 68, 0.9);
+    border-color: #ef4444;
+}
+
+/* ── Curated Design System Font Pairings ── */
+.font-pair-apple { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important; }
+.font-pair-nothing { font-family: 'Space Grotesk', monospace !important; }
+.font-pair-outfit { font-family: 'Outfit', sans-serif !important; }
+.font-pair-serif { font-family: 'Playfair Display', Georgia, serif !important; }
+.font-pair-inter { font-family: 'Inter', sans-serif !important; }
+
+/* ── Curated Background Tones ── */
+.bg-tone-midnight { background-color: #0d0e12 !important; }
+.bg-tone-pitchblack { background-color: #000000 !important; }
+.bg-tone-deepslate { background-color: #111827 !important; }
+.bg-tone-glassfrost { background-color: rgba(255, 255, 255, 0.04) !important; }
+
+/* ── Color Swatch Pills ── */
+.color-swatch-pill {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.color-swatch-pill:hover,
+.color-swatch-pill.is-selected {
+    transform: scale(1.18);
+    border-color: #ffffff;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+/* ── Canvas Dark Mode & Dot-Grid ── */
+.canvas-dot-grid {
+    background-color: #0D0E12 !important;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px) !important;
+    background-size: 28px 28px !important;
+    color: #F5F5F7 !important;
+}
+
+.canvas-card-dark {
+    background: #181920 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+.canvas-card-dark-selected {
+    background: #1E202A !important;
+    border: 1px solid rgba(0, 245, 212, 0.35) !important;
+    box-shadow: 0 18px 40px -12px rgba(0, 245, 212, 0.25), 0 2px 10px rgba(0, 245, 212, 0.1) !important;
+}
+
+@keyframes arcIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.4) translate(0, 0);
+    }
+}
+
+.canvas-zoom-pill {
+    position: absolute;
+    bottom: 102px;
+    left: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.6);
+    background: #181920;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 5px 10px;
+    border-radius: 100px;
+    box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.5);
+    z-index: 30;
+    pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/* RESPONSIVE LAYOUT ADAPTATION (Phone Focused + Full-Fill Desktop)   */
+/* ═══════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+    /* Expand view panels on PC / Laptop screens */
+    .view-panel {
+        max-width: 1120px !important;
+        width: 100% !important;
+        padding-left: 24px !important;
+        padding-right: 24px !important;
+    }
+
+    #exploreViewRoot > div {
+        max-width: 1120px !important;
+        width: 100% !important;
+        padding: 24px 32px 100px !important;
+    }
+
+    /* Transform horizontal scroll rows into multi-column grid layouts on desktop */
+    .responsive-card-row {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+        gap: 18px !important;
+        overflow-x: visible !important;
+    }
+
+    .responsive-card-row > div {
+        width: 100% !important;
+    }
+
+    /* Floating bottom nav bar centers cleanly on large displays */
+    #bottomNav {
+        max-width: 480px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
+}

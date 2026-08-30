@@ -962,6 +962,21 @@ Student Profile:
             event.stopPropagation();
         }
 
+        // Check if on Profile View AND in Edit Mode -> morph button into + creation menu toggle!
+        const profilePanel = document.getElementById('view-profile');
+        const isProfileActive = profilePanel && profilePanel.classList.contains('is-active');
+        const isEditMode = window.appState && window.appState.view === 'view-profile' && window.appState.profileMode === 'edit';
+
+        if (isProfileActive && isEditMode) {
+            if (typeof window.toggleEditToolsMenu === 'function') {
+                window.toggleEditToolsMenu();
+                return;
+            } else if (typeof window.toggleCanvasAddMenu === 'function') {
+                window.toggleCanvasAddMenu();
+                return;
+            }
+        }
+
         const bottomNav = document.getElementById('bottomNav');
         const inputContainer = document.getElementById('navAiInputContainer');
         const input = document.getElementById('navAiInput');
@@ -1157,22 +1172,28 @@ Student Profile:
         window.visualViewport.addEventListener('resize', handleViewportResize);
         window.visualViewport.addEventListener('scroll', handleViewportResize);
         
-        // Wrap window.openMacAI to trigger resize sync
-        const originalOpen = window.openMacAI;
-        window.openMacAI = function() {
-            if (typeof originalOpen === 'function') originalOpen();
-            setTimeout(handleViewportResize, 50);
-        };
+        // Wrap window.openMacAI to trigger resize sync safely
+        if (!window._macAiOpenWrapped) {
+            const originalOpen = window.openMacAI;
+            window.openMacAI = function() {
+                if (typeof originalOpen === 'function') originalOpen();
+                setTimeout(handleViewportResize, 50);
+            };
+            window._macAiOpenWrapped = true;
+        }
         
-        // Wrap window.closeMacAI to reset styles
-        const originalClose = window.closeMacAI;
-        window.closeMacAI = function() {
-            if (typeof originalClose === 'function') originalClose();
-            const viewAi = document.getElementById('view-ai');
-            if (viewAi) viewAi.style.bottom = '0px';
-            const bottomNav = document.getElementById('bottomNav');
-            if (bottomNav) bottomNav.style.bottom = '';
-        };
+        // Wrap window.closeMacAI to reset styles safely
+        if (!window._macAiCloseWrapped) {
+            const originalClose = window.closeMacAI;
+            window.closeMacAI = function() {
+                if (typeof originalClose === 'function') originalClose();
+                const viewAi = document.getElementById('view-ai');
+                if (viewAi) viewAi.style.bottom = '0px';
+                const bottomNav = document.getElementById('bottomNav');
+                if (bottomNav) bottomNav.style.bottom = '';
+            };
+            window._macAiCloseWrapped = true;
+        }
     }
 
 })();

@@ -10,6 +10,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MacHub">
+    
+    <!-- Dynamic Open Graph Meta Tags for WhatsApp/Instagram Link Preview -->
+    <meta property="og:type" content="profile" />
+    <meta id="og-title" property="og:title" content="MacHub Verified Student Profile" />
+    <meta id="og-desc" property="og:description" content="Mar Augusthinose College, Ramapuram" />
+    <meta property="og:site_name" content="MacHub Portal" />
+
     <link rel="stylesheet" href="styles/tailwind.css">
     <link rel="stylesheet" href="styles/base.css?v=2.0.5">
     <link rel="stylesheet" href="styles/components.css?v=2.0.5">
@@ -197,14 +204,12 @@
         <p id="liveClock" class="text-[var(--mac-blue)] text-[10px] font-black tracking-[0.2em] mt-3 uppercase">00:00:00 AM IST</p>
     </header>
 
-    <div id="view-seats" class="view-panel">
+    <div id="view-seats" class="view-panel max-w-md mx-auto p-6">
 
-        <!-- Top navigation header without search box -->
-        <div class="max-w-md mx-auto px-4 pt-4 pb-2 sticky top-0 z-50">
-            <div class="exam-subnav" aria-label="Exam menu">
-                <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item" data-top-target="class">Class</button>
-                <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item is-active" data-top-target="exam">Exam</button>
-            </div>
+        <div class="exam-subnav mb-4" aria-label="Exam menu" c-current="2" c-previous="2">
+            <div class="exam-subnav-indicator"></div>
+            <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item" data-top-target="class">Class</button>
+            <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item is-active" data-top-target="exam">Exam</button>
         </div>
 
         <!-- departmentFilters kept hidden as placeholder in background if needed -->
@@ -218,11 +223,12 @@
         </div>
 
         <!-- Seating Map Glass Container -->
-        <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: calc(100% - 2rem); max-width: 448px;">
+        <div class="glass-panel rounded-[2.5rem] p-4 min-h-[500px] mb-24 overflow-hidden relative mx-auto" style="width: 100%;">
             <!-- Inner Toggle -->
-            <div class="exam-subnav subnav-3col mb-4 mt-2" aria-label="Inner Exam Menu">
-                <button type="button" id="tab-timetable" onclick="switchExamTab('timetable')" class="exam-subnav-item" data-exam-target="view-timetable">Exam Timetable</button>
-                <button type="button" id="tab-seats" onclick="switchExamTab('seats')" class="exam-subnav-item is-active" data-exam-target="view-seats">View Seats</button>
+            <div class="exam-subnav subnav-3col mb-4 mt-2" aria-label="Inner Exam Menu" c-current="1" c-previous="1">
+                <div class="exam-subnav-indicator"></div>
+                <button type="button" id="tab-timetable" onclick="switchExamTab('timetable')" class="exam-subnav-item is-active" data-exam-target="view-timetable">Exam Timetable</button>
+                <button type="button" id="tab-seats" onclick="switchExamTab('seats')" class="exam-subnav-item" data-exam-target="view-seats">View Seats</button>
                 <button type="button" id="tab-results" onclick="switchExamTab('results')" class="exam-subnav-item" data-exam-target="view-results">Result</button>
             </div>
 
@@ -243,7 +249,7 @@
 
 
 
-            <div id="sub-view-seats">
+            <div id="sub-view-seats" class="hidden w-full">
                 <!-- Seating Day Selector -->
                 <div id="daySelector" class="seat-dropdown mb-4"></div>
                 <!-- Hall header: name left | dots center | arrows right -->
@@ -556,7 +562,8 @@
     </div>
 
     <div id="view-class" class="view-panel max-w-md mx-auto p-6">
-        <div class="exam-subnav mb-4" aria-label="Exam menu">
+        <div class="exam-subnav mb-4" aria-label="Exam menu" c-current="1" c-previous="1">
+            <div class="exam-subnav-indicator"></div>
             <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item is-active" data-top-target="class">Class</button>
             <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item" data-top-target="exam">Exam</button>
         </div>
@@ -591,7 +598,8 @@
     </div>
 
     <div id="view-exam-resources" class="view-panel max-w-md mx-auto p-6">
-        <div class="exam-subnav mb-4" aria-label="Exam menu">
+        <div class="exam-subnav mb-4" aria-label="Exam menu" c-current="1" c-previous="1">
+            <div class="exam-subnav-indicator"></div>
             <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item" data-top-target="class">Class</button>
             <button type="button" onclick="switchExamView('view-seats')" class="exam-subnav-item is-active" data-top-target="exam">Exam</button>
         </div>
@@ -630,52 +638,15 @@
     </div>
 
     <!-- MGU University Portal Hub View -->
-    <div id="view-resources" class="view-panel max-w-md mx-auto p-6 relative min-h-screen flex flex-col" style="padding-bottom: 90px;">
+    <div id="view-resources" class="view-panel max-w-md mx-auto p-6 relative min-h-screen" style="padding-bottom: 90px;">
         <div id="mgu-portal-container" class="w-full flex-1 flex flex-col">
             <!-- Dynamic MGU Sync Engine will inject content here -->
         </div>
     </div>
 
-    <!-- Community Chat View -->
-    <div id="view-chat" class="view-panel" style="padding:0;display:flex;flex-direction:column;height:100vh;max-height:100vh;overflow:hidden;">
-        <!-- Chat Header -->
-        <div class="chat-header">
-            <div class="chat-header-left">
-                <div class="chat-header-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-                </div>
-                <div>
-                    <div class="chat-header-title">Community Chat</div>
-                    <div class="chat-header-sub">
-                        <span class="chat-live-dot"></span>
-                        Live &middot; Messages clear after 24h
-                    </div>
-                </div>
-            </div>
-            <div style="font-size:10px;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;">MacHub</div>
-        </div>
-
-        <!-- Messages List -->
-        <div id="chat-msg-list" class="chat-msg-list" style="flex:1;overflow-y:auto;padding:16px 8px 8px;">
-            <!-- Messages injected by chat.js -->
-            <div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.2);">
-                <div style="font-size:40px;margin-bottom:12px;">💬</div>
-                <p style="font-size:13px;font-weight:700;">Connecting...</p>
-            </div>
-        </div>
-
-        <!-- Input Bar -->
-        <div class="chat-input-bar">
-            <div class="chat-input-row">
-                <div class="chat-input-wrap">
-                    <textarea id="chat-input" rows="1" placeholder="Message everyone..." maxlength="300"></textarea>
-                    <div id="chat-char-count">0/300</div>
-                </div>
-                <button id="chat-send-btn" class="chat-send-btn" onclick="window.sendChatMessage()" aria-label="Send message">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                </button>
-            </div>
-        </div>
+    <!-- Explore Tab View -->
+    <div id="view-explore" class="view-panel max-w-md mx-auto relative min-h-screen" style="padding:0; background:#121211;">
+        <div id="exploreViewRoot"></div>
     </div>
 
     <!-- Bottom Navigation (Floating Liquid Glass Pill) -->
@@ -719,18 +690,19 @@
                 </span>
                 <span class="nav-label">Schedule</span>
             </button>
-            <button onclick="switchView('view-chat'); if(window.initChatView) window.initChatView();" id="tab-view-chat" class="nav-item" c-option="3">
+            <button onclick="switchView('view-explore'); if(window.initExploreView) window.initExploreView();" id="tab-view-explore" class="nav-item" c-option="3">
                 <span class="nav-icon">
-                    <!-- Chat Outline -->
+                    <!-- Search Outline -->
                     <svg class="icon-outline" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                    <!-- Chat Filled -->
+                    <!-- Search Filled -->
                     <svg class="icon-filled" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
                     </svg>
                 </span>
-                <span class="nav-label">Chat</span>
+                <span class="nav-label">Explore</span>
             </button>
             <button onclick="switchView('view-profile')" id="tab-view-profile" class="nav-item" c-option="4">
                 <span class="nav-icon">
@@ -753,7 +725,7 @@
 
         <!-- Separate but same to same MacAI Circle Button -->
         <button onclick="handleMacAiBtnClick(event)" id="macAiFloatingBtn" class="nav-ai-pill" aria-label="Open MacAI" style="position: relative;">
-            <div class="ai-btn-icon-gemini flex items-center justify-center w-full h-full transition-all duration-300">
+            <div id="aiBtnNormalIcon" class="ai-btn-icon-gemini flex items-center justify-center w-full h-full transition-all duration-300">
                 <div id="geminianimation">
                     <div></div>
                 </div>
@@ -763,6 +735,10 @@
                         <path d="M19 3L20.06 5.28L22.5 6L20.06 6.72L19 9L17.94 6.72L15.5 6L17.94 5.28L19 3Z" fill="white"/>
                     </svg>
                 </div>
+            </div>
+            <!-- Edit Mode Plus (+) / Close (✕) Single Liquid Glass Toggle Icon -->
+            <div id="aiBtnPlusIcon" class="absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 transform scale-75">
+                <span id="aiPlusIconSymbol" class="text-white text-2xl font-light transition-transform duration-300 flex items-center justify-center select-none" style="line-height:1;">+</span>
             </div>
             <div class="ai-btn-icon-send absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none scale-50 transition-all duration-300">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white">
@@ -966,241 +942,167 @@
 
 
     <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- PROFILE VIEW — ZIP Design (New)                        -->
+    <!-- PROFILE VIEW                                            -->
     <!-- ═══════════════════════════════════════════════════════ -->
-    <div id="view-profile" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-profile" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
-
-        <!-- ── Header ── -->
+        
+        <!-- ── Header (Share | View/Edit Pill Toggle | Settings) ── -->
         <div class="flex justify-between items-center px-4 pt-5 pb-3">
-            <div>
-                <h2 class="text-2xl font-black tracking-tight" style="color:#f5f5f7;">Profile</h2>
-            </div>
-            <div class="flex items-center gap-2">
-                <!-- Sync status pill -->
-                <div id="profileSyncStatusBadge" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-extrabold bg-white/5 border border-white/5 text-[#86868b] transition-all duration-300">
-                    <span class="w-1.5 h-1.5 rounded-full bg-slate-500 transition-all duration-300" id="profileSyncStatusDot"></span>
-                    <span id="profileSyncStatusText">Checking Sync...</span>
-                </div>
-                <button onclick="window.openSettingsTray()"
-                    class="w-10 h-10 rounded-full flex items-center justify-center spring active:scale-90 bg-white/5 border border-white/10 text-white"
-                    aria-label="Settings">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
+            <!-- Left: Share icon only in liquid glass button -->
+            <button onclick="window.shareStudentProfile()"
+                class="w-10 h-10 rounded-full flex items-center justify-center spring active:scale-90 bg-white/10 border border-white/20 text-white backdrop-blur-md shadow-lg"
+                aria-label="Share Profile">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                    <polyline points="16 6 12 2 8 6"></polyline>
+                    <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
+            </button>
 
-        <!-- Claim Profile Banner (shown if unclaimed) -->
-        <div id="profileClaimBanner" class="mx-4 mb-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between hidden">
-            <div class="flex items-center gap-3">
-                <span class="text-lg">🛡️</span>
-                <div>
-                    <h5 class="text-xs font-black text-amber-400">Claim Profile</h5>
-                    <p class="text-[9px] text-zinc-400 leading-tight">Secure your identity & set a login lock PIN.</p>
+            <!-- Middle: Liquid Pill Toggle (View / Edit) — 50/50 precision grid, no gap -->
+            <div class="flex flex-col items-center">
+                <div class="exam-subnav subnav-2col mb-0" style="width: 136px;" aria-label="Profile Mode" c-current="1" c-previous="1">
+                    <div class="exam-subnav-indicator"></div>
+                    <button type="button" id="tab-profile-view" onclick="window.switchProfileMode('view')" class="exam-subnav-item is-active" style="font-size: 11px; padding: 0 8px;">View</button>
+                    <button type="button" id="tab-profile-edit" onclick="window.switchProfileMode('edit')" class="exam-subnav-item" style="font-size: 11px; padding: 0 8px;">Edit</button>
+                </div>
+                <!-- Two Separate Apple Liquid Glass Undo & Redo Buttons -->
+                <div id="undoRedoEditBar" class="flex items-center justify-center gap-3 mt-2 hidden transition-all duration-300">
+                    <button type="button" onclick="window.undoCanvasEdit()" id="undoBtn" class="w-9 h-9 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/25 text-white backdrop-blur-xl shadow-lg spring active:scale-85 disabled:opacity-25 disabled:pointer-events-none transition-all" title="Undo change" aria-label="Undo">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 7v6h6"></path>
+                            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+                        </svg>
+                    </button>
+                    <button type="button" onclick="window.redoCanvasEdit()" id="redoBtn" class="w-9 h-9 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/25 text-white backdrop-blur-xl shadow-lg spring active:scale-85 disabled:opacity-25 disabled:pointer-events-none transition-all" title="Redo change" aria-label="Redo">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 7v6h-6"></path>
+                            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
-            <button onclick="window.triggerProfileClaim()" class="px-3.5 py-2 bg-amber-500 text-black font-black text-[10px] uppercase tracking-wider rounded-xl spring active:scale-95">
-                Claim
+
+            <!-- Right: Settings Button in liquid glass button -->
+            <button onclick="window.openSettingsTray()"
+                class="w-10 h-10 rounded-full flex items-center justify-center spring active:scale-90 bg-white/10 border border-white/20 text-white backdrop-blur-md shadow-lg"
+                aria-label="Settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-200">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
             </button>
         </div>
 
-        <!-- ── Avatar + Stats Row ── -->
-        <div class="flex items-center justify-between px-4 mb-4 gap-4">
-            <!-- Avatar with picker -->
-            <div class="relative" style="flex-shrink:0;">
-                <div class="new-profile-avatar-ring" onclick="window.openAvatarPicker()">
-                    <div class="new-profile-avatar-ring-inner">
-                        <img id="profileAvatarImage"
-                            src="assets/img/ChatGPT%20Image%20May%2018,%202026,%2010_33_49%20PM.png"
-                            alt="Avatar" style="width:100%;height:100%;object-fit:cover;">
-                        <div id="avatarUploadProgress"
-                            class="absolute inset-0 rounded-full flex items-center justify-center"
-                            style="background:rgba(0,0,0,0.6);opacity:0;pointer-events:none;transition:opacity 0.3s;">
-                            <div class="flex flex-col items-center">
-                                <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span id="avatarProgressText" style="font-size:8px;color:#fff;font-weight:800;margin-top:2px;">0%</span>
-                            </div>
+        <!-- ── UNIFIED PORTFOLIO CANVAS PAGE ── -->
+        <div id="profileUnifiedPage" class="px-4 space-y-4">
+            <!-- Student Header Card -->
+            <div class="liquid-glass p-4 rounded-3xl flex items-center gap-4 relative border border-white/10">
+                <div class="relative flex-shrink-0">
+                    <div class="new-profile-avatar-ring gradient-story-ring" onclick="window.openAvatarPicker()">
+                        <div class="new-profile-avatar-ring-inner">
+                            <img id="profileAvatarImage"
+                                src="assets/img/ChatGPT%20Image%20May%2018,%202026,%2010_33_49%20PM.png"
+                                alt="Avatar" style="width:100%;height:100%;object-fit:cover;">
                         </div>
                     </div>
+                    <button onclick="window.openAvatarPicker()"
+                        class="absolute spring active:scale-90"
+                        style="bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:#3897f0;border:2px solid #000;font-size:10px;display:flex;align-items:center;justify-content:center;">
+                        🎭
+                    </button>
+                    <input type="file" id="avatarFileInput" class="hidden" accept="image/jpeg,image/png,image/webp">
                 </div>
-                <!-- 🎭 picker badge -->
-                <button onclick="window.openAvatarPicker()"
-                    class="absolute spring active:scale-90"
-                    style="bottom:0;right:0;width:24px;height:24px;border-radius:50%;background:#3897f0;border:2px solid #000;font-size:11px;display:flex;align-items:center;justify-content:center;">
-                    🎭
-                </button>
-                <input type="file" id="avatarFileInput" class="hidden" accept="image/jpeg,image/png,image/webp">
+
+                <div class="flex-1 min-w-0">
+                    <h3 id="profileBioName" class="text-base font-black truncate" style="color:#f5f5f7;">---</h3>
+                    <p id="profileBioDept" class="text-[11px] font-bold text-[#86868b] truncate mt-0.5">---</p>
+                    <p id="profileBioCustom" class="text-xs font-medium italic leading-tight text-[#d1d1d6] mt-1.5 line-clamp-2">No bio written yet.</p>
+                </div>
             </div>
 
-            <!-- Stats -->
-            <div class="flex-1 flex justify-around text-center">
-                <div class="profile-stat-item cursor-pointer" onclick="openRankingsSheet()">
-                    <p id="profileStatRank" class="text-base font-black tracking-tight" style="color:#f5f5f7;">#--</p>
-                    <p id="profileStatRankLabel" class="text-[9px] font-bold uppercase tracking-wider mt-0.5" style="color:#86868b;">Rank</p>
+            <!-- Interactive Canvas Container (View & Edit Mode render on this Canvas) -->
+            <div id="profileCanvasContainer" class="space-y-3 min-h-[160px]">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+
+
+
+
+
+        <!-- ── Radial Arc Tool Overlay (No Blur, Direct Floating Arc) ── -->
+        <div id="arcToolPopover" class="fixed inset-0 z-[999] pointer-events-none hidden">
+            <div id="arcPopoverGrid" class="absolute inset-0">
+                <!-- Populated dynamically by JS for each of the 4 foundational menus -->
+            </div>
+        </div>
+
+        <!-- ── Secondary Mini Half-Circle Arc for Child Tools ── -->
+        <div id="secondaryArcToolPopover" class="fixed inset-0 z-[1002] pointer-events-none hidden">
+            <div id="secondaryArcPopoverGrid" class="absolute inset-0">
+                <!-- Populated dynamically when a subtool is clicked -->
+            </div>
+        </div>
+        <div id="arcPopoverBackdrop" class="fixed inset-0 z-[998] bg-transparent hidden cursor-pointer" onclick="if (event.target === this) window.closeArcToolMenu()"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- PUBLIC SHOWCASE STUDENT PROFILE VIEW (/p/:publicSlug)   -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="view-public-profile" class="view-panel max-w-md mx-auto p-4 relative min-h-screen flex flex-col justify-between items-center bg-[#0D0E12]">
+        <!-- Read-Only Public Canvas Showcase Container -->
+        <div class="w-full flex-1 flex flex-col items-center justify-start pt-4 pb-20">
+            <div id="pub-loading-state" class="py-16 space-y-4 text-center">
+                <div class="w-16 h-16 rounded-full bg-white/10 animate-pulse mx-auto border-2 border-[#00F5D4]"></div>
+                <div class="h-4 w-48 bg-white/10 animate-pulse rounded-lg mx-auto"></div>
+            </div>
+
+            <div id="pub-profile-unavailable" class="hidden py-16 px-6 text-center max-w-sm">
+                <div class="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-2xl mx-auto mb-4">🔒</div>
+                <h3 class="text-lg font-black text-white">Profile Unavailable</h3>
+                <p class="text-xs text-[#86868b] mt-2 leading-relaxed">This profile isn't public or the link has expired.</p>
+                <a href="https://machub.app" class="inline-block mt-6 px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-bold text-white backdrop-blur-md transition-all spring active:scale-95">Go to Machub Landing Page</a>
+            </div>
+
+            <div id="pub-profile-content" class="w-full hidden">
+                <!-- Student Header Badge -->
+                <div class="flex items-center gap-3 mb-5 px-3.5 py-2.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                    <div class="w-10 h-10 rounded-full overflow-hidden border border-[#00F5D4] flex-shrink-0">
+                        <img id="pub-student-avatar" class="w-full h-full object-cover" src="assets/img/ChatGPT%20Image%20May%2018,%202026,%2010_33_49%20PM.png" alt="Avatar" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h3 id="pub-student-name" class="text-sm font-black text-white leading-tight truncate">Student Name</h3>
+                        <p id="pub-student-dept" class="text-[10px] font-bold text-[#86868b] truncate mt-0.5">MacHub Public Showcase</p>
+                    </div>
+                    <div class="px-2.5 py-1 rounded-full bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-[9px] font-extrabold uppercase tracking-wider flex-shrink-0">
+                        Public Canvas
+                    </div>
                 </div>
-                <div class="profile-stat-item">
-                    <p id="profileStatBunks" class="text-base font-black tracking-tight" style="color:#f5f5f7;">---</p>
-                    <p class="text-[9px] font-bold uppercase tracking-wider mt-0.5" style="color:#86868b;">Safe Bunks</p>
-                </div>
-                <div class="profile-stat-item">
-                    <p id="profileStatClasses" class="text-base font-black tracking-tight" style="color:#f5f5f7;">---</p>
-                    <p class="text-[9px] font-bold uppercase tracking-wider mt-0.5" style="color:#86868b;">Required</p>
+
+                <!-- Public Read-Only Canvas Container -->
+                <div id="pubCanvasContainer" class="relative w-full min-h-[580px] overflow-hidden rounded-3xl border border-white/10 bg-[#121319]">
+                    <!-- Populated dynamically via JS -->
                 </div>
             </div>
         </div>
 
-        <!-- ── Bio ── -->
-        <div class="px-4 mb-3">
-            <h3 id="profileBioName" class="text-sm font-extrabold" style="color:#f5f5f7;">---</h3>
-            <p id="profileBioDept" class="text-[10px] font-bold mt-0.5" style="color:#86868b;">---</p>
-            <p id="profileBioCustom" class="text-xs mt-2 font-medium leading-relaxed italic" style="color:#d1d1d6;">No bio written yet.</p>
-        </div>
-
-        <!-- ── Action Buttons ── -->
-        <div class="px-4 mb-4">
-            <button onclick="window.shareStudentProfile()"
-                class="w-full py-3 rounded-xl text-xs font-black spring active:scale-95 flex items-center justify-center gap-1"
-                style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:#f5f5f7;">
-                🔗 Share
-            </button>
-        </div>
-
-        <!-- ── Accreditation Badges ── -->
-        <div class="flex gap-3 px-4 overflow-x-auto pb-3 mb-2 no-scrollbar select-none">
-            <div class="accreditation-badge">
-                <div class="accreditation-circle">🔰</div>
-                <span class="text-[9px] font-extrabold text-center truncate w-full" style="color:#86868b;">Verified</span>
-            </div>
-            <div class="accreditation-badge">
-                <div class="accreditation-circle">🔥</div>
-                <span class="text-[9px] font-extrabold text-center truncate w-full" style="color:#86868b;">Pro User</span>
-            </div>
-            <div class="accreditation-badge">
-                <div class="accreditation-circle">🎖️</div>
-                <span class="text-[9px] font-extrabold text-center truncate w-full" style="color:#86868b;">Attendance</span>
-            </div>
-            <div class="accreditation-badge">
-                <div class="accreditation-circle">⚡</div>
-                <span class="text-[9px] font-extrabold text-center truncate w-full" style="color:#86868b;">Academic</span>
-            </div>
-        </div>
-
-        <!-- ── NEW 4-Tab Bar ── -->
-        <div class="new-profile-tab-bar">
-            <button class="new-profile-tab-btn active" id="newTabBtn-0" onclick="selectNewProfileTab(0)">📊 Attendance</button>
-            <button class="new-profile-tab-btn" id="newTabBtn-1" onclick="selectNewProfileTab(1)">📝 Marks</button>
-            <button class="new-profile-tab-btn" id="newTabBtn-2" onclick="selectNewProfileTab(2)">📚 Subjects</button>
-            <button class="new-profile-tab-btn" id="newTabBtn-3" onclick="selectNewProfileTab(3)">🪪 Info</button>
-        </div>
-
-        <!-- ── Tab 0: Attendance ── -->
-        <div id="newTabPanel-0" class="px-4 space-y-3 animate-new-fade">
-            <!-- Aggregate card -->
-            <div class="liquid-glass rounded-2xl p-4 flex justify-between items-center">
-                <div>
-                    <span class="block text-[10px] font-bold uppercase tracking-wider" style="color:#8d99ae;">Aggregate Track</span>
-                    <span id="profileAttendancePct" class="text-2xl font-black" style="color:#00F5D4;">--%</span>
-                </div>
-                <span id="profileAttendanceBadge"
-                    class="att-badge"
-                    style="background:rgba(0,245,212,0.12);color:#00F5D4;border:1px solid rgba(0,245,212,0.25);">
-                    ---
-                </span>
-            </div>
-            <!-- Subject grid -->
-            <div id="newAttendanceGrid" class="grid grid-cols-2 gap-2">
-                <!-- Populated by JS -->
-            </div>
-            <!-- old attendance label kept for backward compat (hidden) -->
-            <p id="profileAttendanceLabel" class="hidden"></p>
-            <div id="profileAttendanceBreakdownCard" class="hidden">
-                <div id="profileAttendanceBreakdownList"></div>
-            </div>
-        </div>
-
-        <!-- ── Tab 1: Marks ── -->
-        <div id="newTabPanel-1" class="px-4 space-y-2 animate-new-fade hidden">
-            <div id="newMarksGrid" class="space-y-2">
-                <p class="text-xs text-center py-6" style="color:#86868b;">Marks data loading...</p>
-            </div>
-        </div>
-
-        <!-- ── Tab 2: Subjects ── -->
-        <div id="newTabPanel-2" class="px-4 space-y-2 animate-new-fade hidden">
-            <div id="newSubjectsGrid" class="space-y-2">
-                <p class="text-xs text-center py-6" style="color:#86868b;">Subjects loading...</p>
-            </div>
-        </div>
-
-        <!-- ── Tab 3: Info (ID Card + Details) ── -->
-        <div id="newTabPanel-3" class="px-4 space-y-4 animate-new-fade hidden">
-            <!-- Academic info -->
-            <div class="liquid-glass rounded-2xl p-4">
-                <p class="settings-section-title">🎓 Academic</p>
-                <div class="info-grid-row"><span class="info-grid-label">Full Name</span><span id="profileGridName" class="info-grid-value">---</span></div>
-                <div class="info-grid-row"><span class="info-grid-label">Course</span><span id="profileGridDept" class="info-grid-value">---</span></div>
-                <div class="info-grid-row"><span class="info-grid-label">Reg No</span><span id="profileGridReg" class="info-grid-value">---</span></div>
-                <div class="info-grid-row"><span class="info-grid-label">Admission No</span><span id="profileGridAdmin" class="info-grid-value">---</span></div>
-                <div class="info-grid-row"><span class="info-grid-label">Regulation</span><span class="info-grid-value" style="color:#0a84ff;">MGU-UGP 2024</span></div>
-            </div>
-            <!-- Holographic ID Card (kept!) -->
-            <div>
-                <p class="settings-section-title px-1">🪪 Holographic ID Card</p>
-                <div id="profile-card-container" class="w-full">
-                    <!-- 3D card injected by JS -->
-                </div>
-            </div>
-            <!-- Personal details (hidden until data loads) -->
-            <div id="profileGridPersonalCard" class="liquid-glass rounded-2xl p-4 hidden">
-                <p class="settings-section-title">👤 Personal Details</p>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Date of Birth</p><p id="profilePersonalDob" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Gender</p><p id="profilePersonalGender" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Mobile</p><p id="profilePersonalPhone" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Email</p><p id="profilePersonalEmail" class="text-xs font-black mt-0.5 truncate" style="color:#f5f5f7;">---</p></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Blood Group</p><p id="profilePersonalBlood" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Aadhaar</p><p id="profilePersonalAadhaar" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Religion & Caste</p><p id="profilePersonalReligion" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">ABC Student ID</p><p id="profilePersonalAbc" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                </div>
-                <div class="pt-3 mt-2" style="border-top:1px solid rgba(255,255,255,0.06);">
-                    <p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Permanent Address</p>
-                    <p id="profilePersonalAddress" class="text-xs font-black mt-0.5 leading-relaxed" style="color:#f5f5f7;">---</p>
-                </div>
-            </div>
-            <!-- Parent / Guardian -->
-            <div id="profileGridGuardianCard" class="liquid-glass rounded-2xl p-4 hidden">
-                <p class="settings-section-title">👨‍👩‍👦 Parent / Guardian</p>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Father Name</p><p id="profileGuardianName" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Father Phone</p><p id="profileGuardianPhone" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                </div>
-            </div>
-            <!-- Bank -->
-            <div id="profileGridBankCard" class="liquid-glass rounded-2xl p-4 hidden">
-                <p class="settings-section-title">💳 Bank Account</p>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Holder</p><p id="profileBankHolder" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Account No</p><p id="profileBankAcc" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">Bank Name</p><p id="profileBankName" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-wide" style="color:#86868b;">IFSC</p><p id="profileBankIfsc" class="text-xs font-black mt-0.5" style="color:#f5f5f7;">---</p></div>
-                </div>
-            </div>
-        </div>
-
+        <!-- Fixed Apple Liquid Glass Footer Badge -->
+        <footer id="pubFooterBadge" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+            <a href="https://machub.app" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-4 py-2 rounded-full bg-black/80 border border-white/20 backdrop-blur-xl shadow-2xl text-[11px] font-bold text-white hover:border-[#00F5D4] transition-all spring active:scale-95">
+                <span class="w-2 h-2 rounded-full bg-[#00F5D4] animate-pulse"></span>
+                Created by <span class="text-[#00F5D4] font-black">Machub</span>
+            </a>
+        </footer>
     </div>
 
 
     <!-- ═══════════════════════════════════════════════════════ -->
     <!-- SETTINGS VIEW — Full-Page ZIP Design (New)              -->
     <!-- ═══════════════════════════════════════════════════════ -->
-    <div id="view-settings" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         
         <!-- Header -->
@@ -1396,7 +1298,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: CARD CUSTOMIZATION -->
-    <div id="view-settings-card" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-card" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -1447,7 +1349,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: NOTIFICATIONS -->
-    <div id="view-settings-notifications" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-notifications" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -1489,7 +1391,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: DISPLAY -->
-    <div id="view-settings-display" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-display" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -1517,7 +1419,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: ABOUT -->
-    <div id="view-settings-about" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-about" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -1545,7 +1447,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: SYNCED DATA -->
-    <div id="view-settings-synced-data" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-synced-data" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -1686,7 +1588,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: CHANGE PASSWORD -->
-    <div id="view-settings-change-password" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-change-password" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0; font-family: 'Outfit', sans-serif; color:#f5f5f7; background: #000;">
 
         <!-- Sticky Header -->
@@ -1804,7 +1706,7 @@
 
 
     <!-- DEDICATED SETTINGS PAGE: ACTIVE DEVICES -->
-    <div id="view-settings-active-devices" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-active-devices" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -1850,7 +1752,7 @@
     <!-- DEDICATED SETTINGS PAGE: SECURITY OVERVIEW (DEPRECATED) -->
 
     <!-- DEDICATED SETTINGS PAGE: ALLOTMENT MEMO -->
-    <div id="view-settings-allotment-memo" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-allotment-memo" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -1888,7 +1790,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: HALL TICKET MATRIX -->
-    <div id="view-settings-hall-ticket" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-hall-ticket" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -1941,7 +1843,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: FEE PAYMENT -->
-    <div id="view-settings-fee-payment" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-fee-payment" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -1977,7 +1879,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: GRIEVANCE FORM -->
-    <div id="view-settings-grievance" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-grievance" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -2015,7 +1917,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: BUS CONCESSION PASS -->
-    <div id="view-settings-concession" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-concession" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -2045,7 +1947,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: FEEDBACK -->
-    <div id="view-settings-feedback" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-feedback" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10" style="view-transition-name: settings-header;">
             <div class="flex items-center gap-3">
@@ -2064,7 +1966,7 @@
     </div>
 
     <!-- DEDICATED SETTINGS PAGE: PRIVACY SETTINGS -->
-    <div id="view-settings-privacy" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-settings-privacy" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -2139,7 +2041,7 @@
     </div>
 
     <!-- DEDICATED VIEW: CLAIM PROFILE -->
-    <div id="view-claim-profile" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-claim-profile" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -2513,7 +2415,7 @@
     </div>
 
     <!-- DEDICATED VIEW: PIN LOCK SCREEN -->
-    <div id="view-pin-lock" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-pin-lock" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7; background:#000;">
         <div class="flex-1 overflow-y-auto px-4 py-8" id="pin-lock-container">
             <!-- Populated dynamically by pin_lock.js -->
@@ -2521,7 +2423,7 @@
     </div>
 
     <!-- DEDICATED VIEW: DIGITAL ID CARD (QR) -->
-    <div id="view-qr-id" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-qr-id" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         <div class="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/5 bg-[#000]/95 backdrop-blur-[20px] sticky top-0 z-10">
             <div class="flex items-center gap-3">
@@ -2541,7 +2443,7 @@
     <!-- ═══════════════════════════════════════════════════════ -->
     <!-- PROFILE EDITING VIEW — Full-Page ZIP Design (New)       -->
     <!-- ═══════════════════════════════════════════════════════ -->
-    <div id="view-profile-edit" class="view-panel max-w-md mx-auto relative min-h-screen flex flex-col"
+    <div id="view-profile-edit" class="view-panel max-w-md mx-auto relative min-h-screen"
         style="padding: 0 0 90px; font-family: 'Outfit', sans-serif; color:#f5f5f7;">
         
         <!-- Header -->
@@ -2711,7 +2613,7 @@
     ═══════════════════════════════════════════════════════════════════ -->
     <div id="view-ai" class="view-panel" style="
         position:fixed; inset:0; z-index:100;
-        display:none; flex-direction:column;
+        display:none;-direction:column;
         font-family:'Space Grotesk',system-ui,sans-serif;
         overflow:hidden; background:#000000;">
 
@@ -3151,7 +3053,7 @@
 
     <!-- DEDICATED FULL-SCREEN VIEW: SECURE ACCOUNT (CHANGE PASSWORD) -->
     <!-- Matches view-portal-password-lock theme: dark gradient, floating orbs, MacHub logo top center -->
-    <div id="view-secure-account" class="view-panel flex"
+    <div id="view-secure-account" class="view-panel"
         style="flex-direction:column;min-height:100dvh;width:100%;position:relative;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#fff;">
 
         <style>
@@ -3370,12 +3272,13 @@
     <script defer src="js/timetable.js"></script>
     <script defer src="js/seats.js"></script>
     <script defer src="js/resources.js"></script>
-    <script defer src="js/app.js?v=2.0.4"></script>
+    <script defer src="js/app.v2.js?v=2.0.4"></script>
     <script defer src="js/onboarding.js"></script>
     <script defer src="js/qr_id.js"></script>
     <script defer src="js/bootstrap.js"></script>
     <script defer src="js/mgu_result.js"></script>
     <script defer src="js/chat.js"></script>
+    <script defer src="js/explore.js"></script>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- PORTAL NAV DRAWER — slides up from bottom when 🎓 is tapped    -->
@@ -3724,13 +3627,16 @@
             alert('Admission number saved! Tap any section to load data.');
         };
 
-        // Show admin entry bar if no admission number found
+        // Ensure new window/tab or unauthenticated launch defaults to Start / Search Page!
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                const saved = localStorage.getItem('machub_student_id');
-                const entry = document.getElementById('portalAdminEntry');
-                if (!saved && entry) entry.classList.remove('hidden');
-            }, 500);
+            const saved = localStorage.getItem('machub_student_id');
+            const obScreen = document.getElementById('onboardingScreen');
+            if (!saved && obScreen) {
+                obScreen.classList.remove('hidden');
+                if (typeof window.nextObStep === 'function') window.nextObStep(1);
+            }
+            const entry = document.getElementById('portalAdminEntry');
+            if (!saved && entry) entry.classList.remove('hidden');
         });
     </script>
 

@@ -89,6 +89,11 @@ app.use(express.urlencoded({ extended: true }));
 // ─── Serve static frontend files ─────────────────────────────────────────────
 app.use(express.static(path.join(__dirname)));
 
+// Standalone Public Showcase Page route mapping
+app.get('/p/:publicSlug', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public.html'));
+});
+
 // ════════════════════════════════════════════════════════════════════════════
 //  UTILITY HELPERS
 // ════════════════════════════════════════════════════════════════════════════
@@ -1516,6 +1521,80 @@ app.get('/api/admin/trigger-scrape', async (req, res) => {
   } catch (err) {
     console.error('[Scraper Route] Manual run failed:', err.message);
     return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * ════════════════════════════════════════════════════════════════════════════
+ *  PUBLIC SANITIZED STUDENT PROFILE SHOWCASE ENDPOINT
+ *  GET /api/public/profile/:admissionNumber
+ * ════════════════════════════════════════════════════════════════════════════
+ */
+app.get('/api/public/profile/:admissionNumber', async (req, res) => {
+  const { admissionNumber } = req.params;
+
+  if (!admissionNumber) {
+    return res.status(400).json({ success: false, error: 'Admission Number is required' });
+  }
+
+  try {
+    let rawName = 'Student Showcase';
+    let rawProgramme = 'Degree Program';
+    let rawSemester = 'Active Semester';
+    let activeCourses = [];
+
+    // 1. Attempt to fetch profile details from session/portal proxy
+    try {
+      const cookie = await getSession(admissionNumber);
+      const profilePageRes = await portalAgent.get('/About/Profile.aspx', {
+        headers: {
+          'Cookie': cookie,
+          'Referer': `${specs.baseUrl}/About/Default.aspx`,
+          'Host': 'eportal.maraugusthinosecollege.org'
+        }
+      });
+
+      const $ = cheerio.load(profilePageRes.data);
+      rawName = $('#lblStudentName').text().trim() || $('#lblName').text().trim() || rawName;
+      rawProgramme = $('#lblProgramme').text().trim() || $('#lblDepartment').text().trim() || rawProgramme;
+      rawSemester = $('#lblSemester').text().trim() || $('#lblBatch').text().trim() || rawSemester;
+
+      // 2. Fetch active course list
+      const dashPageRes = await portalAgent.get('/Dashboard.aspx', {
+        headers: { 'Cookie': cookie }
+      });
+      const $dash = cheerio.load(dashPageRes.data);
+
+      $dash('.active-course-item, table tr').each((_, el) => {
+        const courseName = $dash(el).find('.course-title, td').first().text().trim();
+        if (courseName && !activeCourses.includes(courseName) && courseName.length > 3) {
+          activeCourses.push(courseName);
+        }
+      });
+    } catch(fetchErr) {
+      console.warn(`[Public Profile Proxy Warning] ID ${admissionNumber}: ${fetchErr.message}`);
+    }
+
+    // 3. SANITIZED PUBLIC PAYLOAD (Strictly ZERO private PII included)
+    const sanitizedProfile = {
+      admissionNumber,
+      name: rawName,
+      college: "Mar Augusthinose College, Ramapuram",
+      department: rawProgramme,
+      semester: rawSemester,
+      activeCourses: activeCourses.slice(0, 8),
+      avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${admissionNumber}`,
+      verifiedStudent: true
+    };
+
+    return res.json({ success: true, profile: sanitizedProfile });
+
+  } catch (err) {
+    console.error(`[Public Profile Error] ID ${admissionNumber}:`, err.message);
+    return res.status(404).json({ 
+      success: false, 
+      error: 'Student profile not found or server timed out' 
+    });
   }
 });
 

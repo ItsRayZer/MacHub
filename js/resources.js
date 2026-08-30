@@ -1527,16 +1527,19 @@
     }
   };
 
-  // Hook into main view switching
+  // Hook into main view switching safely
   document.addEventListener('DOMContentLoaded', () => {
-    const originalSwitchView = window.switchView;
-    if (originalSwitchView) {
-      window.switchView = function(viewId) {
-        originalSwitchView(viewId);
-        if (viewId === 'view-resources') {
-          window.initResourcesWorkspace();
-        }
-      };
+    if (!window._switchViewResourcesWrapped) {
+      const originalSwitchView = window.switchView;
+      if (originalSwitchView) {
+        window.switchView = function(viewId) {
+          originalSwitchView(viewId);
+          if (viewId === 'view-resources') {
+            window.initResourcesWorkspace();
+          }
+        };
+        window._switchViewResourcesWrapped = true;
+      }
     }
     // Auto-init on initial load if starting on resources
     if (localStorage.getItem('machub_current_view') === 'view-resources') {

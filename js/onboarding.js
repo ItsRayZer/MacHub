@@ -111,10 +111,10 @@ function saveProfile(profile) {
     }
 }
 
-async function enterAppWithProfile(profile) {
+async function enterAppWithProfile(profile, skipLockCheck = false) {
     saveProfile(profile);
 
-    if (profile.adminNo && typeof window.checkCredentialStatus === 'function') {
+    if (!skipLockCheck && profile.adminNo && typeof window.checkCredentialStatus === 'function') {
         await window.checkCredentialStatus(profile.adminNo);
         if (window.isPortalLocked) {
             const obScreen = document.getElementById('onboardingScreen');
@@ -126,6 +126,13 @@ async function enterAppWithProfile(profile) {
                 }, 450);
             }
             return;
+        }
+    }
+
+    if (skipLockCheck) {
+        window.isPortalLocked = false;
+        if (profile.adminNo) {
+            localStorage.removeItem(`machub_portal_locked_${profile.adminNo}`);
         }
     }
 
@@ -173,58 +180,84 @@ async function finishSmartOnboarding(event) {
         return false;
     }
 
-    // Save profile and enter app immediately — no loading screen, no portal handshake
-    localStorage.setItem('machub_student_id', profile.adminNo || '');
-    saveProfile(profile);
+    // Disable action buttons and show loading state
+    const actionArea = document.getElementById('ob-step3-actions');
+    let originalHTML = '';
+    if (actionArea) {
+        originalHTML = actionArea.innerHTML;
+        actionArea.innerHTML = `
+            <div class="flex items-center justify-center py-3">
+                <span class="text-sm font-bold text-white flex items-center gap-2">
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="animation: spin 1s linear infinite; width:20px; height:20px;">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Verifying Profile...
+                </span>
+            </div>
+        `;
+    }
 
-    // Try to restore any existing cloud cache silently in the background
-    if (profile.adminNo) {
-        (async () => {
-            try {
-                // Authenticate first
-                if (window.authenticateFirebase) {
-                    await window.authenticateFirebase(profile.adminNo);
-                }
-                // Attempt Firestore restore if Firebase is available (silent, no UI)
-                if (window.firebaseFirestore && window.firestoreDoc && window.firestoreGetDoc) {
-                    const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', profile.adminNo);
-                    const docSnap = await window.firestoreGetDoc(docRef);
-                    if (docSnap.exists()) {
-                        const docData = docSnap.data();
-                        for (const key of Object.keys(docData)) {
-                            const cachedSection = docData[key];
-                            if (cachedSection && cachedSection.data) {
-                                let section = key;
-                                let semester = '';
-                                if (key.includes('_sem')) {
-                                    const parts = key.split('_sem');
-                                    section = parts[0];
-                                    semester = parts[1];
-                                }
-                                const keyName = `machub_portal_${section}${semester ? `_sem${semester}` : ''}_${profile.adminNo}`;
-                                // Only write if not already cached locally
-                                if (!localStorage.getItem(keyName)) {
-                                    localStorage.setItem(keyName, JSON.stringify({
-                                        data: cachedSection.data,
-                                        savedAt: Date.now()
-                                    }));
+    try {
+        // Save profile and enter app immediately — no loading screen, no portal handshake
+        localStorage.setItem('machub_student_id', profile.adminNo || '');
+        saveProfile(profile);
+
+        // Try to restore any existing cloud cache silently in the background
+        if (profile.adminNo) {
+            (async () => {
+                try {
+                    // Authenticate first
+                    if (window.authenticateFirebase) {
+                        await window.authenticateFirebase(profile.adminNo);
+                    }
+                    // Attempt Firestore restore if Firebase is available (silent, no UI)
+                    if (window.firebaseFirestore && window.firestoreDoc && window.firestoreGetDoc) {
+                        const docRef = window.firestoreDoc(window.firebaseFirestore, 'students', profile.adminNo);
+                        const docSnap = await window.firestoreGetDoc(docRef);
+                        if (docSnap.exists()) {
+                            const docData = docSnap.data();
+                            for (const key of Object.keys(docData)) {
+                                const cachedSection = docData[key];
+                                if (cachedSection && cachedSection.data) {
+                                    let section = key;
+                                    let semester = '';
+                                    if (key.includes('_sem')) {
+                                        const parts = key.split('_sem');
+                                        section = parts[0];
+                                        semester = parts[1];
+                                    }
+                                    const keyName = `machub_portal_${section}${semester ? `_sem${semester}` : ''}_${profile.adminNo}`;
+                                    // Only write if not already cached locally
+                                    if (!localStorage.getItem(keyName)) {
+                                        localStorage.setItem(keyName, JSON.stringify({
+                                            data: cachedSection.data,
+                                            savedAt: Date.now()
+                                        }));
+                                    }
                                 }
                             }
                         }
                     }
+                } catch (e) {
+                    // Silent — cloud restore is best-effort only
                 }
-            } catch (e) {
-                // Silent — cloud restore is best-effort only
-            }
 
-            // Trigger background scrape after entering app
-            if (window.startBackgroundScrapeQueue) {
-                window.startBackgroundScrapeQueue(profile.adminNo);
-            }
-        })();
+                // Trigger background scrape after entering app
+                if (window.startBackgroundScrapeQueue) {
+                    window.startBackgroundScrapeQueue(profile.adminNo);
+                }
+            })();
+        }
+
+        await enterAppWithProfile(profile);
+    } catch (err) {
+        console.error("Onboarding setup failed:", err);
+        alert(err.message || "Failed to setup profile. Please try again.");
+        if (actionArea && originalHTML) {
+            actionArea.innerHTML = originalHTML;
+        }
     }
-
-    enterAppWithProfile(profile);
     return false;
 }
 
@@ -883,7 +916,19 @@ window.submitSecureAccountPasswordChange = async function() {
         window.isPortalLocked = false;
         localStorage.removeItem(`machub_portal_locked_${adminNo}`);
 
-        window.closeSecureAccountModal();
+        const nav = document.getElementById('bottomNav');
+        if (nav) nav.classList.remove('nav-hidden');
+
+        const profile = window.ExamHubProfile?.get?.() || window.getStudentInfo?.();
+        if (profile && typeof window.enterAppWithProfile === 'function') {
+            window.enterAppWithProfile(profile, true);
+        } else {
+            if (typeof window.reactNavigate === 'function') {
+                window.reactNavigate(`/${adminNo}/dashboard`);
+            } else if (typeof switchView === 'function') {
+                switchView('view-home');
+            }
+        }
 
         if (window.syncHomePortalDashboard) {
             window.syncHomePortalDashboard();
@@ -926,3 +971,5 @@ window.skipOnboarding = function() {
     };
     enterAppWithProfile(guestProfile);
 };
+
+window.enterAppWithProfile = enterAppWithProfile;
