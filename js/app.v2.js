@@ -106,15 +106,15 @@ const PORTAL_CACHE_STALE_MS = 4 * 60 * 60 * 1000;
 
 function getPortalCache(section, adminNo, semester = '') {
     if (!adminNo) return null;
-    
-    // 1. If specific semester requested, check exact semester key first
+
+    // 1. If specific semester requested, check exact semester key ONLY.
+    // Never fall back to another semester's data — that shows wrong sem.
     if (semester) {
         const semKey = `machub_portal_${section}_sem${semester}_${adminNo}`;
-        const semData = localStorage.getItem(semKey);
-        if (semData) return semData;
+        return localStorage.getItem(semKey);
     }
-    
-    // 2. Check main generic key (machub_portal_SECTION_ADMIN)
+
+    // 2. No semester specified: check main generic key
     const directKey = `machub_portal_${section}_${adminNo}`;
     const directData = localStorage.getItem(directKey);
     if (directData) return directData;
@@ -713,10 +713,7 @@ function switchView(viewId, isFromRouter, subTabId) {
         if (viewId === 'view-profile' && typeof renderUserProfile === 'function') renderUserProfile();
         syncExternalAppView();
 
-        // Init explore view when switching to it
-        if ((viewId === 'view-explore' || viewId === 'view-chat') && window.initExploreView) {
-            setTimeout(() => window.initExploreView(), 20);
-        }
+        // Explore view is now fully handled by BcaEasy (study mode) - no legacy init needed
 
         document.dispatchEvent(new CustomEvent('viewSwitched', { detail: { viewId } }));
 

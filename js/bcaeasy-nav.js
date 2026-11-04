@@ -1,72 +1,109 @@
 /**
- * BcaEasyNav — Study mode navigation controller for MacHub.
- * Tapping Study morphs the bottom nav: Schedule isolates left, Profile
- * isolates right, 3 study tabs (Study/Mocks/Revise) spring into the center.
- * Tapping Schedule/Profile/Home exits study mode with reverse animation.
+ * BcaEasyNav — Study mode navigation for MacHub.
+ *
+ * TAP STUDY: bottom nav morphs Apple-style —
+ *   Home + Study-entry collapse inward and vanish,
+ *   Schedule isolates to the left edge, Profile to the right edge,
+ *   Study / Mocks / Revise spring into the center with stagger.
+ *   The study view zooms in, isolated and full-screen.
+ *
+ * TAP Schedule / Profile / Home: everything melts back to normal.
  */
-(function() {
+(function () {
     'use strict';
 
     let inStudy = false;
-    let activeStudyTab = 'home';
+    let activeTab = 'home';
+    let switching = false;
 
     function pill() { return document.getElementById('navPill'); }
 
-    function setActiveStudyTabUI(tab) {
+    function setActiveUI(tab) {
         ['home', 'mocks', 'revise'].forEach(t => {
             const el = document.getElementById('tab-study-' + t);
             if (el) el.classList.toggle('active', t === tab);
         });
     }
 
+    function animateContentEnter() {
+        const v = document.getElementById('view-explore');
+        if (!v) return;
+        v.classList.remove('study-enter', 'study-exit');
+        void v.offsetWidth;
+        v.classList.add('study-enter');
+    }
+
+    function animateContentSwitch() {
+        const r = document.getElementById('exploreViewRoot');
+        if (!r) return;
+        r.classList.remove('study-tab-switch');
+        void r.offsetWidth;
+        r.classList.add('study-tab-switch');
+    }
+
+    /* Wait for the lazy BcaEasy script, then render. Poll up to 3s. */
+    function whenReady(fn) {
+        let n = 30;
+        (function tick() {
+            if (window.BcaEasy && window.BcaEasy.showStudy) return fn();
+            if (n-- > 0) return setTimeout(tick, 100);
+            console.warn('[BcaEasyNav] study script failed to load');
+        })();
+    }
+
     window.BcaEasyNav = {
-        isStudyMode() { return inStudy; },
+        isStudy() { return inStudy; },
 
         enterStudy() {
-            const p = pill();
+            if (switching) return;
             if (inStudy) { this.studyTab('home'); return; }
+            switching = true;
             inStudy = true;
-            activeStudyTab = 'home';
-            if (p) p.classList.add('study-mode');
-            setActiveStudyTabUI('home');
-            // Switch to explore view with enter animation
-            if (typeof switchView === 'function') switchView('view-explore');
-            const v = document.getElementById('view-explore');
-            if (v) {
-                v.classList.remove('study-enter');
-                void v.offsetWidth; // restart animation
-                v.classList.add('study-enter');
-            }
-            // Wait for BcaEasy lazy script (race-safe: poll up to 3s)
-            let attempts = 30;
-            const tryShow = () => {
-                if (window.BcaEasy && window.BcaEasy.showStudy) {
-                    window.BcaEasy.showStudy('home');
-                } else if (attempts-- > 0) {
-                    setTimeout(tryShow, 100);
-                } else if (window.initExploreView) {
-                    window.initExploreView(); // fallback
-                }
-            };
-            tryShow();
-        },
+            activeTab = 'home';
 
-        exitStudy() {
-            if (!inStudy) return;
-            inStudy = false;
             const p = pill();
-            if (p) p.classList.remove('study-mode');
-            ['home', 'mocks', 'revise'].forEach(t => {
-                const el = document.getElementById('tab-study-' + t);
-                if (el) el.classList.remove('active');
+            if (p) p.classList.add('study-mode');
+            setActiveUI('home');
+
+            if (typeof switchView === 'function') switchView('view-explore');
+            animateContentEnter();
+
+            whenReady(() => {
+                window.BcaEasy.showStudy('home');
+                switching = false;
             });
+            // Safety: never leave the user stuck
+            setTimeout(() => { switching = false; }, 3500);
         },
 
         studyTab(tab) {
-            if (!inStudy) { this.enterStudy(); }
-            activeStudyTab = tab;
-            setActiveStudyTabUI(tab);
-            if (window.BcaEasy && window.BcaEasy.showStudy) window.BcaEasy.showStudy(tab);
+            if (!inStudy || switching) return;
+            activeTab = tab;
+            setActiveUI(tab);
+            animateContentSwitch();
+            if (window.BcaEasy && window.BcaEasy.showStudy) {
+                window.BcaEasy.showStudy(tab);
+            }
+        },
+
+        exitStudy() {
+            if (!inStudy || switching) return;
+            switching = true;
+            inStudy = false;
+
+            const v = document.getElementById('view-explore');
+            if (v) {
+                v.classList.remove('study-enter');
+                v.classList.add('study-exit');
+            }
+            const p = pill();
+            // Melt the nav back after the content starts zooming out
+            setTimeout(() => {
+                if (p) p.classList.remove('study-mode');
+                setActiveUI('home');
+                if (v) v.classList.remove('study-exit');
+                switching = false;
+            }, 180);
         },
     };
 })();
