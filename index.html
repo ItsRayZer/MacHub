@@ -221,7 +221,7 @@ body.app-ready #bootSplash{display:none;}
         <p id="liveClock" class="text-[var(--mac-blue)] text-[10px] font-black tracking-[0.2em] mt-3 uppercase">00:00:00 AM IST</p>
     </header>
 
-    <div id="view-seats" class="view-panel max-w-md mx-auto p-6">
+    <div id="view-seats" class="view-panel w-full max-w-2xl mx-auto px-4 py-6">
 
         <div class="exam-subnav mb-4" aria-label="Exam menu" c-current="2" c-previous="2">
             <div class="exam-subnav-indicator"></div>
@@ -308,7 +308,7 @@ body.app-ready #bootSplash{display:none;}
         <div id="hallTabs" class="hidden"></div>
     </div> <!-- end view-seats -->
 
-    <div id="view-home" class="view-panel is-active max-w-md mx-auto p-6 relative">
+    <div id="view-home" class="view-panel is-active w-full max-w-2xl mx-auto px-4 py-6 relative">
         <!-- Sync Paused banner removed — password lock page (view-portal-password-lock) handles all credential issues -->
 
         <!-- Apple Premium Glass Greeting Card -->
@@ -531,21 +531,6 @@ body.app-ready #bootSplash{display:none;}
                     </span>
                 </button>
 
-                <!-- MGU ePortal Hub -->
-                <button type="button" class="glass-panel p-4 rounded-3xl spring active:scale-95 cursor-pointer w-full text-left"
-                     onclick="if(typeof switchView==='function') switchView('view-resources');"
-                     style="background:linear-gradient(135deg,rgba(56,151,240,0.08) 0%,rgba(0,113,227,0.08) 100%);border:1px solid rgba(56,151,240,0.2);">
-                    <span style="display:flex;align-items:center;gap:10px;width:100%;">
-                        <span class="w-10 h-10 rounded-[0.8rem] flex items-center justify-center shadow-sm flex-shrink-0"
-                              style="background:rgba(56,151,240,0.15);color:#3897f0;border:1px solid rgba(56,151,240,0.3);">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><line x1="3" y1="10" x2="21" y2="10"/><polygon points="12 3 3 10 21 10"/><line x1="6" y1="10" x2="6" y2="21"/><line x1="10" y1="10" x2="10" y2="21"/><line x1="14" y1="10" x2="14" y2="21"/><line x1="18" y1="10" x2="18" y2="21"/></svg>
-                        </span>
-                        <span class="text-left min-w-0">
-                            <span class="block text-[12px] font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7] truncate">MGU ePortal</span>
-                            <span class="block text-[8px] font-bold text-[#86868b] leading-[1.2] mt-0.5 truncate">FYUGP courses & transfer</span>
-                        </span>
-                    </span>
-                </button>
             </div>
         </div>
 
@@ -568,7 +553,7 @@ body.app-ready #bootSplash{display:none;}
         <div id="announcementsList" class="space-y-4 pb-24"></div>
     </div>
 
-    <div id="view-class" class="view-panel max-w-md mx-auto p-6">
+    <div id="view-class" class="view-panel w-full max-w-2xl mx-auto px-4 py-6">
         <div class="exam-subnav mb-4" aria-label="Exam menu" c-current="1" c-previous="1">
             <div class="exam-subnav-indicator"></div>
             <button type="button" onclick="switchExamView('view-class')" class="exam-subnav-item is-active" data-top-target="class">Class</button>

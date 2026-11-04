@@ -4943,19 +4943,26 @@ window.renderExamResults = function () {
         const isSemOpen = appState.openInternalDropdown === 'semester';
         const isTypeOpen = appState.openInternalDropdown === 'markType';
 
+        const semLabel = activeSem === 'all' ? 'All Semesters' : `Semester ${activeSem}`;
         let filterHtml = `
-            <!-- Horizontal Semester Filter Pills -->
-            <div class="flex justify-center mb-4 overflow-x-auto max-w-full no-scrollbar">
-                <div class="bg-black/10 dark:bg-white/5 p-1 rounded-2xl flex gap-1 border border-white/5">
-                    ${['1', '2', '3', '4', '5', '6'].map(sem => {
-                        const isActive = activeSem === sem;
-                        return `
-                            <button type="button" onclick="window.switchInternalSemester('${sem}')" 
-                                    class="px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${isActive ? 'bg-[var(--mac-blue)] text-white shadow-md' : 'text-[#86868b] hover:text-white'}">
-                                Sem ${sem}
+            <!-- Semester Selector (list dropdown) -->
+            <div class="mb-4 w-full">
+                <div class="seat-dropdown ${isSemOpen ? 'is-open' : ''}">
+                    <button type="button" onclick="window.toggleInternalDropdown('semester')" class="seat-dropdown__trigger">
+                        <div class="seat-dropdown__meta">
+                            <span class="seat-dropdown__label">Select Semester</span>
+                            <span class="seat-dropdown__value">${semLabel}</span>
+                        </div>
+                        <span class="seat-dropdown__icon">\u2304</span>
+                    </button>
+                    <div class="seat-dropdown__menu">
+                        ${['1', '2', '3', '4', '5', '6'].map(sem => `
+                            <button type="button" onclick="window.switchInternalSemester('${sem}')" class="seat-dropdown__option ${activeSem === sem ? 'is-active' : ''}">
+                                <span class="seat-dropdown__option-title">Semester ${sem}</span>
+                                <span class="seat-dropdown__option-meta">${sem === String(getStudentSemNumber()) ? 'Current semester' : 'View marks'}</span>
                             </button>
-                        `;
-                    }).join('')}
+                        `).join('')}
+                    </div>
                 </div>
             </div>
             
