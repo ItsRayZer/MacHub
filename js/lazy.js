@@ -21,7 +21,7 @@
         'view-resources': ['js/resources.js'],
         'view-results': ['js/mgu_result.js'],
         'view-chat': ['js/chat.js'],
-        'view-explore': ['js/explore.js'],
+        'view-explore': ['js/explore.js', 'js/bcaeasy.js'],
         'view-ai': ['js/mac_ai.js'],
     };
 
