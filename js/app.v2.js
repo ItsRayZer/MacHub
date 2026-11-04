@@ -3827,7 +3827,7 @@ window.renderClassTimetable = function() {
 
     // ── 5. Period Cards ──────────────────────────────────────────────────
     const isDayToday = (day === (isWeekend ? 'Monday' : todayName));
-    const ACCENT_COLORS = ['#e6a800','#7c3aed','#059669','#d97706','#e11d48'];
+    const ACCENT_COLORS = ['#e6a800','#eab308','#059669','#d97706','#e11d48'];
     let cardsHtml = '<div style="display:flex;flex-direction:column;gap:10px;">';
 
     dayPeriods.forEach((period, idx) => {

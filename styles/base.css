@@ -23,6 +23,7 @@
         }
 
         :root {
+            --machub-accent: #eab308;
             --canvas-paper: #FAFAF8;
             --canvas-paper-line: rgba(23, 22, 19, 0.08);
             --canvas-ink: #171613;
@@ -3556,11 +3557,11 @@ body.is-scrolling-down #view-profile.is-active ~ #canvasAddMenu {
 #navPill.study-mode #tab-study-mocks { transition-delay: 0.12s; }
 #navPill.study-mode #tab-study-revise { transition-delay: 0.18s; }
 #navPill.study-mode .study-sub.active .nav-icon {
-    color: #7c3aed;
+    color: #eab308;
     transform: scale(1.12);
 }
 #navPill.study-mode .study-sub.active .nav-label {
-    color: #7c3aed;
+    color: #eab308;
     font-weight: 800;
 }
 /* ── Hide sliding indicator in study mode ── */

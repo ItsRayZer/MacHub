@@ -240,11 +240,11 @@
           <div style="display:flex; flex-direction:column; gap:8px;">
             <label style="font-size:10px; font-weight:800; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.08em; padding-left:2px;">Choose Geometry Essence</label>
             <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:10px;">
-              <div class="whisper-avatar-btn selected" data-idx="0" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);"></div>
+              <div class="whisper-avatar-btn selected" data-idx="0" style="background:linear-gradient(135deg,#eab308,#4f46e5);"></div>
               <div class="whisper-avatar-btn" data-idx="1" style="background:linear-gradient(135deg,#10b981,#06b6d4);"></div>
               <div class="whisper-avatar-btn" data-idx="2" style="background:linear-gradient(135deg,#f43f5e,#f97316);"></div>
               <div class="whisper-avatar-btn" data-idx="3" style="background:linear-gradient(135deg,#fbbf24,#ec4899);"></div>
-              <div class="whisper-avatar-btn" data-idx="4" style="background:linear-gradient(135deg,#2563eb,#7c3aed);"></div>
+              <div class="whisper-avatar-btn" data-idx="4" style="background:linear-gradient(135deg,#2563eb,#eab308);"></div>
             </div>
           </div>
 

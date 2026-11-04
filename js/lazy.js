@@ -28,7 +28,7 @@
     var loaded = {};
     var inflight = {};
 
-    var CACHE_BUST = '?v=2.0.7';
+    var CACHE_BUST = '?v=2.0.8';
 
     function loadScript(src) {
         if (loaded[src]) return Promise.resolve();

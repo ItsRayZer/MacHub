@@ -156,7 +156,7 @@
                     style="padding:16px;border-radius:18px;text-align:left;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:pointer;">
                     <p style="font-size:13px;font-weight:900;color:#f5f5f7;">${esc(s.short)}</p>
                     <p style="font-size:11px;color:#86868b;margin-top:2px;line-height:1.3;">${esc(s.name)}</p>
-                    <p style="font-size:10px;color:#7c3aed;font-weight:800;margin-top:6px;">${qCount} questions</p>
+                    <p style="font-size:10px;color:#eab308;font-weight:800;margin-top:6px;">${qCount} questions</p>
                 </button>`;
         });
         html += `</div>`;
@@ -178,7 +178,7 @@
 
     function backBtn(to) {
         return `<button type="button" onclick="window.BcaEasy.back('${to}')"
-            style="display:flex;align-items:center;gap:6px;padding:8px 0;font-size:13px;font-weight:800;color:#7c3aed;background:none;border:none;cursor:pointer;margin-bottom:8px;">
+            style="display:flex;align-items:center;gap:6px;padding:8px 0;font-size:13px;font-weight:800;color:#eab308;background:none;border:none;cursor:pointer;margin-bottom:8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Back</button>`;
     }
 
@@ -230,7 +230,7 @@
         [['learn', 'Learn'], ['quiz', 'Quiz'], ['cards', 'Flashcards']].forEach(([m, label]) => {
             html += `<button type="button" onclick="window.BcaEasy.setTopicMode('${m}')"
                 style="flex:1;padding:10px;border-radius:14px;font-size:13px;font-weight:800;border:1px solid rgba(255,255,255,0.08);cursor:pointer;
-                ${mode === m ? 'background:#7c3aed;color:#fff;border-color:#7c3aed;' : 'background:rgba(255,255,255,0.04);color:#86868b;'}">${label}</button>`;
+                ${mode === m ? 'background:#eab308;color:#fff;border-color:#eab308;' : 'background:rgba(255,255,255,0.04);color:#86868b;'}">${label}</button>`;
         });
         html += `</div>`;
 
@@ -245,17 +245,17 @@
         // Full course text - all points
         if (t.points && t.points.length) {
             html += `<div class="glass-panel" style="border-radius:16px;padding:18px;margin-bottom:14px;">
-                <p style="font-size:11px;font-weight:900;color:#7c3aed;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Course Text</p>
+                <p style="font-size:11px;font-weight:900;color:#eab308;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Course Text</p>
                 <div style="font-size:14px;color:#d4d4d4;line-height:1.7;display:grid;gap:10px;">`;
             t.points.forEach((p, i) => {
-                html += `<p><span style="color:#7c3aed;font-weight:800;margin-right:6px;">${i + 1}.</span>${esc(p)}</p>`;
+                html += `<p><span style="color:#eab308;font-weight:800;margin-right:6px;">${i + 1}.</span>${esc(p)}</p>`;
             });
             html += `</div></div>`;
         }
         // Model questions with answers
         html += `<p style="font-size:11px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;margin:16px 0 8px;">Model Questions</p>`;
         t.questions.forEach((q, i) => {
-            const tagColor = q.tags && q.tags.includes('SURE MARK') ? '#00d4aa' : q.tags && q.tags.includes('REPEATED') ? '#f59e0b' : '#7c3aed';
+            const tagColor = q.tags && q.tags.includes('SURE MARK') ? '#00d4aa' : q.tags && q.tags.includes('REPEATED') ? '#f59e0b' : '#eab308';
             html += `
                 <div class="glass-panel" style="border-radius:16px;padding:16px;margin-bottom:10px;">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
@@ -265,7 +265,7 @@
                     </div>
                     <p style="font-size:14px;font-weight:700;color:#f5f5f7;margin:6px 0;line-height:1.5;">${esc(q.q)}</p>
                     <button type="button" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.nextElementSibling.style.display==='none'?'Show model answer':'Hide model answer';"
-                        style="font-size:12px;font-weight:800;color:#7c3aed;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);border-radius:10px;padding:8px 14px;cursor:pointer;margin-top:6px;">Show model answer</button>
+                        style="font-size:12px;font-weight:800;color:#eab308;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);border-radius:10px;padding:8px 14px;cursor:pointer;margin-top:6px;">Show model answer</button>
                     <div style="display:none;font-size:13px;color:#a1a1aa;margin-top:10px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;line-height:1.6;">
                         ${(q.a || []).map(a => `<p style="margin-bottom:8px;">${esc(a)}</p>`).join('')}
                     </div>
@@ -286,7 +286,7 @@
                 <p style="font-size:15px;font-weight:800;color:#f5f5f7;margin-top:8px;">Quiz Complete</p>
                 <p style="font-size:13px;color:#86868b;margin-top:4px;">${score.correct} correct · ${score.wrong} wrong · ${total} total</p>
                 <button type="button" onclick="window.BcaEasy.restartQuiz()"
-                    style="margin-top:16px;padding:12px 28px;border-radius:14px;font-size:14px;font-weight:800;background:#7c3aed;color:#fff;border:none;cursor:pointer;">Try Again</button>
+                    style="margin-top:16px;padding:12px 28px;border-radius:14px;font-size:14px;font-weight:800;background:#eab308;color:#fff;border:none;cursor:pointer;">Try Again</button>
             </div>`;
         }
         const q = qs[qi];
@@ -296,10 +296,10 @@
                 <span style="font-size:12px;font-weight:800;"><span style="color:#00d4aa;">${score.correct} ✓</span> <span style="color:#86868b;">·</span> <span style="color:#ef4444;">${score.wrong} ✗</span></span>
             </div>
             <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.08);margin-bottom:16px;overflow:hidden;">
-                <div style="height:100%;width:${Math.round(qi / qs.length * 100)}%;background:#7c3aed;border-radius:3px;transition:width 0.3s;"></div>
+                <div style="height:100%;width:${Math.round(qi / qs.length * 100)}%;background:#eab308;border-radius:3px;transition:width 0.3s;"></div>
             </div>
             <div class="glass-panel" style="border-radius:20px;padding:24px 18px;">
-                ${q.marks ? `<span style="font-size:10px;font-weight:800;color:#7c3aed;background:rgba(124,58,237,0.15);padding:4px 10px;border-radius:20px;">${q.marks} marks</span>` : ''}
+                ${q.marks ? `<span style="font-size:10px;font-weight:800;color:#eab308;background:rgba(234,179,8,0.15);padding:4px 10px;border-radius:20px;">${q.marks} marks</span>` : ''}
                 <p style="font-size:17px;font-weight:800;color:#f5f5f7;margin:12px 0 20px;line-height:1.5;">${esc(q.q)}</p>
                 <div id="quiz-answer" style="display:none;">
                     <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:14px;margin-bottom:16px;">
@@ -317,7 +317,7 @@
                     </div>
                 </div>
                 <button type="button" id="quiz-reveal" onclick="document.getElementById('quiz-answer').style.display='block';this.style.display='none';"
-                    style="width:100%;padding:14px;border-radius:14px;font-size:14px;font-weight:800;background:#7c3aed;color:#fff;border:none;cursor:pointer;">Reveal Answer</button>
+                    style="width:100%;padding:14px;border-radius:14px;font-size:14px;font-weight:800;background:#eab308;color:#fff;border:none;cursor:pointer;">Reveal Answer</button>
             </div>`;
         return html;
     }
@@ -332,12 +332,12 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <span style="font-size:12px;font-weight:800;color:#86868b;">Card ${(fi % qs.length) + 1} of ${qs.length}</span>
                 <button type="button" onclick="window.BcaEasy.shuffleCards()"
-                    style="font-size:12px;font-weight:800;color:#7c3aed;background:none;border:none;cursor:pointer;">Shuffle</button>
+                    style="font-size:12px;font-weight:800;color:#eab308;background:none;border:none;cursor:pointer;">Shuffle</button>
             </div>
             <div onclick="window.BcaEasy.flipCard()"
                 style="border-radius:20px;min-height:280px;padding:28px 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;
-                background:${flipped ? 'rgba(0,212,170,0.08)' : 'rgba(124,58,237,0.08)'};
-                border:1px solid ${flipped ? 'rgba(0,212,170,0.25)' : 'rgba(124,58,237,0.25)'};
+                background:${flipped ? 'rgba(0,212,170,0.08)' : 'rgba(234,179,8,0.08)'};
+                border:1px solid ${flipped ? 'rgba(0,212,170,0.25)' : 'rgba(234,179,8,0.25)'};
                 transition:all 0.3s;">
                 <p style="font-size:10px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:12px;">${flipped ? 'Answer' : 'Question'} · tap to flip</p>
                 ${flipped
@@ -348,7 +348,7 @@
                 <button type="button" onclick="window.BcaEasy.prevCard()"
                     style="flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:800;background:rgba(255,255,255,0.06);color:#f5f5f7;border:1px solid rgba(255,255,255,0.1);cursor:pointer;">Previous</button>
                 <button type="button" onclick="window.BcaEasy.nextCard()"
-                    style="flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:800;background:#7c3aed;color:#fff;border:none;cursor:pointer;">Next</button>
+                    style="flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:800;background:#eab308;color:#fff;border:none;cursor:pointer;">Next</button>
             </div>`;
     }
 
@@ -366,7 +366,7 @@
             <h1 style="font-size:24px;font-weight:900;color:#f5f5f7;letter-spacing:-0.02em;">Mock Tests</h1>
             <p style="font-size:13px;color:#86868b;margin-top:2px;">Timed practice, exam-style questions.</p>
             <div class="glass-panel" style="border-radius:20px;padding:32px 20px;text-align:center;margin-top:16px;">
-                <div style="width:52px;height:52px;border-radius:18px;background:rgba(124,58,237,0.15);color:#a78bfa;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                <div style="width:52px;height:52px;border-radius:18px;background:rgba(234,179,8,0.15);color:#facc15;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
                 </div>
                 <p style="font-size:15px;font-weight:800;color:#f5f5f7;">Coming soon</p>
@@ -416,13 +416,13 @@
         const lockedCount = S.docs.filter(d => !canAccess(d)).length;
         if (!semUnlocked && lockedCount > 0) {
             html += `
-            <div class="glass-panel" style="border-radius:20px;padding:20px;text-align:center;margin-bottom:16px;border:1px solid rgba(124,58,237,0.3);">
-                <div style="width:48px;height:48px;border-radius:16px;background:rgba(124,58,237,0.15);color:#a78bfa;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">${IC.lock}</div>
+            <div class="glass-panel" style="border-radius:20px;padding:20px;text-align:center;margin-bottom:16px;border:1px solid rgba(234,179,8,0.3);">
+                <div style="width:48px;height:48px;border-radius:16px;background:rgba(234,179,8,0.15);color:#facc15;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">${IC.lock}</div>
                 <h3 style="font-size:16px;font-weight:900;color:#f5f5f7;">Unlock Semester ${S.semester} PDFs</h3>
                 <p style="font-size:12px;color:#86868b;margin-top:4px;">Every chapter PDF + notes. One-time payment, yours forever.</p>
                 <div style="font-size:28px;font-weight:900;color:#f5f5f7;margin-top:8px;">${UNLOCK_PRICE_INR} INR <span style="font-size:11px;font-weight:600;color:#86868b;">one-time</span></div>
                 <button type="button" onclick="window.BcaEasy.unlock(${S.semester})" id="bcaeasy-unlock-btn"
-                    style="width:100%;margin-top:12px;padding:14px;border-radius:16px;background:#7c3aed;color:#fff;font-size:14px;font-weight:800;border:none;cursor:pointer;">Unlock now</button>
+                    style="width:100%;margin-top:12px;padding:14px;border-radius:16px;background:#eab308;color:#fff;font-size:14px;font-weight:800;border:none;cursor:pointer;">Unlock now</button>
                 <p style="font-size:10px;color:#86868b;margin-top:8px;">Secure payment via Razorpay (UPI, cards, netbanking)</p>
             </div>`;
         }
@@ -438,7 +438,7 @@
                 html += `
                 <button type="button" ${locked ? 'disabled' : `onclick="window.BcaEasy.openDoc('${d.id}')"`}
                     style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;margin-bottom:8px;text-align:left;cursor:${locked ? 'default' : 'pointer'};border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);${locked ? 'opacity:0.65;' : ''}">
-                    <span style="width:40px;height:40px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;${locked ? 'background:rgba(255,255,255,0.06);color:#86868b;' : 'background:rgba(124,58,237,0.15);color:#a78bfa;'}">${locked ? IC.lock : IC.unlock}</span>
+                    <span style="width:40px;height:40px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;${locked ? 'background:rgba(255,255,255,0.06);color:#86868b;' : 'background:rgba(234,179,8,0.15);color:#facc15;'}">${locked ? IC.lock : IC.unlock}</span>
                     <span style="flex:1;min-width:0;">
                         <span style="display:block;font-size:13px;font-weight:800;color:#f5f5f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Ch ${d.chapter}: ${esc(d.title)}</span>
                         <span style="font-size:11px;color:#86868b;">${d.is_free ? 'Free' : locked ? 'Locked' : 'Unlocked'}</span>
@@ -466,7 +466,7 @@
             <p style="font-size:10px;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:0.12em;">Your referral code</p>
             <p style="font-size:28px;font-weight:900;letter-spacing:0.15em;color:#f5f5f7;margin:8px 0;">${esc(S.refCode || '—')}</p>
             <button type="button" onclick="window.BcaEasy.share()"
-                style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:16px;background:#7c3aed;color:#fff;font-size:14px;font-weight:800;border:none;cursor:pointer;">${IC.share} Share invite</button>
+                style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:16px;background:#eab308;color:#fff;font-size:14px;font-weight:800;border:none;cursor:pointer;">${IC.share} Share invite</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;">
             ${[['Invited', S.refStats.total], ['Paid', S.refStats.paid], ['Earned', earned + ' INR']].map(([l, v]) => `

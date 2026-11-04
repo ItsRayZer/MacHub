@@ -625,7 +625,7 @@
               </div>
 
               <!-- CTA Button -->
-              <button onclick="window.showMguLogin()" style="width:100%;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a855f7 100%);color:#fff;border:none;border-radius:16px;padding:15px 20px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:-0.01em;box-shadow:0 10px 24px rgba(99,102,241,0.35),inset 0 1px 0 rgba(255,255,255,0.2);transition:opacity .15s,transform .15s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'" ontouchstart="this.style.transform='scale(0.98)'" ontouchend="this.style.transform='scale(1)'">
+              <button onclick="window.showMguLogin()" style="width:100%;background:linear-gradient(135deg,#6366f1 0%,#f59e0b 50%,#a855f7 100%);color:#fff;border:none;border-radius:16px;padding:15px 20px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:-0.01em;box-shadow:0 10px 24px rgba(99,102,241,0.35),inset 0 1px 0 rgba(255,255,255,0.2);transition:opacity .15s,transform .15s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'" ontouchstart="this.style.transform='scale(0.98)'" ontouchend="this.style.transform='scale(1)'">
                 Connect My MGU Portal
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
@@ -731,7 +731,7 @@
                   <button
                     type="submit"
                     ${S.isScraping ? 'disabled' : ''}
-                    style="width:100%;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a855f7 100%);color:#fff;border:none;border-radius:18px;padding:18px 24px;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:4px;box-shadow:0 12px 40px rgba(99,102,241,0.4),inset 0 1px 0 rgba(255,255,255,0.2);transition:opacity .15s,transform .15s;letter-spacing:-0.01em;${S.isScraping ? 'opacity:0.6;cursor:not-allowed;' : ''}"
+                    style="width:100%;background:linear-gradient(135deg,#6366f1 0%,#f59e0b 50%,#a855f7 100%);color:#fff;border:none;border-radius:18px;padding:18px 24px;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:4px;box-shadow:0 12px 40px rgba(99,102,241,0.4),inset 0 1px 0 rgba(255,255,255,0.2);transition:opacity .15s,transform .15s;letter-spacing:-0.01em;${S.isScraping ? 'opacity:0.6;cursor:not-allowed;' : ''}"
                     ${S.isScraping ? '' : "onmousedown=\"this.style.transform='scale(0.97)'\" onmouseup=\"this.style.transform='scale(1)'\" ontouchstart=\"this.style.transform='scale(0.97)'\" ontouchend=\"this.style.transform='scale(1)'\""}
                   >
                     ${S.isScraping ? `
