@@ -28,12 +28,14 @@
     var loaded = {};
     var inflight = {};
 
+    var CACHE_BUST = '?v=2.0.6';
+
     function loadScript(src) {
         if (loaded[src]) return Promise.resolve();
         if (inflight[src]) return inflight[src];
         inflight[src] = new Promise(function (resolve) {
             var el = document.createElement('script');
-            el.src = src;
+            el.src = src + CACHE_BUST;
             el.async = false; // keep execution order among lazy scripts
             el.onload = function () { loaded[src] = true; resolve(); };
             el.onerror = function () {
