@@ -52,6 +52,11 @@
         selSubject: null,
         selModule: null,
         selTopic: null,
+        topicMode: 'learn',   // learn | quiz | cards
+        quizIndex: 0,
+        quizScore: null,
+        cardIndex: 0,
+        cardFlipped: false,
         subjects: [],
         semester: 3,
         docs: [],
@@ -212,31 +217,139 @@
         return html;
     }
 
+    /* ----- Topic Detail: Learn / Quiz / Flashcards ----- */
     function questionsHtml() {
         const t = S.selTopic;
+        const mode = S.topicMode || 'learn';
         let html = backBtn('topics');
         html += `<h1 style="font-size:20px;font-weight:900;color:#f5f5f7;">${esc(t.title)}</h1>
-            <p style="font-size:12px;color:#86868b;margin:4px 0 12px;">${t.questions.length} questions</p>`;
+            <p style="font-size:12px;color:#86868b;margin:4px 0 12px;">${t.questions.length} questions · ${t.points ? t.points.length : 0} key points</p>`;
+
+        // Mode tabs
+        html += `<div style="display:flex;gap:8px;margin-bottom:14px;">`;
+        [['learn', 'Learn'], ['quiz', 'Quiz'], ['cards', 'Flashcards']].forEach(([m, label]) => {
+            html += `<button type="button" onclick="window.BcaEasy.setTopicMode('${m}')"
+                style="flex:1;padding:10px;border-radius:14px;font-size:13px;font-weight:800;border:1px solid rgba(255,255,255,0.08);cursor:pointer;
+                ${mode === m ? 'background:#7c3aed;color:#fff;border-color:#7c3aed;' : 'background:rgba(255,255,255,0.04);color:#86868b;'}">${label}</button>`;
+        });
+        html += `</div>`;
+
+        if (mode === 'learn') html += learnHtml(t);
+        else if (mode === 'quiz') html += quizHtml(t);
+        else html += flashcardsHtml(t);
+        return html;
+    }
+
+    function learnHtml(t) {
+        let html = '';
+        // Full course text - all points
         if (t.points && t.points.length) {
-            html += `<div class="glass-panel" style="border-radius:16px;padding:16px;margin-bottom:12px;">
-                <p style="font-size:11px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Key Points</p>
-                <ul style="font-size:13px;color:#d4d4d4;padding-left:18px;display:grid;gap:6px;">`;
-            t.points.slice(0, 8).forEach(p => { html += `<li>${esc(p)}</li>`; });
-            html += `</ul></div>`;
+            html += `<div class="glass-panel" style="border-radius:16px;padding:18px;margin-bottom:14px;">
+                <p style="font-size:11px;font-weight:900;color:#7c3aed;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Course Text</p>
+                <div style="font-size:14px;color:#d4d4d4;line-height:1.7;display:grid;gap:10px;">`;
+            t.points.forEach((p, i) => {
+                html += `<p><span style="color:#7c3aed;font-weight:800;margin-right:6px;">${i + 1}.</span>${esc(p)}</p>`;
+            });
+            html += `</div></div>`;
         }
+        // Model questions with answers
+        html += `<p style="font-size:11px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;margin:16px 0 8px;">Model Questions</p>`;
         t.questions.forEach((q, i) => {
+            const tagColor = q.tags && q.tags.includes('SURE MARK') ? '#00d4aa' : q.tags && q.tags.includes('REPEATED') ? '#f59e0b' : '#7c3aed';
             html += `
                 <div class="glass-panel" style="border-radius:16px;padding:16px;margin-bottom:10px;">
-                    <p style="font-size:10px;font-weight:800;color:#7c3aed;">Q${i + 1} · ${q.marks || ''} marks</p>
-                    <p style="font-size:14px;font-weight:700;color:#f5f5f7;margin:6px 0;">${esc(q.q)}</p>
-                    <button type="button" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.nextElementSibling.style.display==='none'?'Show answer':'Hide answer';"
-                        style="font-size:12px;font-weight:800;color:#7c3aed;background:none;border:none;cursor:pointer;padding:4px 0;">Show answer</button>
-                    <div style="display:none;font-size:13px;color:#a1a1aa;margin-top:8px;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
-                        ${(q.a || []).map(a => `<p style="margin-bottom:6px;">${esc(a)}</p>`).join('')}
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span style="font-size:10px;font-weight:800;color:#fff;background:${tagColor};padding:3px 8px;border-radius:20px;">Q${i + 1}</span>
+                        ${q.marks ? `<span style="font-size:10px;font-weight:700;color:#86868b;">${q.marks} marks</span>` : ''}
+                        ${q.tags && q.tags.length ? `<span style="font-size:10px;font-weight:700;color:${tagColor};">${esc(q.tags[0])}</span>` : ''}
+                    </div>
+                    <p style="font-size:14px;font-weight:700;color:#f5f5f7;margin:6px 0;line-height:1.5;">${esc(q.q)}</p>
+                    <button type="button" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.nextElementSibling.style.display==='none'?'Show model answer':'Hide model answer';"
+                        style="font-size:12px;font-weight:800;color:#7c3aed;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);border-radius:10px;padding:8px 14px;cursor:pointer;margin-top:6px;">Show model answer</button>
+                    <div style="display:none;font-size:13px;color:#a1a1aa;margin-top:10px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;line-height:1.6;">
+                        ${(q.a || []).map(a => `<p style="margin-bottom:8px;">${esc(a)}</p>`).join('')}
                     </div>
                 </div>`;
         });
         return html;
+    }
+
+    function quizHtml(t) {
+        const qi = S.quizIndex || 0;
+        const score = S.quizScore || { correct: 0, wrong: 0 };
+        const qs = t.questions;
+        if (qi >= qs.length) {
+            const total = score.correct + score.wrong;
+            const pct = total ? Math.round(score.correct / total * 100) : 0;
+            return `<div class="glass-panel" style="border-radius:20px;padding:32px 20px;text-align:center;">
+                <p style="font-size:48px;font-weight:900;color:${pct >= 70 ? '#00d4aa' : pct >= 40 ? '#f59e0b' : '#ef4444'};">${pct}%</p>
+                <p style="font-size:15px;font-weight:800;color:#f5f5f7;margin-top:8px;">Quiz Complete</p>
+                <p style="font-size:13px;color:#86868b;margin-top:4px;">${score.correct} correct · ${score.wrong} wrong · ${total} total</p>
+                <button type="button" onclick="window.BcaEasy.restartQuiz()"
+                    style="margin-top:16px;padding:12px 28px;border-radius:14px;font-size:14px;font-weight:800;background:#7c3aed;color:#fff;border:none;cursor:pointer;">Try Again</button>
+            </div>`;
+        }
+        const q = qs[qi];
+        let html = `
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <span style="font-size:12px;font-weight:800;color:#86868b;">Question ${qi + 1} of ${qs.length}</span>
+                <span style="font-size:12px;font-weight:800;"><span style="color:#00d4aa;">${score.correct} ✓</span> <span style="color:#86868b;">·</span> <span style="color:#ef4444;">${score.wrong} ✗</span></span>
+            </div>
+            <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.08);margin-bottom:16px;overflow:hidden;">
+                <div style="height:100%;width:${Math.round(qi / qs.length * 100)}%;background:#7c3aed;border-radius:3px;transition:width 0.3s;"></div>
+            </div>
+            <div class="glass-panel" style="border-radius:20px;padding:24px 18px;">
+                ${q.marks ? `<span style="font-size:10px;font-weight:800;color:#7c3aed;background:rgba(124,58,237,0.15);padding:4px 10px;border-radius:20px;">${q.marks} marks</span>` : ''}
+                <p style="font-size:17px;font-weight:800;color:#f5f5f7;margin:12px 0 20px;line-height:1.5;">${esc(q.q)}</p>
+                <div id="quiz-answer" style="display:none;">
+                    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:14px;margin-bottom:16px;">
+                        <p style="font-size:11px;font-weight:900;color:#00d4aa;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Model Answer</p>
+                        <div style="font-size:13px;color:#a1a1aa;line-height:1.6;display:grid;gap:8px;max-height:200px;overflow-y:auto;">
+                            ${(q.a || []).map(a => `<p>${esc(a)}</p>`).join('')}
+                        </div>
+                    </div>
+                    <p style="font-size:13px;font-weight:700;color:#86868b;margin-bottom:10px;">Did you get it right?</p>
+                    <div style="display:flex;gap:10px;">
+                        <button type="button" onclick="window.BcaEasy.quizAnswer(true)"
+                            style="flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:800;background:rgba(0,212,170,0.15);color:#00d4aa;border:1px solid rgba(0,212,170,0.4);cursor:pointer;">I was right</button>
+                        <button type="button" onclick="window.BcaEasy.quizAnswer(false)"
+                            style="flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:800;background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.4);cursor:pointer;">I was wrong</button>
+                    </div>
+                </div>
+                <button type="button" id="quiz-reveal" onclick="document.getElementById('quiz-answer').style.display='block';this.style.display='none';"
+                    style="width:100%;padding:14px;border-radius:14px;font-size:14px;font-weight:800;background:#7c3aed;color:#fff;border:none;cursor:pointer;">Reveal Answer</button>
+            </div>`;
+        return html;
+    }
+
+    function flashcardsHtml(t) {
+        const fi = S.cardIndex || 0;
+        const qs = t.questions;
+        if (!qs.length) return `<p style="color:#86868b;text-align:center;padding:20px;">No flashcards for this topic yet.</p>`;
+        const q = qs[fi % qs.length];
+        const flipped = S.cardFlipped;
+        return `
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <span style="font-size:12px;font-weight:800;color:#86868b;">Card ${(fi % qs.length) + 1} of ${qs.length}</span>
+                <button type="button" onclick="window.BcaEasy.shuffleCards()"
+                    style="font-size:12px;font-weight:800;color:#7c3aed;background:none;border:none;cursor:pointer;">Shuffle</button>
+            </div>
+            <div onclick="window.BcaEasy.flipCard()"
+                style="border-radius:20px;min-height:280px;padding:28px 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;
+                background:${flipped ? 'rgba(0,212,170,0.08)' : 'rgba(124,58,237,0.08)'};
+                border:1px solid ${flipped ? 'rgba(0,212,170,0.25)' : 'rgba(124,58,237,0.25)'};
+                transition:all 0.3s;">
+                <p style="font-size:10px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:12px;">${flipped ? 'Answer' : 'Question'} · tap to flip</p>
+                ${flipped
+                    ? `<div style="font-size:14px;color:#d4d4d4;line-height:1.6;display:grid;gap:8px;max-height:320px;overflow-y:auto;">${(q.a || []).map(a => `<p>${esc(a)}</p>`).join('')}</div>`
+                    : `<p style="font-size:17px;font-weight:800;color:#f5f5f7;line-height:1.5;">${esc(q.q)}</p>`}
+            </div>
+            <div style="display:flex;gap:10px;margin-top:14px;">
+                <button type="button" onclick="window.BcaEasy.prevCard()"
+                    style="flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:800;background:rgba(255,255,255,0.06);color:#f5f5f7;border:1px solid rgba(255,255,255,0.1);cursor:pointer;">Previous</button>
+                <button type="button" onclick="window.BcaEasy.nextCard()"
+                    style="flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:800;background:#7c3aed;color:#fff;border:none;cursor:pointer;">Next</button>
+            </div>`;
     }
 
     function studentName() {
@@ -445,7 +558,38 @@
         },
         openTopic(i) {
             S.selTopic = S.selModule.topics[i];
-            S.view = 'questions'; render();
+            S.view = 'questions';
+            S.topicMode = 'learn';
+            S.quizIndex = 0; S.quizScore = null;
+            S.cardIndex = 0; S.cardFlipped = false;
+            render();
+        },
+        setTopicMode(m) {
+            S.topicMode = m;
+            S.quizIndex = 0; S.quizScore = null;
+            S.cardIndex = 0; S.cardFlipped = false;
+            render();
+        },
+        quizAnswer(correct) {
+            if (!S.quizScore) S.quizScore = { correct: 0, wrong: 0 };
+            if (correct) S.quizScore.correct++; else S.quizScore.wrong++;
+            S.quizIndex++;
+            render();
+        },
+        restartQuiz() {
+            S.quizIndex = 0; S.quizScore = null;
+            render();
+        },
+        flipCard() { S.cardFlipped = !S.cardFlipped; render(); },
+        nextCard() { S.cardIndex++; S.cardFlipped = false; render(); },
+        prevCard() { if (S.cardIndex > 0) S.cardIndex--; S.cardFlipped = false; render(); },
+        shuffleCards() {
+            const qs = S.selTopic.questions;
+            for (let i = qs.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [qs[i], qs[j]] = [qs[j], qs[i]];
+            }
+            S.cardIndex = 0; S.cardFlipped = false; render();
         },
         back(to) {
             S.view = to;
