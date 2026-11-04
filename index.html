@@ -455,6 +455,27 @@ body.app-ready #bootSplash{display:none;}
                         }
                     }
                 };
+
+                // Unified Exam Result shortcut: single navigation + single guarded
+                // fetch path. Replaces the old double-invocation
+                // (syncAndOpenNative + openCollegeResultTab) which raced and
+                // could freeze the app.
+                window.openExamResultShortcut = function() {
+                    // Navigate first for instant feedback
+                    if (window.openCollegeResultTab) {
+                        window.openCollegeResultTab();
+                    } else {
+                        if (typeof switchExamView === 'function') switchExamView('view-seats');
+                    }
+                    // Background sync: ExamResult section (guarded by fetchSection's
+                    // own currentlyLoading lock). InternalMark/Assessment are
+                    // handled by autoFetchInternals via renderExamResults.
+                    if (window.MacHubPortal && typeof window.MacHubPortal.fetchSection === 'function') {
+                        window.MacHubPortal.fetchSection('ExamResult', true).catch(function(e) {
+                            console.warn('[ExamResult] background sync failed:', e && e.message);
+                        });
+                    }
+                };
             </script>
 
             <div class="grid grid-cols-2 gap-3" id="homeShortcutsGrid">
@@ -475,7 +496,7 @@ body.app-ready #bootSplash{display:none;}
 
                 <!-- Exam Result -->
                 <button type="button" class="glass-panel p-4 rounded-3xl spring active:scale-95 text-center flex flex-col items-center justify-center gap-2 cursor-pointer w-full"
-                     onclick="window.syncAndOpenNative('ExamResult', 'view-seats', null); if(window.openCollegeResultTab) window.openCollegeResultTab();"
+                     onclick="if(window.openExamResultShortcut) window.openExamResultShortcut();"
                      style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                     <span class="w-12 h-12 rounded-[1rem] flex items-center justify-center shadow-sm mb-1"
                           style="background: rgba(255, 179, 71, 0.15); color: #ffb347; border: 1px solid rgba(255, 179, 71, 0.3);">

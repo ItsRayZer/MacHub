@@ -4757,6 +4757,17 @@ window.openCollegeResultTab = function() {
 };
 
 window.renderExamResults = function () {
+    // Re-entrancy guard: rapid successive calls (e.g. from overlapping
+    // fetch completions) collapse into one render on the next frame.
+    if (window._renderExamResultsQueued) return;
+    window._renderExamResultsQueued = true;
+    requestAnimationFrame(function() {
+        window._renderExamResultsQueued = false;
+        _renderExamResultsNow();
+    });
+};
+
+function _renderExamResultsNow() {
     const container = document.getElementById('sub-view-results');
     if (!container) return;
 
