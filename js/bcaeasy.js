@@ -46,7 +46,8 @@
 
     /* ---------------- State ---------------- */
     const S = {
-        tab: 'library',
+        studyTab: 'home',   // home | mocks | revise  (bottom nav study mode)
+        tab: 'library',     // library | refer | wallet (inside study home)
         semester: 3,
         docs: [],
         unlocked: [],
@@ -107,10 +108,21 @@
     function render() {
         const root = $('exploreViewRoot');
         if (!root) return;
+        const body = S.studyTab === 'home' ? studyHomeHtml()
+            : S.studyTab === 'mocks' ? mocksHtml()
+            : reviseHtml();
         root.innerHTML = `
         <div style="max-width:480px;margin:0 auto;padding:20px 16px 120px;">
-            <h1 style="font-size:24px;font-weight:900;color:#f5f5f7;letter-spacing:-0.02em;">BcaEasy</h1>
-            <p style="font-size:13px;color:#86868b;margin-top:2px;">Study PDFs, referrals and wallet.</p>
+            ${body}
+        </div>`;
+    }
+
+    /* ----- Study Home (BcaEasy homepage) ----- */
+    function studyHomeHtml() {
+        const name = studentName();
+        return `
+            <h1 style="font-size:24px;font-weight:900;color:#f5f5f7;letter-spacing:-0.02em;">Hi, ${esc(name)}</h1>
+            <p style="font-size:13px;color:#86868b;margin-top:2px;">Ready to study smarter today?</p>
 
             <div style="display:flex;gap:8px;margin:16px 0;">
                 ${['library', 'refer', 'wallet'].map(t => `
@@ -121,8 +133,43 @@
                     </button>`).join('')}
             </div>
 
-            <div id="bcaeasy-body">${S.tab === 'library' ? libraryHtml() : S.tab === 'refer' ? referHtml() : walletHtml()}</div>
-        </div>`;
+            <div id="bcaeasy-body">${S.tab === 'library' ? libraryHtml() : S.tab === 'refer' ? referHtml() : walletHtml()}</div>`;
+    }
+
+    function studentName() {
+        try {
+            const info = typeof getStudentInfo === 'function' ? getStudentInfo() : null;
+            if (info && info.name) return info.name.split(' ')[0].toUpperCase();
+        } catch (e) {}
+        return 'STUDENT';
+    }
+
+    /* ----- Mocks page ----- */
+    function mocksHtml() {
+        return `
+            <h1 style="font-size:24px;font-weight:900;color:#f5f5f7;letter-spacing:-0.02em;">Mock Tests</h1>
+            <p style="font-size:13px;color:#86868b;margin-top:2px;">Timed practice, exam-style questions.</p>
+            <div class="glass-panel" style="border-radius:20px;padding:32px 20px;text-align:center;margin-top:16px;">
+                <div style="width:52px;height:52px;border-radius:18px;background:rgba(124,58,237,0.15);color:#a78bfa;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+                </div>
+                <p style="font-size:15px;font-weight:800;color:#f5f5f7;">Coming soon</p>
+                <p style="font-size:12px;color:#86868b;margin-top:6px;">Full-length mock tests for every subject are being prepared.</p>
+            </div>`;
+    }
+
+    /* ----- Revise page ----- */
+    function reviseHtml() {
+        return `
+            <h1 style="font-size:24px;font-weight:900;color:#f5f5f7;letter-spacing:-0.02em;">Revise</h1>
+            <p style="font-size:13px;color:#86868b;margin-top:2px;">Quick revision, flashcards and key points.</p>
+            <div class="glass-panel" style="border-radius:20px;padding:32px 20px;text-align:center;margin-top:16px;">
+                <div style="width:52px;height:52px;border-radius:18px;background:rgba(0,212,170,0.12);color:#00d4aa;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                </div>
+                <p style="font-size:15px;font-weight:800;color:#f5f5f7;">Coming soon</p>
+                <p style="font-size:12px;color:#86868b;margin-top:6px;">Smart revision decks for every chapter are being prepared.</p>
+            </div>`;
     }
 
     function notConfiguredHtml() {
@@ -276,6 +323,11 @@
     window.BcaEasy = {
         switchTab(t) { S.tab = t; render(); if (t === 'library' && !S.docs.length) loadAll(); },
         setSemester(s) { S.semester = s; S.docs = []; loadAll(); },
+        showStudy(tab) {
+            S.studyTab = tab || 'home';
+            render();
+            if (S.studyTab === 'home' && !S.docs.length && configured()) loadAll();
+        },
 
         async openDoc(id) {
             const sb = db(); if (!sb) return;

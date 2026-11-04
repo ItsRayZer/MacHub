@@ -3454,3 +3454,62 @@ body.is-scrolling-down #view-profile.is-active ~ #canvasAddMenu {
         transform: translateX(-50%) !important;
     }
 }
+
+/* ── Study mode nav morph (Apple-like smooth) ── */
+#navPill {
+    transition: all 0.45s cubic-bezier(0.32, 0.72, 0.35, 1);
+}
+#navPill .nav-item {
+    transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.32, 0.72, 0.35, 1), width 0.45s cubic-bezier(0.32, 0.72, 0.35, 1);
+}
+/* Study mode: hide normal tabs with fade+scale */
+#navPill.study-mode #tab-view-home,
+#navPill.study-mode #tab-view-explore {
+    opacity: 0;
+    transform: scale(0.6);
+    width: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+/* Study mode: isolate Schedule left, Profile right (icon only, smaller) */
+#navPill.study-mode #tab-view-exam,
+#navPill.study-mode #tab-view-profile {
+    width: 48px;
+    opacity: 0.7;
+}
+#navPill.study-mode #tab-view-exam .nav-label,
+#navPill.study-mode #tab-view-profile .nav-label {
+    display: none;
+}
+/* Study sub-tabs: spring in with stagger */
+#navPill .study-sub {
+    opacity: 0;
+    transform: scale(0.5);
+    width: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+#navPill.study-mode .study-sub {
+    opacity: 1;
+    transform: scale(1);
+    width: 64px;
+    pointer-events: auto;
+}
+#navPill.study-mode #tab-study-home { transition-delay: 0.05s; }
+#navPill.study-mode #tab-study-mocks { transition-delay: 0.12s; }
+#navPill.study-mode #tab-study-revise { transition-delay: 0.19s; }
+#navPill.study-mode .study-sub.active .nav-icon {
+    color: #7c3aed;
+}
+/* Hide the sliding indicator in study mode (sub-tabs manage their own) */
+#navPill.study-mode #navIndicator {
+    opacity: 0;
+}
+/* Study view enter animation */
+#view-explore.study-enter {
+    animation: studyEnter 0.5s cubic-bezier(0.32, 0.72, 0.35, 1);
+}
+@keyframes studyEnter {
+    from { opacity: 0; transform: scale(0.96) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
