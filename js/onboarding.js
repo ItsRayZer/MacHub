@@ -17,7 +17,7 @@ function escapeHtml(value) {
 }
 
 function profileAccent(student) {
-    const palette = ['#0071e3', '#34c759', '#ff9f0a', '#ff375f', '#5e5ce6', '#32ade6'];
+    const palette = ['#e6a800', '#34c759', '#ff9f0a', '#ff375f', '#5e5ce6', '#32ade6'];
     const seed = `${student?.adminNo || ''}${student?.classNo || ''}${student?.name || ''}`;
     const code = seed.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
     return palette[code % palette.length];

@@ -453,7 +453,7 @@ body::after {
 
 .intro-search-label {
     padding-left: 0.15rem;
-    color: var(--mac-blue);
+    color: var(--hub);
     font-size: 0.64rem;
     font-weight: 950;
     letter-spacing: 0.22em;
@@ -578,7 +578,7 @@ body::after {
     border-radius: 1rem;
     display: grid;
     place-items: center;
-    background: var(--mac-blue);
+    background: var(--hub);
     color: white;
     font-weight: 950;
     box-shadow: 0 12px 24px rgba(0, 113, 227, 0.18);
@@ -597,8 +597,8 @@ body::after {
     content: "";
     position: absolute;
     inset: 0.64rem 0.72rem 0.64rem 0.58rem;
-    border-top: 2px solid var(--mac-blue);
-    border-right: 2px solid var(--mac-blue);
+    border-top: 2px solid var(--hub);
+    border-right: 2px solid var(--hub);
     transform: rotate(45deg);
 }
 
@@ -606,7 +606,7 @@ body::after {
     width: 100%;
     min-height: 3.35rem;
     border-radius: 1.25rem;
-    color: var(--mac-blue);
+    color: var(--hub);
     font-size: 0.75rem;
     font-weight: 950;
     letter-spacing: 0.12em;
@@ -633,7 +633,7 @@ body::after {
 
 .ob-empty-result button {
     margin-top: 0.8rem;
-    color: var(--mac-blue);
+    color: var(--hub);
     font-size: 0.64rem;
     font-weight: 950;
     letter-spacing: 0.14em;
@@ -874,7 +874,7 @@ body::after {
     height: 2.35rem;
     border-radius: 999px;
     border: 3px solid rgba(0, 113, 227, 0.18);
-    border-top-color: var(--mac-blue);
+    border-top-color: var(--hub);
     animation: external-app-spin 0.82s linear infinite;
 }
 
@@ -1441,7 +1441,7 @@ body::after {
 .accreditation-badge:hover .accreditation-circle {
     transform: translateY(-4px) rotate(8deg);
     background: rgba(255, 255, 255, 0.09);
-    border-color: var(--mac-blue);
+    border-color: var(--hub);
 }
 
 /* Premium Instagram Profile Tab Bar */
@@ -1475,7 +1475,7 @@ body::after {
     position: absolute;
     bottom: -1px;
     height: 2px;
-    background: var(--mac-blue);
+    background: var(--hub);
     border-radius: 2px;
     transition: left 0.35s cubic-bezier(0.32, 0.72, 0, 1), width 0.35s cubic-bezier(0.32, 0.72, 0, 1);
 }

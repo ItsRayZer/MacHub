@@ -1988,17 +1988,17 @@
         { id:'av_f3', src:'assets/img/avatars/av_f3.png', label:'Anjali', cat:'female', accent:'#8a2be2' },
         { id:'av_f4', src:'assets/img/avatars/av_f4.png', label:'Nisha', cat:'female', accent:'#00F5D4' },
         { id:'av_f5', src:'assets/img/avatars/av_f5.png', label:'Kavya', cat:'female', accent:'#FFB703' },
-        { id:'av_m1', src:'assets/img/avatars/av_m1.png', label:'Arjun', cat:'male', accent:'#0a84ff' },
+        { id:'av_m1', src:'assets/img/avatars/av_m1.png', label:'Arjun', cat:'male', accent:'#ffd275' },
         { id:'av_m2', src:'assets/img/avatars/av_m2.png', label:'Dev', cat:'male', accent:'#00F5D4' },
         { id:'av_m3', src:'assets/img/avatars/av_m3.png', label:'Rahul', cat:'male', accent:'#ee2a7b' },
         { id:'av_m4', src:'assets/img/avatars/av_m4.png', label:'Kiran', cat:'male', accent:'#FFB703' },
         { id:'av_tech1', emoji:'💻', label:'Coder', cat:'tech', accent:'#00F5D4' },
-        { id:'av_tech2', emoji:'🤖', label:'Bot', cat:'tech', accent:'#0a84ff' },
+        { id:'av_tech2', emoji:'🤖', label:'Bot', cat:'tech', accent:'#ffd275' },
         { id:'av_tech3', emoji:'👾', label:'Gamer', cat:'tech', accent:'#8a2be2' },
         { id:'av_kerala1', emoji:'🌴', label:'Mallu', cat:'kerala', accent:'#4CAF50' },
         { id:'av_kerala2', emoji:'🥥', label:'Coconut', cat:'kerala', accent:'#FFB703' },
         { id:'av_kerala3', emoji:'🐘', label:'Elephant', cat:'kerala', accent:'#8a2be2' },
-        { id:'av_football1', emoji:'⚽', label:'Messi', cat:'football', accent:'#0a84ff' },
+        { id:'av_football1', emoji:'⚽', label:'Messi', cat:'football', accent:'#ffd275' },
         { id:'av_football2', emoji:'🏆', label:'Ronaldo', cat:'football', accent:'#ee2a7b' },
         { id:'av_football3', emoji:'🥅', label:'Keeper', cat:'football', accent:'#00F5D4' },
     ];
@@ -4157,7 +4157,7 @@
         const borderStyle = AVATAR_BORDERS[avatarBorderIndex];
         const ring = document.querySelector('.new-profile-avatar-ring');
         if (ring) {
-            if (borderStyle === 'cyan') ring.style.background = 'linear-gradient(135deg, #00F5D4, #0071e3)';
+            if (borderStyle === 'cyan') ring.style.background = 'linear-gradient(135deg, #00F5D4, #e6a800)';
             else if (borderStyle === 'story') ring.style.background = 'linear-gradient(45deg, #f09433, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888)';
             else ring.style.background = 'rgba(255, 255, 255, 0.2)';
         }

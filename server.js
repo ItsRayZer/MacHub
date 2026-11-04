@@ -176,7 +176,7 @@ async function getSession(admissionNumber, customPassword = '') {
   const cached = sessionStore.get(admissionNumber);
   const targetPassword = customPassword ? String(customPassword).trim() : admissionNumber;
 
-  console.log(`[Session] DEBUG: Starting login for Admission: "${admissionNumber}" | Password: "${targetPassword}" (Custom length: ${customPassword.length})`);
+  console.log(`[Session] DEBUG: Starting login for Admission: "${admissionNumber}" (custom password: ${customPassword ? 'yes' : 'no'})`);
 
   // Return cached session if still valid
   if (cached && cached.expiresAt > now && cached.password === targetPassword) {

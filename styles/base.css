@@ -30,6 +30,9 @@
             --glass: rgba(255, 255, 255, 0.72);
             --glass-border: rgba(255, 255, 255, 0.42);
             --mac-blue: #0071e3;
+            --hub: #d99e00;
+            --hub-deep: #b57e00;
+            --hub-soft: rgba(217, 158, 0, 0.12);
             --bg-1: #ffffff;
             --bg-2: #f5f5f7;
             --bg-body: #f5f5f7;
@@ -44,6 +47,9 @@
             --glass: rgba(28, 28, 30, 0.62);
             --glass-border: rgba(255, 255, 255, 0.08);
             --mac-blue: #0a84ff;
+            --hub: #ffd275;
+            --hub-deep: #ffcf5c;
+            --hub-soft: rgba(255, 210, 117, 0.14);
             --liquid-glass: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
             --bg-1: #000000;
             --bg-2: #000000;
@@ -593,7 +599,7 @@
         }
 
         .resource-action-card span {
-            color: var(--mac-blue);
+            color: var(--hub);
             font-size: 0.64rem;
             font-weight: 900;
             letter-spacing: 0.16em;
@@ -886,7 +892,7 @@
             letter-spacing: 0.12em;
             text-transform: uppercase;
             background: rgba(0, 113, 227, 0.12);
-            color: var(--mac-blue);
+            color: var(--hub);
         }
 
         .exam-badge.is-final {
@@ -1494,7 +1500,7 @@
         }
 
         .active-seat {
-            background: var(--mac-blue) !important;
+            background: var(--hub) !important;
             color: white !important;
             transform: scale(1.08);
             box-shadow: 0 10px 25px rgba(0, 113, 227, 0.4);
@@ -1671,7 +1677,7 @@
         }
 
         .intro-stack__row strong {
-            color: var(--mac-blue);
+            color: var(--hub);
             font-size: 0.68rem;
             font-weight: 900;
             text-transform: uppercase;
@@ -1688,7 +1694,7 @@
         }
 
         .intro-kicker {
-            color: var(--mac-blue);
+            color: var(--hub);
             font-size: 10px;
             font-weight: 900;
             text-transform: uppercase;
@@ -1730,7 +1736,7 @@
         }
 
         .ob-profile-kicker {
-            color: var(--mac-blue);
+            color: var(--hub);
             font-size: 10px;
             font-weight: 900;
             text-transform: uppercase;
@@ -1835,7 +1841,7 @@
             width: 22px;
             height: 22px;
             border-radius: 999px;
-            background: var(--mac-blue);
+            background: var(--hub);
             position: relative;
         }
 
@@ -1864,7 +1870,7 @@
         }
         .step-dot.active {
             width: 18px;
-            background: var(--mac-blue);
+            background: var(--hub);
             opacity: 1;
             border-radius: 4px;
         }
@@ -1916,13 +1922,13 @@
             place-items: center;
             margin-bottom: 1.2rem;
             background: rgba(0,113,227,0.16);
-            color: var(--mac-blue);
+            color: var(--hub);
             font-size: 0.9rem;
             font-weight: 900;
         }
 
         .practical-seat-empty__kicker {
-            color: var(--mac-blue);
+            color: var(--hub);
             font-size: 10px;
             font-weight: 900;
             text-transform: uppercase;
@@ -1948,7 +1954,7 @@
 
         .highlight-box {
             position: absolute;
-            border: 3px solid var(--mac-blue);
+            border: 3px solid var(--hub);
             border-radius: 1rem;
             pointer-events: none;
             z-index: 300;

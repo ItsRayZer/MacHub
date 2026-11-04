@@ -782,7 +782,7 @@
       const hasCourses = semCourses.length > 0;
 
       const dashboardShortcuts = [
-        { name: 'Profile', icon: '👤', bg: 'rgba(0, 113, 227, 0.12)', color: '#0071e3', border: 'rgba(0, 113, 227, 0.25)', desc: 'Official student credentials' },
+        { name: 'Profile', icon: '👤', bg: 'rgba(0, 113, 227, 0.12)', color: '#e6a800', border: 'rgba(0, 113, 227, 0.25)', desc: 'Official student credentials' },
         { name: 'Major Switching / College Transfer', label: 'Major Switching', icon: '🔄', bg: 'rgba(168, 85, 247, 0.12)', color: '#a855f7', border: 'rgba(168, 85, 247, 0.25)', desc: 'CTMS candidate transfer login' },
         { name: 'Course Selection', icon: '📚', bg: 'rgba(56, 151, 240, 0.12)', color: '#3897f0', border: 'rgba(56, 151, 240, 0.25)', desc: 'Elective selections & sync status' },
         { name: 'E-Copy / RV / Scrutiny', label: 'Revaluation / RV', icon: '📄', bg: 'rgba(255, 179, 71, 0.12)', color: '#ffb347', border: 'rgba(255, 179, 71, 0.25)', desc: 'Request paper revaluations & copies' },
@@ -830,7 +830,7 @@
               </div>
               <!-- Premium minimalist Apple-style progress bar -->
               <div class="w-full h-2 bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
-                <div class="h-full bg-gradient-to-r from-[#3897f0] to-[#0071e3] rounded-full transition-all duration-1000" style="width: ${((profileData.credits || 40) / 160 * 100)}%; background: linear-gradient(90deg, #3897f0 0%, #0071e3 100%);"></div>
+                <div class="h-full bg-gradient-to-r from-[#3897f0] to-[#e6a800] rounded-full transition-all duration-1000" style="width: ${((profileData.credits || 40) / 160 * 100)}%; background: linear-gradient(90deg, #3897f0 0%, #e6a800 100%);"></div>
               </div>
               <div class="flex justify-between items-center text-[8.5px] text-zinc-500 font-medium pt-0.5">
                 <span>Progression: ${Math.round((profileData.credits || 40) / 160 * 100)}%</span>

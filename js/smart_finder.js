@@ -67,6 +67,12 @@ window.SmartFinder = (function() {
      * Apply a student record to the app state.
      */
     function applyStudent(student) {
+        // Year of study, derived from student data only (js/year.js)
+        let yearInfo = null;
+        try {
+            if (window.MacHubYear) yearInfo = window.MacHubYear.detectStudentYear(student);
+        } catch (_) { /* never break onboarding */ }
+
         const profileData = {
             name: student.name,
             reg: student.regNo,
@@ -74,7 +80,9 @@ window.SmartFinder = (function() {
             dept: student.department,
             classGroup: student.classGroup,
             classNo: student.classNo,
-            semester: student.semester
+            semester: student.semester,
+            year: yearInfo && yearInfo.year ? yearInfo.year : null,
+            yearLabel: yearInfo && yearInfo.label ? yearInfo.label : ''
         };
 
         // Save to localStorage
@@ -84,7 +92,10 @@ window.SmartFinder = (function() {
         const homeGreet = document.getElementById('homeGreeting');
         if (homeGreet) homeGreet.textContent = `Hi, ${student.name.split(' ')[0]}!`;
         const deptEl = document.getElementById('homeUserDept');
-        if (deptEl) deptEl.textContent = `${student.classGroup} · ${student.semester}`;
+        if (deptEl) {
+            const yearText = (window.MacHubYear && window.MacHubYear.yearBadgeText(student)) || student.semester;
+            deptEl.textContent = `${student.classGroup} · ${yearText}`;
+        }
         const regEl = document.getElementById('homeUserReg');
         if (regEl) regEl.textContent = student.regNo || student.classNo || 'Not set';
 

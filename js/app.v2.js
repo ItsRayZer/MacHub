@@ -518,6 +518,9 @@ window.switchExamTab = function(tab) {
 };
 
 function switchView(viewId, isFromRouter, subTabId) {
+    // Perf: lazy-load heavy per-view scripts on first navigation (js/lazy.js).
+    // Returns false while scripts load, then re-dispatches switchView.
+    if (typeof window.__machubEnsureViewScripts === 'function' && !window.__machubEnsureViewScripts(viewId)) return;
     if (typeof window.closeArcToolMenu === 'function') window.closeArcToolMenu();
     if (typeof window.closeSecondaryArcMenu === 'function') window.closeSecondaryArcMenu();
 
@@ -1986,7 +1989,7 @@ function renderDepartments() {
         return `
             <div class="glass-panel p-6 rounded-[2rem] flex items-center justify-between shadow-sm">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-[#0071e3] rounded-2xl flex items-center justify-center text-white text-xl font-bold">${dept[0]}</div>
+                    <div class="w-12 h-12 bg-[#e6a800] rounded-2xl flex items-center justify-center text-white text-xl font-bold">${dept[0]}</div>
                     <div>
                         <h4 class="text-lg font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">${dept}</h4>
                         <p class="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-0.5">Mac Ramapuram</p>
@@ -3787,7 +3790,7 @@ window.renderClassTimetable = function() {
                         <span id="timetable-live-timer-value" style="font-size:11px;font-weight:900;color:#f5f5f7;">${formattedTimer}</span>
                     </div>
                     <div style="width:100%;height:3px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;">
-                        <div id="timetable-live-progress" style="height:100%;border-radius:99px;background:#0071e3;width:${scheduleState.progressPct}%;transition:width 0.5s ease;"></div>
+                        <div id="timetable-live-progress" style="height:100%;border-radius:99px;background:#e6a800;width:${scheduleState.progressPct}%;transition:width 0.5s ease;"></div>
                     </div>
                 </div>
                 ${scheduleState.nextTitle ? `
@@ -3827,7 +3830,7 @@ window.renderClassTimetable = function() {
 
     // ── 5. Period Cards ──────────────────────────────────────────────────
     const isDayToday = (day === (isWeekend ? 'Monday' : todayName));
-    const ACCENT_COLORS = ['#0071e3','#7c3aed','#059669','#d97706','#e11d48'];
+    const ACCENT_COLORS = ['#e6a800','#7c3aed','#059669','#d97706','#e11d48'];
     let cardsHtml = '<div style="display:flex;flex-direction:column;gap:10px;">';
 
     dayPeriods.forEach((period, idx) => {
@@ -3888,7 +3891,7 @@ window.renderClassTimetable = function() {
                             <span style="font-size:9px;font-weight:700;color:#86868b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${period.time}</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
-                            ${isLive ? `<span class="live-pulse-dot" style="font-size:9px;font-weight:900;color:#0071e3;background:rgba(0,113,227,0.12);padding:2px 8px;border-radius:99px;text-transform:uppercase;">● LIVE</span>` : ''}
+                            ${isLive ? `<span class="live-pulse-dot" style="font-size:9px;font-weight:900;color:#e6a800;background:rgba(0,113,227,0.12);padding:2px 8px;border-radius:99px;text-transform:uppercase;">● LIVE</span>` : ''}
                             ${isPast ? `<span style="font-size:9px;font-weight:900;color:#10b981;background:rgba(16,185,129,0.1);padding:2px 8px;border-radius:99px;">✓ Done</span>` : ''}
                         </div>
                     </div>
