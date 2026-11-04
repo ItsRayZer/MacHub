@@ -48,6 +48,11 @@
     const S = {
         studyTab: 'home',   // home | mocks | revise  (bottom nav study mode)
         tab: 'library',     // library | refer | wallet (inside study home)
+        view: 'subjects',   // subjects | modules | topics | questions
+        selSubject: null,
+        selModule: null,
+        selTopic: null,
+        subjects: [],
         semester: 3,
         docs: [],
         unlocked: [],
@@ -57,6 +62,14 @@
         showAll: false,
         loading: true,
     };
+
+    async function loadSubjects() {
+        if (S.subjects.length) return;
+        try {
+            const r = await fetch('data/bcaeasy-subjects.json');
+            S.subjects = await r.json();
+        } catch (e) { console.warn('[BcaEasy] subjects load failed'); }
+    }
 
     /* ---------------- SVG icons (no emojis) ---------------- */
     const IC = {
@@ -120,11 +133,33 @@
     /* ----- Study Home (BcaEasy homepage) ----- */
     function studyHomeHtml() {
         const name = studentName();
-        return `
-            <h1 style="font-size:24px;font-weight:900;color:#f5f5f7;letter-spacing:-0.02em;">Hi, ${esc(name)}</h1>
-            <p style="font-size:13px;color:#86868b;margin-top:2px;">Ready to study smarter today?</p>
+        if (S.view === 'subjects' || !S.selSubject) return subjectsHtml(name);
+        if (S.view === 'modules') return modulesHtml();
+        if (S.view === 'topics') return topicsHtml();
+        return questionsHtml();
+    }
 
-            <div style="display:flex;gap:8px;margin:16px 0;">
+    function subjectsHtml(name) {
+        let html = `
+            <h1 style="font-size:24px;font-weight:900;color:#f5f5f7;letter-spacing:-0.02em;">Hi, ${esc(name)}</h1>
+            <p style="font-size:13px;color:#86868b;margin-top:2px;">Pick a subject to start studying.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;">`;
+        S.subjects.forEach(s => {
+            const qCount = s.modules.reduce((a, m) => a + m.topics.reduce((b, t) => b + t.questions.length, 0), 0);
+            html += `
+                <button type="button" onclick="window.BcaEasy.openSubject('${esc(s.short)}')"
+                    style="padding:16px;border-radius:18px;text-align:left;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:pointer;">
+                    <p style="font-size:13px;font-weight:900;color:#f5f5f7;">${esc(s.short)}</p>
+                    <p style="font-size:11px;color:#86868b;margin-top:2px;line-height:1.3;">${esc(s.name)}</p>
+                    <p style="font-size:10px;color:#7c3aed;font-weight:800;margin-top:6px;">${qCount} questions</p>
+                </button>`;
+        });
+        html += `</div>`;
+
+        // Library / Refer / Wallet quick access
+        html += `
+            <p style="font-size:11px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.12em;margin:18px 0 8px;">Study Resources</p>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
                 ${['library', 'refer', 'wallet'].map(t => `
                     <button type="button" onclick="window.BcaEasy.switchTab('${t}')"
                         style="flex:1;padding:10px;border-radius:14px;font-size:13px;font-weight:800;border:1px solid rgba(255,255,255,0.08);cursor:pointer;
@@ -132,8 +167,76 @@
                         ${t === 'library' ? 'Library' : t === 'refer' ? 'Refer' : 'Wallet'}
                     </button>`).join('')}
             </div>
-
             <div id="bcaeasy-body">${S.tab === 'library' ? libraryHtml() : S.tab === 'refer' ? referHtml() : walletHtml()}</div>`;
+        return html;
+    }
+
+    function backBtn(to) {
+        return `<button type="button" onclick="window.BcaEasy.back('${to}')"
+            style="display:flex;align-items:center;gap:6px;padding:8px 0;font-size:13px;font-weight:800;color:#7c3aed;background:none;border:none;cursor:pointer;margin-bottom:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Back</button>`;
+    }
+
+    function modulesHtml() {
+        const s = S.selSubject;
+        let html = backBtn('subjects');
+        html += `<h1 style="font-size:22px;font-weight:900;color:#f5f5f7;">${esc(s.short)} Modules</h1>
+            <p style="font-size:12px;color:#86868b;margin:4px 0 12px;">${esc(s.name)}</p>`;
+        s.modules.forEach(m => {
+            const tc = m.topics.length, qc = m.topics.reduce((a, t) => a + t.questions.length, 0);
+            html += `
+                <button type="button" onclick="window.BcaEasy.openModule('${esc(m.num)}')"
+                    style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:16px;border-radius:16px;margin-bottom:8px;text-align:left;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);cursor:pointer;">
+                    <span><span style="display:block;font-size:14px;font-weight:800;color:#f5f5f7;">Module ${esc(m.num)}: ${esc(m.title)}</span>
+                    <span style="font-size:11px;color:#86868b;">${tc} topics · ${qc} questions</span></span>
+                    <span style="color:#86868b;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></span>
+                </button>`;
+        });
+        return html;
+    }
+
+    function topicsHtml() {
+        const m = S.selModule;
+        let html = backBtn('modules');
+        html += `<h1 style="font-size:22px;font-weight:900;color:#f5f5f7;">Module ${esc(m.num)}</h1>
+            <p style="font-size:12px;color:#86868b;margin:4px 0 12px;">${esc(m.title)}</p>`;
+        m.topics.forEach((t, i) => {
+            html += `
+                <button type="button" onclick="window.BcaEasy.openTopic(${i})"
+                    style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:16px;border-radius:16px;margin-bottom:8px;text-align:left;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);cursor:pointer;">
+                    <span><span style="display:block;font-size:14px;font-weight:800;color:#f5f5f7;">${esc(t.title)}</span>
+                    <span style="font-size:11px;color:#86868b;">${t.questions.length} questions</span></span>
+                    <span style="color:#86868b;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></span>
+                </button>`;
+        });
+        return html;
+    }
+
+    function questionsHtml() {
+        const t = S.selTopic;
+        let html = backBtn('topics');
+        html += `<h1 style="font-size:20px;font-weight:900;color:#f5f5f7;">${esc(t.title)}</h1>
+            <p style="font-size:12px;color:#86868b;margin:4px 0 12px;">${t.questions.length} questions</p>`;
+        if (t.points && t.points.length) {
+            html += `<div class="glass-panel" style="border-radius:16px;padding:16px;margin-bottom:12px;">
+                <p style="font-size:11px;font-weight:900;color:#86868b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Key Points</p>
+                <ul style="font-size:13px;color:#d4d4d4;padding-left:18px;display:grid;gap:6px;">`;
+            t.points.slice(0, 8).forEach(p => { html += `<li>${esc(p)}</li>`; });
+            html += `</ul></div>`;
+        }
+        t.questions.forEach((q, i) => {
+            html += `
+                <div class="glass-panel" style="border-radius:16px;padding:16px;margin-bottom:10px;">
+                    <p style="font-size:10px;font-weight:800;color:#7c3aed;">Q${i + 1} · ${q.marks || ''} marks</p>
+                    <p style="font-size:14px;font-weight:700;color:#f5f5f7;margin:6px 0;">${esc(q.q)}</p>
+                    <button type="button" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.nextElementSibling.style.display==='none'?'Show answer':'Hide answer';"
+                        style="font-size:12px;font-weight:800;color:#7c3aed;background:none;border:none;cursor:pointer;padding:4px 0;">Show answer</button>
+                    <div style="display:none;font-size:13px;color:#a1a1aa;margin-top:8px;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
+                        ${(q.a || []).map(a => `<p style="margin-bottom:6px;">${esc(a)}</p>`).join('')}
+                    </div>
+                </div>`;
+        });
+        return html;
     }
 
     function studentName() {
@@ -326,7 +429,28 @@
         showStudy(tab) {
             S.studyTab = tab || 'home';
             render();
-            if (S.studyTab === 'home' && !S.docs.length && configured()) loadAll();
+            if (S.studyTab === 'home') {
+                loadSubjects().then(() => { if (S.view === 'subjects') render(); });
+                if (!S.docs.length && configured()) loadAll();
+            }
+        },
+        openSubject(short) {
+            S.selSubject = S.subjects.find(s => s.short === short);
+            S.view = 'modules'; render();
+            document.getElementById('exploreViewRoot')?.scrollIntoView();
+        },
+        openModule(num) {
+            S.selModule = S.selSubject.modules.find(m => String(m.num) === String(num));
+            S.view = 'topics'; render();
+        },
+        openTopic(i) {
+            S.selTopic = S.selModule.topics[i];
+            S.view = 'questions'; render();
+        },
+        back(to) {
+            S.view = to;
+            if (to === 'subjects') S.selSubject = null;
+            render();
         },
 
         async openDoc(id) {

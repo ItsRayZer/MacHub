@@ -37,8 +37,18 @@
                 void v.offsetWidth; // restart animation
                 v.classList.add('study-enter');
             }
-            if (window.BcaEasy && window.BcaEasy.showStudy) window.BcaEasy.showStudy('home');
-            else if (window.initExploreView) window.initExploreView();
+            // Wait for BcaEasy lazy script (race-safe: poll up to 3s)
+            let attempts = 30;
+            const tryShow = () => {
+                if (window.BcaEasy && window.BcaEasy.showStudy) {
+                    window.BcaEasy.showStudy('home');
+                } else if (attempts-- > 0) {
+                    setTimeout(tryShow, 100);
+                } else if (window.initExploreView) {
+                    window.initExploreView(); // fallback
+                }
+            };
+            tryShow();
         },
 
         exitStudy() {
