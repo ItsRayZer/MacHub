@@ -31,6 +31,30 @@ function parseSingleTable($, tableEl) {
   return { headers, rows };
 }
 
+/**
+ * Clean a raw subject heading: strip "(CODE)" suffixes, collapse whitespace.
+ */
+function cleanSubjectName(t) {
+  return String(t || '').replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * True when `text` is just this table's own headers concatenated.
+ * cheerio .text() joins cells with no separator, so a parent element's text
+ * can look like "Assessment TypeScoreMax MarkPass M..." — that is NOT a
+ * subject name and must be rejected.
+ */
+function isHeaderBlob(text, headers) {
+  const norm = String(text || '').toLowerCase().replace(/\s+/g, '');
+  if (!norm) return false;
+  let hits = 0;
+  for (const h of headers || []) {
+    const hn = String(h || '').toLowerCase().replace(/\s+/g, '');
+    if (hn && hn.length > 2 && norm.includes(hn)) hits++;
+  }
+  return hits >= 2;
+}
+
 /** Attendance page parser — extracts subject-wise attendance */
 function parseAttendance(html) {
   const $       = cheerio.load(html);
@@ -178,35 +202,41 @@ function parseAssessment(html) {
 
   // Multi-table mode: each subject has an h3/h4/b heading then a table
   $('table').each((_, table) => {
+    // Parse the table FIRST so the fallback can reject this table's own
+    // headers concatenated (cheerio .text() joins cells with no separator).
+    const { headers, rows } = parseSingleTable($, table);
+    if (rows.length === 0) return;
+
     // Try to find the subject name using robust parent-traversal
     let subjectName = '';
-    
+
     // We can look at the table itself or its parents to find direct children of col-sm-12/body
     let current = $(table);
     while (current.length && current.parent().length && !current.parent().is('.col-sm-12') && !current.parent().is('body')) {
       current = current.parent();
     }
-    
+
     // Now current is a direct child of the main container. Look at preceding headings.
     let prevH = current.prevAll('h3, h4, h5, b, strong').first();
     if (prevH.length) {
-      subjectName = prevH.text().replace(/\s*\([^)]+\)/g, '').trim();
+      subjectName = cleanSubjectName(prevH.text());
     } else {
       // Try inside the table's container itself, in case it's in a card
       let prevHInParent = $(table).parent().find('h3, h4, h5, b, strong').first();
       if (prevHInParent.length) {
-        subjectName = prevHInParent.text().replace(/\s*\([^)]+\)/g, '').trim();
+        subjectName = cleanSubjectName(prevHInParent.text());
       }
     }
 
-    if (!subjectName) {
-      // Fallback search up the tree
+    if (!subjectName || isHeaderBlob(subjectName, headers)) {
+      subjectName = '';
+      // Fallback search up the tree — never accept the table's own header blob
       let el = $(table).parent();
       while (el.length && !subjectName) {
         const candidate = el.find('h3, h4, h5, b, strong').first();
         const text = (candidate.length ? candidate : el).text().trim();
-        if (text && text.length > 3 && !/^\d+$/.test(text) && !text.includes('Semester')) {
-          subjectName = text.replace(/\s*\([^)]+\)/, '').trim();
+        if (text && text.length > 3 && !/^\d+$/.test(text) && !text.includes('Semester') && !isHeaderBlob(text, headers)) {
+          subjectName = cleanSubjectName(text);
         }
         el = el.parent();
       }
@@ -216,10 +246,7 @@ function parseAssessment(html) {
       subjectName = 'Unknown Subject';
     }
 
-    const { headers, rows } = parseSingleTable($, table);
-    if (rows.length > 0) {
-      sections.push({ subject: subjectName, headers, rows });
-    }
+    sections.push({ subject: subjectName, headers, rows });
   });
 
   return { page: 'Assessment', sections, semesters };
@@ -288,6 +315,9 @@ function parseInternalMark(html) {
   } else {
     // ── Layout A: one table per subject, with a heading before each ──────────
     tables.forEach(table => {
+      const { headers, rows } = parseSingleTable($, table);
+      if (rows.length === 0) return;
+
       let subjectName = '';
 
       let current = $(table);
@@ -299,12 +329,14 @@ function parseInternalMark(html) {
       // Look at preceding siblings for heading text
       let prevH = current.prevAll('h3, h4, h5, b, strong, div[class*="head"], p[class*="head"]').first();
       if (prevH.length) {
-        subjectName = prevH.text().replace(/\s*\([^)]+\)/g, '').trim();
+        subjectName = cleanSubjectName(prevH.text());
       }
-      if (!subjectName) {
+      if (!subjectName || isHeaderBlob(subjectName, headers)) {
+        subjectName = '';
         let prevHInParent = $(table).parent().find('h3, h4, h5, b, strong').first();
         if (prevHInParent.length) {
-          subjectName = prevHInParent.text().replace(/\s*\([^)]+\)/g, '').trim();
+          const t = cleanSubjectName(prevHInParent.text());
+          if (!isHeaderBlob(t, headers)) subjectName = t;
         }
       }
       if (!subjectName) {
@@ -312,18 +344,15 @@ function parseInternalMark(html) {
         while (el.length && !subjectName) {
           const candidate = el.find('h3, h4, h5, b, strong').first();
           const text = (candidate.length ? candidate : el).text().trim();
-          if (text && text.length > 3 && !/^\d+$/.test(text) && !text.toLowerCase().includes('semester') && !text.toLowerCase().includes('internal mark')) {
-            subjectName = text.replace(/\s*\([^)]+\)/, '').trim();
+          if (text && text.length > 3 && !/^\d+$/.test(text) && !text.toLowerCase().includes('semester') && !text.toLowerCase().includes('internal mark') && !isHeaderBlob(text, headers)) {
+            subjectName = cleanSubjectName(text);
           }
           el = el.parent();
         }
       }
       if (!subjectName) subjectName = 'General';
 
-      const { headers, rows } = parseSingleTable($, table);
-      if (rows.length > 0) {
-        sections.push({ subject: subjectName, headers, rows });
-      }
+      sections.push({ subject: subjectName, headers, rows });
     });
   }
 

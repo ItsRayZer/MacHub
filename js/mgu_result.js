@@ -103,6 +103,25 @@
   }
 
   /* ── Exam list ───────────────────────────────────────────────── */
+  // Student's program (BCA / BBA / B.Voc) from profile department, e.g. "BCA A".
+  function studentProgram() {
+    const p = window.ExamHubProfile?.get() || window.getStudentInfo?.() || {};
+    const dept = String(p.department || p.dept || p.data?.department || '').toUpperCase();
+    if (/\bBCA\b/.test(dept)) return 'BCA';
+    if (/\bBBA\b/.test(dept)) return 'BBA';
+    if (/B\.?VOC/.test(dept)) return 'B.VOC';
+    return '';
+  }
+  // Simple label: "Sem 2 · Apr 2026 · Regular" — easy to tell sem and year.
+  function simpleExamLabel(e) {
+    const label = String(e.label || '');
+    const sem = e.semesterid || '';
+    const monthM = label.match(/(January|February|March|April|May|June|July|August|September|October|November|December)/i);
+    const yearM = label.match(/(20\d{2})/);
+    const type = /special/i.test(label) ? 'Special' : 'Regular';
+    const when = [monthM ? monthM[1].slice(0, 3) : '', yearM ? yearM[1] : ''].filter(Boolean).join(' ');
+    return `Sem ${sem}${when ? ' · ' + when : ''} · ${type}`;
+  }
   async function loadExams() {
     const sel = $('mgu-exam-select');
     const cnt = $('mgu-exam-count');
@@ -112,19 +131,28 @@
     try {
       const d = await api('/api/mgu/exam-list');
       if (!d || !d.success) throw new Error(d?.error || 'Failed to load exams');
-      S.exams = d.exams || []; S.loaded = true;
+      let exams = d.exams || [];
+      // Only show this student's program category (BCA sees BCA exams, etc.)
+      const prog = studentProgram();
+      if (prog) {
+        const needle = prog.replace('.', '');
+        const filtered = exams.filter(e => String(e.label || '').toUpperCase().replace('.', '').includes(needle));
+        if (filtered.length) exams = filtered;
+      }
+      S.exams = exams.map(e => ({ ...e, simpleLabel: simpleExamLabel(e) }));
+      S.loaded = true;
       sel.innerHTML = '<option value="">Select examination…</option>';
       S.exams.forEach(e => {
         const o = document.createElement('option');
-        o.value = e.value; o.textContent = e.label;
+        o.value = e.value; o.textContent = e.simpleLabel; o.title = e.label;
         sel.appendChild(o);
       });
       // Auto-select most recent (first in list)
       if (S.exams.length) sel.value = S.exams[0].value;
-      if (cnt) cnt.textContent = `${S.exams.length} active exams`;
+      if (cnt) cnt.textContent = `${S.exams.length} exams${prog ? ' · ' + prog : ''}`;
       sel.disabled = false;
     } catch (e) {
-      sel.innerHTML = '<option value="">Failed — tap ↺ to retry</option>';
+      sel.innerHTML = '<option value="">Failed — tap retry</option>';
       sel.disabled = false;
       if (cnt) cnt.textContent = 'Failed to load';
     }
@@ -827,5 +855,14 @@
 
   // Keep backward compat
   window.initMguResultPage = window.initMguPage;
+
+  // Self-heal: if a caller requested init before this lazy script arrived
+  // (window._mguInitPending set by ensureMguInit), init now.
+  try {
+    if (window._mguInitPending) {
+      window._mguInitPending = false;
+      window.initMguPage();
+    }
+  } catch (e) { console.warn('[MGU] self-heal init failed', e); }
 
 })();

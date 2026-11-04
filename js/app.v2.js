@@ -221,7 +221,7 @@ function updateCountdown() {
         const homeGreeting = document.getElementById('homeGreeting');
         if (homeGreeting) homeGreeting.textContent = `Hi, ${info.name.split(' ')[0]}!`;
         const homeUserDept = document.getElementById('homeUserDept');
-        if (homeUserDept) homeUserDept.textContent = info.dept;
+        if (homeUserDept) homeUserDept.textContent = window.MacHubYear ? window.MacHubYear.deptYearLine(info) : (info.dept || '---');
     }
 
     const now = new Date();
@@ -490,7 +490,7 @@ window.switchExamTab = function(tab) {
         appState.examSubView = 'view-results';
         localStorage.setItem('machub_exam_sub_view', 'view-results');
         if (typeof window.renderExamResults === 'function') window.renderExamResults();
-        if (typeof window.initMguResultPage === 'function') window.initMguResultPage();
+        window.ensureMguInit();
     }
 
     // Update browser URL to match active subtab client-side
@@ -2776,7 +2776,7 @@ async function applyUserProfile() {
         initialsEl.textContent = initials;
     }
     if (deptEl) {
-        deptEl.textContent = info.dept || 'COURSE';
+        deptEl.textContent = window.MacHubYear ? window.MacHubYear.deptYearLine(info) : (info.dept || 'COURSE');
     }
     if (semEl) {
         const rawSem = info.semester || '';
@@ -2960,7 +2960,7 @@ function legacySaveEditProfile() {
     const homeGreet = document.getElementById('homeGreeting');
     if (homeGreet) homeGreet.textContent = `Hi, ${name.split(' ')[0]}!`;
     const deptEl = document.getElementById('homeUserDept');
-    if (deptEl) deptEl.textContent = dept;
+    if (deptEl) deptEl.textContent = window.MacHubYear ? window.MacHubYear.deptYearLine(updated) : (dept || '---');
     const regEl = document.getElementById('homeUserReg');
     if (regEl) regEl.textContent = reg || 'Not set';
 
@@ -4724,12 +4724,30 @@ window.switchResultsSubTab = function (tab) {
     window.showResultsTab(tab);
 };
 
+// Resilient MGU init: initMguPage lives in lazily-loaded js/mgu_result.js.
+// On first visit the script may still be arriving when callers check, so poll
+// briefly instead of checking once (fixes "Loading exams..." stuck forever).
+window.ensureMguInit = function() {
+    window._mguInitPending = true;
+    var tries = 0;
+    var tick = function() {
+        if (typeof window.initMguPage === 'function') {
+            window._mguInitPending = false;
+            try { window.initMguPage(); } catch (e) { console.error('[MGU] init failed', e); }
+        } else if (++tries < 100) {
+            setTimeout(tick, 100);
+        } else {
+            window._mguInitPending = false;
+            console.warn('[MGU] initMguPage never arrived');
+        }
+    };
+    tick();
+};
+
 window.openMguResultTab = function() {
     appState.resultsSubTab = 'exam';
     window.switchView('view-results');
-    if (typeof window.initMguPage === 'function') {
-        window.initMguPage();
-    }
+    window.ensureMguInit();
 };
 
 window.openCollegeResultTab = function() {
@@ -4829,10 +4847,8 @@ window.renderExamResults = function () {
             <div id="mgu-result-view" style="display:none;"></div>
         `;
         
-        // Trigger MGU initialization
-        if (typeof window.initMguPage === 'function') {
-            window.initMguPage();
-        }
+        // Trigger MGU initialization (resilient to lazy-load race)
+        window.ensureMguInit();
 
     } else {
         // College Result / Internal Marks subtab

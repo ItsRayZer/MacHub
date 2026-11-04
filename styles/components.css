@@ -1924,3 +1924,19 @@ body::after {
 
 .view-panel.no-animation { animation: none !important; }
 
+
+/* ── MacHub skeleton shimmer (perf.js) ─────────────────────────────── */
+.mh-skel-wrap { display: flex; flex-direction: column; gap: 10px; padding: 4px 0; }
+.mh-skeleton {
+    border-radius: 14px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: mh-skel-shimmer 1.3s ease-in-out infinite;
+}
+@keyframes mh-skel-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mh-skeleton { animation: none; }
+}

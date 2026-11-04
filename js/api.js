@@ -1631,14 +1631,27 @@
 
   function _renderAssessment(payload) {
     if (!payload?.sections?.length) return _emptyCard('No assessment records found.');
+    // Guard: reject subject names that are just the table's own headers
+    // concatenated (old parser bug) - cheerio .text() joins cells with no spaces.
+    const _cleanSubject = (s) => {
+      const t = String(s || '').trim();
+      if (!t) return '';
+      const n = t.toLowerCase().replace(/\s+/g, '');
+      const headerBits = ['assessmenttype', 'scoremark', 'maxmark', 'passmark'];
+      let hits = 0;
+      for (const b of headerBits) if (n.includes(b)) hits++;
+      if (hits >= 2 || /^assessmenttype/i.test(t)) return '';
+      return t;
+    };
     let html = `<div class="mb-6">
-      <h4 class="text-xs font-black text-[var(--mac-blue)] uppercase tracking-widest mb-3">📝 Internal Marks</h4>
+      <h4 class="text-xs font-black text-[var(--mac-blue)] uppercase tracking-widest mb-3">Internal Marks</h4>
       <div class="space-y-4">`;
 
     payload.sections.forEach(section => {
       if (!section.rows?.length) return;
+      const subj = _cleanSubject(section.subject);
       html += `<div class="glass-panel p-4 rounded-2xl">
-        <p class="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-3">${_esc(section.subject || '')}</p>
+        ${subj ? `<p class="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-3">${_esc(subj)}</p>` : ''}
         <div class="grid grid-cols-2 gap-2">`;
         
       const getRowType = (row) => {
