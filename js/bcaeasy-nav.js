@@ -97,13 +97,21 @@
                 v.classList.add('study-exit');
             }
             const p = pill();
-            // Melt the nav back after the content starts zooming out
+            // Fade out floating buttons + AI button restores, then melt nav back
+            const examBtn = document.getElementById('tab-view-exam');
+            const profBtn = document.getElementById('tab-view-profile');
+            [examBtn, profBtn].forEach(b => {
+                if (b) { b.style.transition = 'opacity 0.25s ease, transform 0.25s ease'; b.style.opacity = '0'; b.style.transform = 'scale(0.5)'; }
+            });
             setTimeout(() => {
                 if (p) p.classList.remove('study-mode');
+                [examBtn, profBtn].forEach(b => {
+                    if (b) { b.style.transition = ''; b.style.opacity = ''; b.style.transform = ''; }
+                });
                 setActiveUI('home');
                 if (v) v.classList.remove('study-exit');
                 switching = false;
-            }, 180);
+            }, 220);
         },
     };
 })();
