@@ -153,7 +153,7 @@ async function enterAppWithProfile(profile, skipLockCheck = false) {
         if (greetingEl) greetingEl.textContent = `Hi, ${firstName}!`;
 
         const deptEl = document.getElementById('homeUserDept');
-        if (deptEl) deptEl.textContent = profile.dept || profile.classGroup || '---';
+        if (deptEl) deptEl.textContent = window.MacHubYear ? window.MacHubYear.deptYearLine(profile) : (profile.dept || profile.classGroup || '---');
     }
 
     if (typeof window.autoSelectNextExamDay === 'function') window.autoSelectNextExamDay();
