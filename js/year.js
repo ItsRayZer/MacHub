@@ -122,6 +122,21 @@
         return r.year ? r.label : '';
     }
 
+    /**
+     * Full home department line: "BCA A · Year 2".
+     * Falls back to semester text ("SEM 2") when year is unknown.
+     * Never throws; safe to call from any profile refresh path.
+     */
+    function deptYearLine(profile) {
+        const p = profile || {};
+        const base = p.dept || p.classGroup || p.department || '';
+        let yearText = '';
+        try { yearText = yearBadgeText(p); } catch (_) { yearText = ''; }
+        if (!yearText) yearText = p.semester || '';
+        if (!base) return yearText || '---';
+        return yearText ? (base + ' · ' + yearText) : base;
+    }
+
     // ── Auto-enhance: fill any [data-machub-year] elements ─────────────────
     function autoEnhance() {
         try {
@@ -146,6 +161,7 @@
     window.MacHubYear = {
         detectStudentYear,
         yearBadgeText,
+        deptYearLine,
         admissionYearFromRegNo,
         parseBatch,
         academicYear,
