@@ -93,8 +93,7 @@ window.SmartFinder = (function() {
         if (homeGreet) homeGreet.textContent = `Hi, ${student.name.split(' ')[0]}!`;
         const deptEl = document.getElementById('homeUserDept');
         if (deptEl) {
-            const yearText = (window.MacHubYear && window.MacHubYear.yearBadgeText(student)) || student.semester;
-            deptEl.textContent = `${student.classGroup} · ${yearText}`;
+            deptEl.textContent = window.MacHubYear ? window.MacHubYear.deptYearLine(student) : ((student.classGroup || '') + (student.semester ? ' · ' + student.semester : ''));
         }
         const regEl = document.getElementById('homeUserReg');
         if (regEl) regEl.textContent = student.regNo || student.classNo || 'Not set';
